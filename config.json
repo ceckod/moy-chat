@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "youtube_channel_id": "REPLACE_WITH_YOUR_CHANNEL_ID",
+  "tracked_platforms": ["youtube"],
+  "max_videos_tracked": 200,
+  "trend_niches": [
+    "Balkan phonk", "Drift phonk", "Sad boy hyperpop", "Latin trap",
+    "Sped up remix", "Dark folk", "Afrobeats", "Amapiano", "Jersey club",
+    "Lo-fi hip hop", "Hyperpop", "Dark academia music", "Cloud rap",
+    "Dariacore", "Rage beat"
+  ],
+  "notes": "youtube_channel_id и trend_niches не са тайна информация — може да са публични в repo-то. YOUTUBE_API_KEY обаче ВИНАГИ е GitHub Secret, никога тук."
+}
