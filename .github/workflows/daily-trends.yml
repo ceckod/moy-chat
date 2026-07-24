@@ -1,0 +1,39 @@
+
+name: Daily Music Trend Tracker
+
+on:
+  schedule:
+    # 08:00 UTC всеки ден (малко преди YouTube stats tracker-а, без значение за реда)
+    - cron: "0 8 * * *"
+  workflow_dispatch: {}  # позволява и ръчно пускане от Actions таба, за тест
+
+permissions:
+  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytrends
+
+      - name: Run trend tracker
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/track_trends.py
+
+      - name: Commit updated trends
+        run: |
+          git config user.name "cdb-trends-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/trends-history.json
+          git diff --quiet --cached || git commit -m "📈 Daily trend snapshot ($(date -u +%Y-%m-%d))"
+          git push
