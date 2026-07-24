@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "youtube_channel_id": "REPLACE_WITH_YOUR_CHANNEL_ID",
-  "tracked_platforms": ["youtube"],
-  "max_videos_tracked": 200,
-  "notes": "youtube_channel_id не е тайна информация — може да е публично в repo-то. YOUTUBE_API_KEY обаче ВИНАГИ е GitHub Secret, никога тук."
-}
