@@ -9,7 +9,7 @@ const KEYS_STORAGE = "cdb_dashboard_keys_v1";
 // Безплатен Gemini модел, използван навсякъде в приложението.
 // "gemini-2.5-flash-lite" има най-високата дневна квота от безплатните модели (юли 2026).
 // Смени САМО тук, ако искаш друг модел — всички извиквания го четат оттук.
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
+const GEMINI_MODEL = "gemini-flash-lite-latest";
 
 /* ---------- STATE ---------- */
 const AppState = {
