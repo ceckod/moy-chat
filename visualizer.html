@@ -365,6 +365,17 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
       songTitleInput.value = ev.data.title;
       draw();
     }
+    // "Бърз ъплоуд за стари песни" режим — родителският прозорец подава директно
+    // File/Blob обект (structured clone поддържа File/Blob между same-origin документи),
+    // вместо потребителят да го избира ръчно през <input type="file">. Щом всичко
+    // (аудио + intro/smoke/logo клиповете) е готово, автоматично стартираме export
+    // и връщаме готовото видео обратно на родителя през postMessage.
+    if (ev.data && ev.data.type === 'cdb-quick-audio' && ev.data.file) {
+      quickMode = true;
+      quickAutoExportPending = true;
+      if (typeof ev.data.title === 'string' && ev.data.title.trim()) songTitleInput.value = ev.data.title;
+      loadAudioFile(ev.data.file);
+    }
   });
 
   let audioEl = new Audio();
@@ -376,6 +387,8 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   let rafId = null;
   let isRecording = false;
   let isSeeking = false;
+  let quickMode = false; // true когато аудиото е подадено от родителя (Бърз ъплоуд), не от ръчния input
+  let quickAutoExportPending = false; // чака всичко (аудио + клипове) да е готово, за да стартира export автоматично
 
   let introReady = false, smokeAReady = false, smokeBReady = false, logoReady = false;
   let activeLayer = null; // 'intro' | 'smoke'
@@ -462,8 +475,20 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
       if(!verseStartInput.value && introVideo.duration){
         verseStartInput.value = fmtTime(introVideo.duration);
       }
+      if(audioReady) exportBtn.disabled = false;
+      maybeStartQuickExport();
       draw();
     }
+  }
+
+  // В quick режим (Бърз ъплоуд за стари песни) стартираме export автоматично,
+  // веднага щом и аудиото, и всички фонови клипове са готови — без потребителят
+  // да трябва да натиска бутона ръчно.
+  function maybeStartQuickExport(){
+    if(!quickMode || !quickAutoExportPending) return;
+    if(!(audioReady && introReady && smokeAReady && smokeBReady && logoReady)) return;
+    quickAutoExportPending = false;
+    setTimeout(()=>{ startExport(); }, 300);
   }
   introVideo.addEventListener('loadedmetadata', ()=>{ introReady = true; updateReadyStatus(); });
   smokeVideoA.addEventListener('loadedmetadata', ()=>{ smokeAReady = true; updateReadyStatus(); });
@@ -516,8 +541,7 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   qualitySelect.addEventListener('change', applyDims);
 
   // ---- audio upload ----
-  audioFileInput.addEventListener('change', (e)=>{
-    const f = e.target.files[0];
+  function loadAudioFile(f){
     if(!f) return;
     const url = URL.createObjectURL(f);
     audioEl.src = url;
@@ -536,12 +560,18 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
       console.error(err);
       tempoStatus.textContent = "Не успях да анализирам темпото — ще ползвам стойност по подразбиране.";
     });
+  }
+  audioFileInput.addEventListener('change', (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    loadAudioFile(f);
   });
 
   audioEl.addEventListener('loadedmetadata', ()=>{
     audioReady = true;
     seek.max = Math.floor(audioEl.duration*1000);
     if(introReady && smokeAReady && smokeBReady && logoReady) exportBtn.disabled = false;
+    maybeStartQuickExport();
     statusMsg.textContent = "Готово за преглед или експорт.";
     setupAnalyser();
     draw();
@@ -1486,7 +1516,8 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   setInterval(()=>{ if(audioEl.paused && !isRecording) draw(); }, 400);
 
   // ---- export ----
-  exportBtn.addEventListener('click', async ()=>{
+  exportBtn.addEventListener('click', startExport);
+  async function startExport(){
     if(!audioReady){ statusMsg.textContent = "Първо качи аудио файл."; return; }
     if(!introReady || !smokeAReady || !smokeBReady || !logoReady){ statusMsg.textContent = "Изчакай видеата да се заредят."; return; }
     if(!audioCtx) setupAnalyser();
@@ -1516,6 +1547,7 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     }catch(err){
       statusMsg.textContent = "Браузърът не поддържа захващане на аудио поток. Пробвай в Chrome.";
       isRecording = false; exportBtn.disabled=false; progressOuter.classList.remove('show');
+      if(quickMode) parent.postMessage({ type:'cdb-video-error', message:'Браузърът не поддържа захващане на аудио поток.' }, '*');
       return;
     }
 
@@ -1546,6 +1578,13 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
       exportBtn.disabled = false;
       isRecording = false;
       try{ introVideo.pause(); smokeVideoA.pause(); smokeVideoB.pause(); }catch(e){}
+
+      // Quick режим ("Бърз ъплоуд за стари песни") — вместо да чакаме потребителят
+      // да натисне "Изтегли", връщаме готовия видео Blob директно на родителския
+      // прозорец, за да продължи автоматично към анализ/YouTube ъплоуд.
+      if(quickMode){
+        parent.postMessage({ type:'cdb-video-ready', blob, fileName: downloadLink.download, mimeType:'video/webm' }, '*');
+      }
     };
 
     recorder.start();
@@ -1562,7 +1601,7 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
       }
     }
     renderLoop();
-  });
+  }
 
 })();
 </script>

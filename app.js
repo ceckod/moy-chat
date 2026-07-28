@@ -357,6 +357,68 @@ async function callGemini(prompt, useSearch = false) {
   throw lastError || new Error("Gemini API грешка: неуспешно след повторни опити");
 }
 
+// Като callGemini(), но подава и аудио файл (inline base64) като multimodal вход —
+// ползва се от "Бърз ъплоуд за стари песни", за да може Gemini да "чуе" песента
+// директно (жанр/настроение/енергия + разпознаване на текста, ако не е пейстнат ръчно).
+// ЗАБЕЛЕЖКА: inline base64 работи добре за файлове до ~20MB (типично за mp3 на стара песен).
+async function callGeminiMultimodal(prompt, base64Audio, mimeType, useSearch = false) {
+  const k = Keys.load();
+  if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${k.gemini}`;
+  const body = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inline_data: { mime_type: mimeType || "audio/mpeg", data: base64Audio } }
+      ]
+    }]
+  };
+  if (useSearch) body.tools = [{ google_search: {} }];
+
+  const maxRetries = 3;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let res;
+    try {
+      res = await fetchTimeout(proxied(url), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }, 90000); // аудио анализ е по-бавен от чист текст
+    } catch (e) {
+      lastError = e;
+      break;
+    }
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
+    }
+
+    const t = await res.text();
+    if (res.status === 429 && attempt < maxRetries) {
+      const waitMs = 2000 * Math.pow(2, attempt);
+      toast(`⏳ Gemini квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
+      await new Promise(r => setTimeout(r, waitMs));
+      lastError = new Error("Gemini API грешка: " + t);
+      continue;
+    }
+    throw new Error("Gemini API грешка: " + t);
+  }
+  throw lastError || new Error("Gemini API грешка: неуспешно след повторни опити");
+}
+
+// Превръща File/Blob в base64 текст (без "data:...;base64," префикса) — нужно за inline_data.
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = () => reject(new Error("Неуспешно четене на файла"));
+    reader.readAsDataURL(file);
+  });
+}
+
 // Извлича първия валиден JSON блок (масив или обект) от текст, дори ако
 // моделът е добавил коментари/цитати около него (случва се с grounded search).
 function extractJson(text) {
@@ -992,25 +1054,35 @@ const Step4 = {
       scope: "https://www.googleapis.com/auth/youtube.upload",
       callback: (resp) => {
         this.accessToken = resp.access_token;
-        document.getElementById("gAuthStatus").textContent = "✅ Вписан";
-        document.getElementById("gAuthStatus").className = "badge ok";
+        document.querySelectorAll(".g-auth-status").forEach(el => { el.textContent = "✅ Вписан"; el.className = "chip green g-auth-status"; });
         toast("Успешен вход в Google");
+        // Ако Бърз ъплоуд вече има готово видео + метаданни и е чакал само Google вход — качва автоматично.
+        if (window.QuickUpload) QuickUpload._checkBothReady();
       }
     });
-    document.getElementById("gSignInBtn").innerHTML =
-      `<button class="ghost" onclick="Step4.tokenClient.requestAccessToken()">🔑 Вход с Google</button>`;
+    document.querySelectorAll(".g-signin-slot").forEach(el => {
+      el.innerHTML = `<button class="ghost" onclick="Step4.tokenClient.requestAccessToken()">🔑 Вход с Google</button>`;
+    });
   },
 
-  async uploadVideo() {
+  // fileOverride/metaOverride/progressElId — по избор, ползва се от QuickUpload режима,
+  // за да качи видео Blob-а от визуализатора директно, без потребителят да минава
+  // през ръчния <input type="file"> на Стъпка 3.
+  async uploadVideo(fileOverride, metaOverride, progressElId) {
     if (!this.accessToken) return toast("⚠️ Първо влез с Google бутона по-горе");
-    const fileInput = document.getElementById("youtubeVideoFile");
-    if (!fileInput.files.length) return toast("Избери видео файл");
-    const file = fileInput.files[0];
+    const progressEl = document.getElementById(progressElId || "ytUploadProgress");
 
-    const title = document.getElementById("ytTitle").value || AppState.data.project.title || "Untitled";
-    const description = document.getElementById("ytDescription").value;
-    const tags = document.getElementById("ytTags").value.split(",").map(s => s.trim()).filter(Boolean);
-    const madeForKids = document.getElementById("ytMadeForKids").checked;
+    let file = fileOverride;
+    if (!file) {
+      const fileInput = document.getElementById("youtubeVideoFile");
+      if (!fileInput.files.length) return toast("Избери видео файл");
+      file = fileInput.files[0];
+    }
+
+    const title = metaOverride?.title ?? (document.getElementById("ytTitle").value || AppState.data.project.title || "Untitled");
+    const description = metaOverride?.description ?? document.getElementById("ytDescription").value;
+    const tags = metaOverride?.tags ?? document.getElementById("ytTags").value.split(",").map(s => s.trim()).filter(Boolean);
+    const madeForKids = metaOverride?.madeForKids ?? document.getElementById("ytMadeForKids").checked;
 
     const metadata = {
       snippet: { title, description, tags },
@@ -1021,7 +1093,7 @@ const Step4 = {
       }
     };
 
-    document.getElementById("ytUploadProgress").textContent = "⏳ Качвам видеото...";
+    progressEl.textContent = "⏳ Качвам видеото...";
     try {
       // Стъпка 1: инициализация на resumable upload сесия
       const initRes = await fetch(
@@ -1048,13 +1120,210 @@ const Step4 = {
       if (!uploadRes.ok) throw new Error(await uploadRes.text());
       const result = await uploadRes.json();
 
-      document.getElementById("ytUploadProgress").innerHTML =
+      progressEl.innerHTML =
         `✅ Качено! Video ID: <strong>${result.id}</strong> (unlisted)`;
       AppState.data.project.youtube = { videoId: result.id, title };
       AppState.save();
+      return result;
     } catch (e) {
-      document.getElementById("ytUploadProgress").textContent = "❌ " + e.message;
+      progressEl.textContent = "❌ " + e.message;
+      throw e;
     }
+  }
+};
+
+/* =========================================================
+   QUICK UPLOAD — "⚡ Бърз ъплоуд за стари песни"
+   Прескача концепция/обложка (Стъпки 1 и 3 от основния процес):
+   аудио → визуализаторът прави видео → Gemini анализира звука
+   (жанр/настроение/енергия) и текста (пейстнат или разпознат от
+   аудиото) → Claude генерира заглавие/описание/тагове → авто
+   попълване → авто качване в YouTube (unlisted).
+   ========================================================= */
+const QuickUpload = {
+  audioFile: null,
+  videoBlob: null,
+  videoFileName: "video.webm",
+  analysis: null,
+  meta: null,
+  _msgBound: false,
+
+  // Извиква се веднъж при стартиране на приложението — слуша за отговори
+  // от скрития визуализатор-iframe (готово видео / грешка).
+  initListener() {
+    if (this._msgBound) return;
+    this._msgBound = true;
+    window.addEventListener("message", (ev) => {
+      if (!ev.data) return;
+      if (ev.data.type === "cdb-video-ready") {
+        this.videoBlob = ev.data.blob;
+        this.videoFileName = ev.data.fileName || "video.webm";
+        this.log("✅ Видеото е готово (" + Math.round(this.videoBlob.size / 1024 / 1024 * 10) / 10 + " MB).");
+        this._checkBothReady();
+      }
+      if (ev.data.type === "cdb-video-error") {
+        this.log("❌ Грешка от визуализатора: " + ev.data.message);
+        this._setRunning(false);
+      }
+    });
+  },
+
+  onAudioSelected(input) {
+    const f = input.files[0];
+    const infoEl = document.getElementById("qAudioInfo");
+    if (!f) { if (infoEl) infoEl.textContent = ""; this.audioFile = null; return; }
+    this.audioFile = f;
+    if (infoEl) infoEl.textContent = `Избрано: ${f.name} (${Math.round(f.size / 1024 / 1024 * 10) / 10} MB)`;
+    document.getElementById("qStartBtn").disabled = false;
+  },
+
+  log(msg) {
+    const el = document.getElementById("qLog");
+    if (!el) return;
+    const time = new Date().toLocaleTimeString("bg-BG");
+    el.innerHTML += `<div>[${time}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+  },
+
+  _setRunning(v) {
+    const btn = document.getElementById("qStartBtn");
+    if (btn) btn.disabled = v;
+    const spinner = document.getElementById("qRunning");
+    if (spinner) spinner.style.display = v ? "block" : "none";
+  },
+
+  // Основен вход — стартира целия pipeline.
+  async runFull() {
+    if (!this.audioFile) return toast("Първо избери аудио файл");
+    this.videoBlob = null;
+    this.analysis = null;
+    this.meta = null;
+    document.getElementById("qLog").innerHTML = "";
+    document.getElementById("qResultCard").style.display = "none";
+    this._setRunning(true);
+    this.log("🚀 Стартирам — прескачам концепция/обложка, директно видео от аудио.");
+
+    // Изпращаме заглавие по подразбиране (име на файла без разширение) на визуализатора,
+    // потребителят може да го смени после в полето за заглавие на резултата.
+    const guessTitle = this.audioFile.name.replace(/\.[^/.]+$/, "");
+    this._sendAudioToVisualizer(guessTitle);
+    this.log("🎬 Пращам аудиото на визуализатора — прави видео във фонов режим...");
+
+    // Паралелно — анализ на звук/текст с Gemini, после заглавие/описание/тагове с Claude.
+    // Не чакаме видеото за това, за да вървят двата процеса едновременно.
+    this._runAnalysisAndMeta(guessTitle).catch(e => {
+      this.log("❌ Грешка при анализ: " + e.message);
+      this._setRunning(false);
+    });
+  },
+
+  _sendAudioToVisualizer(guessTitle) {
+    const frame = document.getElementById("quickVisualizerFrame");
+    const send = () => frame.contentWindow.postMessage(
+      { type: "cdb-quick-audio", file: this.audioFile, title: guessTitle }, "*"
+    );
+    // Ако iframe вече е зареден (напр. втори пуск в същата сесия) — пращаме веднага,
+    // иначе презареждаме iframe-а (за чист старт) и чакаме неговия load.
+    frame.onload = send;
+    frame.src = "visualizer.html";
+  },
+
+  async _runAnalysisAndMeta(guessTitle) {
+    this.log("🎧 Gemini анализира жанр/настроение/енергия" + (this._pastedLyrics() ? " и текста (пейстнат)..." : " и се опитва да разпознае текста от аудиото..."));
+    const base64 = await fileToBase64(this.audioFile);
+    const mimeType = this.audioFile.type || "audio/mpeg";
+    const pasted = this._pastedLyrics();
+
+    const prompt = `Ти си музикален анализатор. Слушай приложения аудио файл (стара песен) и анализирай:
+1. genre — жанр/поджанр (кратко, 2-4 думи)
+2. mood — настроение/атмосфера (2-4 думи)
+3. energy — ниво на енергия: "ниско", "средно" или "високо"
+4. sound_description — 1-2 изречения свободно описание на звука/инструментите/вокала
+5. lyrics — текстът на песента${pasted ? " (по-долу е дадена ГОТОВА версия на текста от потребителя — ползвай я КАКТО Е, само провери/довърши срещу това, което чуваш в аудиото, ако има пропуснати редове)" : " (РАЗПОЗНАЙ го directly от аудиото, доколкото е разбираемо; ако не можеш да разпознаеш част, отбележи [неразбираемо])"}
+6. lyrics_source — "provided" ако е ползван пейстнатият текст, "extracted" ако е разпознат от аудиото
+
+${pasted ? `Текст, пейстнат от потребителя:\n---\n${pasted}\n---` : ""}
+
+Върни ЧИСТ JSON: {"genre":"...", "mood":"...", "energy":"...", "sound_description":"...", "lyrics":"...", "lyrics_source":"..."}`;
+
+    const raw = await callGeminiMultimodal(prompt, base64, mimeType);
+    const analysis = extractJson(raw);
+    this.analysis = analysis;
+    this.log(`✅ Анализ готов — жанр: "${analysis.genre}", настроение: "${analysis.mood}", енергия: "${analysis.energy}" (текст: ${analysis.lyrics_source === "provided" ? "пейстнат от теб" : "разпознат от Gemini"}).`);
+
+    this.log("✍️ Claude генерира заглавие, описание и тагове...");
+    const metaPrompt = `За стара песен с този анализ на звука и текста:
+Жанр: ${analysis.genre}
+Настроение: ${analysis.mood}
+Енергия: ${analysis.energy}
+Описание на звука: ${analysis.sound_description}
+Текст (откъс, за контекст на темата — НЕ го копирай изцяло в описанието): ${(analysis.lyrics || "").slice(0, 600)}
+
+Генерирай:
+- title: кратко, запомнящо се YouTube заглавие на песента (до 60 символа)
+- description: YouTube описание — ЗАДЪЛЖИТЕЛНО в този ред: (1) най-горе 2-3 placeholder реда за линкове ("🎧 Слушай в Spotify: [линк]", "🍏 Apple Music: [линк]", "📀 DistroKid: [линк]"), (2) после кратък абзац (2-3 изречения) описващ песента базирано на жанр/настроение, (3) най-долу 5-8 релевантни хаштага с #
+- tags: масив от 8-12 YouTube тагове (думи/кратки фрази, БЕЗ #, релевантни за жанр/настроение/тема)
+
+Върни ЧИСТ JSON: {"title":"...", "description":"...", "tags":["...", "..."]}`;
+    const metaRaw = await callClaude(metaPrompt, 900);
+    const meta = extractJson(metaRaw);
+    this.meta = meta;
+    this.log("✅ Заглавие/описание/тагове готови.");
+
+    this._fillResultFields();
+    this._checkBothReady();
+  },
+
+  _pastedLyrics() {
+    const el = document.getElementById("qLyricsPaste");
+    return el ? el.value.trim() : "";
+  },
+
+  _fillResultFields() {
+    const card = document.getElementById("qResultCard");
+    card.style.display = "block";
+    document.getElementById("qTitle").value = this.meta.title || "";
+    document.getElementById("qDescription").value = this.meta.description || "";
+    document.getElementById("qTags").value = (this.meta.tags || []).join(", ");
+    document.getElementById("qAnalysisOut").innerHTML = `
+      <div class="copy-field"><span><strong>Жанр:</strong> ${this.analysis.genre} · <strong>Настроение:</strong> ${this.analysis.mood} · <strong>Енергия:</strong> ${this.analysis.energy}</span></div>`;
+    document.getElementById("qLyricsOut").value = this.analysis.lyrics || "";
+  },
+
+  _checkBothReady() {
+    if (!this.videoBlob || !this.meta) return;
+    this.log("🎉 Видео + метаданни готови. Опитвам автоматично качване в YouTube (unlisted)...");
+    this._setRunning(false);
+    this.autoUpload();
+  },
+
+  async autoUpload() {
+    if (!this.videoBlob) return toast("Няма готово видео още");
+    if (!this.meta) return toast("Няма готови метаданни още");
+    if (!Step4.accessToken) {
+      this.log("⚠️ Не си вписан с Google — влез с бутона по-долу, после натисни \"Качи в YouTube\" ръчно.");
+      return;
+    }
+    const file = new File([this.videoBlob], this.videoFileName, { type: "video/webm" });
+    const tags = document.getElementById("qTags").value.split(",").map(s => s.trim()).filter(Boolean);
+    const meta = {
+      title: document.getElementById("qTitle").value || this.meta.title,
+      description: document.getElementById("qDescription").value || this.meta.description,
+      tags,
+      madeForKids: false
+    };
+    try {
+      await Step4.uploadVideo(file, meta, "qUploadProgress");
+      this.log("✅ Качено в YouTube като unlisted!");
+    } catch (e) {
+      this.log("❌ Грешка при качване: " + e.message);
+    }
+  },
+
+  // Ръчен бутон — за случаите, в които auto-upload-а не е минал (напр. Google вход
+  // е направен ПОСЛЕ като видеото/метаданните вече са готови).
+  async manualUpload() {
+    await this.autoUpload();
   }
 };
 
@@ -1287,6 +1556,7 @@ window.addEventListener("DOMContentLoaded", () => {
   SystemLog.init();
   Prefs.init();
   Stats.renderDashboard();
+  QuickUpload.initListener();
 
   // Зареждаме Google Identity Services скрипта динамично
   const gsi = document.createElement("script");

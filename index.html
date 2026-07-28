@@ -227,6 +227,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     </div>
 
     <div class="nav-group">
+      <div class="nav-label">Бърз режим</div>
+      <button class="nav-btn" data-view="quick" onclick="Nav.showView('quick')"><span class="ic">⚡</span> Бърз ъплоуд (стари песни)</button>
+    </div>
+
+    <div class="nav-group">
       <div class="nav-label">Gemini Validator</div>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Втори поглед (Лог)</button>
     </div>
@@ -284,6 +289,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
     <!-- ============ DASHBOARD VIEW ============ -->
     <div class="view active" id="view-dashboard">
+
+      <div class="card" style="background:var(--grad);border:none;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:15px;">⚡ Бърз ъплоуд за стари песни</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Аудио → видео → Gemini анализ (звук + текст) → Claude заглавие/описание/тагове → авто качване в YouTube (unlisted). Прескача концепция/обложка.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('quick')">Отвори →</button>
+      </div>
 
       <div class="section-title">Стъпка 1 — Пазарен анализ</div>
       <div class="grid cols-6" id="dashStep1Cards">
@@ -507,8 +520,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
       <div class="card" style="margin-top:14px;">
         <strong>Google вход</strong>
-        <div class="chip amber" id="gAuthStatus">Не си вписан</div>
-        <div id="gSignInBtn" style="margin-top:10px;"></div>
+        <div class="chip amber g-auth-status" id="gAuthStatus">Не си вписан</div>
+        <div id="gSignInBtn" class="g-signin-slot" style="margin-top:10px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
@@ -526,6 +539,49 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn grad" onclick="Step4.uploadVideo()">⬆️ Качи в YouTube</button>
         <div id="ytUploadProgress" style="margin-top:10px;"></div>
       </div>
+    </div>
+
+    <!-- ============ QUICK UPLOAD VIEW ============ -->
+    <div class="view" id="view-quick">
+      <div class="section-title">⚡ Бърз ъплоуд за стари песни</div>
+
+      <div class="card">
+        <strong>1 · Аудио на старата песен</strong>
+        <p class="muted">Визуализаторът прави видео директно от аудиото — без концепция/обложка. По желание пейстни готов текст, ако имаш; иначе Gemini ще се опита да го разпознае от звука.</p>
+        <input type="file" id="qAudioFile" accept="audio/*" onchange="QuickUpload.onAudioSelected(this)">
+        <div id="qAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
+        <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
+        <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="QuickUpload.runFull()">🚀 Стартирай пълния процес</button>
+        <div id="qRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато видеото се записва...</div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Лог на процеса</strong>
+        <div id="qLog" style="margin-top:10px;font-family:var(--font-mono);font-size:11.5px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+
+      <div class="card" id="qResultCard" style="margin-top:14px;display:none;">
+        <strong>2 · Gemini анализ</strong>
+        <div id="qAnalysisOut" style="margin-top:8px;"></div>
+        <label style="margin-top:10px;">Разпознат/пейстнат текст</label>
+        <textarea id="qLyricsOut" readonly style="font-size:12px;"></textarea>
+
+        <strong style="display:block;margin-top:16px;">3 · Заглавие / Описание / Тагове (генерирани от Claude — редактируеми)</strong>
+        <label>Заглавие</label><input type="text" id="qTitle">
+        <label>Описание</label><textarea id="qDescription"></textarea>
+        <label>Тагове (запетая разделени)</label><input type="text" id="qTags">
+
+        <strong style="display:block;margin-top:16px;">4 · YouTube (Unlisted)</strong>
+        <div class="chip amber g-auth-status" id="gAuthStatus2">Не си вписан</div>
+        <div id="gSignInBtn2" class="g-signin-slot" style="margin-top:10px;"></div>
+        <p class="muted" style="margin-top:10px;">Автоматично се качва веднага щом видеото и метаданните са готови (ако вече си вписан). Иначе — качи ръчно тук.</p>
+        <button class="btn grad" style="margin-top:6px;" onclick="QuickUpload.manualUpload()">⬆️ Качи в YouTube (unlisted)</button>
+        <div id="qUploadProgress" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Скрит визуализатор — прави видеото програмно (без потребителят да вижда/пипа контролите) -->
+      <iframe id="quickVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
     </div>
 
     <!-- ============ VALIDATOR LOG VIEW ============ -->
