@@ -396,9 +396,14 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
 
   let tempoData = { bpm: 100, beatTimes: [], beatHueCum: [] };
 
-  const DEFAULT_TITLE_STATE = { xPct: 6, yPct: 20, scale: 1 };
+  // Фиксирано разположение по подразбиране: логото е горе, почти по средата на
+  // екрана (центрирано хоризонтално), а заглавието стои центрирано точно под
+  // него, с размер, който не е нито прекалено едър, нито прекалено дребен.
+  // Потребителят пак може да ги премести/преоразмери ръчно през плъзгачите
+  // по-долу — това са само стартовите (по подразбиране) позиции.
+  const DEFAULT_TITLE_STATE = { xPct: 50, yPct: 58, scale: 1 };
   const DEFAULT_PLAYER_STATE = { xPct: 6, yPct: 30, scale: 1 };
-  const DEFAULT_LOGO_STATE = { xPct: 50, yPct: 40, scale: 1 }; // xPct/yPct = CENTER of the logo
+  const DEFAULT_LOGO_STATE = { xPct: 50, yPct: 34, scale: 0.85 }; // xPct/yPct = CENTER of the logo
   let titleState = Object.assign({}, DEFAULT_TITLE_STATE);
   let playerState = Object.assign({}, DEFAULT_PLAYER_STATE);
   let logoState = Object.assign({}, DEFAULT_LOGO_STATE);
@@ -1011,13 +1016,14 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = '#e8c880';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 8;
     ctx.fillText(text, x, y);
     ctx.restore();
 
-    titleBBox = { x: x-8, y: y-fontSize*1.05, w: metrics.width+16, h: fontSize*1.35 };
+    titleBBox = { x: x-metrics.width/2-8, y: y-fontSize*1.05, w: metrics.width+16, h: fontSize*1.35 };
   }
 
   function roundRect(c,x,y,w,h,r){
@@ -1590,13 +1596,23 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     recorder.start();
     audioEl.play();
 
+    let lastSentPct = -1;
     function renderLoop(){
       const t = audioEl.currentTime;
       draw();
-      progressInner.style.width = Math.min(100,(t/dur*100))+'%';
+      const pct = Math.min(100, (t/dur*100));
+      progressInner.style.width = pct + '%';
+      if(quickMode){
+        const pctInt = Math.floor(pct);
+        if(pctInt !== lastSentPct){
+          lastSentPct = pctInt;
+          parent.postMessage({ type:'cdb-video-progress', percent: pctInt }, '*');
+        }
+      }
       if(t < dur - 0.05 && isRecording){
         requestAnimationFrame(renderLoop);
       } else {
+        if(quickMode) parent.postMessage({ type:'cdb-video-progress', percent: 100 }, '*');
         setTimeout(()=>{ if(recorder.state!=='inactive') recorder.stop(); }, 200);
       }
     }

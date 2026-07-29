@@ -103,6 +103,11 @@ const Settings = {
       proxyUrl: ((val("key_proxy_url") ?? prev.proxyUrl) || "").replace(/\/$/, ""),
     });
     toast("Запазено локално 🔒");
+    // Бутонът "Вход с Google" се създава само ако ytClientId вече е бил наличен
+    // при първоначалното зареждане на страницата — ако е добавен/сменен ТУК,
+    // трябва да презаредим Google auth инициализацията, иначе бутонът никога не се появява.
+    if (window.google) Step4.initGoogleAuth();
+    else setTimeout(() => { if (window.google) Step4.initGoogleAuth(); }, 1500);
   },
 
   async testKeys() {
@@ -1158,14 +1163,28 @@ const QuickUpload = {
       if (ev.data.type === "cdb-video-ready") {
         this.videoBlob = ev.data.blob;
         this.videoFileName = ev.data.fileName || "video.webm";
+        this._setVideoProgress(100);
         this.log("✅ Видеото е готово (" + Math.round(this.videoBlob.size / 1024 / 1024 * 10) / 10 + " MB).");
         this._checkBothReady();
+      }
+      if (ev.data.type === "cdb-video-progress") {
+        this._setVideoProgress(ev.data.percent);
       }
       if (ev.data.type === "cdb-video-error") {
         this.log("❌ Грешка от визуализатора: " + ev.data.message);
         this._setRunning(false);
       }
     });
+  },
+
+  _setVideoProgress(pct) {
+    const bar = document.getElementById("qVideoProgressBar");
+    const wrap = document.getElementById("qVideoProgressWrap");
+    const label = document.getElementById("qVideoProgressLabel");
+    if (!bar) return;
+    if (wrap) wrap.style.display = "block";
+    bar.style.width = pct + "%";
+    if (label) label.textContent = pct >= 100 ? "Видео: готово ✅" : `Видео: записва се… ${pct}%`;
   },
 
   onAudioSelected(input) {
@@ -1200,6 +1219,10 @@ const QuickUpload = {
     this.meta = null;
     document.getElementById("qLog").innerHTML = "";
     document.getElementById("qResultCard").style.display = "none";
+    const progWrap = document.getElementById("qVideoProgressWrap");
+    if (progWrap) progWrap.style.display = "none";
+    const progBar = document.getElementById("qVideoProgressBar");
+    if (progBar) progBar.style.width = "0%";
     this._setRunning(true);
     this.log("🚀 Стартирам — прескачам концепция/обложка, директно видео от аудио.");
 
@@ -1239,17 +1262,19 @@ const QuickUpload = {
 2. mood — настроение/атмосфера (2-4 думи)
 3. energy — ниво на енергия: "ниско", "средно" или "високо"
 4. sound_description — 1-2 изречения свободно описание на звука/инструментите/вокала
-5. lyrics — текстът на песента${pasted ? " (по-долу е дадена ГОТОВА версия на текста от потребителя — ползвай я КАКТО Е, само провери/довърши срещу това, което чуваш в аудиото, ако има пропуснати редове)" : " (РАЗПОЗНАЙ го directly от аудиото, доколкото е разбираемо; ако не можеш да разпознаеш част, отбележи [неразбираемо])"}
-6. lyrics_source — "provided" ако е ползван пейстнатият текст, "extracted" ако е разпознат от аудиото
+5. language — ЕЗИКЪТ, на който се пее/говори в песента (напр. "български", "английски", "китайски мандарин", "руски" и т.н.) — определи го САМО от това, което чуваш/разбираш в аудиото, без значение на какъв език е зададен този промпт
+6. language_code — ISO 639-1 код на същия език (напр. "bg", "en", "zh", "ru")
+7. lyrics — текстът на песента, на РЕАЛНИЯ й език (НЕ превеждай)${pasted ? " (по-долу е дадена ГОТОВА версия на текста от потребителя — ползвай я КАКТО Е, само провери/довърши срещу това, което чуваш в аудиото, ако има пропуснати редове)" : " (РАЗПОЗНАЙ го directly от аудиото, доколкото е разбираемо; ако не можеш да разпознаеш част, отбележи [неразбираемо])"}
+8. lyrics_source — "provided" ако е ползван пейстнатият текст, "extracted" ако е разпознат от аудиото
 
 ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pasted}\n---` : ""}
 
-Върни ЧИСТ JSON: {"genre":"...", "mood":"...", "energy":"...", "sound_description":"...", "lyrics":"...", "lyrics_source":"..."}`;
+Върни ЧИСТ JSON: {"genre":"...", "mood":"...", "energy":"...", "sound_description":"...", "language":"...", "language_code":"...", "lyrics":"...", "lyrics_source":"..."}`;
 
     const raw = await callGeminiMultimodal(prompt, base64, mimeType);
     const analysis = extractJson(raw);
     this.analysis = analysis;
-    this.log(`✅ Анализ готов — жанр: "${analysis.genre}", настроение: "${analysis.mood}", енергия: "${analysis.energy}" (текст: ${analysis.lyrics_source === "provided" ? "пейстнат от теб" : "разпознат от Gemini"}).`);
+    this.log(`✅ Анализ готов — жанр: "${analysis.genre}", настроение: "${analysis.mood}", енергия: "${analysis.energy}", език: "${analysis.language}" (текст: ${analysis.lyrics_source === "provided" ? "пейстнат от теб" : "разпознат от Gemini"}).`);
 
     this.log("✍️ Claude генерира заглавие, описание и тагове...");
     const metaPrompt = `За стара песен с този анализ на звука и текста:
@@ -1257,12 +1282,15 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
 Настроение: ${analysis.mood}
 Енергия: ${analysis.energy}
 Описание на звука: ${analysis.sound_description}
+Език на песента: ${analysis.language} (код: ${analysis.language_code})
 Текст (откъс, за контекст на темата — НЕ го копирай изцяло в описанието): ${(analysis.lyrics || "").slice(0, 600)}
 
+ЗАДЪЛЖИТЕЛНО ПРАВИЛО ЗА ЕЗИК: title и description ТРЯБВА да бъдат написани на езика на самата песен — ${analysis.language} (${analysis.language_code}). Не превеждай и не пиши на друг език (включително не на български), дори ако песента е на съвсем различен от български език. Единствено placeholder редовете за линкове могат да останат с универсални имена на платформи (Spotify/Apple Music/DistroKid).
+
 Генерирай:
-- title: кратко, запомнящо се YouTube заглавие на песента (до 60 символа)
-- description: YouTube описание — ЗАДЪЛЖИТЕЛНО в този ред: (1) най-горе 2-3 placeholder реда за линкове ("🎧 Слушай в Spotify: [линк]", "🍏 Apple Music: [линк]", "📀 DistroKid: [линк]"), (2) после кратък абзац (2-3 изречения) описващ песента базирано на жанр/настроение, (3) най-долу 5-8 релевантни хаштага с #
-- tags: масив от 8-12 YouTube тагове (думи/кратки фрази, БЕЗ #, релевантни за жанр/настроение/тема)
+- title: кратко, запомнящо се YouTube заглавие на песента (до 60 символа), на езика на песента
+- description: YouTube описание, на езика на песента — ЗАДЪЛЖИТЕЛНО в този ред: (1) най-горе 2-3 placeholder реда за линкове ("🎧 Spotify: [линк]", "🍏 Apple Music: [линк]", "📀 DistroKid: [линк]"), (2) после кратък абзац (2-3 изречения) описващ песента базирано на жанр/настроение, (3) най-долу 5-8 релевантни хаштага с #
+- tags: масив от 8-12 YouTube тагове (думи/кратки фрази, БЕЗ #), предимно на езика на песента; по избор 1-2 общоприети английски тагове за по-широк обхват (напр. името на жанра), ако е уместно
 
 Върни ЧИСТ JSON: {"title":"...", "description":"...", "tags":["...", "..."]}`;
     const metaRaw = await callClaude(metaPrompt, 900);
@@ -1286,7 +1314,7 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
     document.getElementById("qDescription").value = this.meta.description || "";
     document.getElementById("qTags").value = (this.meta.tags || []).join(", ");
     document.getElementById("qAnalysisOut").innerHTML = `
-      <div class="copy-field"><span><strong>Жанр:</strong> ${this.analysis.genre} · <strong>Настроение:</strong> ${this.analysis.mood} · <strong>Енергия:</strong> ${this.analysis.energy}</span></div>`;
+      <div class="copy-field"><span><strong>Жанр:</strong> ${this.analysis.genre} · <strong>Настроение:</strong> ${this.analysis.mood} · <strong>Енергия:</strong> ${this.analysis.energy} · <strong>Език:</strong> ${this.analysis.language || "?"}</span></div>`;
     document.getElementById("qLyricsOut").value = this.analysis.lyrics || "";
   },
 
