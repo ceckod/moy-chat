@@ -145,6 +145,61 @@ textarea{min-height:100px;resize:vertical;}
 .hashtags span{background:var(--panel-2);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11.5px;}
 .muted{color:var(--muted);font-size:12px;}
 
+/* ---------- VIRAL LAB ---------- */
+.vscore-hero{display:flex;align-items:center;gap:18px;padding:6px 0 14px;flex-wrap:wrap;}
+.vscore-ring{position:relative;width:96px;height:96px;flex-shrink:0;border-radius:50%;
+  background:conic-gradient(var(--p1) calc(var(--pct)*1%), var(--panel-2) 0);
+  display:flex;align-items:center;justify-content:center;}
+.vscore-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--panel-solid);}
+.vscore-ring .v{position:relative;font-family:var(--font-head);font-size:22px;font-weight:700;}
+.vscore-ring .v small{display:block;font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+.vscore-meta strong{font-size:14px;}
+.vscore-meta p{margin:4px 0 0;}
+.vbar-row{margin-top:10px;}
+.vbar-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+.vbar-row .lbl span:last-child{color:var(--muted);font-family:var(--font-mono);}
+.vbar-track{height:7px;border-radius:6px;background:var(--panel-2);overflow:hidden;}
+.vbar-fill{height:100%;border-radius:6px;background:var(--grad);}
+.vpred-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px;}
+.vpred-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.vpred-item .pv{font-family:var(--font-head);font-size:18px;font-weight:700;}
+.vpred-item .pl{font-size:11px;color:var(--muted);margin-top:2px;}
+.stars{color:var(--amber);font-size:15px;letter-spacing:1px;}
+.vlist{margin:8px 0 0;padding-left:18px;font-size:12.5px;line-height:1.55;color:var(--text);}
+.vlist.cons{color:var(--muted);}
+.weak-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.weak-card .ws-score{font-family:var(--font-mono);font-size:12px;color:var(--red);flex-shrink:0;}
+@media (max-width:760px){.vpred-grid{grid-template-columns:1fr 1fr;}}
+
+/* ---------- HOOK EVOLUTION ARENA ---------- */
+.arena-gen{margin-top:16px;}
+.arena-gen-title{font-family:var(--font-head);font-size:12.5px;font-weight:700;color:var(--cyan);
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.arena-gen-title .best{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+.arena-hook{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;
+  display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.arena-hook.winner{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+.arena-hook .txt{font-size:12.5px;line-height:1.5;flex:1;}
+.arena-hook .sc{font-family:var(--font-mono);font-size:13px;font-weight:700;flex-shrink:0;color:var(--p1);}
+.lineage{font-size:10.5px;color:var(--muted-2);margin-top:4px;font-style:italic;}
+
+/* ---------- GHOST AUDIENCE ---------- */
+.persona-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;}
+.persona-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.persona-card .who{display:flex;justify-content:space-between;font-size:12px;font-weight:700;}
+.persona-card .who span:last-child{font-weight:400;color:var(--muted);font-size:11px;}
+.persona-card .quote{font-size:12.5px;margin:5px 0;line-height:1.5;font-style:italic;}
+.persona-card .scroll{font-size:11px;}
+.persona-card .scroll.stay{color:var(--green);}
+.persona-card .scroll.leave{color:var(--red);}
+.heat-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.heat-row .sec{width:100px;flex-shrink:0;font-size:11.5px;color:var(--muted);}
+.heat-track{flex:1;height:16px;border-radius:6px;background:var(--panel-2);overflow:hidden;position:relative;}
+.heat-fill{height:100%;border-radius:6px;}
+.meme-flag{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.35);border-radius:10px;
+  padding:9px 11px;margin-top:8px;font-size:12px;}
+
 /* status chips */
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
 .chip.green{background:rgba(34,197,94,.13);color:var(--green);}
@@ -427,6 +482,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="albumSprintOut" style="margin-top:12px;"></div>
       </div>
 
+      <div class="card" style="margin-top:14px;">
+        <strong>🧬 Hook Evolution Arena</strong>
+        <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
+        <button class="btn grad" onclick="HookArena.start()">🧬 Стартирай еволюцията</button>
+        <div id="hookArenaOut" style="margin-top:14px;"></div>
+      </div>
+
       <div class="card" id="conceptCard" style="display:none;margin-top:14px;">
         <strong>Концепция за Suno AI</strong>
         <div class="row">
@@ -442,8 +504,26 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="card" style="margin-top:14px;">
         <strong>Текст на песента (Claude)</strong>
         <p class="muted">Chorus най-отпред, мета-тагове [Chorus] [Verse] [Drop].</p>
-        <button class="btn grad" onclick="Step1.generateLyrics()">✍️ Генерирай текст</button>
+        <div class="row">
+          <button class="btn grad" onclick="Step1.generateLyrics()">✍️ Генерирай текст</button>
+          <button class="btn ghost" onclick="LyricsHistory.toggle()">🕐 История на версиите</button>
+        </div>
         <textarea id="lyricsOut" style="min-height:220px;margin-top:10px;"></textarea>
+        <div id="lyricsHistoryOut" style="display:none;margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🚀 Viral Lab — AI Music Producer</strong>
+        <p class="muted">Пълен анализ на вирусния потенциал: Viral Score, прогноза за успех, оценка на текста, hook/chorus анализ, структура, жанрова проверка, конкуренция и AI Producer Review. Изисква генериран текст (по-горе).</p>
+        <button class="btn grad" onclick="ViralLab.analyze()">🚀 Анализирай вирусния потенциал</button>
+        <div id="viralLabOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>👻 Ghost Audience</strong>
+        <p class="muted">12 синтетични, но правдоподобни слушателя "чуват" песента и реагират с техния глас — плюс attention heatmap (къде реално губиш вниманието) и meme risk radar (редове, за които публиката би те закачила). Изисква генериран текст.</p>
+        <button class="btn grad" onclick="GhostAudience.run()">👻 Пусни фокус-групата</button>
+        <div id="ghostAudienceOut" style="margin-top:14px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
@@ -647,6 +727,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <hr style="margin:18px 0;">
         <button class="btn ghost" onclick="Settings.newProject()">🆕 Нов проект (изчисти текущия)</button>
       </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📚 Архив на песните</strong>
+        <p class="muted">"Нов проект" вече архивира автоматично старата песен. Можеш и ръчно да запазиш текущата, за да сравняваш Viral Score между песни във времето.</p>
+        <button class="btn grad" onclick="ProjectArchive.saveCurrent()">💾 Архивирай текущия проект сега</button>
+        <div id="projectArchiveOut" style="margin-top:12px;"></div>
+      </div>
     </div>
 
     <!-- ============ SETTINGS: PREFERENCES ============ -->
@@ -684,6 +771,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <div class="view" id="view-stats-analytics">
       <div class="section-title">Анализи &amp; Графики</div>
       <div id="analyticsArea"></div>
+
+      <div class="section-title">🎯 Track Record — Предсказание срещу реалност</div>
+      <div class="card">
+        <p class="muted">Всеки Viral Lab анализ (Стъпка 1) се запазва тук автоматично. Когато песен вече е публикувана и се появи в YouTube Тракера, свържи я с прогнозата, за да видиш реално колко точен е бил AI-я.</p>
+        <div id="trackRecordOut" style="margin-top:10px;"></div>
+      </div>
     </div>
 
     <!-- ============ INFRA: LOGS ============ -->

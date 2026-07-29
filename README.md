@@ -32,6 +32,16 @@
 - **✨ Концепция** — заглавие, Style Prompt (за Suno AI) и 3 хаштага.
 - **📀 Album Sprint** — 10-30 различни заглавия+hook+mood наведнъж.
 - **✍️ Текст на песента** — с Chorus най-отпред, мета-тагове за Suno.
+- **🚀 Viral Lab (AI Music Producer)** — след генериране на текста, едно
+  Claude извикване връща цялостен доклад: претеглен **Viral Score** (0-100:
+  Trend Momentum 30% / Search Volume 20% / Music Competition 15% / Audience
+  Match 15% / Emotional Impact 10% / TikTok Potential 10%), прогнози за успех
+  (% шанс за внимание / Shorts / TikTok звук / YouTube CTR), 7 метрики на
+  текста (Hook, Memorability, Repeatability, Emotion, Singability, Rhyme,
+  Simplicity), анализ на припева, проверка на структурата и BPM/теми за
+  жанра, конкретни препоръки срещу конкуренцията, AI Producer Review (★ +
+  плюсове/минуси) и списък със слаби секции — всяка с бутон **✨ Подобри**,
+  който пренаписва само нея (не цялата песен) през отделно Claude извикване.
 
 ### Стъпка 2 — Визуализатор
 Вграден аудио-реактивен визуализатор (`visualizer.html`) с интро видео →

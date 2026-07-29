@@ -66,7 +66,8 @@ const Nav = {
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === id));
     if (id === "step2") Step2.syncTitleToVisualizer();
     if (id === "dashboard") Stats.renderDashboard();
-    if (id === "stats-analytics") Stats.renderAnalytics();
+    if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); }
+    if (id === "set-project") ProjectArchive.render();
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
     if (id === "stats-tracker") Settings.fillFields();
     window.scrollTo(0, 0);
@@ -250,6 +251,10 @@ const Settings = {
 
   newProject() {
     if (!confirm("Сигурен ли си? Това ще изчисти текущия проект (заглавие, текст, лог). Ключовете НЕ се пипат.")) return;
+    // Автоматично архивираме текущия проект, преди да го изтрием — нищо не се губи безвъзвратно.
+    if (AppState.data.project.title || AppState.data.project.lyrics) {
+      ProjectArchive.saveCurrent();
+    }
     localStorage.removeItem(STORAGE_KEY);
     AppState.load();
     GeminiValidator.render();
@@ -257,7 +262,74 @@ const Settings = {
     const nr = document.getElementById("nicheResults"); if (nr) nr.innerHTML = "";
     const cc = document.getElementById("conceptCard"); if (cc) cc.style.display = "none";
     const lo = document.getElementById("lyricsOut"); if (lo) lo.value = "";
-    toast("Нов, чист проект 🆕");
+    toast("Нов, чист проект 🆕 (старият е в Архива)");
+  }
+};
+
+/* =========================================================
+   PROJECT ARCHIVE — история от предишни песни
+   "Нов проект" вече не изтрива безвъзвратно — старият проект се
+   архивира автоматично. Може и ръчно да запазиш текущия по всяко
+   време, за да сравняваш Viral Score между песни във времето.
+   ========================================================= */
+const ARCHIVE_STORAGE = "cdb_dashboard_archive_v1";
+const ProjectArchive = {
+  load() {
+    const raw = localStorage.getItem(ARCHIVE_STORAGE);
+    return raw ? JSON.parse(raw) : [];
+  },
+  saveAll(list) {
+    localStorage.setItem(ARCHIVE_STORAGE, JSON.stringify(list.slice(0, 30)));
+  },
+
+  saveCurrent() {
+    const p = AppState.data.project;
+    if (!p.title && !p.lyrics) return toast("Няма какво да се архивира — проектът е празен");
+    const list = this.load();
+    list.unshift({
+      id: Date.now(),
+      date: new Date().toLocaleDateString("bg-BG"),
+      title: p.title || "(без заглавие)",
+      niche: p.chosenNiche || "",
+      viralScore: p.viralReport?.viral_score ?? null,
+      snapshot: AppState.data // пълен запис — може да се "зареди" обратно 1:1
+    });
+    this.saveAll(list);
+    toast("Проектът е архивиран 💾");
+    this.render();
+  },
+
+  render() {
+    const el = document.getElementById("projectArchiveOut");
+    if (!el) return;
+    const list = this.load();
+    if (!list.length) { el.innerHTML = `<p class="muted">Архивът е празен — запази текущия проект или направи "Нов проект" (архивира автоматично).</p>`; return; }
+    el.innerHTML = list.map((it, i) => `
+      <div class="copy-field">
+        <span><strong>${it.title}</strong> <span class="muted">· ${it.niche || "—"} · ${it.date}</span>
+          ${it.viralScore != null ? `<br><span class="muted">Viral Score: <strong>${it.viralScore}</strong></span>` : ""}</span>
+        <button onclick="ProjectArchive.loadItem(${i})">📂 Зареди</button>
+        <button onclick="ProjectArchive.remove(${i})">🗑️</button>
+      </div>`).join("");
+  },
+
+  loadItem(i) {
+    const list = this.load();
+    const it = list[i];
+    if (!it) return;
+    if (!confirm(`Зареди "${it.title}"? Текущият (незапазен) проект ще бъде презаписан.`)) return;
+    AppState.data = it.snapshot;
+    AppState.save();
+    GeminiValidator.render();
+    Stats.renderDashboard();
+    toast(`Зареден проект: ${it.title}`);
+  },
+
+  remove(i) {
+    const list = this.load();
+    list.splice(i, 1);
+    this.saveAll(list);
+    this.render();
   }
 };
 
@@ -494,6 +566,26 @@ ${content}
    канали с малко абонати, но много гледания = "outlier" =
    сигнал за висок интерес + слаба конкуренция (VidIQ логика).
    ========================================================= */
+/* =========================================================
+   YOUTUBE TOP TITLES (жанрово заземяване)
+   Лек helper — само заглавия на топ видеа по нишата, без outlier
+   логиката. Използва се да "закотви" genre_check-а на ViralLab
+   в реални, актуални данни вместо в паметта на модела.
+   ========================================================= */
+async function youtubeTopTitles(query, max = 12) {
+  const k = Keys.load();
+  if (!k.ytApiKey) return []; // тихо пропускаме — ViralLab пада обратно на model knowledge
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=${max}&q=${encodeURIComponent(query)}&key=${k.ytApiKey}`;
+    const res = await fetchTimeout(proxied(url));
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map(i => i.snippet.title).filter(Boolean);
+  } catch (e) {
+    return [];
+  }
+}
+
 async function youtubeOutlierScan(query) {
   const k = Keys.load();
   if (!k.ytApiKey) throw new Error("Няма YouTube Data API Key (виж Настройки)");
@@ -552,6 +644,56 @@ async function keywordSuggest(query) {
   return Array.isArray(data) && Array.isArray(data[1]) ? data[1].slice(0, 10) : [];
 }
 
+
+/* =========================================================
+   LYRICS HISTORY — версии на текста
+   Пази предишните версии (при ново генериране или при "Подобри"
+   от ViralLab), за да може да се върнеш назад, ако подобрението
+   всъщност не е по-добро.
+   ========================================================= */
+const LyricsHistory = {
+  push(label) {
+    const current = (document.getElementById("lyricsOut")?.value || "").trim();
+    if (!current) return;
+    const p = AppState.data.project;
+    p.lyricsHistory = p.lyricsHistory || [];
+    p.lyricsHistory.unshift({ label, text: current, time: new Date().toLocaleTimeString("bg-BG") });
+    p.lyricsHistory = p.lyricsHistory.slice(0, 15);
+    AppState.save();
+  },
+
+  render() {
+    const el = document.getElementById("lyricsHistoryOut");
+    if (!el) return;
+    const hist = AppState.data.project.lyricsHistory || [];
+    if (!hist.length) { el.innerHTML = `<p class="muted">Все още няма запазени версии.</p>`; return; }
+    el.innerHTML = hist.map((v, i) => `
+      <div class="copy-field"><span><strong>${v.label}</strong> <span class="muted">· ${v.time}</span><br>
+        <span class="muted">${v.text.slice(0, 90).replace(/\n/g, " ")}${v.text.length > 90 ? "…" : ""}</span></span>
+        <button onclick="LyricsHistory.revert(${i})">↩️ Върни</button></div>`).join("");
+  },
+
+  toggle() {
+    const el = document.getElementById("lyricsHistoryOut");
+    if (!el) return;
+    const showing = el.style.display !== "none";
+    if (showing) { el.style.display = "none"; return; }
+    el.style.display = "block";
+    this.render();
+  },
+
+  revert(i) {
+    const hist = AppState.data.project.lyricsHistory || [];
+    const v = hist[i];
+    if (!v) return;
+    this.push("Преди връщане назад");
+    document.getElementById("lyricsOut").value = v.text;
+    AppState.data.project.lyrics = v.text;
+    AppState.save();
+    toast(`Върнато към версия "${v.label}"`);
+    this.render();
+  }
+};
 
 const Step1 = {
   // Главен бутон "🔍 Предложение за песен".
@@ -722,16 +864,45 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
       const list = extractJson(raw);
       AppState.data.project.albumSprint = list;
       AppState.save();
-      let html = "";
-      list.forEach((c, i) => {
-        html += `<div class="copy-field"><span><strong>${c.title}</strong> <span class="muted">(${c.mood})</span><br>"${c.hook}"</span>
-          <button onclick="Step1.useAlbumIdea(${i})">➡️ Ползвай</button></div>`;
-      });
-      document.getElementById("albumSprintOut").innerHTML = html;
+      this._renderAlbumSprint(list, null);
       GeminiValidator.autoReview("Стъпка 1 — Album Sprint", JSON.stringify(list));
+      this._scoreAlbumSprint(list, niche);
     } catch (e) {
       document.getElementById("albumSprintOut").innerHTML = "❌ " + e.message;
     }
+  },
+
+  // Лек, бърз "quick score" (само по заглавие+hook+mood, без пълен текст) за ВСИЧКИ
+  // идеи наведнъж — за да видиш кое си струва да напишеш преди да похарчиш
+  // token-и/време за пълни текстове на слаби идеи.
+  async _scoreAlbumSprint(list, niche) {
+    const prompt = `Ти си A&R анализатор. Дадени са ${list.length} концепции за песни в жанр "${niche}"
+(само заглавие+hook+mood, текстовете още не са написани). За всяка дай quick_score 0-100
+(бърза прогноза за вирусен потенциал само на база тези 3 неща — hook сила, оригиналност, жанрово пасване).
+${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join("\n")}
+
+Върни ЧИСТ JSON масив в СЪЩИЯ ред: [{"quick_score": number}]`;
+    try {
+      const raw = await callClaude(prompt, 800);
+      const scores = extractJson(raw);
+      this._renderAlbumSprint(list, scores);
+    } catch (e) {
+      // Тихо пропускаме — списъкът вече е видим и без quick score.
+    }
+  },
+
+  _renderAlbumSprint(list, scores) {
+    const withScores = list.map((c, i) => ({ ...c, _i: i, quick_score: scores?.[i]?.quick_score ?? null }));
+    if (scores) withScores.sort((a, b) => (b.quick_score ?? 0) - (a.quick_score ?? 0));
+    let html = scores ? `<p class="muted">Сортирано по прогнозиран потенциал (само по идея, преди пълен текст):</p>` : "";
+    withScores.forEach(c => {
+      const badge = c.quick_score != null
+        ? `<span class="chip ${c.quick_score > 75 ? "green" : c.quick_score > 50 ? "cyan" : "amber"}" style="margin-left:6px;">${c.quick_score}</span>`
+        : "";
+      html += `<div class="copy-field"><span><strong>${c.title}</strong>${badge} <span class="muted">(${c.mood})</span><br>"${c.hook}"</span>
+        <button onclick="Step1.useAlbumIdea(${c._i})">➡️ Ползвай</button></div>`;
+    });
+    document.getElementById("albumSprintOut").innerHTML = html;
   },
 
   // Взима избрана идея от Album Sprint-а и я праща в основната концепция.
@@ -772,12 +943,15 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
   async generateLyrics() {
     const niche = AppState.data.project.chosenNiche || "modern pop";
     const title = AppState.data.project.title || "(без заглавие)";
+    const winningHook = AppState.data.project.winningHook;
     const prompt = `Напиши текст на песен в жанр "${niche}", със заглавие "${title}".
 ЗАДЪЛЖИТЕЛНО:
 - [Chorus] секцията да е НАЙ-ОТПРЕД (преди първия куплет)
 - Използвай ясни мета-тагове: [Chorus], [Verse], [Drop] (ако жанрът позволява drop)
 - Текстът да е готов за качване в Suno AI
+${winningHook ? `- Използвай ТОЧНО този ред като основен hook/първи ред на [Chorus] (дошъл е от Hook Evolution Arena, тестван и избран): "${winningHook}"` : ""}
 Върни само текста с таговете, без допълнителни обяснения.`;
+    LyricsHistory.push("Преди ново генериране");
     document.getElementById("lyricsOut").value = "⏳ Генерирам...";
     try {
       const lyrics = await callClaude(prompt, 900);
@@ -812,6 +986,524 @@ ${lyrics}`;
     } catch (e) {
       GeminiValidator._log("Стъпка 1 — Ръчна проверка", "❌ " + e.message);
     }
+  }
+};
+
+/* =========================================================
+   VIRAL LAB — AI Music Producer
+   Превръща приложението от "генератор на текст" в анализатор,
+   който взема решения на база данни: Viral Score, прогноза за
+   успех, оценка на текста/hook-а/структурата/жанра, конкурентни
+   препоръки, AI Producer Review и автоматично подобряване на
+   слабите части (rewrite само на конкретната секция).
+   ========================================================= */
+const ViralLab = {
+  // Едно голямо структурирано Claude извикване вместо 8 отделни —
+  // по-бързо, по-евтино (по-малко round-trips) и лесно за поддръжка.
+  async analyze() {
+    const p = AppState.data.project;
+    const lyrics = (document.getElementById("lyricsOut")?.value || p.lyrics || "").trim();
+    if (!lyrics) return toast("Първо генерирай текст на песента (по-горе)");
+
+    const niche = p.chosenNiche || "modern pop";
+    const title = p.title || "(без заглавие)";
+    // Реални пазарни сигнали, които вече имаме от Стъпка 1 (trend snapshot /
+    // niche score) — подаваме ги на Claude вместо да гадае от нулата.
+    const nicheRow = (p.niches || []).find(n => n.niche === niche) || {};
+    const marketContext = `Niche score (0-100, от дневния trend snapshot / SEO анализ): ${p.nicheScore ?? "няма данни"}
+Search signal: ${nicheRow.search_signal || "няма данни"}
+Competition signal: ${nicheRow.competition_signal || "няма данни"}`;
+
+    const out = document.getElementById("viralLabOut");
+    out.innerHTML = `<p class="muted">⏳ AI Producer анализира песента (Viral Score, hook, chorus, структура, жанр, конкуренция, review)...</p>`;
+
+    // Жанрово заземяване: реални заглавия на топ видеа в нишата (ако има YouTube ключ),
+    // за да не гадае Claude BPM/теми само от тренировъчните си данни.
+    const topTitles = await youtubeTopTitles(niche);
+    const genreGrounding = topTitles.length
+      ? `\nРЕАЛНИ ЗАГЛАВИЯ НА ТОП ВИДЕА В НИШАТА "${niche}" (YouTube, сортирани по views, използвай ги като реален контекст за genre_check, не гадай):\n${topTitles.map(t => `- ${t}`).join("\n")}\n`
+      : "";
+
+    const prompt = `Ти си AI музикален продуцент, A&R анализатор и маркетинг стратег за 2026 година.
+Анализирай следната песен КАТО ЦЯЛОСТЕН ПРОДУКТ (не само текста) — вземи предвид жанра, заглавието
+и реалните пазарни сигнали по-долу. Бъди честен и критичен, не завишавай оценки без основание.
+
+ЗАГЛАВИЕ: ${title}
+ЖАНР/НИША: ${niche}
+
+ПАЗАРЕН КОНТЕКСТ:
+${marketContext}
+
+ТЕКСТ НА ПЕСЕНТА:
+---
+${lyrics}
+---
+${genreGrounding}
+Върни ЧИСТ JSON (без markdown, без обяснения извън JSON) с ТОЧНО тази структура:
+{
+  "viral_score": number (0-100, претеглена комбинация: Trend Momentum 30%, Search Volume 20%, Music Competition 15%, Audience Match 15%, Emotional Impact 10%, TikTok Potential 10% — изчисли реално претеглената стойност),
+  "breakdown": {
+    "trend_momentum": number (0-100),
+    "search_volume": number (0-100),
+    "competition": number (0-100, по-високо = по-слаба конкуренция/по-добра позиция),
+    "audience_match": number (0-100),
+    "emotional_impact": number (0-100),
+    "tiktok_potential": number (0-100)
+  },
+  "predictions": {
+    "attention_chance": number (0-100, % шанс да привлече внимание),
+    "shorts_fit": number (0-100, % колко е добра за YouTube Shorts),
+    "tiktok_sound_chance": number (0-100, % шанс да стане TikTok звук),
+    "youtube_ctr_chance": number (0-100, % шанс за висок CTR в YouTube)
+  },
+  "lyrics_analysis": {
+    "hook_strength": number (0-100),
+    "memorability": number (0-100),
+    "repeatability": number (0-100),
+    "emotional_intensity": number (0-100),
+    "singability": number (0-100),
+    "rhyme_quality": number (0-100),
+    "simplicity": number (0-100)
+  },
+  "chorus": {
+    "text": "извлеченият припев от текста, дословно (или '(няма ясен [Chorus] таг)')",
+    "has_repeating_hook": boolean,
+    "word_count": number,
+    "memorability": number (0-100),
+    "fits_15_30s_clip": boolean,
+    "notes": "1-2 изречения защо"
+  },
+  "structure": {
+    "expected_for_genre": ["Intro","Verse","Pre-Chorus","Chorus","Verse","Bridge","Final Chorus"] (адаптирай реално за жанра, не копирай сляпо),
+    "detected_in_lyrics": ["...секциите, които реално откри по [таговете] в текста..."],
+    "fits_genre": boolean,
+    "notes": "1-2 изречения препоръка"
+  },
+  "genre_check": {
+    "typical_bpm": [number, number, number] (типични BPM за жанра),
+    "common_themes": ["...", "...", "...", "..."] (най-чести теми в жанра),
+    "alignment_notes": "доколко темата/лириката на тази песен пасва на очакванията на аудиторията в жанра — 1-2 изречения"
+  },
+  "competition_advice": ["конкретна препоръка 1", "конкретна препоръка 2", "конкретна препоръка 3"] (действия, не статистика — напр. смяна на гледна точка, по-кратък припев, по-силен първи ред и т.н., съобразени с competition signal-а по-горе),
+  "ai_review": {
+    "stars": number (1-5, може с .5),
+    "pros": ["плюс 1", "плюс 2", "плюс 3"],
+    "cons": ["минус 1", "минус 2"]
+  },
+  "weak_sections": [
+    {"section": "напр. Verse 2 / Chorus / Bridge — конкретна секция от ТОЗИ текст", "score": number (0-10), "reason": "защо е слаба, 1 изречение"}
+  ] (0-3 елемента; само реално слаби секции, ако всичко е силно — празен масив)
+}`;
+
+    try {
+      const raw = await callClaude(prompt, 2200);
+      const r = extractJson(raw);
+      AppState.data.project.viralReport = r;
+      AppState.save();
+      this.render(r);
+      TrackRecord.save(r);
+      GeminiValidator.autoReview("Стъпка 1 — Viral Lab анализ", JSON.stringify(r.breakdown) + " | Score: " + r.viral_score);
+    } catch (e) {
+      out.innerHTML = `<p class="muted">❌ Грешка при анализ: ${e.message}</p>`;
+    }
+  },
+
+  _bar(label, val) {
+    return `<div class="vbar-row">
+      <div class="lbl"><span>${label}</span><span>${val}</span></div>
+      <div class="vbar-track"><div class="vbar-fill" style="width:${Math.max(0, Math.min(100, val))}%;"></div></div>
+    </div>`;
+  },
+
+  _stars(n) {
+    const full = Math.floor(n), half = n % 1 >= 0.5;
+    let s = "★".repeat(full);
+    if (half) s += "⯨";
+    s += "☆".repeat(Math.max(0, 5 - full - (half ? 1 : 0)));
+    return s;
+  },
+
+  render(r) {
+    const out = document.getElementById("viralLabOut");
+    const b = r.breakdown || {}, pr = r.predictions || {}, la = r.lyrics_analysis || {};
+    const ch = r.chorus || {}, st = r.structure || {}, gc = r.genre_check || {};
+    const score = Math.round(r.viral_score || 0);
+    const scoreColor = score >= 75 ? "var(--green)" : score >= 50 ? "var(--amber)" : "var(--red)";
+
+    let html = `
+      <div class="vscore-hero">
+        <div class="vscore-ring" style="--pct:${score};">
+          <div class="v" style="color:${scoreColor};">${score}<small>VIRAL SCORE</small></div>
+        </div>
+        <div class="vscore-meta">
+          <strong>Overall Viral Score</strong>
+          <p class="muted">Претеглена комбинация от 6 фактора (Trend 30% · Search 20% · Competition 15% · Audience 15% · Emotion 10% · TikTok 10%).</p>
+        </div>
+      </div>
+
+      ${this._bar("📈 Trend Momentum", b.trend_momentum ?? 0)}
+      ${this._bar("🔍 Search Volume", b.search_volume ?? 0)}
+      ${this._bar("🎵 Music Competition", b.competition ?? 0)}
+      ${this._bar("🎯 Audience Match", b.audience_match ?? 0)}
+      ${this._bar("💬 Emotional Impact", b.emotional_impact ?? 0)}
+      ${this._bar("📱 TikTok Potential", b.tiktok_potential ?? 0)}
+
+      <div class="vpred-grid">
+        <div class="vpred-item"><div class="pv">${pr.attention_chance ?? "—"}%</div><div class="pl">⭐ Шанс да привлече внимание</div></div>
+        <div class="vpred-item"><div class="pv">${pr.shorts_fit ?? "—"}%</div><div class="pl">⭐ Добра за YouTube Shorts</div></div>
+        <div class="vpred-item"><div class="pv">${pr.tiktok_sound_chance ?? "—"}%</div><div class="pl">⭐ Шанс да стане TikTok звук</div></div>
+        <div class="vpred-item"><div class="pv">${pr.youtube_ctr_chance ?? "—"}%</div><div class="pl">⭐ Висок CTR в YouTube</div></div>
+      </div>
+
+      <div class="section-title" style="margin:20px 0 8px;">✍️ Анализ на текста</div>
+      ${this._bar("Hook Strength", la.hook_strength ?? 0)}
+      ${this._bar("Memorability", la.memorability ?? 0)}
+      ${this._bar("Repeatability", la.repeatability ?? 0)}
+      ${this._bar("Emotional Intensity", la.emotional_intensity ?? 0)}
+      ${this._bar("Singability", la.singability ?? 0)}
+      ${this._bar("Rhyme Quality", la.rhyme_quality ?? 0)}
+      ${this._bar("Simplicity", la.simplicity ?? 0)}
+
+      <div class="section-title" style="margin:20px 0 8px;">🎤 Анализ на припева (Chorus)</div>
+      <div class="copy-field"><span><em>"${ch.text || "—"}"</em></span></div>
+      <p class="muted" style="margin:8px 0 0;">
+        ${ch.has_repeating_hook ? "✅" : "⚠️"} Повтарящ се hook ·
+        ${ch.word_count ?? "—"} думи ·
+        Memorability ${ch.memorability ?? "—"}/100 ·
+        ${ch.fits_15_30s_clip ? "✅ Пасва на 15-30с клипове" : "⚠️ Не е идеален за кратки клипове"}
+      </p>
+      <p class="muted">${ch.notes || ""}</p>
+
+      <div class="section-title" style="margin:20px 0 8px;">🧱 Структура</div>
+      <p class="muted">Очаквана за жанра: ${(st.expected_for_genre || []).join(" → ") || "—"}</p>
+      <p class="muted">Открита в текста: ${(st.detected_in_lyrics || []).join(" → ") || "—"}</p>
+      <p>${st.fits_genre ? "🟢 Структурата пасва на жанра" : "🟡 Структурата не пасва напълно"} — ${st.notes || ""}</p>
+
+      <div class="section-title" style="margin:20px 0 8px;">🎯 Жанрова проверка</div>
+      <p class="muted">Типични BPM за "${AppState.data.project.chosenNiche || ""}": <strong>${(gc.typical_bpm || []).join(" / ") || "—"}</strong></p>
+      <div class="hashtags">${(gc.common_themes || []).map(t => `<span>${t}</span>`).join("")}</div>
+      <p class="muted" style="margin-top:8px;">${gc.alignment_notes || ""}</p>
+
+      <div class="section-title" style="margin:20px 0 8px;">🏁 Анализ на конкуренцията</div>
+      <ul class="vlist">${(r.competition_advice || []).map(a => `<li>${a}</li>`).join("")}</ul>
+
+      <div class="section-title" style="margin:20px 0 8px;">🤖 AI Producer Review</div>
+      <div class="stars">${this._stars(r.ai_review?.stars || 0)}</div>
+      <p class="muted" style="margin:6px 0 0;">Плюсове:</p>
+      <ul class="vlist">${(r.ai_review?.pros || []).map(x => `<li>${x}</li>`).join("")}</ul>
+      <p class="muted" style="margin:6px 0 0;">Минуси:</p>
+      <ul class="vlist cons">${(r.ai_review?.cons || []).map(x => `<li>${x}</li>`).join("")}</ul>
+    `;
+
+    const weak = r.weak_sections || [];
+    html += `<div class="section-title" style="margin:20px 0 8px;">✨ Подобри слабите места</div>`;
+    if (!weak.length) {
+      html += `<p class="muted">Няма ясно слаби секции — текстът е стабилен като цяло.</p>`;
+    } else {
+      html += weak.map((w, i) => `
+        <div class="weak-card">
+          <span><strong>${w.section}</strong> <span class="ws-score">${w.score}/10</span><br>
+            <span class="muted">${w.reason}</span></span>
+          <button class="btn ghost" onclick="ViralLab.improveSection(${i})">✨ Подобри</button>
+        </div>`).join("");
+    }
+    html += `<div id="viralImproveOut" style="margin-top:10px;"></div>`;
+
+    out.innerHTML = html;
+  },
+
+  // Пренаписва САМО посочената слаба секция (не цялата песен) и връща
+  // текста обратно в lyricsOut — с before/after "score", за да се вижда
+  // реалният ефект от подобрението.
+  async improveSection(i) {
+    const r = AppState.data.project.viralReport;
+    const w = r?.weak_sections?.[i];
+    const lyrics = document.getElementById("lyricsOut").value.trim();
+    if (!w || !lyrics) return;
+    const el = document.getElementById("viralImproveOut");
+    el.innerHTML = `<p class="muted">⏳ Пренаписвам "${w.section}"...</p>`;
+
+    const prompt = `Дадена е песен. Пренапиши САМО секцията "${w.section}", защото: "${w.reason}".
+Не пипай останалите секции — върни ги дословно същите. Запази мета-таговете ([Chorus], [Verse] и т.н.),
+стила и жанра. Новата версия на секцията трябва да е осезаемо по-силна (по-добър hook/рими/образност).
+
+Пълен текст:
+---
+${lyrics}
+---
+
+Върни ЧИСТ JSON: {"full_lyrics": "целият текст с пренаписаната секция", "new_section_score": number (0-10, честна нова оценка САМО на пренаписаната секция), "what_changed": "1 изречение какво промени"}`;
+
+    try {
+      const raw = await callClaude(prompt, 1200);
+      const res = extractJson(raw);
+      LyricsHistory.push(`Преди подобряване: ${w.section}`);
+      document.getElementById("lyricsOut").value = res.full_lyrics;
+      AppState.data.project.lyrics = res.full_lyrics;
+      AppState.save();
+      el.innerHTML = `<div class="copy-field"><span>✅ <strong>${w.section}</strong>: ${w.score}/10 → <strong style="color:var(--green);">${res.new_section_score}/10</strong><br><span class="muted">${res.what_changed}</span></span></div>
+        <p class="muted">Текстът по-горе е обновен. Препоръка: пусни "Анализирай вирусния потенциал" пак за нов пълен доклад.</p>`;
+      GeminiValidator.autoReview(`Стъпка 1 — Подобряване (${w.section})`, res.what_changed);
+    } catch (e) {
+      el.innerHTML = `<p class="muted">❌ ${e.message}</p>`;
+    }
+  }
+};
+
+/* =========================================================
+   HOOK EVOLUTION ARENA
+   Вместо 1 hook и се надяваш да е добър: генерираме 8 различни,
+   тестваме всеки с "3-секунден scroll тест" (симулация на реално
+   TikTok/Shorts поведение — не цялата песен, само прозорче от 3с),
+   選ираме топ 3, и ги "кръстосваме" — хибриди + мутации — за
+   следващо поколение. 3 поколения по-късно остава 1 победител.
+   Вдъхновено от генетични алгоритми: селекция + кръстосване >
+   просто "генерирай N пъти и избери най-добрия".
+   ========================================================= */
+const HookArena = {
+  running: false,
+
+  async start() {
+    if (this.running) return;
+    this.running = true;
+    const p = AppState.data.project;
+    const niche = p.chosenNiche || "modern pop";
+    const title = p.title || "";
+    const out = document.getElementById("hookArenaOut");
+    out.innerHTML = `<p class="muted">🧬 Generation 1 — създавам 8 различни hook-а...</p>`;
+
+    try {
+      let pool = await this._generateInitial(niche, title);
+      let allGenerationsHtml = "";
+
+      for (let gen = 1; gen <= 3; gen++) {
+        out.innerHTML = allGenerationsHtml + `<p class="muted">🧬 Generation ${gen} — 3-секунден scroll тест на ${pool.length} hook-а...</p>`;
+        const scored = await this._scoreHooks(pool, niche);
+        const merged = pool.map((h, i) => ({ ...h, ...scored[i] }))
+          .sort((a, b) => (b.hook_score ?? 0) - (a.hook_score ?? 0));
+
+        const isFinal = gen === 3;
+        allGenerationsHtml += this._renderGeneration(gen, merged, isFinal);
+        out.innerHTML = allGenerationsHtml;
+
+        if (isFinal) {
+          const winner = merged[0];
+          AppState.data.project.winningHook = winner.text;
+          AppState.save();
+          out.innerHTML = allGenerationsHtml + `
+            <div class="card tight" style="margin-top:12px;border-color:var(--green);">
+              <strong>🏆 Победител: Gen 3, score ${winner.hook_score}</strong>
+              <p style="margin:6px 0 0;font-size:13px;">"${winner.text}"</p>
+              <p class="muted" style="margin-top:6px;">Запазен — при следващото "✍️ Генерирай текст" Claude ще го вгради като chorus hook.</p>
+            </div>`;
+          GeminiValidator.autoReview("Стъпка 1 — Hook Evolution Arena (победител)", winner.text);
+          break;
+        }
+
+        const top3 = merged.slice(0, 3);
+        out.innerHTML = allGenerationsHtml + `<p class="muted">🧬 Кръстосвам топ 3 в следващо поколение...</p>`;
+        pool = await this._breed(top3, niche, title, gen === 2 ? 5 : 8);
+      }
+    } catch (e) {
+      out.innerHTML += `<p class="muted">❌ ${e.message}</p>`;
+    } finally {
+      this.running = false;
+    }
+  },
+
+  async _generateInitial(niche, title) {
+    const prompt = `Генерирай 8 РАЗЛИЧНИ hook/chorus реда (1 ред всеки) за песен в жанр "${niche}"${title ? ` със заглавие "${title}"` : ""}.
+Всеки трябва да звучи различно: различна рима схема, различен ъгъл/емоция, различен ключов образ.
+Не повтаряй теми/думи между тях. Пиши директно репликите, без обяснения.
+Върни ЧИСТ JSON масив: [{"text":"..."}]`;
+    const raw = await callClaude(prompt, 700);
+    return extractJson(raw);
+  },
+
+  // "3-секунден scroll тест" — симулира реално TikTok/Shorts поведение:
+  // не цялата песен, само прозорче, каквото реално вижда скролващ човек.
+  async _scoreHooks(hooks, niche) {
+    const prompt = `Ти си симулация на TikTok/YouTube Shorts scroll поведение за жанр "${niche}".
+За всеки от следните hook редове, представи си, че потребител чува САМО първите 3 секунди
+докато скролва — направи честен "3-секунден window тест":
+
+${hooks.map((h, i) => `${i + 1}. "${h.text}"`).join("\n")}
+
+За всеки върни:
+- hook_score: 0-100 (обща сила — запомняемост, ритъм, изненада, "stopping power")
+- stops_scroll: boolean (дали тези 3 секунди реално биха спрели скрола)
+- why: кратка причина, максимум 8 думи
+
+Върни ЧИСТ JSON масив, В СЪЩИЯ РЕД: [{"hook_score":number,"stops_scroll":boolean,"why":"..."}]`;
+    const raw = await callClaude(prompt, 900);
+    return extractJson(raw);
+  },
+
+  async _breed(top3, niche, title, targetCount) {
+    const isFinal = targetCount === 5;
+    const prompt = `Ти си AI hook "breeder" — вземаш най-силните hook-ове от предишно поколение и ги кръстосваш,
+за песен в жанр "${niche}"${title ? ` със заглавие "${title}"` : ""}.
+
+РОДИТЕЛИ (топ 3 от предишно поколение):
+${top3.map((h, i) => `${i + 1}. "${h.text}" — защо е силен: ${h.why || "висок scroll score"}`).join("\n")}
+
+Генерирай СЛЕДВАЩО поколение от ${targetCount} ${isFinal ? "ФИНАЛНО РАФИНИРАНИ" : "НОВИ"} hook-а:
+${isFinal
+      ? `- Вземи най-добрите елементи от родителите и ги доизпипай до максимална сила — по-остри думи, по-чист ритъм, по-силна изненада. Всеки трябва да е реално по-добър от родителите си, не просто различен.`
+      : `- ${Math.max(targetCount - 3, 1)} "хибрида": вземи най-силния елемент от 1 родител (напр. рима/ритъм) + най-силния елемент от друг (напр. образ/тема) и ги слей в нов hook.
+- останалите "мутации": вземи 1 самостоятелен родител и направи смел творчески туист (нов ъгъл/метафора), запазвайки основната му сила.`}
+
+За всеки нов hook дай lineage: кратко обяснение на произхода (кой родител/и и какво взе от всеки), до 15 думи.
+Върни ЧИСТ JSON масив: [{"text":"...", "lineage":"..."}]`;
+    const raw = await callClaude(prompt, 1000);
+    return extractJson(raw);
+  },
+
+  _renderGeneration(gen, merged, isFinal) {
+    const best = merged[0];
+    let html = `<div class="arena-gen">
+      <div class="arena-gen-title">🧬 Generation ${gen} ${isFinal ? "(финал)" : ""} <span class="best">— best: ${best.hook_score ?? "—"}</span></div>`;
+    merged.forEach((h, i) => {
+      html += `<div class="arena-hook ${i === 0 ? "winner" : ""}">
+        <span class="txt">"${h.text}"${h.lineage ? `<div class="lineage">🧬 ${h.lineage}</div>` : ""}${h.why ? `<div class="lineage">${h.stops_scroll ? "✅" : "⚠️"} ${h.why}</div>` : ""}</span>
+        <span class="sc">${h.hook_score ?? "—"}</span>
+      </div>`;
+    });
+    html += `</div>`;
+    return html;
+  }
+};
+
+/* =========================================================
+   GHOST AUDIENCE
+   Симулирана фокус-група: 12 синтетични, но правдоподобни
+   персони "чуват" песента и реагират — с техните думи, техния
+   сленг, техните предразсъдъци. Не абстрактно число, а РЕАКЦИЯ.
+   Плюс: attention heatmap (секунда по секунда по структурата) и
+   meme risk radar (редове, за които няколко персони независимо
+   се закачат подигравателно — улавя нещото, за което си твърде
+   близо до текста, за да го видиш сам).
+   ========================================================= */
+// Жанрово-специфични типове аудитория — помага на AI-я да не генерира генерични
+// персони, а реални типове слушатели, които действително съществуват около жанра.
+// Fallback към генерична инструкция, ако нишата не съвпада с нищо познато.
+function ghostAudienceArchetypeHint(niche) {
+  const n = (niche || "").toLowerCase();
+  const table = [
+    { keys: ["k-pop", "kpop"], hint: "K-pop stan/fancam акаунт, dance-cover creator, casual Spotify слушател, reaction channel, критик на 'западни' K-pop опити" },
+    { keys: ["metal", "rock", "хеви"], hint: "дългогодишен guitarist/музикант, old-school фен на 90-те, festival-goer, критик който сравнява с 'истински' метъл" },
+    { keys: ["чалга", "chalga", "pop folk"], hint: "wedding DJ, club/парти публика, по-възрастен фен на 'старата чалга', TikTok trend-follower" },
+    { keys: ["drill", "trap"], hint: "TikTok drill фен тийнейджър, hip-hop nerd/lyricist критик, случаен слушател от algorithm feed, по-възрастен родител на фен" },
+    { keys: ["hyperpop", "sad boy"], hint: "hyperpop nerd от Discord/SoundCloud сцена, TikTok sad-core фен, случаен слушател объркан от звука, критик на 'прекалено произведено'" },
+    { keys: ["lo-fi", "lofi"], hint: "study-with-me/фонов слушател, Spotify playlist curator тип, chill hip-hop nerd, критик че 'звучи като всичко останало'" },
+    { keys: ["phonk", "drift"], hint: "car edit/drift TikTok фен, GTA/gaming edit creator, случаен слушател от algorithm, критик на 'poromenyat sample'" },
+    { keys: ["afrobeat", "amapiano"], hint: "afrobeats dance TikTok фен, club/парти публика, диаспора слушател, критик за автентичност на звука" }
+  ];
+  const match = table.find(t => t.keys.some(k => n.includes(k)));
+  return match ? match.hint : "фен на жанра, случаен TikTok/algorithm слушател, по-възрастен 'случаен' слушател, критичен music nerd/коментатор";
+}
+
+const GhostAudience = {
+  async run() {
+    const p = AppState.data.project;
+    const lyrics = (document.getElementById("lyricsOut")?.value || p.lyrics || "").trim();
+    if (!lyrics) return toast("Първо генерирай текст на песента (по-горе)");
+    const niche = p.chosenNiche || "modern pop";
+    const archetypeHint = ghostAudienceArchetypeHint(niche);
+    const out = document.getElementById("ghostAudienceOut");
+    out.innerHTML = `<p class="muted">👻 Свиквам 12 синтетични слушателя да чуят песента...</p>`;
+
+    const prompt = `Ти симулираш РЕАЛНА, разнообразна публика от 12 души, слушащи следната песен
+за пръв път (жанр: "${niche}"), все едно я срещат случайно на своя TikTok/YouTube feed.
+
+ТЕКСТ:
+---
+${lyrics}
+---
+
+Създай 12 РАЗЛИЧНИ, правдоподобни персони, ПАСВАЩИ НА ТОЗИ КОНКРЕТЕН ЖАНР — типове слушатели,
+които реално съществуват около него, например (не копирай буквално, вдъхнови се): ${archetypeHint}.
+За всяка:
+- name: измислено кратко име/псевдоним (не истинска знаменитост)
+- context: 3-5 думи кой е (напр. "17г, drill фен, TikTok")
+- reaction: 1-2 изречения РЕАЛНА реакция, С ТЕХНИЯ ГЛАС/СЛЕНГ (не обяснение — самата реакция, все едно я пише в коментар)
+- would_scroll_away: boolean — дали биха скролнали до края
+- scroll_away_at: ако would_scroll_away е true, коя секция от текста ги "загуби" (напр. "Verse 2"); ако false — null
+
+ВАЖНО — не прави всичките 12 единодушни. Реална публика спори. Направи така, че поне 2-3 персони
+да имат ЯВНО противоположни мнения за същия ред/секция (напр. една персона да намира hook-а за най-силната
+част, друга — точно него за най-слабата). Несъгласието е по-достоверно от единодушие.
+
+После, на база всичките 12 реакции, направи:
+- attention_heatmap: масив от {"section":"Intro/Verse/Chorus и т.н., в реда на текста","attention":number 0-100} — колко от персоните останаха "включени" на всяка секция
+- misinterpretation_risk: масив от 0-2 елемента {"line":"конкретен ред от текста, за който 2+ персони имат негативно/подигравателно впечатление","flagged_by":number,"descriptors":["1-3 кратки думи, с които персоните са го описали, напр. 'cringe','forced','overused'"],"note":"защо е рисков, 1 изречение, ФОРМУЛИРАНО ПРЕДПАЗЛИВО като 'възможност за', не като сигурност"} — САМО ако реално има такъв риск, иначе празен масив
+- replay_moment: {"lyric_line":"конкретният ред, който е най-запомнящ се/цитируем","timestamp_estimate":"приблизителен таймкод във формат м:сс, base на позицията му в структурата","reason":"защо точно този момент, 1 изречение"} — най-вероятният момент хората да пуснат повторно/цитират; ако няма ясен кандидат, null
+
+Върни ЧИСТ JSON: {"personas":[...], "attention_heatmap":[...], "misinterpretation_risk":[...], "replay_moment":{...}}`;
+
+    try {
+      const raw = await callClaude(prompt, 2600);
+      const r = extractJson(raw);
+      AppState.data.project.ghostAudience = r;
+      AppState.save();
+      this.render(r);
+      GeminiValidator.autoReview("Стъпка 1 — Ghost Audience", `${r.personas?.length || 0} персони, ${r.misinterpretation_risk?.length || 0} рискови реда`);
+    } catch (e) {
+      out.innerHTML = `<p class="muted">❌ ${e.message}</p>`;
+    }
+  },
+
+  render(r) {
+    const out = document.getElementById("ghostAudienceOut");
+    const personas = r.personas || [];
+    const stayCount = personas.filter(p => !p.would_scroll_away).length;
+
+    let html = `<p class="muted" style="font-style:italic;">👻 AI симулация на вероятни реакции от различни типове слушатели — не гаранция за реалната реакция на публиката.</p>
+      <p class="muted">${stayCount}/${personas.length} персони биха останали до края.</p>
+      <div class="persona-grid">`;
+    personas.forEach(p => {
+      html += `<div class="persona-card">
+        <div class="who"><span>👤 ${p.name}</span><span>${p.context || ""}</span></div>
+        <div class="quote">"${p.reaction}"</div>
+        <div class="scroll ${p.would_scroll_away ? "leave" : "stay"}">
+          ${p.would_scroll_away ? `⚠️ Скролва на: ${p.scroll_away_at || "—"}` : "✅ Остава до края"}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    if (r.replay_moment?.lyric_line) {
+      html += `<div class="section-title" style="margin:20px 0 4px;">🔥 Вероятен Replay Moment</div>
+        <div class="card tight" style="border-color:var(--green);">
+          <strong>${r.replay_moment.timestamp_estimate || "—"} — "${r.replay_moment.lyric_line}"</strong>
+          <p class="muted" style="margin:6px 0 0;">${r.replay_moment.reason || ""}</p>
+        </div>`;
+    }
+
+    if (r.attention_heatmap?.length) {
+      html += `<div class="section-title" style="margin:20px 0 4px;">📈 Attention Heatmap</div>`;
+      r.attention_heatmap.forEach(s => {
+        const val = Math.max(0, Math.min(100, s.attention ?? 0));
+        const color = val >= 70 ? "var(--green)" : val >= 40 ? "var(--amber)" : "var(--red)";
+        html += `<div class="heat-row"><span class="sec">${s.section}</span>
+          <div class="heat-track"><div class="heat-fill" style="width:${val}%;background:${color};"></div></div>
+          <span class="muted" style="width:34px;text-align:right;">${val}</span></div>`;
+      });
+    }
+
+    const risks = r.misinterpretation_risk || r.meme_risk || [];
+    if (risks.length) {
+      html += `<div class="section-title" style="margin:20px 0 4px;">⚠️ Possible Misinterpretation</div>`;
+      risks.forEach(m => {
+        const descriptors = (m.descriptors || []).join(", ");
+        html += `<div class="meme-flag"><strong>"${m.line}"</strong><br>
+          <span class="muted">${m.flagged_by || "неколцина"} персони реагираха негативно${descriptors ? ` (${descriptors})` : ""} — ${m.note}</span></div>`;
+      });
+    } else {
+      html += `<p class="muted" style="margin-top:14px;">✅ Никой ред не беше маркиран за риск от погрешно тълкуване.</p>`;
+    }
+
+    out.innerHTML = html;
   }
 };
 
@@ -1458,6 +2150,120 @@ const SystemLog = {
    STATS — чете data/stats-history.json от GitHub (Actions tracker)
    и рисува KPI карти + графика + таблица с последни видеа.
    ========================================================= */
+/* =========================================================
+   TRACK RECORD — Предсказание срещу реалност
+   Всеки път, когато ViralLab направи анализ, записваме прогнозата.
+   По-късно, когато песента е публикувана и daily YouTube tracker-ът
+   вече има данни за нея, потребителят я "свързва" с реално видео —
+   и приложението показва честно колко точни са били предсказанията
+   му във времето (не само едно число без последствия).
+   ========================================================= */
+const TRACK_STORAGE = "cdb_dashboard_trackrecord_v1";
+const TrackRecord = {
+  load() {
+    const raw = localStorage.getItem(TRACK_STORAGE);
+    return raw ? JSON.parse(raw) : [];
+  },
+  saveAll(list) {
+    localStorage.setItem(TRACK_STORAGE, JSON.stringify(list.slice(0, 40)));
+  },
+
+  save(report) {
+    const p = AppState.data.project;
+    const list = this.load();
+    list.unshift({
+      id: Date.now(),
+      date: new Date().toLocaleDateString("bg-BG"),
+      title: p.title || "(без заглавие)",
+      niche: p.chosenNiche || "",
+      predicted: {
+        viral_score: report.viral_score,
+        attention_chance: report.predictions?.attention_chance,
+        shorts_fit: report.predictions?.shorts_fit,
+        tiktok_sound_chance: report.predictions?.tiktok_sound_chance,
+        youtube_ctr_chance: report.predictions?.youtube_ctr_chance
+      },
+      actual: null
+    });
+    this.saveAll(list);
+  },
+
+  async render() {
+    const el = document.getElementById("trackRecordOut");
+    if (!el) return;
+    const list = this.load();
+    if (!list.length) {
+      el.innerHTML = `<p class="muted">Все още няма записани прогнози — направи анализ в "🚀 Viral Lab" (Стъпка 1) и той автоматично ще се появи тук.</p>`;
+      return;
+    }
+
+    const statsData = await Stats.fetchData();
+    const latest = statsData?.snapshots?.length ? statsData.snapshots[statsData.snapshots.length - 1] : null;
+    const videos = latest?.videos || [];
+
+    // Обща калибрация: колко от "високите" прогнози реално излязоха силни
+    const linked = list.filter(r => r.actual);
+    let calibrationHtml = "";
+    if (linked.length) {
+      const hits = linked.filter(r => (r.predicted.viral_score >= 70 && r.actual.perf === "Отлично") ||
+        (r.predicted.viral_score < 70 && r.actual.perf !== "Отлично")).length;
+      calibrationHtml = `<div class="card tight" style="margin-bottom:12px;">
+        <strong>🎯 Точност на предсказанията</strong>
+        <p class="muted" style="margin:6px 0 0;">${hits}/${linked.length} свързани песни съвпаднаха посоката на прогнозата с реалния резултат (${Math.round(hits / linked.length * 100)}%).</p>
+      </div>`;
+    }
+
+    el.innerHTML = calibrationHtml + list.map((r, i) => {
+      const actualHtml = r.actual
+        ? `<span class="chip ${r.actual.perf === "Отлично" ? "green" : r.actual.perf === "Добре" ? "cyan" : "amber"}">${r.actual.perf}</span>
+           <span class="muted"> — "${r.actual.videoTitle}" · ${r.actual.perDay.toFixed(0)} views/ден</span>`
+        : videos.length
+          ? `<select id="trackLink-${i}" style="width:auto;display:inline-block;padding:6px 8px;">
+               <option value="">— избери публикувано видео —</option>
+               ${videos.map((v, vi) => `<option value="${vi}">${v.title}</option>`).join("")}
+             </select>
+             <button class="btn ghost sm" onclick="TrackRecord.link(${i})">🔗 Свържи</button>`
+          : `<span class="muted">Няма още публикувани видеа в YouTube Тракера, за да сравним.</span>`;
+
+      return `<div class="copy-field" style="align-items:flex-start;">
+        <span>
+          <strong>${r.title}</strong> <span class="muted">· ${r.niche} · ${r.date}</span><br>
+          <span class="muted">Прогноза: Viral Score ${r.predicted.viral_score} · Внимание ${r.predicted.attention_chance}% · Shorts ${r.predicted.shorts_fit}% · TikTok ${r.predicted.tiktok_sound_chance}% · CTR ${r.predicted.youtube_ctr_chance}%</span><br>
+          <span style="display:inline-block;margin-top:6px;">${actualHtml}</span>
+        </span>
+      </div>`;
+    }).join("");
+  },
+
+  async link(i) {
+    const sel = document.getElementById(`trackLink-${i}`);
+    const vi = sel?.value;
+    if (vi === "" || vi === undefined) return toast("Избери видео първо");
+    const statsData = await Stats.fetchData();
+    const latest = statsData.snapshots[statsData.snapshots.length - 1];
+    const videos = latest.videos || [];
+    const v = videos[vi];
+    if (!v) return;
+
+    // Същата логика като Stats.renderAnalytics — views/ден спрямо медианата на канала
+    const rates = videos.map(vv => {
+      const days = Math.max(1, (new Date(latest.date) - new Date(vv.published_at)) / 86400000);
+      return (vv.views || 0) / days;
+    }).sort((a, b) => a - b);
+    const median = rates[Math.floor(rates.length / 2)] || 1;
+    const days = Math.max(1, (new Date(latest.date) - new Date(v.published_at)) / 86400000);
+    const perDay = (v.views || 0) / days;
+    const ratio = perDay / median;
+    const perf = ratio > 1.3 ? "Отлично" : ratio > 0.8 ? "Добре" : "Средно";
+
+    const list = this.load();
+    list[i].actual = { videoTitle: v.title, perDay, perf };
+    this.saveAll(list);
+    toast("Свързано ✅");
+    this.render();
+  }
+};
+
 const Stats = {
   cache: null,
 
@@ -1597,8 +2403,45 @@ const Stats = {
 /* =========================================================
    INIT
    ========================================================= */
+/* =========================================================
+   RESTORE UI — хидратира екрана от localStorage след презареждане
+   Преди това: AppState.save() пазеше всичко, но при F5 полетата
+   (заглавие, текст, Viral Report...) оставаха празни, въпреки че
+   данните бяха налични. Сега при зареждане екранът се "връща" на
+   мястото, където си спрял — без нищо да е загубено.
+   ========================================================= */
+function restoreUI() {
+  const p = AppState.data?.project;
+  if (!p) return;
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+  const show = (id) => { const el = document.getElementById(id); if (el) el.style.display = "block"; };
+
+  setVal("songTitle", p.title);
+  setVal("stylePrompt", p.stylePrompt);
+  setVal("lyricsOut", p.lyrics);
+  if (p.nicheScore != null) setVal("nicheScore", p.nicheScore + "/100");
+
+  if (p.hashtags?.length) {
+    const h = document.getElementById("hashtagsOut");
+    if (h) h.innerHTML = p.hashtags.map(x => `<span>${x}</span>`).join("");
+  }
+  if (p.title) { show("conceptCard"); show("albumSprintCard"); }
+
+  if (p.niches?.length) {
+    const el = document.getElementById("nicheResults");
+    if (el) {
+      el.innerHTML = p.niches.map(r => {
+        const color = r.score > 75 ? "🟢" : r.score > 50 ? "🟡" : "⚪";
+        return `<div class="copy-field"><span>${color} <strong>${r.niche}</strong> — ${r.score}/100<br><span class="muted">${r.reason || ""}</span></span></div>`;
+      }).join("");
+    }
+  }
+  if (p.viralReport) ViralLab.render(p.viralReport);
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   Nav.init();
+  restoreUI();
   Step3.buildDistrokidFields();
   GeminiValidator.render();
   SystemLog.init();
