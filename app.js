@@ -1384,32 +1384,12 @@ ${isFinal
    се закачат подигравателно — улавя нещото, за което си твърде
    близо до текста, за да го видиш сам).
    ========================================================= */
-// Жанрово-специфични типове аудитория — помага на AI-я да не генерира генерични
-// персони, а реални типове слушатели, които действително съществуват около жанра.
-// Fallback към генерична инструкция, ако нишата не съвпада с нищо познато.
-function ghostAudienceArchetypeHint(niche) {
-  const n = (niche || "").toLowerCase();
-  const table = [
-    { keys: ["k-pop", "kpop"], hint: "K-pop stan/fancam акаунт, dance-cover creator, casual Spotify слушател, reaction channel, критик на 'западни' K-pop опити" },
-    { keys: ["metal", "rock", "хеви"], hint: "дългогодишен guitarist/музикант, old-school фен на 90-те, festival-goer, критик който сравнява с 'истински' метъл" },
-    { keys: ["чалга", "chalga", "pop folk"], hint: "wedding DJ, club/парти публика, по-възрастен фен на 'старата чалга', TikTok trend-follower" },
-    { keys: ["drill", "trap"], hint: "TikTok drill фен тийнейджър, hip-hop nerd/lyricist критик, случаен слушател от algorithm feed, по-възрастен родител на фен" },
-    { keys: ["hyperpop", "sad boy"], hint: "hyperpop nerd от Discord/SoundCloud сцена, TikTok sad-core фен, случаен слушател объркан от звука, критик на 'прекалено произведено'" },
-    { keys: ["lo-fi", "lofi"], hint: "study-with-me/фонов слушател, Spotify playlist curator тип, chill hip-hop nerd, критик че 'звучи като всичко останало'" },
-    { keys: ["phonk", "drift"], hint: "car edit/drift TikTok фен, GTA/gaming edit creator, случаен слушател от algorithm, критик на 'poromenyat sample'" },
-    { keys: ["afrobeat", "amapiano"], hint: "afrobeats dance TikTok фен, club/парти публика, диаспора слушател, критик за автентичност на звука" }
-  ];
-  const match = table.find(t => t.keys.some(k => n.includes(k)));
-  return match ? match.hint : "фен на жанра, случаен TikTok/algorithm слушател, по-възрастен 'случаен' слушател, критичен music nerd/коментатор";
-}
-
 const GhostAudience = {
   async run() {
     const p = AppState.data.project;
     const lyrics = (document.getElementById("lyricsOut")?.value || p.lyrics || "").trim();
     if (!lyrics) return toast("Първо генерирай текст на песента (по-горе)");
     const niche = p.chosenNiche || "modern pop";
-    const archetypeHint = ghostAudienceArchetypeHint(niche);
     const out = document.getElementById("ghostAudienceOut");
     out.innerHTML = `<p class="muted">👻 Свиквам 12 синтетични слушателя да чуят песента...</p>`;
 
@@ -1421,33 +1401,27 @@ const GhostAudience = {
 ${lyrics}
 ---
 
-Създай 12 РАЗЛИЧНИ, правдоподобни персони, ПАСВАЩИ НА ТОЗИ КОНКРЕТЕН ЖАНР — типове слушатели,
-които реално съществуват около него, например (не копирай буквално, вдъхнови се): ${archetypeHint}.
-За всяка:
+Създай 12 РАЗЛИЧНИ, правдоподобни персони (различна възраст, вкус, платформа, отношение —
+от фен до циничен критик). За всяка:
 - name: измислено кратко име/псевдоним (не истинска знаменитост)
 - context: 3-5 думи кой е (напр. "17г, drill фен, TikTok")
 - reaction: 1-2 изречения РЕАЛНА реакция, С ТЕХНИЯ ГЛАС/СЛЕНГ (не обяснение — самата реакция, все едно я пише в коментар)
 - would_scroll_away: boolean — дали биха скролнали до края
 - scroll_away_at: ако would_scroll_away е true, коя секция от текста ги "загуби" (напр. "Verse 2"); ако false — null
 
-ВАЖНО — не прави всичките 12 единодушни. Реална публика спори. Направи така, че поне 2-3 персони
-да имат ЯВНО противоположни мнения за същия ред/секция (напр. една персона да намира hook-а за най-силната
-част, друга — точно него за най-слабата). Несъгласието е по-достоверно от единодушие.
-
 После, на база всичките 12 реакции, направи:
 - attention_heatmap: масив от {"section":"Intro/Verse/Chorus и т.н., в реда на текста","attention":number 0-100} — колко от персоните останаха "включени" на всяка секция
-- misinterpretation_risk: масив от 0-2 елемента {"line":"конкретен ред от текста, за който 2+ персони имат негативно/подигравателно впечатление","flagged_by":number,"descriptors":["1-3 кратки думи, с които персоните са го описали, напр. 'cringe','forced','overused'"],"note":"защо е рисков, 1 изречение, ФОРМУЛИРАНО ПРЕДПАЗЛИВО като 'възможност за', не като сигурност"} — САМО ако реално има такъв риск, иначе празен масив
-- replay_moment: {"lyric_line":"конкретният ред, който е най-запомнящ се/цитируем","timestamp_estimate":"приблизителен таймкод във формат м:сс, base на позицията му в структурата","reason":"защо точно този момент, 1 изречение"} — най-вероятният момент хората да пуснат повторно/цитират; ако няма ясен кандидат, null
+- meme_risk: масив от 0-2 елемента {"line":"конкретен ред от текста, за който 2+ персони се закачиха подигравателно","flagged_by":number,"note":"защо е рисков, 1 изречение"} — САМО ако реално има такъв риск, иначе празен масив
 
-Върни ЧИСТ JSON: {"personas":[...], "attention_heatmap":[...], "misinterpretation_risk":[...], "replay_moment":{...}}`;
+Върни ЧИСТ JSON: {"personas":[...], "attention_heatmap":[...], "meme_risk":[...]}`;
 
     try {
-      const raw = await callClaude(prompt, 2600);
+      const raw = await callClaude(prompt, 2400);
       const r = extractJson(raw);
       AppState.data.project.ghostAudience = r;
       AppState.save();
       this.render(r);
-      GeminiValidator.autoReview("Стъпка 1 — Ghost Audience", `${r.personas?.length || 0} персони, ${r.misinterpretation_risk?.length || 0} рискови реда`);
+      GeminiValidator.autoReview("Стъпка 1 — Ghost Audience", `${r.personas?.length || 0} персони, ${r.meme_risk?.length || 0} meme риска`);
     } catch (e) {
       out.innerHTML = `<p class="muted">❌ ${e.message}</p>`;
     }
@@ -1458,8 +1432,7 @@ ${lyrics}
     const personas = r.personas || [];
     const stayCount = personas.filter(p => !p.would_scroll_away).length;
 
-    let html = `<p class="muted" style="font-style:italic;">👻 AI симулация на вероятни реакции от различни типове слушатели — не гаранция за реалната реакция на публиката.</p>
-      <p class="muted">${stayCount}/${personas.length} персони биха останали до края.</p>
+    let html = `<p class="muted">${stayCount}/${personas.length} персони биха останали до края.</p>
       <div class="persona-grid">`;
     personas.forEach(p => {
       html += `<div class="persona-card">
@@ -1472,14 +1445,6 @@ ${lyrics}
     });
     html += `</div>`;
 
-    if (r.replay_moment?.lyric_line) {
-      html += `<div class="section-title" style="margin:20px 0 4px;">🔥 Вероятен Replay Moment</div>
-        <div class="card tight" style="border-color:var(--green);">
-          <strong>${r.replay_moment.timestamp_estimate || "—"} — "${r.replay_moment.lyric_line}"</strong>
-          <p class="muted" style="margin:6px 0 0;">${r.replay_moment.reason || ""}</p>
-        </div>`;
-    }
-
     if (r.attention_heatmap?.length) {
       html += `<div class="section-title" style="margin:20px 0 4px;">📈 Attention Heatmap</div>`;
       r.attention_heatmap.forEach(s => {
@@ -1491,16 +1456,14 @@ ${lyrics}
       });
     }
 
-    const risks = r.misinterpretation_risk || r.meme_risk || [];
-    if (risks.length) {
-      html += `<div class="section-title" style="margin:20px 0 4px;">⚠️ Possible Misinterpretation</div>`;
-      risks.forEach(m => {
-        const descriptors = (m.descriptors || []).join(", ");
+    if (r.meme_risk?.length) {
+      html += `<div class="section-title" style="margin:20px 0 4px;">⚠️ Meme Risk Radar</div>`;
+      r.meme_risk.forEach(m => {
         html += `<div class="meme-flag"><strong>"${m.line}"</strong><br>
-          <span class="muted">${m.flagged_by || "неколцина"} персони реагираха негативно${descriptors ? ` (${descriptors})` : ""} — ${m.note}</span></div>`;
+          <span class="muted">${m.flagged_by} персони се закачиха за този ред — ${m.note}</span></div>`;
       });
     } else {
-      html += `<p class="muted" style="margin-top:14px;">✅ Никой ред не беше маркиран за риск от погрешно тълкуване.</p>`;
+      html += `<p class="muted" style="margin-top:14px;">✅ Никой ред не беше маркиран за подигравателен риск.</p>`;
     }
 
     out.innerHTML = html;
