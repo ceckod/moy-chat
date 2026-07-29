@@ -1193,6 +1193,12 @@ const QuickUpload = {
     if (!f) { if (infoEl) infoEl.textContent = ""; this.audioFile = null; return; }
     this.audioFile = f;
     if (infoEl) infoEl.textContent = `Избрано: ${f.name} (${Math.round(f.size / 1024 / 1024 * 10) / 10} MB)`;
+    const nameEl = document.getElementById("qSongName");
+    if (nameEl && !nameEl.value.trim()) {
+      // Само предлагаме — потребителят може да го поправи преди да старира,
+      // ако името на файла не е точното име на песента.
+      nameEl.value = f.name.replace(/\.[^/.]+$/, "").replace(/[_\-]+/g, " ").trim();
+    }
     document.getElementById("qStartBtn").disabled = false;
   },
 
@@ -1226,9 +1232,11 @@ const QuickUpload = {
     this._setRunning(true);
     this.log("🚀 Стартирам — прескачам концепция/обложка, директно видео от аудио.");
 
-    // Изпращаме заглавие по подразбиране (име на файла без разширение) на визуализатора,
-    // потребителят може да го смени после в полето за заглавие на резултата.
-    const guessTitle = this.audioFile.name.replace(/\.[^/.]+$/, "");
+    // Точното име на песента, което заглавието е ЗАДЪЛЖИТЕЛНО да започва с него —
+    // взето от редактируемото поле (предпопълнено от файла, но потребителят може
+    // да го е поправил, ако името на файла не е точно).
+    const songNameEl = document.getElementById("qSongName");
+    const guessTitle = (songNameEl && songNameEl.value.trim()) || this.audioFile.name.replace(/\.[^/.]+$/, "");
     this._sendAudioToVisualizer(guessTitle);
     this.log("🎬 Пращам аудиото на визуализатора — прави видео във фонов режим...");
 
@@ -1277,7 +1285,9 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
     this.log(`✅ Анализ готов — жанр: "${analysis.genre}", настроение: "${analysis.mood}", енергия: "${analysis.energy}", език: "${analysis.language}" (текст: ${analysis.lyrics_source === "provided" ? "пейстнат от теб" : "разпознат от Gemini"}).`);
 
     this.log("✍️ Claude генерира заглавие, описание и тагове...");
-    const metaPrompt = `За стара песен с този анализ на звука и текста:
+    const metaPrompt = `За стара песен, чието ТОЧНО заглавие/име е: "${guessTitle}"
+
+Допълнителен анализ на звука и текста:
 Жанр: ${analysis.genre}
 Настроение: ${analysis.mood}
 Енергия: ${analysis.energy}
@@ -1285,16 +1295,26 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
 Език на песента: ${analysis.language} (код: ${analysis.language_code})
 Текст (откъс, за контекст на темата — НЕ го копирай изцяло в описанието): ${(analysis.lyrics || "").slice(0, 600)}
 
-ЗАДЪЛЖИТЕЛНО ПРАВИЛО ЗА ЕЗИК: title и description ТРЯБВА да бъдат написани на езика на самата песен — ${analysis.language} (${analysis.language_code}). Не превеждай и не пиши на друг език (включително не на български), дори ако песента е на съвсем различен от български език. Единствено placeholder редовете за линкове могат да останат с универсални имена на платформи (Spotify/Apple Music/DistroKid).
+ЗАДЪЛЖИТЕЛНО ПРАВИЛО ЗА ЗАГЛАВИЕТО: title ТРЯБВА да започва ТОЧНО с "${guessTitle}" (без промяна, без превод на името), последвано от " - " и кратко, атрактивно описателно подзаглавие базирано на жанр/настроение. Формат: "${guessTitle} - [описателно подзаглавие]". НЕ подменяй и НЕ перифразирай самото име на песента.
+
+ЗАДЪЛЖИТЕЛНО ПРАВИЛО ЗА ЕЗИК: title (описателната част след тирето) и description ТРЯБВА да бъдат написани на езика на самата песен — ${analysis.language} (${analysis.language_code}). Не превеждай и не пиши на друг език (включително не на български), дори ако песента е на съвсем различен от български език. Единствено placeholder редовете за линкове могат да останат с универсални имена на платформи (Spotify/Apple Music/DistroKid).
 
 Генерирай:
-- title: кратко, запомнящо се YouTube заглавие на песента (до 60 символа), на езика на песента
+- title: "${guessTitle} - [описателно подзаглавие]" (до 60 символа общо), на езика на песента
 - description: YouTube описание, на езика на песента — ЗАДЪЛЖИТЕЛНО в този ред: (1) най-горе 2-3 placeholder реда за линкове ("🎧 Spotify: [линк]", "🍏 Apple Music: [линк]", "📀 DistroKid: [линк]"), (2) после кратък абзац (2-3 изречения) описващ песента базирано на жанр/настроение, (3) най-долу 5-8 релевантни хаштага с #
 - tags: масив от 8-12 YouTube тагове (думи/кратки фрази, БЕЗ #), предимно на езика на песента; по избор 1-2 общоприети английски тагове за по-широк обхват (напр. името на жанра), ако е уместно
 
 Върни ЧИСТ JSON: {"title":"...", "description":"...", "tags":["...", "..."]}`;
     const metaRaw = await callClaude(metaPrompt, 900);
     const meta = extractJson(metaRaw);
+    // Гаранция на кода (не само на промпта) — ако генерираното заглавие не
+    // започва точно с реалното име на песента, го поправяме тук вместо да
+    // разчитаме единствено на това LLM-ът да го спази.
+    const normalizedGuess = guessTitle.trim();
+    if (!meta.title || !meta.title.trim().toLowerCase().startsWith(normalizedGuess.toLowerCase())) {
+      const subtitle = (meta.title || "").replace(/^[^-–—]*[-–—]\s*/, "").trim();
+      meta.title = subtitle ? `${normalizedGuess} - ${subtitle}` : normalizedGuess;
+    }
     this.meta = meta;
     this.log("✅ Заглавие/описание/тагове готови.");
 

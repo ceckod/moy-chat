@@ -550,6 +550,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">Визуализаторът прави видео директно от аудиото — без концепция/обложка. По желание пейстни готов текст, ако имаш; иначе Gemini ще се опита да го разпознае от звука.</p>
         <input type="file" id="qAudioFile" accept="audio/*" onchange="QuickUpload.onAudioSelected(this)">
         <div id="qAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Име на песента (задължително ще е НАЧАЛОТО на YouTube заглавието — провери/поправи го)</label>
+        <input type="text" id="qSongName" placeholder="напр. Само ти">
         <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
         <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
         <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="QuickUpload.runFull()">🚀 Стартирай пълния процес</button>

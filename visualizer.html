@@ -407,6 +407,12 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   let titleState = Object.assign({}, DEFAULT_TITLE_STATE);
   let playerState = Object.assign({}, DEFAULT_PLAYER_STATE);
   let logoState = Object.assign({}, DEFAULT_LOGO_STATE);
+  // Докато потребителят НЕ ги е местил ръчно, заглавието и плейърът се
+  // позиционират и оразмеряват автоматично спрямо логото (центрирани, с
+  // широчина ~колкото логото) — вместо фиксирани по подразбиране проценти,
+  // които не пасват на реалния размер на логото.
+  let titleAuto = true;
+  let playerAuto = true;
   let titleBBox = null;
   let playerBBox = null;
   let logoBBox = null;
@@ -826,6 +832,8 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     titleState = Object.assign({}, DEFAULT_TITLE_STATE, {scale: titleState.scale});
     playerState = Object.assign({}, DEFAULT_PLAYER_STATE, {scale: playerState.scale});
     logoState = Object.assign({}, DEFAULT_LOGO_STATE, {scale: logoState.scale});
+    titleAuto = true;
+    playerAuto = true;
     draw();
   });
 
@@ -847,10 +855,12 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     const p = toCanvasCoords(e.clientX, e.clientY);
     if(pointInBox(p.x,p.y,titleBBox)){
       dragTarget='title';
+      titleAuto = false;
       dragOffset = { x: p.x - (titleState.xPct/100*canvas.width), y: p.y - (titleState.yPct/100*canvas.height) };
       canvas.classList.add('dragging'); canvas.setPointerCapture(e.pointerId);
     } else if(pointInBox(p.x,p.y,playerBBox)){
       dragTarget='player';
+      playerAuto = false;
       dragOffset = { x: p.x - (playerState.xPct/100*canvas.width), y: p.y - (playerState.yPct/100*canvas.height) };
       canvas.classList.add('dragging'); canvas.setPointerCapture(e.pointerId);
     } else if(pointInBox(p.x,p.y,logoBBox)){
@@ -1006,12 +1016,29 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   }
 
   function drawTitle(t, alpha, W, H){
-    const fontSize = Math.max(10, Math.round(H*0.032*titleState.scale));
-    ctx.font = videoLook.fontWeight+' '+fontSize+'px '+videoLook.fontFamily;
     const text = songTitleInput.value || 'Име на песента';
+    let fontSize = Math.max(10, Math.round(H*0.032*titleState.scale));
+    let x = W*titleState.xPct/100;
+    let y = H*titleState.yPct/100;
+
+    if(titleAuto && logoBBox){
+      // Целим заглавието да е широко приблизително колкото логото (не повече),
+      // центрирано хоризонтално спрямо него, точно отдолу.
+      const targetWidth = logoBBox.w * 0.92;
+      ctx.font = videoLook.fontWeight+' '+fontSize+'px '+videoLook.fontFamily;
+      const w0 = ctx.measureText(text).width || 1;
+      fontSize = Math.round(fontSize * (targetWidth / w0));
+      // Не позволяваме буквите да станат абсурдно едри/дребни дори при много
+      // къс/дълъг текст на заглавието.
+      fontSize = Math.min(Math.round(H*0.075), Math.max(Math.round(H*0.02), fontSize));
+      x = logoBBox.x + logoBBox.w/2;
+      y = logoBBox.y + logoBBox.h + H*0.075*titleState.scale + fontSize;
+      titleState.xPct = x/W*100;
+      titleState.yPct = y/H*100;
+    }
+
+    ctx.font = videoLook.fontWeight+' '+fontSize+'px '+videoLook.fontFamily;
     const metrics = ctx.measureText(text);
-    const x = W*titleState.xPct/100;
-    const y = H*titleState.yPct/100;
 
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -1037,10 +1064,22 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   }
 
   function drawPlayer(t, alpha, W, H, dur){
-    const barX = W*playerState.xPct/100;
-    const barY = H*playerState.yPct/100;
-    const barW = W*0.34*playerState.scale;
-    const barH = H*0.052*playerState.scale;
+    let barX = W*playerState.xPct/100;
+    let barY = H*playerState.yPct/100;
+    let barW = W*0.34*playerState.scale;
+    let barH = H*0.052*playerState.scale;
+
+    if(playerAuto && logoBBox){
+      // Плейър лентата — приблизително колкото логото по ширина, центрирана
+      // под него (под заглавието, ако вече е нарисувано в тази рамка).
+      barW = logoBBox.w * 0.8;
+      barH = barW * (0.052/0.34) * (H/W);
+      const cx = logoBBox.x + logoBBox.w/2;
+      barX = cx - barW/2;
+      barY = titleBBox ? (titleBBox.y + titleBBox.h + H*0.045) : (logoBBox.y + logoBBox.h + H*0.15);
+      playerState.xPct = barX/W*100;
+      playerState.yPct = barY/H*100;
+    }
     const r = barH/2;
 
     const amp = (isRecording || !audioEl.paused) ? getAmplitude() : 0.15+0.05*Math.sin(t*2);
