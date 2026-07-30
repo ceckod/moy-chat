@@ -362,7 +362,7 @@ function proxied(url) {
   return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
 }
 
-async function callClaude(prompt, maxTokens = 1200) {
+async function callClaude(prompt, maxTokens = 1200, _isRetry = false) {
   const k = Keys.load();
   if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
 
@@ -380,12 +380,23 @@ async function callClaude(prompt, maxTokens = 1200) {
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }]
     })
-  }, 45000); // по-дълъг timeout — генериране на текст отнема повече от кратка проверка
+  }, 60000); // по-дълъг timeout — генериране на текст отнема повече от кратка проверка
   if (!res.ok) {
     const t = await res.text();
     throw new Error("Claude API грешка: " + t);
   }
   const data = await res.json();
+
+  // Ако отговорът е бил отрязан заради max_tokens (чест проблем при по-дълги
+  // структурирани JSON отговори — Viral Lab, Ghost Audience и т.н.), опитваме
+  // автоматично ОЩЕ ВЕДНЪЖ с двойно по-голям бюджет, вместо да върнем счупен
+  // JSON и объркваща грешка. Само 1 повторен опит, за да не увисне безкрайно.
+  if (data.stop_reason === "max_tokens" && !_isRetry) {
+    return callClaude(prompt, Math.min(maxTokens * 2, 8000), true);
+  }
+  if (data.stop_reason === "max_tokens" && _isRetry) {
+    throw new Error("Отговорът на модела е твърде дълъг дори след удвоен лимит — опитай със по-къса заявка (по-кратък текст/по-малко елементи).");
+  }
   return data.content.map(b => b.text || "").join("\n").trim();
 }
 
@@ -860,7 +871,7 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 Всички трябва да пасват на нишата, но да звучат различно едно от друго (не повтаряй теми).
 Върни ЧИСТ JSON масив: [{"title":"...", "hook":"...", "mood":"..."}]`;
     try {
-      const raw = await callClaude(prompt, 1800);
+      const raw = await callClaude(prompt, 2400);
       const list = extractJson(raw);
       AppState.data.project.albumSprint = list;
       AppState.save();
@@ -954,7 +965,7 @@ ${winningHook ? `- Използвай ТОЧНО този ред като осн
     LyricsHistory.push("Преди ново генериране");
     document.getElementById("lyricsOut").value = "⏳ Генерирам...";
     try {
-      const lyrics = await callClaude(prompt, 900);
+      const lyrics = await callClaude(prompt, 1400);
       document.getElementById("lyricsOut").value = lyrics;
       AppState.data.project.lyrics = lyrics;
       AppState.save();
@@ -1096,7 +1107,7 @@ ${genreGrounding}
 }`;
 
     try {
-      const raw = await callClaude(prompt, 2200);
+      const raw = await callClaude(prompt, 3200);
       const r = extractJson(raw);
       AppState.data.project.viralReport = r;
       AppState.save();
@@ -1235,7 +1246,7 @@ ${lyrics}
 Върни ЧИСТ JSON: {"full_lyrics": "целият текст с пренаписаната секция", "new_section_score": number (0-10, честна нова оценка САМО на пренаписаната секция), "what_changed": "1 изречение какво промени"}`;
 
     try {
-      const raw = await callClaude(prompt, 1200);
+      const raw = await callClaude(prompt, 1800);
       const res = extractJson(raw);
       LyricsHistory.push(`Преди подобряване: ${w.section}`);
       document.getElementById("lyricsOut").value = res.full_lyrics;
@@ -1335,7 +1346,7 @@ ${hooks.map((h, i) => `${i + 1}. "${h.text}"`).join("\n")}
 - why: кратка причина, максимум 8 думи
 
 Върни ЧИСТ JSON масив, В СЪЩИЯ РЕД: [{"hook_score":number,"stops_scroll":boolean,"why":"..."}]`;
-    const raw = await callClaude(prompt, 900);
+    const raw = await callClaude(prompt, 1300);
     return extractJson(raw);
   },
 
@@ -1355,7 +1366,7 @@ ${isFinal
 
 За всеки нов hook дай lineage: кратко обяснение на произхода (кой родител/и и какво взе от всеки), до 15 думи.
 Върни ЧИСТ JSON масив: [{"text":"...", "lineage":"..."}]`;
-    const raw = await callClaude(prompt, 1000);
+    const raw = await callClaude(prompt, 1500);
     return extractJson(raw);
   },
 
@@ -1416,7 +1427,7 @@ ${lyrics}
 Върни ЧИСТ JSON: {"personas":[...], "attention_heatmap":[...], "meme_risk":[...]}`;
 
     try {
-      const raw = await callClaude(prompt, 2400);
+      const raw = await callClaude(prompt, 3200);
       const r = extractJson(raw);
       AppState.data.project.ghostAudience = r;
       AppState.save();
