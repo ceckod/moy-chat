@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#020617">
+<title>Site AI — вграден асистент</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg-primary:#020617;--bg-secondary:#0f172a;--bg-tertiary:#1e293b;
+    --border:#1e293b;--border-light:#334155;--text-primary:#f8fafc;
+    --text-secondary:#e2e8f0;--text-muted:#94a3b8;--accent:#3b82f6;
+    --accent-hover:#2563eb;--user-bg:#111827;--user-border:#1f2937;
+    --success:#10b981;--error:#ef4444;--admin:#f59e0b;
+    --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-secondary);overflow:hidden;}
+  .app{display:flex;height:100vh;height:100dvh;width:100vw;}
+
+  /* ---------- Login gate ---------- */
+  .login-gate{position:fixed;inset:0;background:var(--bg-primary);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.25rem;padding:2rem;text-align:center;}
+  .login-gate.hidden{display:none;}
+  .login-gate h1{font-size:1.4rem;color:var(--text-primary);font-weight:700;}
+  .login-gate p{color:var(--text-muted);max-width:360px;font-size:0.9rem;line-height:1.5;}
+  .gsi-box{min-height:44px;}
+  .client-id-setup{margin-top:0.5rem;font-size:0.78rem;color:var(--text-muted);max-width:360px;}
+  .client-id-setup input{width:100%;margin-top:0.5rem;padding:0.6rem;border-radius:0.5rem;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-primary);font-family:inherit;font-size:0.85rem;}
+  .client-id-setup button{margin-top:0.5rem;padding:0.5rem 0.9rem;border-radius:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-primary);cursor:pointer;font-size:0.8rem;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{width:280px;background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:50;overflow-y:auto;}
+  .sidebar-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}
+  .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#34d399,#3b82f6);border-radius:.5rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0;}
+  .sidebar-title{font-size:1.15rem;font-weight:700;color:var(--text-primary);letter-spacing:-0.02em;}
+  .user-badge{display:flex;align-items:center;gap:.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:.5rem;padding:.55rem .7rem;margin-bottom:1rem;font-size:.78rem;}
+  .user-badge .u-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;color:var(--text-secondary);}
+  .user-badge .u-tag{font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:1rem;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0;}
+  .u-tag.admin{background:rgba(245,158,11,.15);color:var(--admin);border:1px solid rgba(245,158,11,.3);}
+  .u-tag.guest{background:rgba(148,163,184,.15);color:var(--text-muted);border:1px solid var(--border-light);}
+  .logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;flex-shrink:0;padding:.2rem;}
+  .new-chat-btn{width:100%;padding:.75rem;border-radius:.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-primary);font-family:inherit;font-size:.875rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;}
+  .new-chat-btn:hover{background:var(--border-light);}
+  .sidebar-section{margin-top:1.25rem;}
+  .sidebar-label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.5rem;font-weight:600;}
+  .sidebar-select,.sidebar-input{width:100%;padding:.6rem .7rem;border-radius:.5rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none;min-height:42px;}
+  .sidebar-select:focus,.sidebar-input:focus{border-color:var(--accent);}
+  .field-hint{font-size:.7rem;color:var(--text-muted);margin-top:.4rem;line-height:1.4;}
+  .field-hint a{color:var(--accent);}
+  .sessions-list{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem;max-height:22vh;overflow-y:auto;}
+  .session-item{display:flex;align-items:center;justify-content:space-between;gap:.4rem;padding:.55rem .6rem;border-radius:.5rem;cursor:pointer;font-size:.8rem;border:1px solid transparent;}
+  .session-item:hover{background:var(--bg-tertiary);}
+  .session-item.active{background:var(--bg-tertiary);border-color:var(--border-light);color:var(--text-primary);}
+  .session-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+  .session-delete{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:.2rem .4rem;border-radius:.35rem;flex-shrink:0;}
+  .session-delete:hover{color:var(--error);background:rgba(239,68,68,.12);}
+  .admin-panel{margin-top:1.25rem;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.06);border-radius:.6rem;padding:.85rem;}
+  .admin-panel .sidebar-label{color:var(--admin);}
+  .tool-log{margin-top:.6rem;max-height:14vh;overflow-y:auto;font-family:var(--font-mono);font-size:.68rem;color:var(--text-muted);border-top:1px solid var(--border);padding-top:.5rem;}
+  .tool-log div{padding:.15rem 0;word-break:break-all;}
+  .overlay{position:fixed;inset:0;background:rgba(2,6,23,.6);backdrop-filter:blur(4px);z-index:40;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .overlay.active{opacity:1;pointer-events:auto;}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--bg-primary);min-width:0;min-height:0;}
+  .main-header{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;background:rgba(15,23,42,.8);backdrop-filter:blur(10px);flex-shrink:0;}
+  .header-left{display:flex;align-items:center;gap:1rem;min-width:0;}
+  .menu-toggle{display:none;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.25rem;min-width:40px;min-height:40px;}
+  .header-model{font-weight:500;color:var(--text-secondary);font-size:.85rem;display:flex;align-items:center;gap:.5rem;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;}
+  .chat-window{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem 1.5rem .5rem;scroll-behavior:smooth;}
+  .messages-list{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:1.1rem;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:2rem;}
+  .empty-state h2{font-size:1.2rem;font-weight:600;color:var(--text-secondary);margin-bottom:.5rem;}
+  .empty-state p{max-width:420px;line-height:1.5;font-size:.88rem;}
+  .message-row{display:flex;width:100%;flex-direction:column;}
+  .message-row.user{align-items:flex-end;}
+  .message-row.assistant{align-items:flex-start;}
+  .message-content{max-width:90%;display:flex;gap:.7rem;}
+  .message-row.user .message-content{flex-direction:row-reverse;}
+  .message-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;margin-top:4px;}
+  .message-row.assistant .message-avatar{background:var(--accent);color:#fff;}
+  .message-row.user .message-avatar{background:var(--success);color:var(--bg-primary);}
+  .message-bubble{padding:.9rem 1.15rem;border-radius:1rem;font-size:.92rem;line-height:1.6;word-wrap:break-word;overflow-x:auto;min-width:0;white-space:pre-wrap;}
+  .message-row.user .message-bubble{background:var(--user-bg);border:1px solid var(--user-border);color:var(--text-primary);border-bottom-right-radius:.25rem;}
+  .message-row.assistant .message-bubble{background:rgba(30,41,59,.4);border:1px solid var(--border);color:var(--text-secondary);border-bottom-left-radius:.25rem;}
+  .tool-badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--admin);font-size:.72rem;font-family:var(--font-mono);padding:.35rem .6rem;border-radius:.5rem;margin:.3rem 0;}
+  .error-row .message-bubble{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#fca5a5;}
+  .typing-indicator span{animation:blink 1.4s infinite;opacity:.2;}
+  .typing-indicator span:nth-child(2){animation-delay:.2s;}
+  .typing-indicator span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
+  .input-area{padding:1rem 1.5rem 1.25rem;border-top:1px solid var(--border);flex-shrink:0;}
+  .input-wrapper{max-width:800px;margin:0 auto;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:1rem;padding:.5rem;}
+  .input-row{display:flex;align-items:flex-end;gap:.4rem;}
+  .chat-textarea{flex:1;min-width:0;background:transparent;border:none;color:var(--text-primary);padding:.7rem .5rem;font-family:inherit;font-size:.92rem;resize:none;outline:none;line-height:1.4;min-height:40px;max-height:160px;overflow-y:auto;}
+  .send-btn{flex-shrink:0;width:42px;height:42px;border-radius:.7rem;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:1.15rem;}
+  .send-btn:hover{background:var(--accent-hover);}
+  .send-btn:disabled{opacity:.5;cursor:not-allowed;}
+  @media(max-width:768px){
+    .sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);width:min(280px,85vw);}
+    .sidebar.open{transform:translateX(0);}
+    .menu-toggle{display:block;}
+    .input-area{padding:.6rem .6rem 1.1rem;padding-bottom:calc(1.1rem + env(safe-area-inset-bottom));}
+    .chat-window{padding:.85rem .75rem .5rem;}
+    .message-content{max-width:96%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="login-gate" id="loginGate">
+  <div class="logo-icon" style="width:52px;height:52px;font-size:1.4rem;">AI</div>
+  <h1>Влез, за да чатиш</h1>
+  <p>Достъпът е само с Google акаунт. Администраторският акаунт получава и права за редакция на сайта.</p>
+  <div class="gsi-box" id="gsiButtonContainer"></div>
+  <div class="client-id-setup" id="clientIdSetup">
+    <div>Първи път тук: въведи своя Google OAuth Client ID (от Google Cloud Console → Credentials), за да заработи логинът на този домейн.</div>
+    <input type="text" id="googleClientIdInput" placeholder="1234567890-xxxx.apps.googleusercontent.com">
+    <button type="button" id="saveClientIdBtn">Запази и покажи бутон за вход</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon">AI</div>
+      <div class="sidebar-title">Site AI</div>
+    </div>
+
+    <div class="user-badge" id="userBadge" style="display:none;">
+      <span class="u-email" id="userEmail"></span>
+      <span class="u-tag" id="userTag"></span>
+      <button class="logout-btn" id="logoutBtn" title="Изход" type="button">⏻</button>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn" type="button">+ Нов чат</button>
+
+    <div class="sidebar-section">
+      <label class="sidebar-label">История</label>
+      <div class="sessions-list" id="sessionsList"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="sidebar-label" for="providerSelect">AI доставчик</label>
+      <select class="sidebar-select" id="providerSelect">
+        <option value="gemini">Gemini</option>
+        <option value="claude">Claude</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section" id="geminiKeySection">
+      <label class="sidebar-label" for="geminiKeyInput">Gemini API ключ</label>
+      <input type="password" class="sidebar-input" id="geminiKeyInput" placeholder="AIza..." autocomplete="off">
+      <div class="field-hint">Безплатен ключ: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a></div>
+      <label class="sidebar-label" for="geminiModelSelect" style="margin-top:.75rem;">Gemini модел</label>
+      <select class="sidebar-select" id="geminiModelSelect">
+        <option value="">Зареждане на модели...</option>
+      </select>
+      <div class="field-hint">Списъкът се дърпа директно от твоя ключ. Отвори менюто отново, за да опресниш.</div>
+    </div>
+
+    <div class="sidebar-section" id="claudeKeySection" style="display:none;">
+      <label class="sidebar-label" for="claudeKeyInput">Claude API ключ</label>
+      <input type="password" class="sidebar-input" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off">
+      <div class="field-hint">От <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
+      <label class="sidebar-label" for="claudeModelSelect" style="margin-top:.75rem;">Claude модел</label>
+      <select class="sidebar-select" id="claudeModelSelect">
+        <option value="">Зареждане на модели...</option>
+      </select>
+      <div class="field-hint">По подразбиране е Haiku 4.5 — най-евтиният текущ модел ($1/$5 на млн. токена). Смени го от менюто за по-силен модел.</div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel" style="display:none;">
+      <label class="sidebar-label">⚙ Достъп за редакция (admin)</label>
+      <input type="password" class="sidebar-input" id="githubTokenInput" placeholder="GitHub token (ghp_...)" autocomplete="off" style="margin-bottom:.5rem;">
+      <input type="text" class="sidebar-input" id="repoOwnerInput" placeholder="repo owner, напр. ceckod" style="margin-bottom:.5rem;">
+      <input type="text" class="sidebar-input" id="repoNameInput" placeholder="repo име, напр. moy-chat" style="margin-bottom:.5rem;">
+      <input type="text" class="sidebar-input" id="repoBranchInput" placeholder="branch (по подразбиране main)">
+      <div class="field-hint">Token с "repo" scope, само за твоя браузър — <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a></div>
+      <div class="tool-log" id="toolLog"></div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+  </aside>
+
+  <div class="overlay" id="overlayMobile"></div>
+
+  <main class="main">
+    <header class="main-header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Меню">☰</button>
+        <div class="header-model"><span class="status-dot"></span><span id="modelDisplay">Gemini</span></div>
+      </div>
+    </header>
+
+    <div class="chat-window" id="chatWindow">
+      <div class="messages-list" id="messagesList">
+        <div class="empty-state" id="emptyState">
+          <h2>Започни разговор</h2>
+          <p id="emptyStateText">Пиши директно. Ако си admin, можеш да поискаш промени по сайта и AI-ят ще ги приложи директно в GitHub repo-то.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <div class="input-row">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Напиши съобщение..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn" type="button" aria-label="Изпрати">↑</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ============ CONFIG ============
+  var ADMIN_EMAIL = 'ceckod@gmail.com';
+  var STORAGE_KEY = 'site_ai_sessions_v1';
+  var GOOGLE_CLIENT_ID_KEY = 'site_ai_google_client_id';
+  var GEMINI_MODEL_KEY = 'site_ai_gemini_model';
+  var CLAUDE_MODEL_KEY = 'site_ai_claude_model';
+  var DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+  // Claude Haiku 4.5 е най-евтиният текущ модел ($1/$5 на млн. токена) — избран по подразбиране.
+  var DEFAULT_CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
+  var CLAUDE_FALLBACK_MODELS = [
+    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 — $1/$5 (най-евтин)' },
+    { id: 'claude-sonnet-5', label: 'Claude Sonnet 5 — $2-3/$10-15' },
+    { id: 'claude-opus-4-8', label: 'Claude Opus 4.8 — $5/$25' },
+    { id: 'claude-fable-5', label: 'Claude Fable 5 — $10/$50' }
+  ];
+
+  var ADMIN_SYSTEM_PROMPT = "Ти си AI асистент, вграден в личния сайт на потребителя, с директни права за редакция на GitHub хранилището на сайта чрез инструментите list_files, read_file и write_file. Когато потребителят поиска промяна (нов елемент, поправка, нова секция, нов файл и т.н.): 1) при нужда използвай list_files и read_file, за да разбереш структурата и текущото съдържание; 2) направи промяната директно чрез write_file, като изпращаш ЦЯЛОТО ново съдържание на файла (никога diff или частичен откъс); 3) обясни накратко на български какво си променил и защо. Никога не искай от потребителя да архивира или праща файлове ръчно — винаги работиш директно с хранилището. За обикновени въпроси отговаряй нормално, без да ползваш инструменти.";
+  var GUEST_SYSTEM_PROMPT = "Ти си полезен AI асистент за посетители на сайта. Отговаряй кратко, приятелски и на български, освен ако потребителят пише на друг език. Нямаш достъп за редакция на сайта — ако някой поиска промяна по сайта, обясни любезно, че само администраторът може да прави това.";
+
+  var TOOLS = [
+    { name: 'list_files', description: "Списък на файлове/папки в дадена пътека от repo-то на сайта. Използвай path='' за корена.",
+      params: { path: { type: 'string', description: 'Път в repo-то, напр. "" или "assets/css"' } } },
+    { name: 'read_file', description: 'Прочита пълното съдържание на текстов файл от repo-то на сайта.',
+      params: { path: { type: 'string', description: 'Пълен път до файла' } } },
+    { name: 'write_file', description: 'Създава или презаписва текстов файл в repo-то на сайта с ново пълно съдържание (директен commit).',
+      params: { path: { type: 'string', description: 'Пълен път до файла' },
+                content: { type: 'string', description: 'Пълното ново съдържание на файла' },
+                message: { type: 'string', description: 'Кратко commit съобщение' } } }
+  ];
+
+  // ============ STATE ============
+  var currentUser = null;   // {email, name}
+  var isAdmin = false;
+  var sessions = [];
+  var currentSessionId = null;
+  var isGenerating = false;
+
+  // ============ DOM ============
+  var loginGate = document.getElementById('loginGate');
+  var gsiButtonContainer = document.getElementById('gsiButtonContainer');
+  var clientIdSetup = document.getElementById('clientIdSetup');
+  var googleClientIdInput = document.getElementById('googleClientIdInput');
+  var saveClientIdBtn = document.getElementById('saveClientIdBtn');
+
+  var userBadge = document.getElementById('userBadge');
+  var userEmailEl = document.getElementById('userEmail');
+  var userTagEl = document.getElementById('userTag');
+  var logoutBtn = document.getElementById('logoutBtn');
+
+  var sidebar = document.getElementById('sidebar');
+  var overlayMobile = document.getElementById('overlayMobile');
+  var menuToggle = document.getElementById('menuToggle');
+  var newChatBtn = document.getElementById('newChatBtn');
+  var sessionsListEl = document.getElementById('sessionsList');
+  var providerSelect = document.getElementById('providerSelect');
+  var geminiKeySection = document.getElementById('geminiKeySection');
+  var claudeKeySection = document.getElementById('claudeKeySection');
+  var geminiKeyInput = document.getElementById('geminiKeyInput');
+  var claudeKeyInput = document.getElementById('claudeKeyInput');
+  var geminiModelSelect = document.getElementById('geminiModelSelect');
+  var claudeModelSelect = document.getElementById('claudeModelSelect');
+  var adminPanel = document.getElementById('adminPanel');
+  var githubTokenInput = document.getElementById('githubTokenInput');
+  var repoOwnerInput = document.getElementById('repoOwnerInput');
+  var repoNameInput = document.getElementById('repoNameInput');
+  var repoBranchInput = document.getElementById('repoBranchInput');
+  var toolLog = document.getElementById('toolLog');
+  var modelDisplay = document.getElementById('modelDisplay');
+  var chatWindow = document.getElementById('chatWindow');
+  var messagesList = document.getElementById('messagesList');
+  var emptyState = document.getElementById('emptyState');
+  var emptyStateText = document.getElementById('emptyStateText');
+  var chatInput = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('sendBtn');
+
+  // ============ Persisted settings (per-browser only) ============
+  function loadSetting(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+  function saveSetting(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  providerSelect.value = loadSetting('site_ai_provider', 'gemini');
+  geminiKeyInput.value = loadSetting('site_ai_gemini_key', '');
+  claudeKeyInput.value = loadSetting('site_ai_claude_key', '');
+  githubTokenInput.value = loadSetting('site_ai_github_token', '');
+  repoOwnerInput.value = loadSetting('site_ai_repo_owner', '');
+  repoNameInput.value = loadSetting('site_ai_repo_name', '');
+  repoBranchInput.value = loadSetting('site_ai_repo_branch', 'main');
+
+  [geminiKeyInput, claudeKeyInput, githubTokenInput, repoOwnerInput, repoNameInput, repoBranchInput].forEach(function (el) {
+    el.addEventListener('change', function () {
+      var map = { geminiKeyInput: 'site_ai_gemini_key', claudeKeyInput: 'site_ai_claude_key', githubTokenInput: 'site_ai_github_token', repoOwnerInput: 'site_ai_repo_owner', repoNameInput: 'site_ai_repo_name', repoBranchInput: 'site_ai_repo_branch' };
+      saveSetting(map[el.id], el.value.trim());
+    });
+  });
+
+  // Презарежда съответния модел-списък, ако вече е наличен ключ, при смяна на самия ключ.
+  geminiKeyInput.addEventListener('change', function () { loadGeminiModels(); });
+  claudeKeyInput.addEventListener('change', function () { loadClaudeModels(); });
+
+  function updateProviderUI() {
+    var p = providerSelect.value;
+    saveSetting('site_ai_provider', p);
+    geminiKeySection.style.display = p === 'gemini' ? '' : 'none';
+    claudeKeySection.style.display = p === 'claude' ? '' : 'none';
+    modelDisplay.textContent = p === 'gemini' ? 'Gemini' : 'Claude';
+  }
+  providerSelect.addEventListener('change', updateProviderUI);
+  updateProviderUI();
+
+  // ============ Model selectors (Gemini + Claude) ============
+  function currentGeminiModel() { return loadSetting(GEMINI_MODEL_KEY, DEFAULT_GEMINI_MODEL); }
+  function currentClaudeModel() { return loadSetting(CLAUDE_MODEL_KEY, DEFAULT_CLAUDE_MODEL); }
+
+  function loadGeminiModels() {
+    var apiKey = geminiKeyInput.value.trim();
+    if (!apiKey) { geminiModelSelect.innerHTML = '<option value="">⚠ Добави Gemini ключ</option>'; return; }
+    geminiModelSelect.innerHTML = '<option value="">Зареждане...</option>';
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey);
+    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+      var models = (data.models || []).filter(function (m) {
+        return m.supportedGenerationMethods && m.supportedGenerationMethods.indexOf('generateContent') !== -1;
+      });
+      if (!models.length) { geminiModelSelect.innerHTML = '<option value="">Няма намерени модели</option>'; return; }
+      var saved = loadSetting(GEMINI_MODEL_KEY, '');
+      geminiModelSelect.innerHTML = '';
+      models.forEach(function (m) {
+        var name = m.name.replace('models/', '');
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = m.displayName ? (m.displayName + ' (' + name + ')') : name;
+        if (name === (saved || DEFAULT_GEMINI_MODEL)) opt.selected = true;
+        geminiModelSelect.appendChild(opt);
+      });
+      if (!saved) saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value);
+    }).catch(function () {
+      geminiModelSelect.innerHTML = '<option value="' + DEFAULT_GEMINI_MODEL + '">' + DEFAULT_GEMINI_MODEL + ' (по подразбиране)</option>';
+    });
+  }
+
+  function loadClaudeModels() {
+    var apiKey = claudeKeyInput.value.trim();
+    if (!apiKey) { claudeModelSelect.innerHTML = '<option value="">⚠ Добави Claude ключ</option>'; return; }
+    claudeModelSelect.innerHTML = '<option value="">Зареждане...</option>';
+    var url = 'https://api.anthropic.com/v1/models?limit=100';
+    fetch(url, {
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      }
+    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        var saved = loadSetting(CLAUDE_MODEL_KEY, '');
+        var list = [];
+        if (res.ok && res.data && Array.isArray(res.data.data) && res.data.data.length) {
+          list = res.data.data.map(function (m) { return { id: m.id, label: m.display_name || m.id }; });
+          var rank = function (id) {
+            id = id.toLowerCase();
+            if (id.indexOf('haiku') !== -1) return 0;
+            if (id.indexOf('sonnet') !== -1) return 1;
+            if (id.indexOf('opus') !== -1) return 2;
+            if (id.indexOf('fable') !== -1 || id.indexOf('mythos') !== -1) return 3;
+            return 4;
+          };
+          list.sort(function (a, b) { return rank(a.id) - rank(b.id); });
+        } else {
+          list = CLAUDE_FALLBACK_MODELS.slice();
+        }
+        claudeModelSelect.innerHTML = '';
+        list.forEach(function (m) {
+          var opt = document.createElement('option');
+          opt.value = m.id; opt.textContent = m.label;
+          if (m.id === (saved || DEFAULT_CLAUDE_MODEL)) opt.selected = true;
+          claudeModelSelect.appendChild(opt);
+        });
+        if (!saved) saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value);
+      }).catch(function () {
+        claudeModelSelect.innerHTML = '';
+        CLAUDE_FALLBACK_MODELS.forEach(function (m) {
+          var opt = document.createElement('option');
+          opt.value = m.id; opt.textContent = m.label;
+          if (m.id === DEFAULT_CLAUDE_MODEL) opt.selected = true;
+          claudeModelSelect.appendChild(opt);
+        });
+      });
+  }
+
+  geminiModelSelect.addEventListener('change', function () { saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value); });
+  geminiModelSelect.addEventListener('mousedown', loadGeminiModels); // презарежда при всяко отваряне
+  claudeModelSelect.addEventListener('change', function () { saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value); });
+  claudeModelSelect.addEventListener('mousedown', loadClaudeModels); // презарежда при всяко отваряне
+
+  loadGeminiModels();
+  loadClaudeModels();
+
+  // ============ Google Sign-In ============
+  function b64urlDecode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) str += '=';
+    return decodeURIComponent(escape(atob(str)));
+  }
+
+  function decodeJwt(token) {
+    var parts = token.split('.');
+    return JSON.parse(b64urlDecode(parts[1]));
+  }
+
+  function handleCredentialResponse(response) {
+    var payload = decodeJwt(response.credential);
+    if (!payload.email_verified) { alert('Имейлът не е верифициран в Google акаунта.'); return; }
+    currentUser = { email: payload.email, name: payload.name || payload.email };
+    isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    saveSetting('site_ai_user_email', currentUser.email);
+    saveSetting('site_ai_user_name', currentUser.name);
+    onLoginSuccess();
+  }
+
+  function initGoogleSignIn() {
+    var clientId = loadSetting(GOOGLE_CLIENT_ID_KEY, '');
+    if (!clientId) { clientIdSetup.style.display = 'block'; return; }
+    clientIdSetup.style.display = 'none';
+    if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(initGoogleSignIn, 300); return; }
+    google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse, auto_select: false });
+    google.accounts.id.renderButton(gsiButtonContainer, { theme: 'filled_blue', size: 'large', text: 'signin_with' });
+  }
+
+  saveClientIdBtn.addEventListener('click', function () {
+    var v = googleClientIdInput.value.trim();
+    if (!v) return;
+    saveSetting(GOOGLE_CLIENT_ID_KEY, v);
+    initGoogleSignIn();
+  });
+
+  logoutBtn.addEventListener('click', function () {
+    currentUser = null; isAdmin = false;
+    try { localStorage.removeItem('site_ai_user_email'); localStorage.removeItem('site_ai_user_name'); } catch (e) {}
+    if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+    loginGate.classList.remove('hidden');
+    initGoogleSignIn();
+  });
+
+  function onLoginSuccess() {
+    loginGate.classList.add('hidden');
+    userBadge.style.display = 'flex';
+    userEmailEl.textContent = currentUser.email;
+    userTagEl.textContent = isAdmin ? 'Admin' : 'Гост';
+    userTagEl.className = 'u-tag ' + (isAdmin ? 'admin' : 'guest');
+    adminPanel.style.display = isAdmin ? 'block' : 'none';
+    emptyStateText.textContent = isAdmin
+      ? 'Пиши директно. Можеш да поискаш промени по сайта (нова секция, поправка, нов файл) и AI-ят ще ги commit-не директно в GitHub repo-то.'
+      : 'Пиши директно. Достъпен си като гост — само чат, без права за редакция на сайта.';
+    loadSessions(); renderSessionsList(); renderMessages();
+  }
+
+  // Restore session if this browser already logged in before (best-effort, no real token persisted)
+  (function tryRestore() {
+    var savedEmail = loadSetting('site_ai_user_email', '');
+    if (savedEmail) {
+      currentUser = { email: savedEmail, name: loadSetting('site_ai_user_name', savedEmail) };
+      isAdmin = savedEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      onLoginSuccess();
+    } else {
+      initGoogleSignIn();
+    }
+  })();
+
+  // ============ Sidebar mobile toggle ============
+  menuToggle.addEventListener('click', function () { sidebar.classList.add('open'); overlayMobile.classList.add('active'); });
+  overlayMobile.addEventListener('click', function () { sidebar.classList.remove('open'); overlayMobile.classList.remove('active'); });
+
+  // ============ Sessions ============
+  function uid() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function createEmptySession() { return { id: uid(), title: 'Нов чат', updatedAt: Date.now(), messages: [] }; }
+
+  function loadSessions() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      sessions = raw ? JSON.parse(raw) : [];
+    } catch (e) { sessions = []; }
+    if (!sessions.length) sessions = [createEmptySession()];
+    currentSessionId = sessions[0].id;
+  }
+  function saveSessions() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch (e) {} }
+  function getCurrentSession() {
+    var s = sessions.find(function (x) { return x.id === currentSessionId; });
+    if (!s) { s = createEmptySession(); sessions.unshift(s); currentSessionId = s.id; }
+    return s;
+  }
+  function touchSession(s) {
+    s.updatedAt = Date.now();
+    if (s.title === 'Нов чат') {
+      var firstUser = s.messages.find(function (m) { return m.role === 'user'; });
+      if (firstUser) s.title = firstUser.content.slice(0, 40);
+    }
+  }
+  function renderSessionsList() {
+    sessionsListEl.innerHTML = '';
+    sessions.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; }).forEach(function (s) {
+      var item = document.createElement('div');
+      item.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+      var title = document.createElement('span'); title.className = 'session-title'; title.textContent = s.title;
+      var del = document.createElement('button'); del.className = 'session-delete'; del.type = 'button'; del.textContent = '×';
+      del.addEventListener('click', function (e) {
+        e.stopPropagation();
+        sessions = sessions.filter(function (x) { return x.id !== s.id; });
+        if (!sessions.length) sessions = [createEmptySession()];
+        if (currentSessionId === s.id) currentSessionId = sessions[0].id;
+        saveSessions(); renderSessionsList(); renderMessages();
+      });
+      item.appendChild(title); item.appendChild(del);
+      item.addEventListener('click', function () { currentSessionId = s.id; renderSessionsList(); renderMessages(); sidebar.classList.remove('open'); overlayMobile.classList.remove('active'); });
+      sessionsListEl.appendChild(item);
+    });
+  }
+  newChatBtn.addEventListener('click', function () {
+    var s = createEmptySession(); sessions.unshift(s); currentSessionId = s.id;
+    saveSessions(); renderSessionsList(); renderMessages();
+    sidebar.classList.remove('open'); overlayMobile.classList.remove('active');
+  });
+
+  // ============ Rendering ============
+  function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
+
+  function createMessageElement(msg, isError) {
+    var row = document.createElement('div');
+    row.className = 'message-row ' + msg.role + (isError ? ' error-row' : '');
+    var wrap = document.createElement('div'); wrap.className = 'message-content';
+    var avatar = document.createElement('div'); avatar.className = 'message-avatar';
+    avatar.textContent = msg.role === 'user' ? 'Аз' : 'AI';
+    var bubble = document.createElement('div'); bubble.className = 'message-bubble';
+    bubble.textContent = msg.content || '';
+    wrap.appendChild(avatar); wrap.appendChild(bubble); row.appendChild(wrap);
+    return row;
+  }
+
+  function appendToolBadge(text) {
+    var el = document.createElement('div'); el.className = 'tool-badge'; el.textContent = '🔧 ' + text;
+    messagesList.appendChild(el); scrollToBottom();
+  }
+
+  function logTool(text) {
+    var d = document.createElement('div');
+    d.textContent = new Date().toLocaleTimeString() + ' — ' + text;
+    toolLog.insertBefore(d, toolLog.firstChild);
+  }
+
+  function renderMessages() {
+    messagesList.innerHTML = '';
+    var session = getCurrentSession();
+    if (!session.messages.length) { messagesList.appendChild(emptyState); return; }
+    session.messages.forEach(function (m) { messagesList.appendChild(createMessageElement(m, m.isError)); });
+    scrollToBottom();
+  }
+
+  var typingRow = null;
+  function showTyping() {
+    typingRow = document.createElement('div'); typingRow.className = 'message-row assistant';
+    var wrap = document.createElement('div'); wrap.className = 'message-content';
+    var avatar = document.createElement('div'); avatar.className = 'message-avatar'; avatar.textContent = 'AI';
+    var bubble = document.createElement('div'); bubble.className = 'message-bubble';
+    bubble.innerHTML = '<div class="typing-indicator"><span>.</span><span>.</span><span>.</span></div>';
+    wrap.appendChild(avatar); wrap.appendChild(bubble); typingRow.appendChild(wrap);
+    messagesList.appendChild(typingRow); scrollToBottom();
+  }
+  function removeTyping() { if (typingRow) { typingRow.remove(); typingRow = null; } }
+
+  function addErrorMessage(text) {
+    removeTyping();
+    messagesList.appendChild(createMessageElement({ role: 'assistant', content: text }, true));
+    scrollToBottom();
+  }
+
+  // ============ GitHub tool execution ============
+  function ghHeaders() {
+    return { 'Authorization': 'token ' + githubTokenInput.value.trim(), 'Accept': 'application/vnd.github+json' };
+  }
+  function ghBase() {
+    var owner = repoOwnerInput.value.trim(), repo = repoNameInput.value.trim();
+    return 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/';
+  }
+  function branchParam() { return repoBranchInput.value.trim() || 'main'; }
+
+  function utf8ToB64(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function b64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
+
+  function ghListFiles(path) {
+    var url = ghBase() + encodeURI(path || '') + '?ref=' + encodeURIComponent(branchParam());
+    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        if (!res.ok) return 'Грешка: ' + (res.data.message || 'неуспешно четене');
+        if (Array.isArray(res.data)) return res.data.map(function (f) { return (f.type === 'dir' ? '[папка] ' : '') + f.path; }).join('\n') || '(празна папка)';
+        return res.data.path;
+      });
+  }
+
+  function ghReadFile(path) {
+    var url = ghBase() + encodeURI(path) + '?ref=' + encodeURIComponent(branchParam());
+    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        if (!res.ok) return 'Грешка: ' + (res.data.message || 'файлът не е намерен');
+        if (res.data.encoding === 'base64') return b64ToUtf8(res.data.content.replace(/\n/g, ''));
+        return res.data.content || '';
+      });
+  }
+
+  function ghWriteFile(path, content, message) {
+    var url = ghBase() + encodeURI(path);
+    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (existing) {
+        var body = {
+          message: message || ('Промяна чрез Site AI: ' + path),
+          content: utf8ToB64(content),
+          branch: branchParam()
+        };
+        if (existing && existing.sha) body.sha = existing.sha;
+        return fetch(url, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()), body: JSON.stringify(body) })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            if (!res.ok) return 'Грешка при запис: ' + (res.data.message || r.statusText);
+            return 'Записано успешно: ' + path + ' (commit ' + (res.data.commit && res.data.commit.sha ? res.data.commit.sha.slice(0, 7) : '') + ')';
+          });
+      });
+  }
+
+  function executeTool(name, input) {
+    if (!githubTokenInput.value.trim() || !repoOwnerInput.value.trim() || !repoNameInput.value.trim()) {
+      return Promise.resolve('Грешка: липсват GitHub настройки (token/owner/repo) в admin панела.');
+    }
+    appendToolBadge(name + '(' + (input.path || '') + ')');
+    logTool(name + ' → ' + (input.path || ''));
+    if (name === 'list_files') return ghListFiles(input.path);
+    if (name === 'read_file') return ghReadFile(input.path);
+    if (name === 'write_file') return ghWriteFile(input.path, input.content, input.message);
+    return Promise.resolve('Непознат инструмент: ' + name);
+  }
+
+  // ============ Provider: Gemini ============
+  function geminiToolDecl() {
+    return [{ functionDeclarations: TOOLS.map(function (t) {
+      var props = {}; var required = [];
+      Object.keys(t.params).forEach(function (k) { props[k] = { type: 'STRING', description: t.params[k].description }; required.push(k); });
+      return { name: t.name, description: t.description, parameters: { type: 'OBJECT', properties: props, required: required } };
+    }) }];
+  }
+
+  function runGemini(sessionMessages, sysPrompt, useTools) {
+    var apiKey = geminiKeyInput.value.trim();
+    if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в лявото меню.');
+    var contents = sessionMessages.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
+    var model = currentGeminiModel();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+
+    function step(depth) {
+      if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
+      var body = { contents: contents, systemInstruction: { parts: [{ text: sysPrompt }] }, generationConfig: { maxOutputTokens: 8192 } };
+      if (useTools) body.tools = geminiToolDecl();
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          if (!res.ok) return 'Грешка от Gemini: ' + (res.data.error ? res.data.error.message : 'неизвестна');
+          var cand = res.data.candidates && res.data.candidates[0];
+          var parts = cand && cand.content && cand.content.parts ? cand.content.parts : [];
+          var fnCalls = parts.filter(function (p) { return p.functionCall; });
+          var textParts = parts.filter(function (p) { return p.text }).map(function (p) { return p.text; }).join('\n');
+          if (!fnCalls.length) return textParts || '(празен отговор)';
+          contents.push({ role: 'model', parts: parts });
+          return Promise.all(fnCalls.map(function (p) {
+            return executeTool(p.functionCall.name, p.functionCall.args || {}).then(function (result) {
+              return { functionResponse: { name: p.functionCall.name, response: { result: String(result) } } };
+            });
+          })).then(function (responseParts) {
+            contents.push({ role: 'user', parts: responseParts });
+            return step(depth + 1);
+          });
+        });
+    }
+    return step(0);
+  }
+
+  // ============ Provider: Claude ============
+  function claudeToolDecl() {
+    return TOOLS.map(function (t) {
+      var props = {}; var required = [];
+      Object.keys(t.params).forEach(function (k) { props[k] = { type: 'string', description: t.params[k].description }; required.push(k); });
+      return { name: t.name, description: t.description, input_schema: { type: 'object', properties: props, required: required } };
+    });
+  }
+
+  function runClaude(sessionMessages, sysPrompt, useTools) {
+    var apiKey = claudeKeyInput.value.trim();
+    if (!apiKey) return Promise.resolve('⚠ Липсва Claude API ключ — добави го в лявото меню.');
+    var model = currentClaudeModel();
+    var working = sessionMessages.map(function (m) { return { role: m.role, content: m.content }; });
+    var url = 'https://api.anthropic.com/v1/messages';
+
+    function step(depth) {
+      if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
+      var body = { model: model, max_tokens: 4096, system: sysPrompt, messages: working };
+      if (useTools) body.tools = claudeToolDecl();
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify(body)
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          if (!res.ok) return 'Грешка от Claude: ' + (res.data.error ? res.data.error.message : 'неизвестна');
+          var blocks = res.data.content || [];
+          var toolUses = blocks.filter(function (b) { return b.type === 'tool_use'; });
+          var text = blocks.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('\n');
+          if (!toolUses.length) return text || '(празен отговор)';
+          working.push({ role: 'assistant', content: blocks });
+          return Promise.all(toolUses.map(function (tu) {
+            return executeTool(tu.name, tu.input || {}).then(function (result) {
+              return { type: 'tool_result', tool_use_id: tu.id, content: String(result) };
+            });
+          })).then(function (toolResults) {
+            working.push({ role: 'user', content: toolResults });
+            return step(depth + 1);
+          });
+        });
+    }
+    return step(0);
+  }
+
+  // ============ Send message ============
+  function setBusy(b) { isGenerating = b; sendBtn.disabled = b; }
+
+  function sendMessage() {
+    if (isGenerating || !currentUser) return;
+    var text = chatInput.value.trim();
+    if (!text) return;
+
+    var session = getCurrentSession();
+    session.messages.push({ role: 'user', content: text });
+    chatInput.value = ''; chatInput.style.height = 'auto';
+    setBusy(true);
+    touchSession(session); saveSessions(); renderSessionsList(); renderMessages(); showTyping();
+
+    var provider = providerSelect.value;
+    var sysPrompt = isAdmin ? ADMIN_SYSTEM_PROMPT : GUEST_SYSTEM_PROMPT;
+    var useTools = isAdmin;
+
+    var runner = provider === 'claude' ? runClaude : runGemini;
+    runner(session.messages, sysPrompt, useTools).then(function (answer) {
+      removeTyping();
+      session.messages.push({ role: 'assistant', content: answer });
+      touchSession(session); saveSessions(); renderMessages(); setBusy(false);
+    }).catch(function (err) {
+      addErrorMessage('Грешка: ' + err.message); setBusy(false);
+    });
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  chatInput.addEventListener('input', function () {
+    this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  });
+
+});
+</script>
+</body>
+</html>
