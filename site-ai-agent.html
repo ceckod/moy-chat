@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var apiKey = geminiKeyInput.value.trim();
     if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в лявото меню.');
     var contents = sessionMessages.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
-    var model = 'gemini-2.5-flash';
+    var model = 'gemini-3.6-flash';
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(apiKey);
 
     function step(depth) {
