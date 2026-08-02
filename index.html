@@ -2,662 +2,1032 @@
 <html lang="bg">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#020617">
-<title>Site AI — вграден асистент</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Music Suite — CD-B Records</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AI Music Suite">
+<meta name="theme-color" content="#0a0a14">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
-  :root{
-    --bg-primary:#020617;--bg-secondary:#0f172a;--bg-tertiary:#1e293b;
-    --border:#1e293b;--border-light:#334155;--text-primary:#f8fafc;
-    --text-secondary:#e2e8f0;--text-muted:#94a3b8;--accent:#3b82f6;
-    --accent-hover:#2563eb;--user-bg:#111827;--user-border:#1f2937;
-    --success:#10b981;--error:#ef4444;--admin:#f59e0b;
-    --font-sans:'Inter',system-ui,-apple-system,sans-serif;
-    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-secondary);overflow:hidden;}
-  .app{display:flex;height:100vh;height:100dvh;width:100vw;}
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+:root{
+  --bg:#0a0a14; --bg-sidebar:#0d0e1a; --panel:#13142450; --panel-solid:#141527;
+  --panel-2:#1a1b30; --border:#25263f; --border-soft:#1d1e35;
+  --text:#eef0fb; --muted:#8b8fb0; --muted-2:#5f6285;
+  --p1:#8b5cf6; --p2:#ec4899; --cyan:#22d3ee;
+  --grad: linear-gradient(135deg, var(--p1), var(--p2));
+  --green:#22c55e; --amber:#f59e0b; --red:#f43f5e;
+  --radius:14px; --radius-sm:9px;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-head:'Space Grotesk',var(--font-ui);
+  --font-mono:'JetBrains Mono',monospace;
+}
+body.theme-light{
+  --bg:#f3f4fb; --bg-sidebar:#ffffff; --panel:#ffffffcc; --panel-solid:#ffffff;
+  --panel-2:#f0f1fa; --border:#e3e5f4; --border-soft:#ececf7;
+  --text:#191a2e; --muted:#666a8c; --muted-2:#9a9dbb;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-ui);background:var(--bg);color:var(--text);
+     -webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:inherit;}
+a{color:var(--cyan);}
 
-  /* ---------- Login gate ---------- */
-  .login-gate{position:fixed;inset:0;background:var(--bg-primary);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.25rem;padding:2rem;text-align:center;}
-  .login-gate.hidden{display:none;}
-  .login-gate h1{font-size:1.4rem;color:var(--text-primary);font-weight:700;}
-  .login-gate p{color:var(--text-muted);max-width:360px;font-size:0.9rem;line-height:1.5;}
-  .gsi-box{min-height:44px;}
-  .client-id-setup{margin-top:0.5rem;font-size:0.78rem;color:var(--text-muted);max-width:360px;}
-  .client-id-setup input{width:100%;margin-top:0.5rem;padding:0.6rem;border-radius:0.5rem;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-primary);font-family:inherit;font-size:0.85rem;}
-  .client-id-setup button{margin-top:0.5rem;padding:0.5rem 0.9rem;border-radius:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-primary);cursor:pointer;font-size:0.8rem;}
+/* ---------- SHELL ---------- */
+.shell{display:flex;min-height:100vh;}
 
-  /* ---------- Sidebar ---------- */
-  .sidebar{width:280px;background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:50;overflow-y:auto;}
-  .sidebar-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}
-  .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#34d399,#3b82f6);border-radius:.5rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0;}
-  .sidebar-title{font-size:1.15rem;font-weight:700;color:var(--text-primary);letter-spacing:-0.02em;}
-  .user-badge{display:flex;align-items:center;gap:.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:.5rem;padding:.55rem .7rem;margin-bottom:1rem;font-size:.78rem;}
-  .user-badge .u-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;color:var(--text-secondary);}
-  .user-badge .u-tag{font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:1rem;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0;}
-  .u-tag.admin{background:rgba(245,158,11,.15);color:var(--admin);border:1px solid rgba(245,158,11,.3);}
-  .u-tag.guest{background:rgba(148,163,184,.15);color:var(--text-muted);border:1px solid var(--border-light);}
-  .logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;flex-shrink:0;padding:.2rem;}
-  .new-chat-btn{width:100%;padding:.75rem;border-radius:.5rem;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-primary);font-family:inherit;font-size:.875rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;}
-  .new-chat-btn:hover{background:var(--border-light);}
-  .sidebar-section{margin-top:1.25rem;}
-  .sidebar-label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.5rem;font-weight:600;}
-  .sidebar-select,.sidebar-input{width:100%;padding:.6rem .7rem;border-radius:.5rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none;min-height:42px;}
-  .sidebar-select:focus,.sidebar-input:focus{border-color:var(--accent);}
-  .field-hint{font-size:.7rem;color:var(--text-muted);margin-top:.4rem;line-height:1.4;}
-  .field-hint a{color:var(--accent);}
-  .sessions-list{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem;max-height:22vh;overflow-y:auto;}
-  .session-item{display:flex;align-items:center;justify-content:space-between;gap:.4rem;padding:.55rem .6rem;border-radius:.5rem;cursor:pointer;font-size:.8rem;border:1px solid transparent;}
-  .session-item:hover{background:var(--bg-tertiary);}
-  .session-item.active{background:var(--bg-tertiary);border-color:var(--border-light);color:var(--text-primary);}
-  .session-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
-  .session-delete{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:.2rem .4rem;border-radius:.35rem;flex-shrink:0;}
-  .session-delete:hover{color:var(--error);background:rgba(239,68,68,.12);}
-  .admin-panel{margin-top:1.25rem;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.06);border-radius:.6rem;padding:.85rem;}
-  .admin-panel .sidebar-label{color:var(--admin);}
-  .tool-log{margin-top:.6rem;max-height:14vh;overflow-y:auto;font-family:var(--font-mono);font-size:.68rem;color:var(--text-muted);border-top:1px solid var(--border);padding-top:.5rem;}
-  .tool-log div{padding:.15rem 0;word-break:break-all;}
-  .overlay{position:fixed;inset:0;background:rgba(2,6,23,.6);backdrop-filter:blur(4px);z-index:40;opacity:0;pointer-events:none;transition:opacity .3s;}
-  .overlay.active{opacity:1;pointer-events:auto;}
+/* ---------- SIDEBAR ---------- */
+.sidebar{width:250px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border-soft);
+         padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 18px;}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--grad);display:flex;align-items:center;
+            justify-content:center;font-size:16px;flex-shrink:0;}
+.brand-name{font-family:var(--font-head);font-weight:700;font-size:15px;line-height:1.2;}
+.brand-sub{font-size:10.5px;color:var(--muted);}
+.nav-group{margin-top:16px;}
+.nav-label{font-size:10px;letter-spacing:.08em;color:var(--muted-2);font-weight:700;
+           padding:0 10px;margin-bottom:6px;text-transform:uppercase;}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;
+         border:none;color:var(--muted);padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;
+         margin-bottom:2px;}
+.nav-btn:hover{background:var(--panel-2);color:var(--text);}
+.nav-btn.active{background:var(--panel-2);color:var(--text);position:relative;}
+.nav-btn.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;
+                         border-radius:3px;background:var(--grad);}
+.nav-btn .ic{width:16px;text-align:center;flex-shrink:0;opacity:.9;}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border-soft);}
+.theme-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:12px;color:var(--muted);}
+.switch{position:relative;width:38px;height:21px;border-radius:20px;background:var(--panel-2);
+        border:1px solid var(--border);cursor:pointer;flex-shrink:0;}
+.switch .knob{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--grad);
+              transition:left .15s;}
+.switch.on .knob{left:19px;}
+.user-card{display:flex;align-items:center;gap:9px;padding:10px;border-radius:10px;background:var(--panel-2);margin-top:8px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--grad);flex-shrink:0;}
+.user-name{font-size:12.5px;font-weight:600;}
+.user-plan{font-size:10.5px;color:var(--muted);}
+.version-tag{font-size:10px;color:var(--muted-2);text-align:center;margin-top:10px;}
 
-  /* ---------- Main ---------- */
-  .main{flex:1;display:flex;flex-direction:column;background:var(--bg-primary);min-width:0;min-height:0;}
-  .main-header{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;background:rgba(15,23,42,.8);backdrop-filter:blur(10px);flex-shrink:0;}
-  .header-left{display:flex;align-items:center;gap:1rem;min-width:0;}
-  .menu-toggle{display:none;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.25rem;min-width:40px;min-height:40px;}
-  .header-model{font-weight:500;color:var(--text-secondary);font-size:.85rem;display:flex;align-items:center;gap:.5rem;}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;}
-  .chat-window{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem 1.5rem .5rem;scroll-behavior:smooth;}
-  .messages-list{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:1.1rem;}
-  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:2rem;}
-  .empty-state h2{font-size:1.2rem;font-weight:600;color:var(--text-secondary);margin-bottom:.5rem;}
-  .empty-state p{max-width:420px;line-height:1.5;font-size:.88rem;}
-  .message-row{display:flex;width:100%;flex-direction:column;}
-  .message-row.user{align-items:flex-end;}
-  .message-row.assistant{align-items:flex-start;}
-  .message-content{max-width:90%;display:flex;gap:.7rem;}
-  .message-row.user .message-content{flex-direction:row-reverse;}
-  .message-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;margin-top:4px;}
-  .message-row.assistant .message-avatar{background:var(--accent);color:#fff;}
-  .message-row.user .message-avatar{background:var(--success);color:var(--bg-primary);}
-  .message-bubble{padding:.9rem 1.15rem;border-radius:1rem;font-size:.92rem;line-height:1.6;word-wrap:break-word;overflow-x:auto;min-width:0;white-space:pre-wrap;}
-  .message-row.user .message-bubble{background:var(--user-bg);border:1px solid var(--user-border);color:var(--text-primary);border-bottom-right-radius:.25rem;}
-  .message-row.assistant .message-bubble{background:rgba(30,41,59,.4);border:1px solid var(--border);color:var(--text-secondary);border-bottom-left-radius:.25rem;}
-  .tool-badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--admin);font-size:.72rem;font-family:var(--font-mono);padding:.35rem .6rem;border-radius:.5rem;margin:.3rem 0;}
-  .error-row .message-bubble{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#fca5a5;}
-  .typing-indicator span{animation:blink 1.4s infinite;opacity:.2;}
-  .typing-indicator span:nth-child(2){animation-delay:.2s;}
-  .typing-indicator span:nth-child(3){animation-delay:.4s;}
-  @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
-  .input-area{padding:1rem 1.5rem 1.25rem;border-top:1px solid var(--border);flex-shrink:0;}
-  .input-wrapper{max-width:800px;margin:0 auto;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:1rem;padding:.5rem;}
-  .input-row{display:flex;align-items:flex-end;gap:.4rem;}
-  .chat-textarea{flex:1;min-width:0;background:transparent;border:none;color:var(--text-primary);padding:.7rem .5rem;font-family:inherit;font-size:.92rem;resize:none;outline:none;line-height:1.4;min-height:40px;max-height:160px;overflow-y:auto;}
-  .send-btn{flex-shrink:0;width:42px;height:42px;border-radius:.7rem;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:1.15rem;}
-  .send-btn:hover{background:var(--accent-hover);}
-  .send-btn:disabled{opacity:.5;cursor:not-allowed;}
-  @media(max-width:768px){
-    .sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);width:min(280px,85vw);}
-    .sidebar.open{transform:translateX(0);}
-    .menu-toggle{display:block;}
-    .input-area{padding:.6rem .6rem 1.1rem;padding-bottom:calc(1.1rem + env(safe-area-inset-bottom));}
-    .chat-window{padding:.85rem .75rem .5rem;}
-    .message-content{max-width:96%;}
-  }
+/* ---------- MAIN ---------- */
+.main{flex:1;min-width:0;padding:22px 26px 60px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.topbar h1{font-family:var(--font-head);font-size:22px;margin:0;}
+.topbar .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.pill{display:flex;align-items:center;gap:8px;background:var(--panel-solid);border:1px solid var(--border);
+      border-radius:20px;padding:7px 14px;font-size:12px;}
+.pill .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;}
+.pill strong{font-size:12px;}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--panel-solid);border:1px solid var(--border);
+          color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+
+/* ---------- VIEWS ---------- */
+.view{display:none;}
+.view.active{display:block;}
+.section-title{font-family:var(--font-head);font-size:12px;letter-spacing:.06em;color:var(--muted);
+               font-weight:700;text-transform:uppercase;margin:26px 0 12px;}
+.section-title:first-child{margin-top:0;}
+
+/* ---------- CARDS / GRID ---------- */
+.grid{display:grid;gap:14px;}
+.grid.cols-6{grid-template-columns:repeat(6,1fr);}
+.grid.cols-5{grid-template-columns:repeat(5,1fr);}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.grid.cols-2{grid-template-columns:repeat(2,1fr);}
+@media (max-width:1100px){
+  .grid.cols-6,.grid.cols-5,.grid.cols-4{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:760px){
+  .sidebar{display:none;}
+  .grid.cols-6,.grid.cols-5,.grid.cols-4,.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}
+}
+
+.card{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card.tight{padding:14px;}
+.num-card{position:relative;}
+.num-card .n{position:absolute;top:12px;right:14px;font-family:var(--font-mono);font-size:11px;color:var(--muted-2);}
+.num-card .ic-badge{width:34px;height:34px;border-radius:9px;background:var(--panel-2);display:flex;align-items:center;
+                     justify-content:center;font-size:16px;margin-bottom:10px;}
+.num-card h4{margin:0 0 6px;font-size:13.5px;font-weight:600;}
+.num-card p{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.4;min-height:32px;}
+
+/* buttons */
+.btn{border:none;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;}
+.btn.grad{background:var(--grad);color:#fff;}
+.btn.grad:hover{opacity:.92;}
+.btn.ghost{background:var(--panel-2);border:1px solid var(--border);color:var(--text);}
+.btn.ghost:hover{background:var(--border);}
+.btn.full{width:100%;}
+.btn.sm{padding:6px 11px;font-size:11.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* forms */
+label{display:block;font-size:11.5px;color:var(--muted);margin:12px 0 4px;font-weight:600;}
+input[type=text],input[type=number],input[type=password],textarea,select{
+  width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:13.5px;font-family:inherit;
+}
+textarea{min-height:100px;resize:vertical;}
+.row{display:flex;gap:12px;flex-wrap:wrap;}
+.row > *{flex:1;min-width:150px;}
+.copy-field{display:flex;gap:8px;align-items:center;background:var(--bg);
+            border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-top:6px;}
+.copy-field span{flex:1;font-size:12.5px;word-break:break-word;line-height:1.4;}
+.copy-field button{flex-shrink:0;}
+.hashtags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.hashtags span{background:var(--panel-2);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11.5px;}
+.muted{color:var(--muted);font-size:12px;}
+
+/* ---------- VIRAL LAB ---------- */
+.vscore-hero{display:flex;align-items:center;gap:18px;padding:6px 0 14px;flex-wrap:wrap;}
+.vscore-ring{position:relative;width:96px;height:96px;flex-shrink:0;border-radius:50%;
+  background:conic-gradient(var(--p1) calc(var(--pct)*1%), var(--panel-2) 0);
+  display:flex;align-items:center;justify-content:center;}
+.vscore-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--panel-solid);}
+.vscore-ring .v{position:relative;font-family:var(--font-head);font-size:22px;font-weight:700;}
+.vscore-ring .v small{display:block;font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+.vscore-meta strong{font-size:14px;}
+.vscore-meta p{margin:4px 0 0;}
+.vbar-row{margin-top:10px;}
+.vbar-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+.vbar-row .lbl span:last-child{color:var(--muted);font-family:var(--font-mono);}
+.vbar-track{height:7px;border-radius:6px;background:var(--panel-2);overflow:hidden;}
+.vbar-fill{height:100%;border-radius:6px;background:var(--grad);}
+.vpred-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px;}
+.vpred-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.vpred-item .pv{font-family:var(--font-head);font-size:18px;font-weight:700;}
+.vpred-item .pl{font-size:11px;color:var(--muted);margin-top:2px;}
+.stars{color:var(--amber);font-size:15px;letter-spacing:1px;}
+.vlist{margin:8px 0 0;padding-left:18px;font-size:12.5px;line-height:1.55;color:var(--text);}
+.vlist.cons{color:var(--muted);}
+.weak-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.weak-card .ws-score{font-family:var(--font-mono);font-size:12px;color:var(--red);flex-shrink:0;}
+@media (max-width:760px){.vpred-grid{grid-template-columns:1fr 1fr;}}
+
+/* ---------- HOOK EVOLUTION ARENA ---------- */
+.arena-gen{margin-top:16px;}
+.arena-gen-title{font-family:var(--font-head);font-size:12.5px;font-weight:700;color:var(--cyan);
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.arena-gen-title .best{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+.arena-hook{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;
+  display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.arena-hook.winner{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+.arena-hook .txt{font-size:12.5px;line-height:1.5;flex:1;}
+.arena-hook .sc{font-family:var(--font-mono);font-size:13px;font-weight:700;flex-shrink:0;color:var(--p1);}
+.lineage{font-size:10.5px;color:var(--muted-2);margin-top:4px;font-style:italic;}
+
+/* ---------- GHOST AUDIENCE ---------- */
+.persona-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;}
+.persona-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.persona-card .who{display:flex;justify-content:space-between;font-size:12px;font-weight:700;}
+.persona-card .who span:last-child{font-weight:400;color:var(--muted);font-size:11px;}
+.persona-card .quote{font-size:12.5px;margin:5px 0;line-height:1.5;font-style:italic;}
+.persona-card .scroll{font-size:11px;}
+.persona-card .scroll.stay{color:var(--green);}
+.persona-card .scroll.leave{color:var(--red);}
+.heat-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.heat-row .sec{width:100px;flex-shrink:0;font-size:11.5px;color:var(--muted);}
+.heat-track{flex:1;height:16px;border-radius:6px;background:var(--panel-2);overflow:hidden;position:relative;}
+.heat-fill{height:100%;border-radius:6px;}
+.meme-flag{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.35);border-radius:10px;
+  padding:9px 11px;margin-top:8px;font-size:12px;}
+
+/* status chips */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.chip.green{background:rgba(34,197,94,.13);color:var(--green);}
+.chip.amber{background:rgba(245,158,11,.13);color:var(--amber);}
+.chip.red{background:rgba(244,63,94,.13);color:var(--red);}
+.chip.cyan{background:rgba(34,211,238,.13);color:var(--cyan);}
+.chip .d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* KPI stat block */
+.kpi{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.kpi .label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.kpi .value{font-family:var(--font-mono);font-size:20px;font-weight:600;}
+.kpi .delta{font-size:11px;color:var(--green);margin-top:4px;}
+.kpi .delta.down{color:var(--red);}
+
+/* table */
+table.data{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.data th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 8px;
+              border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.03em;}
+table.data td{padding:9px 8px;border-bottom:1px solid var(--border-soft);}
+table.data tr:last-child td{border-bottom:none;}
+
+/* settings list row */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;
+         border-bottom:1px solid var(--border-soft);}
+.set-row:last-child{border-bottom:none;}
+.set-row .txt strong{font-size:13px;display:block;}
+.set-row .txt span{font-size:11.5px;color:var(--muted);}
+
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;
+           align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--panel-solid);border:1px solid var(--border);border-radius:16px;
+       padding:22px;width:460px;max-width:100%;max-height:88vh;overflow-y:auto;}
+.modal h3{margin-top:0;font-family:var(--font-head);}
+hr{border:none;border-top:1px solid var(--border-soft);}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--panel-solid);border:1px solid var(--border);
+       padding:12px 16px;border-radius:10px;font-size:13px;z-index:60;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+
+/* visualizer / transition mini widget */
+.transition-badge{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 0;}
+.tb-box{width:64px;height:64px;border-radius:12px;border:2px solid var(--p1);display:flex;align-items:center;
+        justify-content:center;font-family:var(--font-head);font-weight:700;font-size:24px;
+        box-shadow:0 0 20px rgba(139,92,246,.35);color:var(--p1);}
+.tb-arrow{font-size:20px;color:var(--p2);}
+
+.checklist-item{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:6px;color:var(--muted);}
+.checklist-item .ok{color:var(--green);}
+.checklist-item .bug{color:var(--amber);}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+
+/* ---------- AI CHAT BLOCK (dashboard, always visible) ---------- */
+.aichat-card{display:flex;flex-direction:column;padding:0;overflow:hidden;}
+.aichat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;}
+.aichat-head-left{display:flex;align-items:center;gap:10px;}
+.aichat-head-left .ic-badge{width:34px;height:34px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:16px;margin:0;flex-shrink:0;}
+.aichat-head strong{font-size:13.5px;}
+.aichat-head .sub{font-size:11px;color:var(--muted);}
+.aichat-controls{display:flex;gap:8px;align-items:center;}
+.aichat-controls select{width:auto;padding:6px 9px;font-size:12px;}
+.aichat-log{max-height:340px;min-height:140px;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+.aichat-empty{color:var(--muted);font-size:12.5px;text-align:center;padding:18px 10px;}
+.aichat-msg{display:flex;gap:8px;max-width:92%;}
+.aichat-msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.aichat-msg.assistant{align-self:flex-start;}
+.aichat-avatar{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-top:2px;}
+.aichat-msg.user .aichat-avatar{background:var(--grad);color:#fff;}
+.aichat-msg.assistant .aichat-avatar{background:var(--panel-2);color:var(--text);}
+.aichat-bubble{padding:9px 12px;border-radius:11px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
+.aichat-msg.user .aichat-bubble{background:var(--grad);color:#fff;border-bottom-right-radius:3px;}
+.aichat-msg.assistant .aichat-bubble{background:var(--panel-solid);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px;}
+.aichat-msg.error .aichat-bubble{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.35);color:#ffb4c2;}
+.aichat-tool{align-self:flex-start;font-family:var(--font-mono);font-size:10.5px;color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:4px 9px;border-radius:8px;}
+.aichat-typing span{animation:aichat-blink 1.4s infinite;opacity:.25;}
+.aichat-typing span:nth-child(2){animation-delay:.2s;}
+.aichat-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes aichat-blink{0%,100%{opacity:.25;}50%{opacity:1;}}
+.aichat-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border-soft);align-items:flex-end;}
+.aichat-input-row textarea{min-height:38px;max-height:120px;resize:none;padding:8px 10px;}
+.aichat-input-row button{flex-shrink:0;height:38px;}
+.aichat-hint{font-size:10.5px;color:var(--muted-2);padding:0 16px 12px;}
+@media (max-width:760px){.aichat-msg{max-width:96%;}}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
 </style>
 </head>
+   
 <body>
+<div class="shell">
 
-<div class="login-gate" id="loginGate">
-  <div class="logo-icon" style="width:52px;height:52px;font-size:1.4rem;">AI</div>
-  <h1>Влез, за да чатиш</h1>
-  <p>Достъпът е само с Google акаунт. Администраторският акаунт получава и права за редакция на сайта.</p>
-  <div class="gsi-box" id="gsiButtonContainer"></div>
-  <div class="client-id-setup" id="clientIdSetup">
-    <div>Първи път тук: въведи своя Google OAuth Client ID (от Google Cloud Console → Credentials), за да заработи логинът на този домейн.</div>
-    <input type="text" id="googleClientIdInput" placeholder="1234567890-xxxx.apps.googleusercontent.com">
-    <button type="button" id="saveClientIdBtn">Запази и покажи бутон за вход</button>
+  <!-- ================= SIDEBAR ================= -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">🎚️</div>
+      <div>
+        <div class="brand-name">AI Music Suite</div>
+        <div class="brand-sub">Your AI Co-Pilot for Viral Music</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Навигация</div>
+      <button class="nav-btn" data-view="dashboard" onclick="Nav.showView('dashboard')"><span class="ic">🏠</span> Dashboard</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Стъпка 1 — Създаване</div>
+      <button class="nav-btn" data-view="step1" onclick="Nav.showView('step1')"><span class="ic">🔍</span> 1. Пазарен анализ</button>
+      <button class="nav-btn" data-view="step2" onclick="Nav.showView('step2')"><span class="ic">🎬</span> 2. Визуализатор</button>
+      <button class="nav-btn" data-view="step3" onclick="Nav.showView('step3')"><span class="ic">📤</span> 3. Публикуване</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Бърз режим</div>
+      <button class="nav-btn" data-view="quick" onclick="Nav.showView('quick')"><span class="ic">⚡</span> Бърз ъплоуд (стари песни)</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Gemini Validator</div>
+      <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Втори поглед (Лог)</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Настройки</div>
+      <button class="nav-btn" data-view="set-keys" onclick="Nav.showView('set-keys')"><span class="ic">🔑</span> API Ключове</button>
+      <button class="nav-btn" data-view="set-proxy" onclick="Nav.showView('set-proxy')"><span class="ic">🌐</span> Proxy &amp; Мрежа</button>
+      <button class="nav-btn" data-view="set-project" onclick="Nav.showView('set-project')"><span class="ic">💾</span> Проект &amp; Данни</button>
+      <button class="nav-btn" data-view="set-prefs" onclick="Nav.showView('set-prefs')"><span class="ic">🎛️</span> Предпочитания</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Статистика</div>
+      <button class="nav-btn" data-view="stats-tracker" onclick="Nav.showView('stats-tracker')"><span class="ic">📡</span> YouTube Тракер</button>
+      <button class="nav-btn" data-view="stats-analytics" onclick="Nav.showView('stats-analytics')"><span class="ic">📊</span> Анализи &amp; Графики</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Инфраструктура</div>
+      <button class="nav-btn" data-view="infra-logs" onclick="Nav.showView('infra-logs')"><span class="ic">🖥️</span> Системни логове</button>
+      <button class="nav-btn" data-view="infra-config" onclick="Nav.showView('infra-config')"><span class="ic">🧩</span> Конфигурация</button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="theme-row">
+        <span>Тема</span>
+        <div class="switch" id="themeSwitch" onclick="Prefs.toggleTheme()"><div class="knob"></div></div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div>
+          <div class="user-name">Музикален Визионер</div>
+          <div class="user-plan">CD-B Records</div>
+        </div>
+      </div>
+      <div class="version-tag">v2.1.0 · AI Music Suite</div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <div class="topbar">
+      <div>
+        <h1>Здравей, Музикален Визионер! 👋</h1>
+        <div class="sub">Създавай. Анализирай. Публикувай. Расти.</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="pill"><span class="dot-live" id="validatorStatusDot"></span> <span>Gemini Validator<br><strong id="validatorStatusText">Проверка...</strong></span></div>
+        <button class="btn grad" onclick="Settings.newProject()">+ Нов проект</button>
+        <button class="icon-btn" onclick="Nav.showView('set-keys')" title="Настройки">⚙️</button>
+      </div>
+    </div>
+
+    <!-- ============ DASHBOARD VIEW ============ -->
+    <div class="view active" id="view-dashboard">
+
+      <div class="card" style="background:var(--grad);border:none;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:15px;">⚡ Бърз ъплоуд за стари песни</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Аудио → видео → Gemini анализ (звук + текст) → Claude заглавие/описание/тагове → авто качване в YouTube (unlisted). Прескача концепция/обложка.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('quick')">Отвори →</button>
+      </div>
+
+      <div class="section-title">AI Чат — говори директно с Gemini / Claude</div>
+      <div class="card aichat-card">
+        <div class="aichat-head">
+          <div class="aichat-head-left">
+            <div class="ic-badge">💬</div>
+            <div>
+              <strong>AI Асистент</strong>
+              <div class="sub">Може да редактира файлове в това repo при поискване (GitHub commit).</div>
+            </div>
+          </div>
+          <div class="aichat-controls">
+            <select id="aichatProvider">
+              <option value="gemini">Gemini</option>
+              <option value="claude">Claude</option>
+            </select>
+            <button class="btn ghost sm" onclick="AIChat.clear()">🧹 Изчисти</button>
+          </div>
+        </div>
+        <div class="aichat-log" id="aichatLog">
+          <div class="aichat-empty" id="aichatEmpty">Пиши съобщение — напр. „Добави нова карта на Dashboard-а за X“ и AI-ят ще редактира repo-то директно.</div>
+        </div>
+        <div class="aichat-input-row">
+          <textarea id="aichatInput" placeholder="Напиши съобщение..." rows="1"></textarea>
+          <button class="btn grad" id="aichatSend" onclick="AIChat.send()">Изпрати</button>
+        </div>
+        <div class="aichat-hint">Ползва Claude/Gemini ключовете и GitHub token-а от ⚙️ „API Ключове“, и repo owner/име/branch от „Статистика → YouTube Тракер“.</div>
+      </div>
+
+      <div class="section-title">Стъпка 1 — Пазарен анализ</div>
+      <div class="grid cols-6" id="dashStep1Cards">
+        <div class="card num-card"><span class="n">1</span><div class="ic-badge">🔍</div><h4>Пазарен анализ</h4><p>Открий топ ниши, тренд-ове и възможности.</p><button class="btn grad full sm" onclick="Nav.showView('step1')">Стартирай анализ</button></div>
+        <div class="card num-card"><span class="n">2</span><div class="ic-badge">📊</div><h4>YouTube Outlier</h4><p>Намери малки канали с непропорционално много гледания.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Открий outliers</button></div>
+        <div class="card num-card"><span class="n">3</span><div class="ic-badge">🔎</div><h4>Свързани търсения</h4><p>Виж какво реално търси аудиторията (autocomplete).</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Провери търсения</button></div>
+        <div class="card num-card"><span class="n">4</span><div class="ic-badge">✨</div><h4>Концепция</h4><p>Генерирай заглавие, style prompt и хаштагове.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Генерирай концепция</button></div>
+        <div class="card num-card"><span class="n">5</span><div class="ic-badge">📀</div><h4>Album Sprint</h4><p>Генерирай 10-30 идеи за заглавия + hook + mood.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Стартирай Sprint</button></div>
+        <div class="card num-card"><span class="n">6</span><div class="ic-badge">✍️</div><h4>Текст на песента</h4><p>Генерирай пълен текст на песента.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Генерирай текст</button></div>
+      </div>
+
+      <div class="section-title">Бърз изглед — Пазарни ниши (auto scan)</div>
+      <div class="row" style="align-items:stretch;">
+        <div style="flex:3;min-width:280px;">
+          <div class="grid cols-4" id="dashNicheQuick">
+            <div class="card tight muted" style="grid-column:1/-1;">Все още няма сканиране — отвори Стъпка 1 и натисни "Предложение за песен".</div>
+          </div>
+        </div>
+        <div class="card tight" style="flex:1;min-width:200px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;">
+          <span class="muted">Ръчно сравнение на ниши</span>
+          <button class="btn ghost full sm" onclick="Nav.showView('step1')">Въведи свои жанрове</button>
+        </div>
+      </div>
+
+      <div class="section-title">Gemini Validator</div>
+      <div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--grad);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🤖</div>
+        <div style="flex:1;min-width:220px;">
+          <strong>Gemini Validator (втори поглед)</strong>
+          <p class="muted" style="margin:4px 0 0;">Автоматичен кратък анализ след всяка стъпка. Логът се трупа и може да бъде прегледан по всяко време.</p>
+        </div>
+        <button class="btn grad sm" onclick="Nav.showView('validator')">Отвори лог →</button>
+        <span class="chip cyan" id="dashValidatorCount">0</span>
+      </div>
+
+      <div class="section-title">Стъпка 2 — Визуализатор</div>
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <div style="flex:1;min-width:260px;">
+            <strong>Видео1 → Видео2 преход</strong>
+            <span class="chip green" id="dashTransitionChip" style="margin-left:8px;">Поправено</span>
+            <p class="muted" style="margin-top:8px;">Прецизно pre-priming на буферите премахва замръзването/черния кадър при прехода.</p>
+            <div class="checklist-item"><span class="ok">✔</span> Видео1: заредено</div>
+            <div class="checklist-item"><span class="ok">✔</span> Видео2: заредено</div>
+            <div class="checklist-item"><span class="ok">✔</span> Преход: pre-primed, без freeze</div>
+            <button class="btn grad sm" style="margin-top:14px;" onclick="Nav.showView('step2')">Отвори визуализатор</button>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <div class="transition-badge">
+              <div class="tb-box">1</div><span class="tb-arrow">→</span><div class="tb-box">2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Стъпка 3 — Публикуване</div>
+      <div class="grid cols-5">
+        <div class="card num-card"><span class="n">10</span><div class="ic-badge">🖼️</div><h4>Обложка</h4><p>Промпт + генериране на обложка (Gemini / Nano Banana).</p><button class="btn grad full sm" onclick="Nav.showView('step3')">Генерирай обложка</button></div>
+        <div class="card num-card"><span class="n">11</span><div class="ic-badge">🎧</div><h4>DistroKid</h4><p>Auto-fill текстове за DistroKid формата.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Попълни автоматично</button></div>
+        <div class="card num-card"><span class="n">12</span><div class="ic-badge">🎵</div><h4>Spotify / Apple</h4><p>Готови текстове за Spotify/Apple Music for Artists.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Генерирай текстове</button></div>
+        <div class="card num-card"><span class="n">13</span><div class="ic-badge">📺</div><h4>YouTube A/B</h4><p>3 A/B варианта заглавие + thumbnail текст. Gemini анализ.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Генерирай варианти</button></div>
+        <div class="card num-card"><span class="n">14</span><div class="ic-badge">🛡️</div><h4>Проверка за прилика</h4><p>Бърза проверка за прилика с съществуваща песен.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Провери сега</button></div>
+      </div>
+      <p class="muted" style="text-align:center;margin-top:6px;">Всички готови текстове и резултати са готови за copy-paste и директно публикуване.</p>
+
+      <div class="row" style="align-items:flex-start;margin-top:6px;">
+        <div style="flex:2;min-width:320px;">
+          <div class="section-title">Статистика Tracker (GitHub Actions)</div>
+          <div class="grid cols-4">
+            <div class="card num-card tight"><span class="n">23</span><div class="ic-badge">⏱️</div><h4>Дневен tracker</h4><p>GitHub Actions cron следи целия канал.</p></div>
+            <div class="card num-card tight"><span class="n">24</span><div class="ic-badge">📸</div><h4>Daily snapshot</h4><p>Абонати, views, likes, comments.</p></div>
+            <div class="card num-card tight"><span class="n">25</span><div class="ic-badge">🗂️</div><h4>История в JSON</h4><p>Версиониран JSON (schema_version).</p></div>
+            <div class="card num-card tight"><span class="n">27</span><div class="ic-badge">📈</div><h4>Performance Check</h4><p>Сравнява 24ч views с очакването.</p></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:280px;">
+          <div class="section-title">Инфраструктура &amp; Дизайн</div>
+          <div class="grid cols-2">
+            <div class="card num-card tight"><span class="n">28</span><div class="ic-badge">🎨</div><h4>Дизайн система</h4><p>Цветове, шрифтове, layout на референцията.</p></div>
+            <div class="card num-card tight"><span class="n">29</span><div class="ic-badge">🧱</div><h4>Модулна структура</h4><p>Разделени файлове/конфиг за лесно разширяване.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Статистика — YouTube Канал</div>
+      <div id="dashStatsArea"></div>
+
+      <div class="section-title">Настройки</div>
+      <div class="card">
+        <div class="set-row"><div class="txt"><strong>16. API ключове</strong><span>Управлявай Claude, Gemini, YouTube ключове.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-keys')">Управление →</button></div>
+        <div class="set-row"><div class="txt"><strong>17. Proxy URL</strong><span>Cloudflare Worker прокси за заобикаляне на CORS.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-proxy')">Конфигурирай →</button></div>
+        <div class="set-row"><div class="txt"><strong>18. Тествай ключовете</strong><span>Бърза проверка на всички ключове.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-keys')">Тествай сега →</button></div>
+        <div class="set-row"><div class="txt"><strong>19. Export / Import проект</strong><span>Бекъп и възстановяване на проекта.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-project')">Export / Импорт →</button></div>
+        <div class="set-row"><div class="txt"><strong>20. Нов проект</strong><span>Данните за песента ще се изчистят.</span></div><button class="btn ghost sm" onclick="Settings.newProject()">Нов проект →</button></div>
+        <div class="set-row"><div class="txt"><strong>21. Проверка на ключовете при зареждане</strong><span>Тихо проверява дали някой ключ е "умрял".</span></div>
+          <div class="switch on" id="healthSwitch" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div>
+        </div>
+        <div class="set-row"><div class="txt"><strong>22. Тъмен / Светъл Theme</strong><span>Превключи външния вид на таблото.</span></div>
+          <div class="switch" id="themeSwitch2" onclick="Prefs.toggleTheme()"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 1 VIEW ============ -->
+    <div class="view" id="view-step1">
+      <div class="section-title">Стъпка 1 — Пазарен анализ &amp; Текст</div>
+
+      <div class="card">
+        <strong>Пазарен анализ (SEO)</strong>
+        <p class="muted">Остави полето празно и натисни бутона — чете дневния trend snapshot (GitHub Actions, Google Trends + YouTube данни, обновява се веднъж на ден, без Gemini квота) и ти връща нишата с най-добро съотношение търсене/конкуренция. По желание можеш да въведеш свои 2-3 ниши, за да сравниш точно тях вместо авто-сканиране (използва Claude).</p>
+        <label>Жанрове/ниши за сравнение (по избор — празно = авто-сканиране)</label>
+        <textarea id="nicheInput" placeholder="празно = авто · или напр.&#10;lofi hip hop&#10;phonk drift&#10;sad r&b 2026"></textarea>
+        <button class="btn grad" style="margin-top:14px;" onclick="Step1.scanNiches()">🔍 Предложение за песен</button>
+        <div id="nicheResults" style="margin-top:14px;"></div>
+        <div id="outlierResults" style="margin-top:10px;"></div>
+        <div id="keywordSuggestOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" id="albumSprintCard" style="display:none;margin-top:14px;">
+        <strong>📀 Album Sprint</strong>
+        <p class="muted">Наведнъж генерира 10-30 кратки заглавия + hook идеи в избраната ниша — опашка от идеи вместо 1 по 1.</p>
+        <div class="row">
+          <div><label>Брой концепции</label>
+            <select id="albumSprintCount"><option>10</option><option selected>15</option><option>20</option><option>30</option></select>
+          </div>
+        </div>
+        <button class="btn ghost" onclick="Step1.generateAlbumSprint()">📀 Генерирай Album Sprint</button>
+        <div id="albumSprintOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🧬 Hook Evolution Arena</strong>
+        <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
+        <button class="btn grad" onclick="HookArena.start()">🧬 Стартирай еволюцията</button>
+        <div id="hookArenaOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" id="conceptCard" style="display:none;margin-top:14px;">
+        <strong>Концепция за Suno AI</strong>
+        <div class="row">
+          <div><label>Заглавие</label><input type="text" id="songTitle"></div>
+          <div><label>Score</label><input type="text" id="nicheScore" disabled></div>
+        </div>
+        <label>Style Prompt (за Suno)</label>
+        <textarea id="stylePrompt"></textarea>
+        <label>3 хаштага</label>
+        <div class="hashtags" id="hashtagsOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Текст на песента (Claude)</strong>
+        <p class="muted">Chorus най-отпред, мета-тагове [Chorus] [Verse] [Drop].</p>
+        <div class="row">
+          <button class="btn grad" onclick="Step1.generateLyrics()">✍️ Генерирай текст</button>
+          <button class="btn ghost" onclick="LyricsHistory.toggle()">🕐 История на версиите</button>
+        </div>
+        <textarea id="lyricsOut" style="min-height:220px;margin-top:10px;"></textarea>
+        <div id="lyricsHistoryOut" style="display:none;margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🚀 Viral Lab — AI Music Producer</strong>
+        <p class="muted">Пълен анализ на вирусния потенциал: Viral Score, прогноза за успех, оценка на текста, hook/chorus анализ, структура, жанрова проверка, конкуренция и AI Producer Review. Изисква генериран текст (по-горе).</p>
+        <button class="btn grad" onclick="ViralLab.analyze()">🚀 Анализирай вирусния потенциал</button>
+        <div id="viralLabOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>👻 Ghost Audience</strong>
+        <p class="muted">12 синтетични, но правдоподобни слушателя "чуват" песента и реагират с техния глас — плюс attention heatmap (къде реално губиш вниманието) и meme risk radar (редове, за които публиката би те закачила). Изисква генериран текст.</p>
+        <button class="btn grad" onclick="GhostAudience.run()">👻 Пусни фокус-групата</button>
+        <div id="ghostAudienceOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🤖 Gemini Validator</strong>
+        <p class="muted">Малък модул за "втори поглед" — анализира сам, автоматично, резултата от всяка стъпка. Пълният лог е в раздел "Втори поглед (Лог)".</p>
+        <button class="btn ghost" onclick="Step1.validateWithGemini()">🔁 Ръчна повторна проверка на текста</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 2 VIEW ============ -->
+    <div class="view" id="view-step2">
+      <div class="section-title">Стъпка 2 — Визуализатор</div>
+
+      <div class="card">
+        <strong>FX конфигурация (генерирана от Claude според жанра)</strong>
+        <p class="muted">Справочен бриф за настроението/ефектите — визуализаторът отдолу си има собствена аудио-реактивна логика (бас пулс, bloom, частици).</p>
+        <button class="btn ghost" onclick="Step2.generateFxConfig()">🎛️ Генерирай FX конфиг</button>
+        <textarea id="fxConfigOut" style="margin-top:10px;font-family:var(--font-mono);font-size:12px;"></textarea>
+      </div>
+
+      <div class="card tight" style="margin-top:14px;">
+        <strong style="padding-left:2px;">Видео1 → Видео2 преход <span class="chip green">Поправено</span></strong>
+        <p class="muted" style="padding-left:2px;">Двата буфера се "загряват" (pre-seek) 1.2 сек преди прехода, докато видео1 все още тече — вече няма черен/замръзнал кадър при смяната.</p>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;margin-top:14px;">
+        <div style="padding:14px 18px 0;">
+          <strong>Видео Визуализатор</strong>
+          <p class="muted">Заглавието от Стъпка 1 се подава автоматично. Качи аудиото директно тук.</p>
+        </div>
+        <iframe id="visualizerFrame" src="visualizer.html" style="width:100%;height:900px;border:0;display:block;margin-top:10px;"></iframe>
+      </div>
+    </div>
+
+    <!-- ============ STEP 3 VIEW ============ -->
+    <div class="view" id="view-step3">
+      <div class="section-title">Стъпка 3 — Публикуване</div>
+
+      <div class="card">
+        <strong>10 · Обложка (Gemini / Nano Banana)</strong>
+        <button class="btn ghost" style="margin-top:10px;" onclick="Step3.generateCoverPrompt()">🎨 Генерирай визуален промпт</button>
+        <textarea id="coverPromptOut" style="margin-top:10px;"></textarea>
+        <button class="btn grad" onclick="Step3.generateCoverImage()">🖼️ Генерирай обложка (3000×3000)</button>
+        <div id="coverImgOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>11 · DistroKid — Auto-fill Асистент</strong>
+        <p class="muted">Копирай всяко поле директно в DistroKid формата.</p>
+        <div id="distrokidFields"></div>
+        <button class="btn ghost" onclick="Step3.buildDistrokidFields()" style="margin-top:12px;">🔄 Генерирай/обнови полетата</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>12 · Spotify for Artists / Apple Music for Artists</strong>
+        <p class="muted">Готов bio текст + описание на пускането за двата профила.</p>
+        <button class="btn ghost" onclick="Step3.generateSpotifyAppleText()">🎵 Генерирай текстове</button>
+        <div id="spotifyAppleOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>13 · YouTube A/B заглавия</strong>
+        <p class="muted">3 варианта заглавие + thumbnail текст, с кратък Gemini коментар кой е по-clickable.</p>
+        <button class="btn ghost" onclick="Step3.generateABTitles()">📺 Генерирай A/B варианти</button>
+        <div id="abTitlesOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>14 · Проверка за прилика</strong>
+        <p class="muted">Бърза проверка дали заглавието вече не е твърде близко до съществуваща песен в YouTube.</p>
+        <button class="btn ghost" onclick="Step3.checkSimilarity()">🛡️ Провери сега</button>
+        <div id="similarityOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Google вход</strong>
+        <div class="chip amber g-auth-status" id="gAuthStatus">Не си вписан</div>
+        <div id="gSignInBtn" class="g-signin-slot" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Видео за качване в YouTube (Unlisted)</strong>
+        <input type="file" id="youtubeVideoFile" accept="video/*" style="margin-top:10px;">
+        <label>Заглавие</label><input type="text" id="ytTitle">
+        <label>Описание</label>
+        <textarea id="ytDescription" placeholder="Линкове към Spotify/DistroKid най-горе...&#10;&#10;#tag1 #tag2 #tag3 най-долу"></textarea>
+        <label>Тагове (запетая разделени)</label><input type="text" id="ytTags">
+        <div class="row" style="margin-top:10px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="ytMadeForKids" style="width:auto;"> Not made for kids</label>
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="ytSynthetic" checked disabled style="width:auto;"> Synthetic/AI content (задължително)</label>
+        </div>
+        <p class="muted">privacyStatus е фиксиран на <strong>unlisted</strong> — не подлежи на промяна.</p>
+        <button class="btn grad" onclick="Step4.uploadVideo()">⬆️ Качи в YouTube</button>
+        <div id="ytUploadProgress" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ QUICK UPLOAD VIEW ============ -->
+    <div class="view" id="view-quick">
+      <div class="section-title">⚡ Бърз ъплоуд за стари песни</div>
+
+      <div class="card">
+        <strong>1 · Аудио на старата песен</strong>
+        <p class="muted">Визуализаторът прави видео директно от аудиото — без концепция/обложка. По желание пейстни готов текст, ако имаш; иначе Gemini ще се опита да го разпознае от звука.</p>
+        <input type="file" id="qAudioFile" accept="audio/*" onchange="QuickUpload.onAudioSelected(this)">
+        <div id="qAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Име на песента (задължително ще е НАЧАЛОТО на YouTube заглавието — провери/поправи го)</label>
+        <input type="text" id="qSongName" placeholder="напр. Само ти">
+        <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
+        <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
+        <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="QuickUpload.runFull()">🚀 Стартирай пълния процес</button>
+        <div id="qRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато видеото се записва...</div>
+        <div id="qVideoProgressWrap" style="display:none;margin-top:10px;">
+          <div id="qVideoProgressLabel" class="muted" style="font-size:12px;margin-bottom:4px;">Видео: записва се…</div>
+          <div style="background:var(--panel-2);border:1px solid var(--border);border-radius:20px;height:10px;overflow:hidden;">
+            <div id="qVideoProgressBar" style="background:var(--grad);height:100%;width:0%;transition:width .2s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Лог на процеса</strong>
+        <div id="qLog" style="margin-top:10px;font-family:var(--font-mono);font-size:11.5px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+
+      <div class="card" id="qResultCard" style="margin-top:14px;display:none;">
+        <strong>2 · Gemini анализ</strong>
+        <div id="qAnalysisOut" style="margin-top:8px;"></div>
+        <label style="margin-top:10px;">Разпознат/пейстнат текст</label>
+        <textarea id="qLyricsOut" readonly style="font-size:12px;"></textarea>
+
+        <strong style="display:block;margin-top:16px;">3 · Заглавие / Описание / Тагове (генерирани от Claude — редактируеми)</strong>
+        <label>Заглавие</label><input type="text" id="qTitle">
+        <label>Описание</label><textarea id="qDescription"></textarea>
+        <label>Тагове (запетая разделени)</label><input type="text" id="qTags">
+
+        <strong style="display:block;margin-top:16px;">4 · YouTube (Unlisted)</strong>
+        <div class="chip amber g-auth-status" id="gAuthStatus2">Не си вписан</div>
+        <div id="gSignInBtn2" class="g-signin-slot" style="margin-top:10px;"></div>
+        <p class="muted" style="margin-top:10px;">Автоматично се качва веднага щом видеото и метаданните са готови (ако вече си вписан). Иначе — качи ръчно тук.</p>
+        <button class="btn grad" style="margin-top:6px;" onclick="QuickUpload.manualUpload()">⬆️ Качи в YouTube (unlisted)</button>
+        <div id="qUploadProgress" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Скрит визуализатор — прави видеото програмно (без потребителят да вижда/пипа контролите) -->
+      <iframe id="quickVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
+    </div>
+
+    <!-- ============ VALIDATOR LOG VIEW ============ -->
+    <div class="view" id="view-validator">
+      <div class="section-title">Gemini Validator — Втори поглед (пълен лог)</div>
+      <div class="card">
+        <p class="muted">Автоматичен анализ след всяка стъпка (trend scan, концепция, текст, FX, обложка, album sprint, A/B заглавия). Пази последните 20 записа.</p>
+        <button class="btn ghost" onclick="Step1.validateWithGemini()">🔁 Ръчна повторна проверка на текста</button>
+        <div id="geminiOut" style="margin-top:12px;white-space:pre-wrap;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: API KEYS ============ -->
+    <div class="view" id="view-set-keys">
+      <div class="section-title">Настройки — API Ключове</div>
+      <div class="card">
+        <p class="muted">Всичко се пази само локално в браузъра (localStorage) на това устройство. Нищо не се качва в GitHub.</p>
+        <label>Anthropic (Claude) API Key</label>
+        <input type="password" id="key_claude">
+        <label>Google Gemini API Key</label>
+        <input type="password" id="key_gemini">
+        <label>YouTube Data API — Google Client ID (OAuth)</label>
+        <input type="password" id="key_yt_client_id">
+        <label>YouTube Data API Key</label>
+        <input type="password" id="key_yt_apikey">
+        <hr style="margin:18px 0;">
+        <label>GitHub Personal Access Token — за AI редакция на това repo (scope: repo)</label>
+        <input type="password" id="key_github_token" placeholder="ghp_...">
+        <p class="muted" style="margin-top:6px;">Използва се от AI Чата на Dashboard-а, за да чете/пише файлове директно в repo-то (виж полетата repo owner/име/branch в "Статистика → YouTube Тракер"). Пази се само локално в браузъра.</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>
+        <div id="keyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PROXY ============ -->
+    <div class="view" id="view-set-proxy">
+      <div class="section-title">Настройки — Proxy &amp; Мрежа</div>
+      <div class="card">
+        <label>Proxy URL (по избор)</label>
+        <input type="text" id="key_proxy_url" placeholder="напр. https://твоя-worker.workers.dev">
+        <p class="muted" style="margin-top:8px;">Празно = директни заявки (стандартно). Ако въведеш URL, заявките към Gemini/Imagen/Suggest ще минат през <code>PROXY_URL?target=ORIGINAL_URL</code> — прокси-то (напр. Cloudflare Worker) трябва просто да препрати метода/хедърите/тялото към <code>target</code> и да върне отговора с CORS хедъри.</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PROJECT & DATA ============ -->
+    <div class="view" id="view-set-project">
+      <div class="section-title">Настройки — Проект &amp; Данни</div>
+      <div class="card">
+        <strong>💾 Резервно копие на проекта</strong>
+        <p class="muted">Проектът (заглавие, текст, ниши, лог) живее само в този браузър. Направи export преди да чистиш кеша или сменяш устройство.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="Settings.exportProject()">⬇️ Export проект</button>
+          <button class="btn ghost" onclick="document.getElementById('importFile').click()">⬆️ Import проект</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="Settings.importProject(this.files[0])">
+        <hr style="margin:18px 0;">
+        <button class="btn ghost" onclick="Settings.newProject()">🆕 Нов проект (изчисти текущия)</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📚 Архив на песните</strong>
+        <p class="muted">"Нов проект" вече архивира автоматично старата песен. Можеш и ръчно да запазиш текущата, за да сравняваш Viral Score между песни във времето.</p>
+        <button class="btn grad" onclick="ProjectArchive.saveCurrent()">💾 Архивирай текущия проект сега</button>
+        <div id="projectArchiveOut" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PREFERENCES ============ -->
+    <div class="view" id="view-set-prefs">
+      <div class="section-title">Настройки — Предпочитания</div>
+      <div class="card">
+        <div class="set-row"><div class="txt"><strong>Тъмна / Светла тема</strong><span>Превключи външния вид на цялото табло.</span></div><div class="switch" id="themeSwitch3" onclick="Prefs.toggleTheme()"><div class="knob"></div></div></div>
+        <div class="set-row"><div class="txt"><strong>Проверка на ключовете при зареждане</strong><span>Тиха проверка дали някой ключ е "умрял" — предупреждение горе вместо грешка по средата на работа.</span></div><div class="switch on" id="healthSwitch2" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ============ STATS: TRACKER SETUP ============ -->
+    <div class="view" id="view-stats-tracker">
+      <div class="section-title">Статистика — YouTube Тракер (GitHub Actions)</div>
+      <div class="card">
+        <p class="muted">Дневен, автоматичен tracker живее извън браузъра — GitHub Actions cron сам се събужда всеки ден, дърпа статистика за целия канал (абонати, views, likes, comments за всяко видео) и я записва в <code>data/stats-history.json</code> в repo-то. Таблото само чете този файл.</p>
+        <label>GitHub потребител/организация</label>
+        <input type="text" id="gh_owner" placeholder="напр. ceckod">
+        <label>Име на repo-то</label>
+        <input type="text" id="gh_repo" placeholder="напр. cd-b-dashboard">
+        <label>Клон (branch)</label>
+        <input type="text" id="gh_branch" placeholder="main" value="main">
+        <button class="btn grad" style="margin-top:14px;" onclick="Stats.saveRepoConfig()">💾 Запази и презареди статистиката</button>
+        <hr style="margin:18px 0;">
+        <strong style="font-size:13px;">Еднократен setup в GitHub (виж README.md в repo-то за пълни стъпки)</strong>
+        <ol class="muted" style="padding-left:18px;line-height:1.7;">
+          <li>Добави <code>YOUTUBE_API_KEY</code> като GitHub Secret (Settings → Secrets → Actions).</li>
+          <li>Сложи своя Channel ID в <code>config.json</code> в repo-то.</li>
+          <li>Workflow-ът в <code>.github/workflows/daily-stats.yml</code> тръгва сам всеки ден.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ============ STATS: ANALYTICS ============ -->
+    <div class="view" id="view-stats-analytics">
+      <div class="section-title">Анализи &amp; Графики</div>
+      <div id="analyticsArea"></div>
+
+      <div class="section-title">🎯 Track Record — Предсказание срещу реалност</div>
+      <div class="card">
+        <p class="muted">Всеки Viral Lab анализ (Стъпка 1) се запазва тук автоматично. Когато песен вече е публикувана и се появи в YouTube Тракера, свържи я с прогнозата, за да видиш реално колко точен е бил AI-я.</p>
+        <div id="trackRecordOut" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ INFRA: LOGS ============ -->
+    <div class="view" id="view-infra-logs">
+      <div class="section-title">Системни логове</div>
+      <div class="card">
+        <p class="muted">Улавя JS грешки/предупреждения в реално време на тази сесия — полезно ако нещо не работи и искаш да видиш какво точно е гръмнало.</p>
+        <button class="btn ghost" onclick="SystemLog.clear()">🧹 Изчисти</button>
+        <div id="systemLogOut" style="margin-top:12px;font-family:var(--font-mono);font-size:11.5px;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+
+    <!-- ============ INFRA: CONFIG ============ -->
+    <div class="view" id="view-infra-config">
+      <div class="section-title">Конфигурация</div>
+      <div class="card">
+        <strong>Схема на данните (stats-history.json)</strong>
+        <p class="muted">Версиониран JSON формат — добавяне на нови полета в бъдеще не чупи старите записи.</p>
+        <pre style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;font-size:11.5px;overflow-x:auto;">{
+  "schema_version": 1,
+  "channel_id": "UCxxxxxxxx",
+  "snapshots": [
+    {
+      "date": "2026-07-22",
+      "channel": { "subscribers": 0, "total_views": 0, "video_count": 0 },
+      "videos": [
+        { "video_id": "...", "title": "...", "published_at": "...",
+          "views": 0, "likes": 0, "comments": 0 }
+      ]
+    }
+  ]
+}</pre>
+        <strong style="display:block;margin-top:16px;">Модулна структура на проекта</strong>
+        <p class="muted">index.html/app.js четат данни, не ги генерират. scripts/track_stats.py, .github/workflows/daily-stats.yml и config.json са напълно самостоятелни — добавяне на нов източник (напр. Spotify) става с нов файл, без да се пипат съществуващите.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<div class="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-icon">AI</div>
-      <div class="sidebar-title">Site AI</div>
-    </div>
+<div class="toast" id="toast"></div>
 
-    <div class="user-badge" id="userBadge" style="display:none;">
-      <span class="u-email" id="userEmail"></span>
-      <span class="u-tag" id="userTag"></span>
-      <button class="logout-btn" id="logoutBtn" title="Изход" type="button">⏻</button>
-    </div>
-
-    <button class="new-chat-btn" id="newChatBtn" type="button">+ Нов чат</button>
-
-    <div class="sidebar-section">
-      <label class="sidebar-label">История</label>
-      <div class="sessions-list" id="sessionsList"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <label class="sidebar-label" for="providerSelect">AI доставчик</label>
-      <select class="sidebar-select" id="providerSelect">
-        <option value="gemini">Gemini</option>
-        <option value="claude">Claude</option>
-      </select>
-    </div>
-
-    <div class="sidebar-section" id="geminiKeySection">
-      <label class="sidebar-label" for="geminiKeyInput">Gemini API ключ</label>
-      <input type="password" class="sidebar-input" id="geminiKeyInput" placeholder="AIza..." autocomplete="off">
-      <div class="field-hint">Безплатен ключ: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a></div>
-      <label class="sidebar-label" for="geminiModelSelect" style="margin-top:.75rem;">Gemini модел</label>
-      <select class="sidebar-select" id="geminiModelSelect">
-        <option value="">Зареждане на модели...</option>
-      </select>
-      <div class="field-hint">Списъкът се дърпа директно от твоя ключ. Отвори менюто отново, за да опресниш.</div>
-    </div>
-
-    <div class="sidebar-section" id="claudeKeySection" style="display:none;">
-      <label class="sidebar-label" for="claudeKeyInput">Claude API ключ</label>
-      <input type="password" class="sidebar-input" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off">
-      <div class="field-hint">От <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
-      <label class="sidebar-label" for="claudeModelSelect" style="margin-top:.75rem;">Claude модел</label>
-      <select class="sidebar-select" id="claudeModelSelect">
-        <option value="">Зареждане на модели...</option>
-      </select>
-      <div class="field-hint">По подразбиране е Haiku 4.5 — най-евтиният текущ модел ($1/$5 на млн. токена). Смени го от менюто за по-силен модел.</div>
-    </div>
-
-    <div class="admin-panel" id="adminPanel" style="display:none;">
-      <label class="sidebar-label">⚙ Достъп за редакция (admin)</label>
-      <input type="password" class="sidebar-input" id="githubTokenInput" placeholder="GitHub token (ghp_...)" autocomplete="off" style="margin-bottom:.5rem;">
-      <input type="text" class="sidebar-input" id="repoOwnerInput" placeholder="repo owner, напр. ceckod" style="margin-bottom:.5rem;">
-      <input type="text" class="sidebar-input" id="repoNameInput" placeholder="repo име, напр. moy-chat" style="margin-bottom:.5rem;">
-      <input type="text" class="sidebar-input" id="repoBranchInput" placeholder="branch (по подразбиране main)">
-      <div class="field-hint">Token с "repo" scope, само за твоя браузър — <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a></div>
-      <div class="tool-log" id="toolLog"></div>
-    </div>
-
-    <div class="overlay" id="overlay"></div>
-  </aside>
-
-  <div class="overlay" id="overlayMobile"></div>
-
-  <main class="main">
-    <header class="main-header">
-      <div class="header-left">
-        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Меню">☰</button>
-        <div class="header-model"><span class="status-dot"></span><span id="modelDisplay">Gemini</span></div>
-      </div>
-    </header>
-
-    <div class="chat-window" id="chatWindow">
-      <div class="messages-list" id="messagesList">
-        <div class="empty-state" id="emptyState">
-          <h2>Започни разговор</h2>
-          <p id="emptyStateText">Пиши директно. Ако си admin, можеш да поискаш промени по сайта и AI-ят ще ги приложи директно в GitHub repo-то.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="input-area">
-      <div class="input-wrapper">
-        <div class="input-row">
-          <textarea class="chat-textarea" id="chatInput" placeholder="Напиши съобщение..." rows="1"></textarea>
-          <button class="send-btn" id="sendBtn" type="button" aria-label="Изпрати">↑</button>
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
-
+<script src="app.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+/* =========================================================
+   AI CHAT — вграден асистент с GitHub self-edit tools
+   Независим модул: не пипа Settings/Nav/Prefs от app.js,
+   само чете стойностите на съществуващите полета за ключове.
+   ========================================================= */
+var AIChat = (function () {
+  var HISTORY_KEY = 'cdb_aichat_history_v1';
+  var PROVIDER_KEY = 'cdb_aichat_provider';
+  var messages = [];
+  var busy = false;
 
-  // ============ CONFIG ============
-  var ADMIN_EMAIL = 'ceckod@gmail.com';
-  var STORAGE_KEY = 'site_ai_sessions_v1';
-  var GOOGLE_CLIENT_ID_KEY = 'site_ai_google_client_id';
-  var GEMINI_MODEL_KEY = 'site_ai_gemini_model';
-  var CLAUDE_MODEL_KEY = 'site_ai_claude_model';
-  var DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
-  // Claude Haiku 4.5 е най-евтиният текущ модел ($1/$5 на млн. токена) — избран по подразбиране.
-  var DEFAULT_CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-  var CLAUDE_FALLBACK_MODELS = [
-    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 — $1/$5 (най-евтин)' },
-    { id: 'claude-sonnet-5', label: 'Claude Sonnet 5 — $2-3/$10-15' },
-    { id: 'claude-opus-4-8', label: 'Claude Opus 4.8 — $5/$25' },
-    { id: 'claude-fable-5', label: 'Claude Fable 5 — $10/$50' }
-  ];
-
-  var ADMIN_SYSTEM_PROMPT = "Ти си AI асистент, вграден в личния сайт на потребителя, с директни права за редакция на GitHub хранилището на сайта чрез инструментите list_files, read_file и write_file. Когато потребителят поиска промяна (нов елемент, поправка, нова секция, нов файл и т.н.): 1) при нужда използвай list_files и read_file, за да разбереш структурата и текущото съдържание; 2) направи промяната директно чрез write_file, като изпращаш ЦЯЛОТО ново съдържание на файла (никога diff или частичен откъс); 3) обясни накратко на български какво си променил и защо. Никога не искай от потребителя да архивира или праща файлове ръчно — винаги работиш директно с хранилището. За обикновени въпроси отговаряй нормално, без да ползваш инструменти.";
-  var GUEST_SYSTEM_PROMPT = "Ти си полезен AI асистент за посетители на сайта. Отговаряй кратко, приятелски и на български, освен ако потребителят пише на друг език. Нямаш достъп за редакция на сайта — ако някой поиска промяна по сайта, обясни любезно, че само администраторът може да прави това.";
+  var SYSTEM_PROMPT = "Ти си AI асистент, вграден в Dashboard-а на 'AI Music Suite' (CD-B Records), с директни права за редакция на GitHub хранилището на този проект чрез инструментите list_files, read_file и write_file. Когато потребителят поиска промяна по таблото (нова карта, поправка, нова секция, нов файл и т.н.): 1) при нужда използвай list_files и read_file, за да разбереш структурата и текущото съдържание; 2) направи промяната директно чрез write_file, като изпращаш ЦЯЛОТО ново съдържание на файла (никога diff или частичен откъс); 3) обясни накратко на български какво си променил. Никога не искай от потребителя да праща файлове ръчно — винаги работиш директно с хранилището. За обикновени въпроси за музика/маркетинг/YouTube отговаряй нормално, без инструменти.";
 
   var TOOLS = [
-    { name: 'list_files', description: "Списък на файлове/папки в дадена пътека от repo-то на сайта. Използвай path='' за корена.",
-      params: { path: { type: 'string', description: 'Път в repo-то, напр. "" или "assets/css"' } } },
-    { name: 'read_file', description: 'Прочита пълното съдържание на текстов файл от repo-то на сайта.',
+    { name: 'list_files', description: "Списък на файлове/папки в дадена пътека от repo-то. path='' за корена.",
+      params: { path: { type: 'string', description: 'Път в repo-то' } } },
+    { name: 'read_file', description: 'Прочита пълното съдържание на текстов файл от repo-то.',
       params: { path: { type: 'string', description: 'Пълен път до файла' } } },
-    { name: 'write_file', description: 'Създава или презаписва текстов файл в repo-то на сайта с ново пълно съдържание (директен commit).',
+    { name: 'write_file', description: 'Създава или презаписва текстов файл в repo-то (директен commit).',
       params: { path: { type: 'string', description: 'Пълен път до файла' },
                 content: { type: 'string', description: 'Пълното ново съдържание на файла' },
                 message: { type: 'string', description: 'Кратко commit съобщение' } } }
   ];
 
-  // ============ STATE ============
-  var currentUser = null;   // {email, name}
-  var isAdmin = false;
-  var sessions = [];
-  var currentSessionId = null;
-  var isGenerating = false;
+  function el(id) { return document.getElementById(id); }
+  function val(id) { var e = el(id); return e ? e.value.trim() : ''; }
 
-  // ============ DOM ============
-  var loginGate = document.getElementById('loginGate');
-  var gsiButtonContainer = document.getElementById('gsiButtonContainer');
-  var clientIdSetup = document.getElementById('clientIdSetup');
-  var googleClientIdInput = document.getElementById('googleClientIdInput');
-  var saveClientIdBtn = document.getElementById('saveClientIdBtn');
-
-  var userBadge = document.getElementById('userBadge');
-  var userEmailEl = document.getElementById('userEmail');
-  var userTagEl = document.getElementById('userTag');
-  var logoutBtn = document.getElementById('logoutBtn');
-
-  var sidebar = document.getElementById('sidebar');
-  var overlayMobile = document.getElementById('overlayMobile');
-  var menuToggle = document.getElementById('menuToggle');
-  var newChatBtn = document.getElementById('newChatBtn');
-  var sessionsListEl = document.getElementById('sessionsList');
-  var providerSelect = document.getElementById('providerSelect');
-  var geminiKeySection = document.getElementById('geminiKeySection');
-  var claudeKeySection = document.getElementById('claudeKeySection');
-  var geminiKeyInput = document.getElementById('geminiKeyInput');
-  var claudeKeyInput = document.getElementById('claudeKeyInput');
-  var geminiModelSelect = document.getElementById('geminiModelSelect');
-  var claudeModelSelect = document.getElementById('claudeModelSelect');
-  var adminPanel = document.getElementById('adminPanel');
-  var githubTokenInput = document.getElementById('githubTokenInput');
-  var repoOwnerInput = document.getElementById('repoOwnerInput');
-  var repoNameInput = document.getElementById('repoNameInput');
-  var repoBranchInput = document.getElementById('repoBranchInput');
-  var toolLog = document.getElementById('toolLog');
-  var modelDisplay = document.getElementById('modelDisplay');
-  var chatWindow = document.getElementById('chatWindow');
-  var messagesList = document.getElementById('messagesList');
-  var emptyState = document.getElementById('emptyState');
-  var emptyStateText = document.getElementById('emptyStateText');
-  var chatInput = document.getElementById('chatInput');
-  var sendBtn = document.getElementById('sendBtn');
-
-  // ============ Persisted settings (per-browser only) ============
-  function loadSetting(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
-  function saveSetting(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-
-  providerSelect.value = loadSetting('site_ai_provider', 'gemini');
-  geminiKeyInput.value = loadSetting('site_ai_gemini_key', '');
-  claudeKeyInput.value = loadSetting('site_ai_claude_key', '');
-  githubTokenInput.value = loadSetting('site_ai_github_token', '');
-  repoOwnerInput.value = loadSetting('site_ai_repo_owner', '');
-  repoNameInput.value = loadSetting('site_ai_repo_name', '');
-  repoBranchInput.value = loadSetting('site_ai_repo_branch', 'main');
-
-  [geminiKeyInput, claudeKeyInput, githubTokenInput, repoOwnerInput, repoNameInput, repoBranchInput].forEach(function (el) {
-    el.addEventListener('change', function () {
-      var map = { geminiKeyInput: 'site_ai_gemini_key', claudeKeyInput: 'site_ai_claude_key', githubTokenInput: 'site_ai_github_token', repoOwnerInput: 'site_ai_repo_owner', repoNameInput: 'site_ai_repo_name', repoBranchInput: 'site_ai_repo_branch' };
-      saveSetting(map[el.id], el.value.trim());
-    });
-  });
-
-  // Презарежда съответния модел-списък, ако вече е наличен ключ, при смяна на самия ключ.
-  geminiKeyInput.addEventListener('change', function () { loadGeminiModels(); });
-  claudeKeyInput.addEventListener('change', function () { loadClaudeModels(); });
-
-  function updateProviderUI() {
-    var p = providerSelect.value;
-    saveSetting('site_ai_provider', p);
-    geminiKeySection.style.display = p === 'gemini' ? '' : 'none';
-    claudeKeySection.style.display = p === 'claude' ? '' : 'none';
-    modelDisplay.textContent = p === 'gemini' ? 'Gemini' : 'Claude';
+  function load() {
+    try { messages = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch (e) { messages = []; }
+    var provSel = el('aichatProvider');
+    if (provSel) provSel.value = localStorage.getItem(PROVIDER_KEY) || 'gemini';
   }
-  providerSelect.addEventListener('change', updateProviderUI);
-  updateProviderUI();
+  function persist() { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(messages)); } catch (e) {} }
 
-  // ============ Model selectors (Gemini + Claude) ============
-  function currentGeminiModel() { return loadSetting(GEMINI_MODEL_KEY, DEFAULT_GEMINI_MODEL); }
-  function currentClaudeModel() { return loadSetting(CLAUDE_MODEL_KEY, DEFAULT_CLAUDE_MODEL); }
-
-  function loadGeminiModels() {
-    var apiKey = geminiKeyInput.value.trim();
-    if (!apiKey) { geminiModelSelect.innerHTML = '<option value="">⚠ Добави Gemini ключ</option>'; return; }
-    geminiModelSelect.innerHTML = '<option value="">Зареждане...</option>';
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey);
-    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
-      var models = (data.models || []).filter(function (m) {
-        return m.supportedGenerationMethods && m.supportedGenerationMethods.indexOf('generateContent') !== -1;
-      });
-      if (!models.length) { geminiModelSelect.innerHTML = '<option value="">Няма намерени модели</option>'; return; }
-      var saved = loadSetting(GEMINI_MODEL_KEY, '');
-      geminiModelSelect.innerHTML = '';
-      models.forEach(function (m) {
-        var name = m.name.replace('models/', '');
-        var opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = m.displayName ? (m.displayName + ' (' + name + ')') : name;
-        if (name === (saved || DEFAULT_GEMINI_MODEL)) opt.selected = true;
-        geminiModelSelect.appendChild(opt);
-      });
-      if (!saved) saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value);
-    }).catch(function () {
-      geminiModelSelect.innerHTML = '<option value="' + DEFAULT_GEMINI_MODEL + '">' + DEFAULT_GEMINI_MODEL + ' (по подразбиране)</option>';
-    });
-  }
-
-  function loadClaudeModels() {
-    var apiKey = claudeKeyInput.value.trim();
-    if (!apiKey) { claudeModelSelect.innerHTML = '<option value="">⚠ Добави Claude ключ</option>'; return; }
-    claudeModelSelect.innerHTML = '<option value="">Зареждане...</option>';
-    var url = 'https://api.anthropic.com/v1/models?limit=100';
-    fetch(url, {
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      }
-    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-      .then(function (res) {
-        var saved = loadSetting(CLAUDE_MODEL_KEY, '');
-        var list = [];
-        if (res.ok && res.data && Array.isArray(res.data.data) && res.data.data.length) {
-          list = res.data.data.map(function (m) { return { id: m.id, label: m.display_name || m.id }; });
-          var rank = function (id) {
-            id = id.toLowerCase();
-            if (id.indexOf('haiku') !== -1) return 0;
-            if (id.indexOf('sonnet') !== -1) return 1;
-            if (id.indexOf('opus') !== -1) return 2;
-            if (id.indexOf('fable') !== -1 || id.indexOf('mythos') !== -1) return 3;
-            return 4;
-          };
-          list.sort(function (a, b) { return rank(a.id) - rank(b.id); });
-        } else {
-          list = CLAUDE_FALLBACK_MODELS.slice();
-        }
-        claudeModelSelect.innerHTML = '';
-        list.forEach(function (m) {
-          var opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.label;
-          if (m.id === (saved || DEFAULT_CLAUDE_MODEL)) opt.selected = true;
-          claudeModelSelect.appendChild(opt);
-        });
-        if (!saved) saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value);
-      }).catch(function () {
-        claudeModelSelect.innerHTML = '';
-        CLAUDE_FALLBACK_MODELS.forEach(function (m) {
-          var opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.label;
-          if (m.id === DEFAULT_CLAUDE_MODEL) opt.selected = true;
-          claudeModelSelect.appendChild(opt);
-        });
-      });
-  }
-
-  geminiModelSelect.addEventListener('change', function () { saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value); });
-  geminiModelSelect.addEventListener('mousedown', loadGeminiModels); // презарежда при всяко отваряне
-  claudeModelSelect.addEventListener('change', function () { saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value); });
-  claudeModelSelect.addEventListener('mousedown', loadClaudeModels); // презарежда при всяко отваряне
-
-  loadGeminiModels();
-  loadClaudeModels();
-
-  // ============ Google Sign-In ============
-  function b64urlDecode(str) {
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (str.length % 4) str += '=';
-    return decodeURIComponent(escape(atob(str)));
-  }
-
-  function decodeJwt(token) {
-    var parts = token.split('.');
-    return JSON.parse(b64urlDecode(parts[1]));
-  }
-
-  function handleCredentialResponse(response) {
-    var payload = decodeJwt(response.credential);
-    if (!payload.email_verified) { alert('Имейлът не е верифициран в Google акаунта.'); return; }
-    currentUser = { email: payload.email, name: payload.name || payload.email };
-    isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    saveSetting('site_ai_user_email', currentUser.email);
-    saveSetting('site_ai_user_name', currentUser.name);
-    onLoginSuccess();
-  }
-
-  function initGoogleSignIn() {
-    var clientId = loadSetting(GOOGLE_CLIENT_ID_KEY, '');
-    if (!clientId) { clientIdSetup.style.display = 'block'; return; }
-    clientIdSetup.style.display = 'none';
-    if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(initGoogleSignIn, 300); return; }
-    google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse, auto_select: false });
-    google.accounts.id.renderButton(gsiButtonContainer, { theme: 'filled_blue', size: 'large', text: 'signin_with' });
-  }
-
-  saveClientIdBtn.addEventListener('click', function () {
-    var v = googleClientIdInput.value.trim();
-    if (!v) return;
-    saveSetting(GOOGLE_CLIENT_ID_KEY, v);
-    initGoogleSignIn();
-  });
-
-  logoutBtn.addEventListener('click', function () {
-    currentUser = null; isAdmin = false;
-    try { localStorage.removeItem('site_ai_user_email'); localStorage.removeItem('site_ai_user_name'); } catch (e) {}
-    if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
-    loginGate.classList.remove('hidden');
-    initGoogleSignIn();
-  });
-
-  function onLoginSuccess() {
-    loginGate.classList.add('hidden');
-    userBadge.style.display = 'flex';
-    userEmailEl.textContent = currentUser.email;
-    userTagEl.textContent = isAdmin ? 'Admin' : 'Гост';
-    userTagEl.className = 'u-tag ' + (isAdmin ? 'admin' : 'guest');
-    adminPanel.style.display = isAdmin ? 'block' : 'none';
-    emptyStateText.textContent = isAdmin
-      ? 'Пиши директно. Можеш да поискаш промени по сайта (нова секция, поправка, нов файл) и AI-ят ще ги commit-не директно в GitHub repo-то.'
-      : 'Пиши директно. Достъпен си като гост — само чат, без права за редакция на сайта.';
-    loadSessions(); renderSessionsList(); renderMessages();
-  }
-
-  // Restore session if this browser already logged in before (best-effort, no real token persisted)
-  (function tryRestore() {
-    var savedEmail = loadSetting('site_ai_user_email', '');
-    if (savedEmail) {
-      currentUser = { email: savedEmail, name: loadSetting('site_ai_user_name', savedEmail) };
-      isAdmin = savedEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-      onLoginSuccess();
-    } else {
-      initGoogleSignIn();
+  function render() {
+    var log = el('aichatLog');
+    if (!log) return;
+    log.innerHTML = '';
+    if (!messages.length) {
+      var empty = document.createElement('div');
+      empty.className = 'aichat-empty';
+      empty.id = 'aichatEmpty';
+      empty.textContent = 'Пиши съобщение — напр. „Добави нова карта на Dashboard-а за X“ и AI-ят ще редактира repo-то директно.';
+      log.appendChild(empty);
+      return;
     }
-  })();
-
-  // ============ Sidebar mobile toggle ============
-  menuToggle.addEventListener('click', function () { sidebar.classList.add('open'); overlayMobile.classList.add('active'); });
-  overlayMobile.addEventListener('click', function () { sidebar.classList.remove('open'); overlayMobile.classList.remove('active'); });
-
-  // ============ Sessions ============
-  function uid() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-  function createEmptySession() { return { id: uid(), title: 'Нов чат', updatedAt: Date.now(), messages: [] }; }
-
-  function loadSessions() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      sessions = raw ? JSON.parse(raw) : [];
-    } catch (e) { sessions = []; }
-    if (!sessions.length) sessions = [createEmptySession()];
-    currentSessionId = sessions[0].id;
-  }
-  function saveSessions() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch (e) {} }
-  function getCurrentSession() {
-    var s = sessions.find(function (x) { return x.id === currentSessionId; });
-    if (!s) { s = createEmptySession(); sessions.unshift(s); currentSessionId = s.id; }
-    return s;
-  }
-  function touchSession(s) {
-    s.updatedAt = Date.now();
-    if (s.title === 'Нов чат') {
-      var firstUser = s.messages.find(function (m) { return m.role === 'user'; });
-      if (firstUser) s.title = firstUser.content.slice(0, 40);
-    }
-  }
-  function renderSessionsList() {
-    sessionsListEl.innerHTML = '';
-    sessions.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; }).forEach(function (s) {
-      var item = document.createElement('div');
-      item.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
-      var title = document.createElement('span'); title.className = 'session-title'; title.textContent = s.title;
-      var del = document.createElement('button'); del.className = 'session-delete'; del.type = 'button'; del.textContent = '×';
-      del.addEventListener('click', function (e) {
-        e.stopPropagation();
-        sessions = sessions.filter(function (x) { return x.id !== s.id; });
-        if (!sessions.length) sessions = [createEmptySession()];
-        if (currentSessionId === s.id) currentSessionId = sessions[0].id;
-        saveSessions(); renderSessionsList(); renderMessages();
-      });
-      item.appendChild(title); item.appendChild(del);
-      item.addEventListener('click', function () { currentSessionId = s.id; renderSessionsList(); renderMessages(); sidebar.classList.remove('open'); overlayMobile.classList.remove('active'); });
-      sessionsListEl.appendChild(item);
+    messages.forEach(function (m) {
+      var row = document.createElement('div');
+      row.className = 'aichat-msg ' + m.role + (m.isError ? ' error' : '');
+      var av = document.createElement('div'); av.className = 'aichat-avatar'; av.textContent = m.role === 'user' ? 'Аз' : 'AI';
+      var bubble = document.createElement('div'); bubble.className = 'aichat-bubble'; bubble.textContent = m.content;
+      row.appendChild(av); row.appendChild(bubble);
+      log.appendChild(row);
     });
-  }
-  newChatBtn.addEventListener('click', function () {
-    var s = createEmptySession(); sessions.unshift(s); currentSessionId = s.id;
-    saveSessions(); renderSessionsList(); renderMessages();
-    sidebar.classList.remove('open'); overlayMobile.classList.remove('active');
-  });
-
-  // ============ Rendering ============
-  function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
-
-  function createMessageElement(msg, isError) {
-    var row = document.createElement('div');
-    row.className = 'message-row ' + msg.role + (isError ? ' error-row' : '');
-    var wrap = document.createElement('div'); wrap.className = 'message-content';
-    var avatar = document.createElement('div'); avatar.className = 'message-avatar';
-    avatar.textContent = msg.role === 'user' ? 'Аз' : 'AI';
-    var bubble = document.createElement('div'); bubble.className = 'message-bubble';
-    bubble.textContent = msg.content || '';
-    wrap.appendChild(avatar); wrap.appendChild(bubble); row.appendChild(wrap);
-    return row;
+    log.scrollTop = log.scrollHeight;
   }
 
   function appendToolBadge(text) {
-    var el = document.createElement('div'); el.className = 'tool-badge'; el.textContent = '🔧 ' + text;
-    messagesList.appendChild(el); scrollToBottom();
-  }
-
-  function logTool(text) {
+    var log = el('aichatLog');
+    if (!log) return;
     var d = document.createElement('div');
-    d.textContent = new Date().toLocaleTimeString() + ' — ' + text;
-    toolLog.insertBefore(d, toolLog.firstChild);
+    d.className = 'aichat-tool';
+    d.textContent = '🔧 ' + text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
   }
 
-  function renderMessages() {
-    messagesList.innerHTML = '';
-    var session = getCurrentSession();
-    if (!session.messages.length) { messagesList.appendChild(emptyState); return; }
-    session.messages.forEach(function (m) { messagesList.appendChild(createMessageElement(m, m.isError)); });
-    scrollToBottom();
-  }
-
-  var typingRow = null;
+  var typingEl = null;
   function showTyping() {
-    typingRow = document.createElement('div'); typingRow.className = 'message-row assistant';
-    var wrap = document.createElement('div'); wrap.className = 'message-content';
-    var avatar = document.createElement('div'); avatar.className = 'message-avatar'; avatar.textContent = 'AI';
-    var bubble = document.createElement('div'); bubble.className = 'message-bubble';
-    bubble.innerHTML = '<div class="typing-indicator"><span>.</span><span>.</span><span>.</span></div>';
-    wrap.appendChild(avatar); wrap.appendChild(bubble); typingRow.appendChild(wrap);
-    messagesList.appendChild(typingRow); scrollToBottom();
+    var log = el('aichatLog'); if (!log) return;
+    typingEl = document.createElement('div');
+    typingEl.className = 'aichat-msg assistant';
+    typingEl.innerHTML = '<div class="aichat-avatar">AI</div><div class="aichat-bubble aichat-typing"><span>.</span><span>.</span><span>.</span></div>';
+    log.appendChild(typingEl);
+    log.scrollTop = log.scrollHeight;
   }
-  function removeTyping() { if (typingRow) { typingRow.remove(); typingRow = null; } }
+  function removeTyping() { if (typingEl) { typingEl.remove(); typingEl = null; } }
 
-  function addErrorMessage(text) {
-    removeTyping();
-    messagesList.appendChild(createMessageElement({ role: 'assistant', content: text }, true));
-    scrollToBottom();
-  }
-
-  // ============ GitHub tool execution ============
-  function ghHeaders() {
-    return { 'Authorization': 'token ' + githubTokenInput.value.trim(), 'Accept': 'application/vnd.github+json' };
-  }
-  function ghBase() {
-    var owner = repoOwnerInput.value.trim(), repo = repoNameInput.value.trim();
-    return 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/';
-  }
-  function branchParam() { return repoBranchInput.value.trim() || 'main'; }
-
+  /* ---------- GitHub tool execution ---------- */
   function utf8ToB64(str) { return btoa(unescape(encodeURIComponent(str))); }
   function b64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
 
+  function ghConfig() {
+    return {
+      token: val('key_github_token'),
+      owner: val('gh_owner'),
+      repo: val('gh_repo'),
+      branch: val('gh_branch') || 'main'
+    };
+  }
+  function ghHeaders(cfg) { return { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github+json' }; }
+  function ghBase(cfg) { return 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/'; }
+
   function ghListFiles(path) {
-    var url = ghBase() + encodeURI(path || '') + '?ref=' + encodeURIComponent(branchParam());
-    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    var cfg = ghConfig();
+    var url = ghBase(cfg) + encodeURI(path || '') + '?ref=' + encodeURIComponent(cfg.branch);
+    return fetch(url, { headers: ghHeaders(cfg) }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
       .then(function (res) {
         if (!res.ok) return 'Грешка: ' + (res.data.message || 'неуспешно четене');
         if (Array.isArray(res.data)) return res.data.map(function (f) { return (f.type === 'dir' ? '[папка] ' : '') + f.path; }).join('\n') || '(празна папка)';
         return res.data.path;
       });
   }
-
   function ghReadFile(path) {
-    var url = ghBase() + encodeURI(path) + '?ref=' + encodeURIComponent(branchParam());
-    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    var cfg = ghConfig();
+    var url = ghBase(cfg) + encodeURI(path) + '?ref=' + encodeURIComponent(cfg.branch);
+    return fetch(url, { headers: ghHeaders(cfg) }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
       .then(function (res) {
         if (!res.ok) return 'Грешка: ' + (res.data.message || 'файлът не е намерен');
         if (res.data.encoding === 'base64') return b64ToUtf8(res.data.content.replace(/\n/g, ''));
         return res.data.content || '';
       });
   }
-
   function ghWriteFile(path, content, message) {
-    var url = ghBase() + encodeURI(path);
-    return fetch(url, { headers: ghHeaders() }).then(function (r) { return r.ok ? r.json() : null; })
+    var cfg = ghConfig();
+    var url = ghBase(cfg) + encodeURI(path);
+    return fetch(url, { headers: ghHeaders(cfg) }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (existing) {
-        var body = {
-          message: message || ('Промяна чрез Site AI: ' + path),
-          content: utf8ToB64(content),
-          branch: branchParam()
-        };
+        var body = { message: message || ('Промяна чрез AI Чат: ' + path), content: utf8ToB64(content), branch: cfg.branch };
         if (existing && existing.sha) body.sha = existing.sha;
-        return fetch(url, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()), body: JSON.stringify(body) })
+        return fetch(url, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders(cfg)), body: JSON.stringify(body) })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
           .then(function (res) {
-            if (!res.ok) return 'Грешка при запис: ' + (res.data.message || r.statusText);
+            if (!res.ok) return 'Грешка при запис: ' + (res.data.message || 'неуспешен commit');
             return 'Записано успешно: ' + path + ' (commit ' + (res.data.commit && res.data.commit.sha ? res.data.commit.sha.slice(0, 7) : '') + ')';
           });
       });
   }
 
   function executeTool(name, input) {
-    if (!githubTokenInput.value.trim() || !repoOwnerInput.value.trim() || !repoNameInput.value.trim()) {
-      return Promise.resolve('Грешка: липсват GitHub настройки (token/owner/repo) в admin панела.');
+    var cfg = ghConfig();
+    if (!cfg.token || !cfg.owner || !cfg.repo) {
+      return Promise.resolve('Грешка: липсват GitHub настройки — GitHub Token (в API Ключове) и/или repo owner/име (в Статистика → YouTube Тракер).');
     }
     appendToolBadge(name + '(' + (input.path || '') + ')');
-    logTool(name + ' → ' + (input.path || ''));
     if (name === 'list_files') return ghListFiles(input.path);
     if (name === 'read_file') return ghReadFile(input.path);
     if (name === 'write_file') return ghWriteFile(input.path, input.content, input.message);
     return Promise.resolve('Непознат инструмент: ' + name);
   }
 
-  // ============ Provider: Gemini ============
+  /* ---------- Gemini ---------- */
   function geminiToolDecl() {
     return [{ functionDeclarations: TOOLS.map(function (t) {
       var props = {}; var required = [];
@@ -665,18 +1035,14 @@ document.addEventListener('DOMContentLoaded', function () {
       return { name: t.name, description: t.description, parameters: { type: 'OBJECT', properties: props, required: required } };
     }) }];
   }
-
-  function runGemini(sessionMessages, sysPrompt, useTools) {
-    var apiKey = geminiKeyInput.value.trim();
-    if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в лявото меню.');
-    var contents = sessionMessages.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
-    var model = currentGeminiModel();
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-
+  function runGemini(history) {
+    var apiKey = val('key_gemini');
+    if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в ⚙️ „API Ключове“.');
+    var contents = history.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + encodeURIComponent(apiKey);
     function step(depth) {
       if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
-      var body = { contents: contents, systemInstruction: { parts: [{ text: sysPrompt }] }, generationConfig: { maxOutputTokens: 8192 } };
-      if (useTools) body.tools = geminiToolDecl();
+      var body = { contents: contents, systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }, generationConfig: { maxOutputTokens: 8192 }, tools: geminiToolDecl() };
       return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
         .then(function (res) {
@@ -684,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var cand = res.data.candidates && res.data.candidates[0];
           var parts = cand && cand.content && cand.content.parts ? cand.content.parts : [];
           var fnCalls = parts.filter(function (p) { return p.functionCall; });
-          var textParts = parts.filter(function (p) { return p.text }).map(function (p) { return p.text; }).join('\n');
+          var textParts = parts.filter(function (p) { return p.text; }).map(function (p) { return p.text; }).join('\n');
           if (!fnCalls.length) return textParts || '(празен отговор)';
           contents.push({ role: 'model', parts: parts });
           return Promise.all(fnCalls.map(function (p) {
@@ -700,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return step(0);
   }
 
-  // ============ Provider: Claude ============
+  /* ---------- Claude ---------- */
   function claudeToolDecl() {
     return TOOLS.map(function (t) {
       var props = {}; var required = [];
@@ -708,18 +1074,14 @@ document.addEventListener('DOMContentLoaded', function () {
       return { name: t.name, description: t.description, input_schema: { type: 'object', properties: props, required: required } };
     });
   }
-
-  function runClaude(sessionMessages, sysPrompt, useTools) {
-    var apiKey = claudeKeyInput.value.trim();
-    if (!apiKey) return Promise.resolve('⚠ Липсва Claude API ключ — добави го в лявото меню.');
-    var model = currentClaudeModel();
-    var working = sessionMessages.map(function (m) { return { role: m.role, content: m.content }; });
+  function runClaude(history) {
+    var apiKey = val('key_claude');
+    if (!apiKey) return Promise.resolve('⚠ Липсва Claude API ключ — добави го в ⚙️ „API Ключове“.');
+    var working = history.map(function (m) { return { role: m.role, content: m.content }; });
     var url = 'https://api.anthropic.com/v1/messages';
-
     function step(depth) {
       if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
-      var body = { model: model, max_tokens: 4096, system: sysPrompt, messages: working };
-      if (useTools) body.tools = claudeToolDecl();
+      var body = { model: 'claude-sonnet-4-6', max_tokens: 4096, system: SYSTEM_PROMPT, messages: working, tools: claudeToolDecl() };
       return fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -746,43 +1108,56 @@ document.addEventListener('DOMContentLoaded', function () {
     return step(0);
   }
 
-  // ============ Send message ============
-  function setBusy(b) { isGenerating = b; sendBtn.disabled = b; }
-
-  function sendMessage() {
-    if (isGenerating || !currentUser) return;
-    var text = chatInput.value.trim();
+  function send() {
+    if (busy) return;
+    var input = el('aichatInput');
+    var text = input.value.trim();
     if (!text) return;
+    var sendBtn = el('aichatSend');
+    busy = true; if (sendBtn) sendBtn.disabled = true;
 
-    var session = getCurrentSession();
-    session.messages.push({ role: 'user', content: text });
-    chatInput.value = ''; chatInput.style.height = 'auto';
-    setBusy(true);
-    touchSession(session); saveSessions(); renderSessionsList(); renderMessages(); showTyping();
+    messages.push({ role: 'user', content: text });
+    input.value = ''; input.style.height = 'auto';
+    persist(); render(); showTyping();
 
-    var provider = providerSelect.value;
-    var sysPrompt = isAdmin ? ADMIN_SYSTEM_PROMPT : GUEST_SYSTEM_PROMPT;
-    var useTools = isAdmin;
-
+    var provider = (el('aichatProvider') || {}).value || 'gemini';
     var runner = provider === 'claude' ? runClaude : runGemini;
-    runner(session.messages, sysPrompt, useTools).then(function (answer) {
+    runner(messages).then(function (answer) {
       removeTyping();
-      session.messages.push({ role: 'assistant', content: answer });
-      touchSession(session); saveSessions(); renderMessages(); setBusy(false);
+      messages.push({ role: 'assistant', content: answer });
+      persist(); render();
+      busy = false; if (sendBtn) sendBtn.disabled = false;
     }).catch(function (err) {
-      addErrorMessage('Грешка: ' + err.message); setBusy(false);
+      removeTyping();
+      messages.push({ role: 'assistant', content: 'Грешка: ' + err.message, isError: true });
+      persist(); render();
+      busy = false; if (sendBtn) sendBtn.disabled = false;
     });
   }
 
-  sendBtn.addEventListener('click', sendMessage);
-  chatInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  });
-  chatInput.addEventListener('input', function () {
-    this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 160) + 'px';
-  });
+  function clear() {
+    if (!confirm('Да изчистя ли историята на AI чата?')) return;
+    messages = []; persist(); render();
+  }
 
-});
+  function init() {
+    load(); render();
+    var provSel = el('aichatProvider');
+    if (provSel) provSel.addEventListener('change', function () { localStorage.setItem(PROVIDER_KEY, provSel.value); });
+    var input = el('aichatInput');
+    if (input) {
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+      input.addEventListener('input', function () {
+        this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+  return { send: send, clear: clear };
+})();
 </script>
 </body>
 </html>

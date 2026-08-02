@@ -158,22 +158,12 @@
       <label class="sidebar-label" for="geminiKeyInput">Gemini API ключ</label>
       <input type="password" class="sidebar-input" id="geminiKeyInput" placeholder="AIza..." autocomplete="off">
       <div class="field-hint">Безплатен ключ: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a></div>
-      <label class="sidebar-label" for="geminiModelSelect" style="margin-top:.75rem;">Gemini модел</label>
-      <select class="sidebar-select" id="geminiModelSelect">
-        <option value="">Зареждане на модели...</option>
-      </select>
-      <div class="field-hint">Списъкът се дърпа директно от твоя ключ. Отвори менюто отново, за да опресниш.</div>
     </div>
 
     <div class="sidebar-section" id="claudeKeySection" style="display:none;">
       <label class="sidebar-label" for="claudeKeyInput">Claude API ключ</label>
       <input type="password" class="sidebar-input" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off">
       <div class="field-hint">От <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
-      <label class="sidebar-label" for="claudeModelSelect" style="margin-top:.75rem;">Claude модел</label>
-      <select class="sidebar-select" id="claudeModelSelect">
-        <option value="">Зареждане на модели...</option>
-      </select>
-      <div class="field-hint">По подразбиране е Haiku 4.5 — най-евтиният текущ модел ($1/$5 на млн. токена). Смени го от менюто за по-силен модел.</div>
     </div>
 
     <div class="admin-panel" id="adminPanel" style="display:none;">
@@ -226,17 +216,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var ADMIN_EMAIL = 'ceckod@gmail.com';
   var STORAGE_KEY = 'site_ai_sessions_v1';
   var GOOGLE_CLIENT_ID_KEY = 'site_ai_google_client_id';
-  var GEMINI_MODEL_KEY = 'site_ai_gemini_model';
-  var CLAUDE_MODEL_KEY = 'site_ai_claude_model';
-  var DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
-  // Claude Haiku 4.5 е най-евтиният текущ модел ($1/$5 на млн. токена) — избран по подразбиране.
-  var DEFAULT_CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-  var CLAUDE_FALLBACK_MODELS = [
-    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 — $1/$5 (най-евтин)' },
-    { id: 'claude-sonnet-5', label: 'Claude Sonnet 5 — $2-3/$10-15' },
-    { id: 'claude-opus-4-8', label: 'Claude Opus 4.8 — $5/$25' },
-    { id: 'claude-fable-5', label: 'Claude Fable 5 — $10/$50' }
-  ];
 
   var ADMIN_SYSTEM_PROMPT = "Ти си AI асистент, вграден в личния сайт на потребителя, с директни права за редакция на GitHub хранилището на сайта чрез инструментите list_files, read_file и write_file. Когато потребителят поиска промяна (нов елемент, поправка, нова секция, нов файл и т.н.): 1) при нужда използвай list_files и read_file, за да разбереш структурата и текущото съдържание; 2) направи промяната директно чрез write_file, като изпращаш ЦЯЛОТО ново съдържание на файла (никога diff или частичен откъс); 3) обясни накратко на български какво си променил и защо. Никога не искай от потребителя да архивира или праща файлове ръчно — винаги работиш директно с хранилището. За обикновени въпроси отговаряй нормално, без да ползваш инструменти.";
   var GUEST_SYSTEM_PROMPT = "Ти си полезен AI асистент за посетители на сайта. Отговаряй кратко, приятелски и на български, освен ако потребителят пише на друг език. Нямаш достъп за редакция на сайта — ако някой поиска промяна по сайта, обясни любезно, че само администраторът може да прави това.";
@@ -281,8 +260,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var claudeKeySection = document.getElementById('claudeKeySection');
   var geminiKeyInput = document.getElementById('geminiKeyInput');
   var claudeKeyInput = document.getElementById('claudeKeyInput');
-  var geminiModelSelect = document.getElementById('geminiModelSelect');
-  var claudeModelSelect = document.getElementById('claudeModelSelect');
   var adminPanel = document.getElementById('adminPanel');
   var githubTokenInput = document.getElementById('githubTokenInput');
   var repoOwnerInput = document.getElementById('repoOwnerInput');
@@ -316,10 +293,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Презарежда съответния модел-списък, ако вече е наличен ключ, при смяна на самия ключ.
-  geminiKeyInput.addEventListener('change', function () { loadGeminiModels(); });
-  claudeKeyInput.addEventListener('change', function () { loadClaudeModels(); });
-
   function updateProviderUI() {
     var p = providerSelect.value;
     saveSetting('site_ai_provider', p);
@@ -329,92 +302,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   providerSelect.addEventListener('change', updateProviderUI);
   updateProviderUI();
-
-  // ============ Model selectors (Gemini + Claude) ============
-  function currentGeminiModel() { return loadSetting(GEMINI_MODEL_KEY, DEFAULT_GEMINI_MODEL); }
-  function currentClaudeModel() { return loadSetting(CLAUDE_MODEL_KEY, DEFAULT_CLAUDE_MODEL); }
-
-  function loadGeminiModels() {
-    var apiKey = geminiKeyInput.value.trim();
-    if (!apiKey) { geminiModelSelect.innerHTML = '<option value="">⚠ Добави Gemini ключ</option>'; return; }
-    geminiModelSelect.innerHTML = '<option value="">Зареждане...</option>';
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey);
-    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
-      var models = (data.models || []).filter(function (m) {
-        return m.supportedGenerationMethods && m.supportedGenerationMethods.indexOf('generateContent') !== -1;
-      });
-      if (!models.length) { geminiModelSelect.innerHTML = '<option value="">Няма намерени модели</option>'; return; }
-      var saved = loadSetting(GEMINI_MODEL_KEY, '');
-      geminiModelSelect.innerHTML = '';
-      models.forEach(function (m) {
-        var name = m.name.replace('models/', '');
-        var opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = m.displayName ? (m.displayName + ' (' + name + ')') : name;
-        if (name === (saved || DEFAULT_GEMINI_MODEL)) opt.selected = true;
-        geminiModelSelect.appendChild(opt);
-      });
-      if (!saved) saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value);
-    }).catch(function () {
-      geminiModelSelect.innerHTML = '<option value="' + DEFAULT_GEMINI_MODEL + '">' + DEFAULT_GEMINI_MODEL + ' (по подразбиране)</option>';
-    });
-  }
-
-  function loadClaudeModels() {
-    var apiKey = claudeKeyInput.value.trim();
-    if (!apiKey) { claudeModelSelect.innerHTML = '<option value="">⚠ Добави Claude ключ</option>'; return; }
-    claudeModelSelect.innerHTML = '<option value="">Зареждане...</option>';
-    var url = 'https://api.anthropic.com/v1/models?limit=100';
-    fetch(url, {
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      }
-    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-      .then(function (res) {
-        var saved = loadSetting(CLAUDE_MODEL_KEY, '');
-        var list = [];
-        if (res.ok && res.data && Array.isArray(res.data.data) && res.data.data.length) {
-          list = res.data.data.map(function (m) { return { id: m.id, label: m.display_name || m.id }; });
-          var rank = function (id) {
-            id = id.toLowerCase();
-            if (id.indexOf('haiku') !== -1) return 0;
-            if (id.indexOf('sonnet') !== -1) return 1;
-            if (id.indexOf('opus') !== -1) return 2;
-            if (id.indexOf('fable') !== -1 || id.indexOf('mythos') !== -1) return 3;
-            return 4;
-          };
-          list.sort(function (a, b) { return rank(a.id) - rank(b.id); });
-        } else {
-          list = CLAUDE_FALLBACK_MODELS.slice();
-        }
-        claudeModelSelect.innerHTML = '';
-        list.forEach(function (m) {
-          var opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.label;
-          if (m.id === (saved || DEFAULT_CLAUDE_MODEL)) opt.selected = true;
-          claudeModelSelect.appendChild(opt);
-        });
-        if (!saved) saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value);
-      }).catch(function () {
-        claudeModelSelect.innerHTML = '';
-        CLAUDE_FALLBACK_MODELS.forEach(function (m) {
-          var opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.label;
-          if (m.id === DEFAULT_CLAUDE_MODEL) opt.selected = true;
-          claudeModelSelect.appendChild(opt);
-        });
-      });
-  }
-
-  geminiModelSelect.addEventListener('change', function () { saveSetting(GEMINI_MODEL_KEY, geminiModelSelect.value); });
-  geminiModelSelect.addEventListener('mousedown', loadGeminiModels); // презарежда при всяко отваряне
-  claudeModelSelect.addEventListener('change', function () { saveSetting(CLAUDE_MODEL_KEY, claudeModelSelect.value); });
-  claudeModelSelect.addEventListener('mousedown', loadClaudeModels); // презарежда при всяко отваряне
-
-  loadGeminiModels();
-  loadClaudeModels();
 
   // ============ Google Sign-In ============
   function b64urlDecode(str) {
@@ -670,8 +557,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var apiKey = geminiKeyInput.value.trim();
     if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в лявото меню.');
     var contents = sessionMessages.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
-    var model = currentGeminiModel();
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var model = 'gemini-3.6-flash';
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(apiKey);
 
     function step(depth) {
       if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
@@ -712,13 +599,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function runClaude(sessionMessages, sysPrompt, useTools) {
     var apiKey = claudeKeyInput.value.trim();
     if (!apiKey) return Promise.resolve('⚠ Липсва Claude API ключ — добави го в лявото меню.');
-    var model = currentClaudeModel();
     var working = sessionMessages.map(function (m) { return { role: m.role, content: m.content }; });
     var url = 'https://api.anthropic.com/v1/messages';
 
     function step(depth) {
       if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
-      var body = { model: model, max_tokens: 4096, system: sysPrompt, messages: working };
+      var body = { model: 'claude-sonnet-4-6', max_tokens: 4096, system: sysPrompt, messages: working };
       if (useTools) body.tools = claudeToolDecl();
       return fetch(url, {
         method: 'POST',
