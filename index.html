@@ -1039,7 +1039,7 @@ var AIChat = (function () {
     var apiKey = val('key_gemini');
     if (!apiKey) return Promise.resolve('⚠ Липсва Gemini API ключ — добави го в ⚙️ „API Ключове“.');
     var contents = history.map(function (m) { return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }; });
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + encodeURIComponent(apiKey);
     function step(depth) {
       if (depth > 6) return Promise.resolve('(достигнат лимит от стъпки с инструменти)');
       var body = { contents: contents, systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }, generationConfig: { maxOutputTokens: 8192 }, tools: geminiToolDecl() };
