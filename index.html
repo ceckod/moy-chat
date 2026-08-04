@@ -258,6 +258,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 </head>
    
 <body>
+<div id="vaultBanner" style="display:none;position:sticky;top:0;left:0;right:0;z-index:70;background:var(--amber);color:#1a1200;padding:8px 16px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;" onclick="Nav.showView('set-keys')">
+  🔒 Ключовете са заключени за тази сесия — натисни тук, за да въведеш паролата на трезора
+</div>
 <div class="shell">
 
   <!-- ================= SIDEBAR ================= -->
@@ -492,6 +495,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
         <button class="btn grad" onclick="guardClick(this, () => HookArena.start())">🧬 Стартирай еволюцията</button>
         <div id="hookArenaOut" style="margin-top:14px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => HookArena.compareWithRealHits())">📊 Сравни с реални hits в нишата</button>
+        <div id="hookArenaCompareOut" style="margin-top:12px;"></div>
       </div>
 
       <div class="card" id="conceptCard" style="display:none;margin-top:14px;">
@@ -731,6 +736,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         </select>
         <div id="modelPrefOut" class="muted" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
         <hr style="margin:18px 0;">
+        <strong>🔐 Криптиране на ключовете (Vault)</strong>
+        <div id="vaultOut" style="margin-top:8px;"></div>
+        <hr style="margin:18px 0;">
         <strong>💾 Резервно копие на API ключовете</strong>
         <p class="muted" style="margin-top:6px;">Отделно от резервното копие на проекта (виж "Проект &amp; Данни") — тук се пазят/възстановяват само ключовете. Файлът е в ЧИСТ ТЕКСТ, пази го на сигурно място.</p>
         <div class="row" style="margin-top:10px;">
@@ -755,6 +763,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <button class="btn ghost" onclick="AICallLog.clear()">🗑️ Изчисти лога</button>
         </div>
         <div id="aiCallLogOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🏆 Класация по надеждност</strong>
+        <p class="muted">Процент успешни извиквания на всеки модел на това устройство. При "🧪 Тествай ключовете" моделите с най-добра история се пробват първи.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="AICallLog.renderLeaderboard()">🏆 Покажи класацията</button>
+        <div id="aiLeaderboardOut" style="margin-top:10px;"></div>
       </div>
     </div>
 
@@ -885,5 +900,15 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
 <script src="app.js"></script>
    <script src="scripts/clock-and-keys.js"></script>
+   <script>
+     // Регистрира Service Worker за offline достъп до дашборда (само
+     // черупката — HTML/JS/CSS/шрифтове; AI/GitHub/YouTube заявките
+     // винаги минават през мрежата, виж sw.js).
+     if ("serviceWorker" in navigator) {
+       window.addEventListener("load", () => {
+         navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW регистрация неуспешна:", e));
+       });
+     }
+   </script>
 </body>
 </html>

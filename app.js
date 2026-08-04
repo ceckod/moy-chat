@@ -7,6 +7,42 @@ const STORAGE_KEY = "cdb_dashboard_state_v1";
 const KEYS_STORAGE = "cdb_dashboard_keys_v1";
 
 /* =========================================================
+   STORAGE — тънък wrapper над localStorage вместо localStorage.get/setItem
+   пръснато на 35+ места из целия файл. Всеки модул по-долу (AppState, Keys,
+   ModelPref, AICallLog, QuotaTracker, AICache, Prefs, TrackRecord...) минава
+   през него. Ползи:
+     - JSON.parse/stringify + try/catch на ЕДНО място, не преповторени 20 пъти
+     - Ако утре решим да сменим localStorage с нещо друго (IndexedDB, remote
+       sync и т.н.), пипаме само тук, не 35 различни функции.
+   .get/.set работят с произволни JS стойности (обект/масив/число) — сами
+   правят JSON сериализация. .getRaw/.setRaw са за чисто текстови флагове
+   (напр. "1"/"0"), където JSON би бил излишен overhead (виж Vault).
+   ========================================================= */
+const Storage = {
+  get(key, fallback = null) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : JSON.parse(raw);
+    } catch (e) {
+      console.warn(`Storage.get: счупени данни за "${key}", връщам fallback.`, e);
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (e) { console.warn(`Storage.set: неуспешен запис за "${key}" (диск пълен?).`, e); return false; }
+  },
+  remove(key) { localStorage.removeItem(key); },
+  has(key) { return localStorage.getItem(key) !== null; },
+
+  getRaw(key, fallback = null) {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : v;
+  },
+  setRaw(key, value) { localStorage.setItem(key, value); }
+};
+
+/* =========================================================
    ДИНАМИЧЕН СПИСЪК С GEMINI МОДЕЛИ
    Вместо да разчитаме на твърдо закодирани имена на модели (Google ги
    преименува/премахва от време на време и това чупи приложението), питаме
@@ -57,7 +93,7 @@ function _sortGeminiModelNames(names) {
 async function getGeminiModelList(apiKey, forceRefresh = false) {
   if (!forceRefresh) {
     try {
-      const cached = JSON.parse(localStorage.getItem(GEMINI_MODELS_CACHE_KEY) || "null");
+      const cached = Storage.get(GEMINI_MODELS_CACHE_KEY);
       if (cached && Array.isArray(cached.models) && cached.models.length &&
           (Date.now() - cached.ts) < GEMINI_MODELS_CACHE_HOURS * 3600 * 1000) {
         return ModelPref.applyTo("gemini", cached.models);
@@ -74,7 +110,7 @@ async function getGeminiModelList(apiKey, forceRefresh = false) {
       .map(m => m.name.replace("models/", ""));
     const sorted = _sortGeminiModelNames(names);
     if (!sorted.length) throw new Error("Няма достъпни generateContent модели за този ключ");
-    localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
+    Storage.set(GEMINI_MODELS_CACHE_KEY, { ts: Date.now(), models: sorted });
     return ModelPref.applyTo("gemini", sorted);
   } catch (e) {
     console.warn("Неуспешно изтегляне на реалния списък Gemini модели, ползвам резервен списък:", e.message);
@@ -119,7 +155,7 @@ function _sortClaudeModelNames(ids) {
 async function getClaudeModelList(apiKey, forceRefresh = false) {
   if (!forceRefresh) {
     try {
-      const cached = JSON.parse(localStorage.getItem(CLAUDE_MODELS_CACHE_KEY) || "null");
+      const cached = Storage.get(CLAUDE_MODELS_CACHE_KEY);
       if (cached && Array.isArray(cached.models) && cached.models.length &&
           (Date.now() - cached.ts) < CLAUDE_MODELS_CACHE_HOURS * 3600 * 1000) {
         return ModelPref.applyTo("claude", cached.models);
@@ -140,7 +176,7 @@ async function getClaudeModelList(apiKey, forceRefresh = false) {
     const ids = (data.data || []).map(m => m.id);
     const sorted = _sortClaudeModelNames(ids);
     if (!sorted.length) throw new Error("Няма достъпни Claude модели за този ключ");
-    localStorage.setItem(CLAUDE_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
+    Storage.set(CLAUDE_MODELS_CACHE_KEY, { ts: Date.now(), models: sorted });
     return ModelPref.applyTo("claude", sorted);
   } catch (e) {
     console.warn("Неуспешно изтегляне на реалния списък Claude модели, ползвам резервен списък:", e.message);
@@ -153,8 +189,7 @@ const AppState = {
   data: null,
 
   load() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    this.data = raw ? JSON.parse(raw) : {
+    this.data = Storage.get(STORAGE_KEY) || {
       currentStep: 1,
       status: { 1: "blue", 2: "grey", 3: "grey", 4: "grey" },
       project: {
@@ -167,17 +202,118 @@ const AppState = {
     };
   },
   save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    Storage.set(STORAGE_KEY, this.data);
+  }
+};
+
+/* =========================================================
+   VAULT — опционално криптиране на API ключовете "at rest" в
+   localStorage с парола (Web Crypto: PBKDF2 → AES-GCM). ИЗКЛЮЧЕНО по
+   подразбиране — нищо не се променя, ако не го включиш ръчно от Настройки.
+   Когато е включено:
+     - localStorage пази САМО криптиран blob (сол + IV + ciphertext),
+       никога чист текст.
+     - Дешифрираните ключове живеят САМО в паметта (RAM) на текущия таб,
+       докато не презаредиш/затвориш страницата — тогава пак трябва парола
+       ("🔓 Отключи трезора" в Настройки), преди AI/GitHub функциите да
+       проработят отново.
+     - Самата парола НИКЪДЕ не се пази — само изведеният от нея AES ключ
+       стои в паметта (не може да се прочете обратно), докато е отключен.
+   Това не е военна сигурност (клиентски JS все пак може да бъде инспектиран
+   в момента на употреба), но е сериозно по-добре от чист текст на диска.
+   ========================================================= */
+const VAULT_ENC_KEY = "cdb_keys_vault_enc_v1";
+const VAULT_FLAG_KEY = "cdb_keys_vault_flag_v1";
+
+function _b64(bytes) { return btoa(String.fromCharCode(...new Uint8Array(bytes))); }
+function _unb64(str) { return Uint8Array.from(atob(str), c => c.charCodeAt(0)); }
+
+const Vault = {
+  _plain: null,  // дешифрирани ключове — само в паметта, докато е отключен
+  _key: null,    // derived CryptoKey — само в паметта, докато е отключен
+
+  isEnabled() { return Storage.getRaw(VAULT_FLAG_KEY) === "1"; },
+  isUnlocked() { return this._plain !== null; },
+
+  async _deriveKey(passphrase, saltBytes) {
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: saltBytes, iterations: 150000, hash: "SHA-256" },
+      baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    );
+  },
+
+  // Включва трезора: криптира текущите (чист текст) ключове с нова парола,
+  // трие чист текст от localStorage завинаги и ги пази оттук нататък само в RAM.
+  async enable(passphrase) {
+    if (!window.crypto?.subtle) throw new Error("Криптирането изисква HTTPS (или localhost).");
+    if (!passphrase || passphrase.length < 6) throw new Error("Паролата трябва да е поне 6 символа.");
+    const plain = Keys.load(); // все още чист текст в този момент (Vault не е активен)
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await this._deriveKey(passphrase, salt);
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(plain)));
+    Storage.set(VAULT_ENC_KEY, { salt: _b64(salt), iv: _b64(iv), data: _b64(ciphertext) });
+    Storage.setRaw(VAULT_FLAG_KEY, "1");
+    Storage.remove(KEYS_STORAGE); // никога повече чист текст на диска
+    this._key = key;
+    this._plain = plain;
+  },
+
+  // Опитва да отключи с подадена парола за тази сесия/таб; хвърля грешка при грешна парола.
+  async unlock(passphrase) {
+    const blob = Storage.get(VAULT_ENC_KEY);
+    if (!blob) throw new Error("Няма криптирани ключове в този браузър.");
+    const salt = _unb64(blob.salt), iv = _unb64(blob.iv), data = _unb64(blob.data);
+    const key = await this._deriveKey(passphrase, salt);
+    let plainBuf;
+    try { plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data); }
+    catch (e) { throw new Error("Грешна парола."); }
+    const plain = JSON.parse(new TextDecoder().decode(plainBuf));
+    this._key = key;
+    this._plain = plain;
+    return plain;
+  },
+
+  // Заключва само RAM копието (криптираният blob на диска остава недокоснат).
+  lock() { this._plain = null; this._key = null; },
+
+  // Изключва трезора напълно: изисква парола за проверка, връща ключовете
+  // обратно в чист текст в localStorage (поведение отпреди включване на Vault).
+  async disable(passphrase) {
+    const plain = await this.unlock(passphrase); // хвърля при грешна парола
+    Storage.set(KEYS_STORAGE, plain);
+    Storage.remove(VAULT_ENC_KEY);
+    Storage.remove(VAULT_FLAG_KEY);
+    this._plain = null;
+    this._key = null;
+  },
+
+  // Презаписва криптирания blob със същия (кеширан) ключ — вика се от
+  // Keys.save(), когато трезорът е активен и вече отключен в тази сесия.
+  async _reencrypt(plain) {
+    if (!this._key) return; // заключен — не бива да се стига дотук по нормален път
+    const blob = Storage.get(VAULT_ENC_KEY);
+    const salt = blob ? _unb64(blob.salt) : crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, this._key, new TextEncoder().encode(JSON.stringify(plain)));
+    Storage.set(VAULT_ENC_KEY, { salt: _b64(salt), iv: _b64(iv), data: _b64(ciphertext) });
   }
 };
 
 const Keys = {
   load() {
-    const raw = localStorage.getItem(KEYS_STORAGE);
-    return raw ? JSON.parse(raw) : {};
+    if (Vault.isEnabled()) return Vault._plain ? { ...Vault._plain } : {};
+    return Storage.get(KEYS_STORAGE) || {};
   },
   save(obj) {
-    localStorage.setItem(KEYS_STORAGE, JSON.stringify(obj));
+    if (Vault.isEnabled()) {
+      Vault._plain = obj;
+      Vault._reencrypt(obj); // async, "fire and forget" — RAM копието е вярно веднага
+      return;
+    }
+    Storage.set(KEYS_STORAGE, obj);
   }
 };
 
@@ -201,9 +337,9 @@ const MODEL_PREF_KEY = "cdb_model_pref_v1";
 
 const ModelPref = {
   _load() {
-    try { return JSON.parse(localStorage.getItem(MODEL_PREF_KEY) || "{}"); } catch (e) { return {}; }
+    try { return Storage.get(MODEL_PREF_KEY) || {}; } catch (e) { return {}; }
   },
-  _save(data) { localStorage.setItem(MODEL_PREF_KEY, JSON.stringify(data)); },
+  _save(data) { Storage.set(MODEL_PREF_KEY, data); },
 
   // { model, source: "auto" | "manual" } или null, ако няма зададено предпочитание
   get(provider) {
@@ -247,21 +383,22 @@ const AI_CALL_LOG_MAX = 40;
 const AICallLog = {
   record({ provider, model, ok, note }) {
     let log = [];
-    try { log = JSON.parse(localStorage.getItem(AI_CALL_LOG_KEY) || "[]"); } catch (e) { /* счупен лог, пренапиши */ }
+    try { log = Storage.get(AI_CALL_LOG_KEY) || []; } catch (e) { /* счупен лог, пренапиши */ }
     log.unshift({ ts: Date.now(), provider, model, ok: !!ok, note: note || "" });
     log = log.slice(0, AI_CALL_LOG_MAX);
-    localStorage.setItem(AI_CALL_LOG_KEY, JSON.stringify(log));
+    Storage.set(AI_CALL_LOG_KEY, log);
     this._renderIfVisible();
   },
   get() {
-    try { return JSON.parse(localStorage.getItem(AI_CALL_LOG_KEY) || "[]"); } catch (e) { return []; }
+    try { return Storage.get(AI_CALL_LOG_KEY) || []; } catch (e) { return []; }
   },
   clear() {
-    localStorage.removeItem(AI_CALL_LOG_KEY);
+    Storage.remove(AI_CALL_LOG_KEY);
     this._renderIfVisible();
   },
   _renderIfVisible() {
     if (document.getElementById("aiCallLogOut")) this.render();
+    if (document.getElementById("aiLeaderboardOut")) this.renderLeaderboard();
   },
   render() {
     const el = document.getElementById("aiCallLogOut");
@@ -273,6 +410,61 @@ const AICallLog = {
       const providerLabel = e.provider === "claude" ? "Claude" : "Gemini";
       return `${time} ${e.ok ? "✅" : "❌"} ${providerLabel} · ${e.model}${e.note ? " — " + e.note : ""}`;
     }).join("\n");
+  },
+
+  // ---------- Leaderboard по надеждност ----------
+  // Смята процент успех за всеки provider+модел от последните записи в лога.
+  // Ползва се от Settings.testKeys(), за да пробва първо моделите, които
+  // исторически са работили най-добре на това устройство, вместо сляпо да
+  // следва статичния fallback ред всеки път.
+  getLeaderboard(provider) {
+    const log = this.get().filter(e => e.provider === provider);
+    const stats = {};
+    for (const e of log) {
+      if (!stats[e.model]) stats[e.model] = { ok: 0, total: 0, lastTs: 0 };
+      stats[e.model].total++;
+      if (e.ok) stats[e.model].ok++;
+      stats[e.model].lastTs = Math.max(stats[e.model].lastTs, e.ts);
+    }
+    return Object.entries(stats)
+      .map(([model, s]) => ({ model, rate: s.ok / s.total, total: s.total, lastTs: s.lastTs }))
+      .sort((a, b) => b.rate - a.rate || b.total - a.total || b.lastTs - a.lastTs);
+  },
+
+  // Подрежда models[] по историческа надеждност (най-добрите отпред);
+  // модели без история остават по края в оригиналния си ред.
+  sortByReliability(provider, models) {
+    const board = this.getLeaderboard(provider);
+    const rank = new Map(board.map((b, i) => [b.model, i]));
+    return [...models].sort((a, b) => {
+      const ra = rank.has(a) ? rank.get(a) : Infinity;
+      const rb = rank.has(b) ? rank.get(b) : Infinity;
+      if (ra === rb) return 0;
+      return ra - rb;
+    });
+  },
+
+  renderLeaderboard() {
+    const el = document.getElementById("aiLeaderboardOut");
+    if (!el) return;
+    const rows = [];
+    for (const provider of ["claude", "gemini"]) {
+      const board = this.getLeaderboard(provider);
+      if (!board.length) continue;
+      rows.push(`<div style="font-size:11px;opacity:.7;margin:8px 0 4px;">${provider === "claude" ? "Claude" : "Gemini"}:</div>`);
+      for (const b of board) {
+        const pct = Math.round(b.rate * 100);
+        const color = pct >= 80 ? "var(--green)" : pct >= 50 ? "var(--amber)" : "var(--red)";
+        rows.push(`<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;">
+          <div style="width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${b.model}</div>
+          <div style="flex:1;background:var(--panel-2);border-radius:5px;height:12px;overflow:hidden;">
+            <div style="width:${Math.max(4, pct)}%;height:100%;background:${color};"></div>
+          </div>
+          <div style="width:70px;text-align:right;flex-shrink:0;">${pct}% (${b.total})</div>
+        </div>`);
+      }
+    }
+    el.innerHTML = rows.length ? rows.join("") : "Още няма достатъчно история за класация.";
   }
 };
 
@@ -287,9 +479,9 @@ const QUOTA_TRACKER_KEY = "cdb_quota_tracker_v1";
 const QuotaTracker = {
   _today() { return new Date().toISOString().slice(0, 10); },
   _load() {
-    try { return JSON.parse(localStorage.getItem(QUOTA_TRACKER_KEY) || "{}"); } catch (e) { return {}; }
+    try { return Storage.get(QUOTA_TRACKER_KEY) || {}; } catch (e) { return {}; }
   },
-  _save(data) { localStorage.setItem(QUOTA_TRACKER_KEY, JSON.stringify(data)); },
+  _save(data) { Storage.set(QUOTA_TRACKER_KEY, data); },
 
   record(provider, model) {
     const data = this._load();
@@ -317,9 +509,20 @@ const QuotaTracker = {
     if (!el) return;
     const counts = this.summary();
     const keys = Object.keys(counts);
-    el.textContent = keys.length
-      ? "Днес (приблизително, локален брояч — не официална квота):\n" + keys.map(k => `${k}: ${counts[k]}`).join("\n")
-      : "Още няма извиквания днес на това устройство.";
+    if (!keys.length) { el.textContent = "Още няма извиквания днес на това устройство."; return; }
+    const max = Math.max(...keys.map(k => counts[k]));
+    el.innerHTML = '<div style="font-size:11px;opacity:.7;margin-bottom:8px;">Днес (приблизително, локален брояч — не официална квота):</div>' +
+      keys.sort((a, b) => counts[b] - counts[a]).map(k => {
+        const v = counts[k];
+        const pct = Math.max(4, Math.round((v / max) * 100));
+        return `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;">
+          <div style="width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${k}</div>
+          <div style="flex:1;background:var(--panel-2);border-radius:5px;height:14px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--grad);"></div>
+          </div>
+          <div style="width:26px;text-align:right;flex-shrink:0;">${v}</div>
+        </div>`;
+      }).join("");
   }
 };
 
@@ -342,9 +545,9 @@ function _simpleHash(str) {
 
 const AICache = {
   _load() {
-    try { return JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}"); } catch (e) { return {}; }
+    try { return Storage.get(AI_CACHE_KEY) || {}; } catch (e) { return {}; }
   },
-  _save(data) { localStorage.setItem(AI_CACHE_KEY, JSON.stringify(data)); },
+  _save(data) { Storage.set(AI_CACHE_KEY, data); },
   _key(type, inputs) { return type + ":" + _simpleHash(JSON.stringify(inputs)); },
 
   get(type, inputs) {
@@ -421,7 +624,7 @@ const Nav = {
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); }
     if (id === "set-project") ProjectArchive.render();
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
-    if (id === "set-keys") { AICallLog.render(); QuotaTracker.render(); }
+    if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
@@ -442,13 +645,82 @@ const Settings = {
     set("gh_owner", k.ghOwner);
     set("gh_repo", k.ghRepo);
     set("gh_branch", k.ghBranch || "main");
+    set("key_github_token", k.ghToken);
     const kt = document.getElementById("keyTestOut");
     if (kt) kt.textContent = "";
     this.populateModelDropdowns();
     this.renderModelPref();
+    this.renderVaultUI();
+  },
+
+  // ---------- Трезор (криптиране на ключовете, виж модул Vault) ----------
+  renderVaultUI() {
+    const el = document.getElementById("vaultOut");
+    if (!el) return;
+    if (!Vault.isEnabled()) {
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">Ключовете в момента се пазят като чист текст в localStorage на това устройство. Можеш да ги криптираш с парола — тогава на диска ще стои само криптиран blob, а истинските стойности ще живеят само в паметта, докато страницата е отворена (при презареждане ще искат паролата отново).</p>
+        <input type="password" id="vault_pass_new" placeholder="Нова парола (мин. 6 символа)">
+        <input type="password" id="vault_pass_new2" placeholder="Повтори паролата">
+        <button class="btn ghost" style="margin-top:10px;" onclick="Settings.vaultEnable()">🔒 Включи криптиране</button>`;
+    } else if (!Vault.isUnlocked()) {
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">🔒 Трезорът е <strong>заключен</strong> за тази сесия — AI/GitHub функциите няма да работят, докато не въведеш паролата.</p>
+        <input type="password" id="vault_pass_unlock" placeholder="Парола">
+        <button class="btn ghost" style="margin-top:10px;" onclick="Settings.vaultUnlock()">🔓 Отключи</button>`;
+    } else {
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">✅ Трезорът е <strong>отключен</strong> за тази сесия/таб. Ключовете се пазят криптирани на диска и в чист вид само в паметта, докато не презаредиш/затвориш страницата.</p>
+        <div class="row">
+          <button class="btn ghost" onclick="Settings.vaultLock()">🔒 Заключи сега</button>
+        </div>
+        <p class="muted" style="margin:10px 0 6px;">Изключване на криптирането (връща чист текст в localStorage, както преди):</p>
+        <input type="password" id="vault_pass_disable" placeholder="Парола, за да изключиш">
+        <button class="btn ghost" style="margin-top:10px;" onclick="Settings.vaultDisable()">🔓 Изключи криптирането</button>`;
+    }
+  },
+
+  async vaultEnable() {
+    const p1 = document.getElementById("vault_pass_new")?.value || "";
+    const p2 = document.getElementById("vault_pass_new2")?.value || "";
+    if (p1 !== p2) return toast("Паролите не съвпадат ❌");
+    try {
+      await Vault.enable(p1);
+      toast("🔒 Ключовете вече са криптирани на диска");
+      this.fillFields();
+      updateVaultBanner();
+    } catch (e) { toast("❌ " + e.message); }
+  },
+
+  async vaultUnlock() {
+    const p = document.getElementById("vault_pass_unlock")?.value || "";
+    try {
+      await Vault.unlock(p);
+      toast("🔓 Трезорът е отключен за тази сесия");
+      this.fillFields();
+      updateVaultBanner();
+    } catch (e) { toast("❌ " + e.message); }
+  },
+
+  vaultLock() {
+    Vault.lock();
+    toast("🔒 Заключено");
+    this.fillFields();
+    updateVaultBanner();
+  },
+
+  async vaultDisable() {
+    const p = document.getElementById("vault_pass_disable")?.value || "";
+    try {
+      await Vault.disable(p);
+      toast("🔓 Криптирането е изключено — ключовете пак са чист текст в localStorage");
+      this.fillFields();
+      updateVaultBanner();
+    } catch (e) { toast("❌ " + e.message); }
   },
 
   save() {
+    if (Vault.isEnabled() && !Vault.isUnlocked()) {
+      toast("🔒 Отключи трезора първо (по-долу), за да променяш ключовете");
+      return;
+    }
     const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : undefined; };
     const prev = Keys.load();
     Keys.save({
@@ -458,6 +730,7 @@ const Settings = {
       ytClientId: val("key_yt_client_id") ?? prev.ytClientId,
       ytApiKey: val("key_yt_apikey") ?? prev.ytApiKey,
       proxyUrl: ((val("key_proxy_url") ?? prev.proxyUrl) || "").replace(/\/$/, ""),
+      ghToken: val("key_github_token") ?? prev.ghToken,
     });
     toast("Запазено локално 🔒");
     // Бутонът "Вход с Google" се създава само ако ytClientId вече е бил наличен
@@ -474,6 +747,7 @@ const Settings = {
       claude: document.getElementById("key_claude").value.trim(),
       gemini: document.getElementById("key_gemini").value.trim(),
       ytApiKey: document.getElementById("key_yt_apikey").value.trim(),
+      ghToken: document.getElementById("key_github_token")?.value.trim(),
     };
     const lines = [];
 
@@ -487,7 +761,7 @@ const Settings = {
         // getClaudeModelList вече би избутал предишно ръчно/auto избрания модел
         // на първо място — но тук нарочно тестваме "чист" списък по приоритет,
         // за да проверим наистина всички модели, ако предпочитаният вече не работи.
-        const rawModels = await getClaudeModelList(k.claude, true); // forceRefresh
+        const rawModels = AICallLog.sortByReliability("claude", await getClaudeModelList(k.claude, true));
         let found = null;
         const attempts = [];
         for (const testModel of rawModels) {
@@ -498,8 +772,9 @@ const Settings = {
                          "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
               body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
             });
-            if (r.ok) { found = testModel; break; }
+            if (r.ok) { found = testModel; AICallLog.record({ provider: "claude", model: testModel, ok: true, note: "тест" }); break; }
             attempts.push(`${testModel} → ❌ ${r.status}`);
+            AICallLog.record({ provider: "claude", model: testModel, ok: false, note: "тест: HTTP " + r.status });
           } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
         }
         if (found) {
@@ -517,7 +792,7 @@ const Settings = {
     if (!k.gemini) lines.push("Gemini: ⚪ няма ключ");
     else {
       try {
-        const rawModels = await getGeminiModelList(k.gemini, true); // forceRefresh
+        const rawModels = AICallLog.sortByReliability("gemini", await getGeminiModelList(k.gemini, true));
         let found = null;
         const attempts = [];
         for (const testModel of rawModels) {
@@ -526,9 +801,10 @@ const Settings = {
               method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
             });
-            if (r.ok) { found = testModel; break; }
+            if (r.ok) { found = testModel; AICallLog.record({ provider: "gemini", model: testModel, ok: true, note: "тест" }); break; }
             const body = await r.text();
             attempts.push(`${testModel} → ❌ ${r.status} ${body.slice(0, 120)}`);
+            AICallLog.record({ provider: "gemini", model: testModel, ok: false, note: "тест: HTTP " + r.status });
           } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
         }
         if (found) {
@@ -550,11 +826,30 @@ const Settings = {
     }
 
     lines.push("YouTube OAuth Client ID: проверява се само при 🔑 Вход с Google в Стъпка 3");
+
+    // GitHub Personal Access Token (само проверка дали е валиден и разпознат,
+    // без да пипаме репото — GET /user)
+    if (!k.ghToken) lines.push("GitHub Token: ⚪ няма ключ");
+    else {
+      try {
+        const r = await fetchTimeout("https://api.github.com/user", {
+          headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json" }
+        });
+        if (r.ok) {
+          const data = await r.json();
+          lines.push(`GitHub Token: ✅ валиден (${data.login})`);
+        } else {
+          lines.push(`GitHub Token: ❌ ${r.status}`);
+        }
+      } catch (e) { lines.push("GitHub Token: ❌ " + e.message); }
+    }
+
     out.textContent = lines.join("\n");
     // Опресни падащите менюта и текущите "по подразбиране" модели, за да
     // се вижда веднага какво е хванал теста, без да се налага refresh.
     await this.populateModelDropdowns();
     this.renderModelPref();
+    AICallLog.renderLeaderboard();
     return lines;
   },
 
@@ -768,7 +1063,7 @@ const Settings = {
     if (AppState.data.project.title || AppState.data.project.lyrics) {
       ProjectArchive.saveCurrent();
     }
-    localStorage.removeItem(STORAGE_KEY);
+    Storage.remove(STORAGE_KEY);
     AppState.load();
     GeminiValidator.render();
     Stats.renderDashboard();
@@ -788,11 +1083,10 @@ const Settings = {
 const ARCHIVE_STORAGE = "cdb_dashboard_archive_v1";
 const ProjectArchive = {
   load() {
-    const raw = localStorage.getItem(ARCHIVE_STORAGE);
-    return raw ? JSON.parse(raw) : [];
+    return Storage.get(ARCHIVE_STORAGE) || [];
   },
   saveAll(list) {
-    localStorage.setItem(ARCHIVE_STORAGE, JSON.stringify(list.slice(0, 30)));
+    Storage.set(ARCHIVE_STORAGE, list.slice(0, 30));
   },
 
   saveCurrent() {
@@ -1700,6 +1994,11 @@ Competition signal: ${nicheRow.competition_signal || "няма данни"}`;
       ? `\nРЕАЛНИ ЗАГЛАВИЯ НА ВИДЕА, КОИТО РЕАЛНО НАБИРАТ ИНЕРЦИЯ В НИШАТА "${niche}" ТОЧНО СЕГА (YouTube, последните месеци, сортирани по темп на растеж — не стари all-time хитове), използвай ги като реален контекст за genre_check, не гадай:\n${topTitles.map(t => `- ${t}`).join("\n")}\n`
       : "";
 
+    // Обратна връзка от Track Record: последните песни, за които вече знаем
+    // реалния резултат на канала — за да се калибрира прогнозата спрямо
+    // действителността, а не да гадае "на сляпо" всеки път.
+    const calibrationContext = TrackRecord.getCalibrationContext();
+
     const prompt = `Ти си AI музикален продуцент, A&R анализатор и маркетинг стратег за 2026 година.
 Анализирай следната песен КАТО ЦЯЛОСТЕН ПРОДУКТ (не само текста) — вземи предвид жанра, заглавието
 и реалните пазарни сигнали по-долу. Бъди честен и критичен, не завишавай оценки без основание.
@@ -1714,7 +2013,7 @@ ${marketContext}
 ---
 ${lyrics}
 ---
-${genreGrounding}
+${genreGrounding}${calibrationContext}
 Върни ЧИСТ JSON (без markdown, без обяснения извън JSON) с ТОЧНО тази структура:
 {
   "viral_score": number (0-100, претеглена комбинация: Trend Momentum 30%, Search Volume 20%, Music Competition 15%, Audience Match 15%, Emotional Impact 10%, TikTok Potential 10% — изчисли реално претеглената стойност),
@@ -2048,6 +2347,51 @@ ${isFinal
     });
     html += `</div>`;
     return html;
+  },
+
+  // ---------- Сравни с реални hits в нишата ----------
+  // Взима реални, СКОРО набиращи инерция заглавия от YouTube в избраната
+  // ниша (същият източник като "жанрово заземяване" във Viral Lab) и ги
+  // пуска през СЪЩИЯ "3-секунден scroll тест", през който мина нашият
+  // победител — за да видим реално къде стоим спрямо истински хитове в
+  // нишата, вместо абстрактно число без контекст.
+  async compareWithRealHits() {
+    const p = AppState.data.project;
+    const winner = p.winningHook;
+    if (!winner) return toast("Първо стартирай еволюцията по-горе и изчакай победител 🧬");
+    const niche = p.chosenNiche || "modern pop";
+    const out = document.getElementById("hookArenaCompareOut");
+    out.innerHTML = `<p class="muted">📡 Тегля реални заглавия, набиращи инерция в "${niche}", и ги пускам през 3-секундния тест...</p>`;
+
+    try {
+      const realTitles = await youtubeTopTitles(niche, 5);
+      if (!realTitles.length) {
+        out.innerHTML = `<p class="muted">⚠️ Няма достатъчно реални резултати за тази ниша точно сега (изисква се YouTube API ключ в Настройки). Опитай пак по-късно или смени нишата.</p>`;
+        return;
+      }
+      const pool = [
+        { text: winner, mine: true },
+        ...realTitles.map(t => ({ text: t, mine: false }))
+      ];
+      const scored = await this._scoreHooks(pool, niche);
+      const merged = pool.map((h, i) => ({ ...h, ...scored[i] }))
+        .sort((a, b) => (b.hook_score ?? 0) - (a.hook_score ?? 0));
+
+      const myRank = merged.findIndex(h => h.mine) + 1;
+      const rankLabel = myRank === 1
+        ? `🏆 Твоят hook е класиран #1 от ${merged.length} — над реалните заглавия в нишата точно сега!`
+        : `Твоят hook е #${myRank} от ${merged.length} — ${myRank <= Math.ceil(merged.length / 2) ? "в горната половина" : "под средното"} спрямо реални заглавия в нишата.`;
+
+      out.innerHTML = `<div class="card tight" style="margin-bottom:10px;border-color:${myRank === 1 ? "var(--green)" : "var(--border)"};">
+          <strong>${rankLabel}</strong>
+        </div>` +
+        merged.map((h, i) => `<div class="arena-hook ${h.mine ? "winner" : ""}">
+            <span class="txt">${h.mine ? "🧬 (твоят hook) " : "📡 (реален, от нишата) "}"${h.text}"${h.why ? `<div class="lineage">${h.stops_scroll ? "✅" : "⚠️"} ${h.why}</div>` : ""}</span>
+            <span class="sc">${h.hook_score ?? "—"}</span>
+          </div>`).join("");
+    } catch (e) {
+      out.innerHTML = `<p class="muted">❌ ${e.message}</p>`;
+    }
   }
 };
 
@@ -2731,11 +3075,11 @@ const PREFS_STORAGE = "cdb_dashboard_prefs_v1";
 const Prefs = {
   data: { theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false },
   load() {
-    const raw = localStorage.getItem(PREFS_STORAGE);
-    this.data = raw ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false }, JSON.parse(raw)) : this.data;
+    const saved = Storage.get(PREFS_STORAGE);
+    this.data = saved ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false }, saved) : this.data;
   },
   save() {
-    localStorage.setItem(PREFS_STORAGE, JSON.stringify(this.data));
+    Storage.set(PREFS_STORAGE, this.data);
   },
   applyTheme() {
     document.body.classList.toggle("theme-light", this.data.theme === "light");
@@ -2848,11 +3192,10 @@ const SystemLog = {
 const TRACK_STORAGE = "cdb_dashboard_trackrecord_v1";
 const TrackRecord = {
   load() {
-    const raw = localStorage.getItem(TRACK_STORAGE);
-    return raw ? JSON.parse(raw) : [];
+    return Storage.get(TRACK_STORAGE) || [];
   },
   saveAll(list) {
-    localStorage.setItem(TRACK_STORAGE, JSON.stringify(list.slice(0, 40)));
+    Storage.set(TRACK_STORAGE, list.slice(0, 40));
   },
 
   save(report) {
@@ -2948,6 +3291,21 @@ const TrackRecord = {
     this.saveAll(list);
     toast("Свързано ✅");
     this.render();
+  },
+
+  // ---------- Калибрация за Viral Lab ----------
+  // Връща кратък текстов блок с последните N песни, за които вече знаем
+  // реалния резултат (свързани в Track Record) — за да може Viral Lab да
+  // подаде "ето какво предвидих последно и какво реално стана" в промпта
+  // и AI-то да се самокалибрира спрямо действителните резултати на канала,
+  // вместо да гадае "на сляпо" всеки път.
+  getCalibrationContext(limit = 5) {
+    const linked = this.load().filter(r => r.actual).slice(0, limit);
+    if (!linked.length) return "";
+    const lines = linked.map(r =>
+      `- "${r.title}" (${r.niche || "без ниша"}): предвидих Viral Score ${r.predicted.viral_score}/100 → реално представяне: ${r.actual.perf} (${Math.round(r.actual.perDay)} views/ден спрямо канала)`
+    );
+    return `\n\nКАЛИБРАЦИОНЕН КОНТЕКСТ (реални резултати от предишни мои прогнози за този канал — вземи ги предвид и се калибрирай спрямо тях, вместо да предвиждаш "на сляпо"):\n${lines.join("\n")}\nАко предишни високи прогнози не са потвърдени от реалните views, бъди по-консервативен този път и обясни защо.`;
   }
 };
 
@@ -2955,6 +3313,7 @@ const Stats = {
   cache: null,
 
   saveRepoConfig() {
+    if (Vault.isEnabled() && !Vault.isUnlocked()) { toast("🔒 Отключи трезора първо в Настройки → API Ключове"); return; }
     const prev = Keys.load();
     Keys.save({
       ...prev,
@@ -3228,6 +3587,7 @@ window.addEventListener("DOMContentLoaded", () => {
   Prefs.init();
   Stats.renderDashboard();
   QuickUpload.initListener();
+  updateVaultBanner();
 
   // Зареждаме Google Identity Services скрипта динамично
   const gsi = document.createElement("script");
@@ -3235,3 +3595,12 @@ window.addEventListener("DOMContentLoaded", () => {
   gsi.onload = () => Step4.initGoogleAuth();
   document.head.appendChild(gsi);
 });
+
+// Показва/скрива лентата "🔒 Ключовете са заключени" горе на екрана — вика
+// се при зареждане и след всяко действие върху трезора (enable/unlock/lock/disable).
+function updateVaultBanner() {
+  const el = document.getElementById("vaultBanner");
+  if (!el) return;
+  el.style.display = (Vault.isEnabled() && !Vault.isUnlocked()) ? "block" : "none";
+}
+
