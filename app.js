@@ -60,7 +60,7 @@ async function getGeminiModelList(apiKey, forceRefresh = false) {
       const cached = JSON.parse(localStorage.getItem(GEMINI_MODELS_CACHE_KEY) || "null");
       if (cached && Array.isArray(cached.models) && cached.models.length &&
           (Date.now() - cached.ts) < GEMINI_MODELS_CACHE_HOURS * 3600 * 1000) {
-        return cached.models;
+        return ModelPref.applyTo("gemini", cached.models);
       }
     } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
   }
@@ -75,10 +75,10 @@ async function getGeminiModelList(apiKey, forceRefresh = false) {
     const sorted = _sortGeminiModelNames(names);
     if (!sorted.length) throw new Error("Няма достъпни generateContent модели за този ключ");
     localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
-    return sorted;
+    return ModelPref.applyTo("gemini", sorted);
   } catch (e) {
     console.warn("Неуспешно изтегляне на реалния списък Gemini модели, ползвам резервен списък:", e.message);
-    return GEMINI_FALLBACK_MODELS;
+    return ModelPref.applyTo("gemini", GEMINI_FALLBACK_MODELS);
   }
 }
 
@@ -122,7 +122,7 @@ async function getClaudeModelList(apiKey, forceRefresh = false) {
       const cached = JSON.parse(localStorage.getItem(CLAUDE_MODELS_CACHE_KEY) || "null");
       if (cached && Array.isArray(cached.models) && cached.models.length &&
           (Date.now() - cached.ts) < CLAUDE_MODELS_CACHE_HOURS * 3600 * 1000) {
-        return cached.models;
+        return ModelPref.applyTo("claude", cached.models);
       }
     } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
   }
@@ -141,10 +141,10 @@ async function getClaudeModelList(apiKey, forceRefresh = false) {
     const sorted = _sortClaudeModelNames(ids);
     if (!sorted.length) throw new Error("Няма достъпни Claude модели за този ключ");
     localStorage.setItem(CLAUDE_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
-    return sorted;
+    return ModelPref.applyTo("claude", sorted);
   } catch (e) {
     console.warn("Неуспешно изтегляне на реалния списък Claude модели, ползвам резервен списък:", e.message);
-    return CLAUDE_FALLBACK_MODELS;
+    return ModelPref.applyTo("claude", CLAUDE_FALLBACK_MODELS);
   }
 }
 
@@ -178,6 +178,59 @@ const Keys = {
   },
   save(obj) {
     localStorage.setItem(KEYS_STORAGE, JSON.stringify(obj));
+  }
+};
+
+/* =========================================================
+   MODEL PREF — кой модел се ползва "по подразбиране" за всяко
+   извикване (callClaude/callGeminiWithFallback), вместо винаги да
+   пробваме fallback списъка отначало (models[0]).
+   Два начина да се зададе:
+     - "auto"   → Settings.testKeys() пробва РЕАЛНО моделите от fallback
+                  списъка по ред и хваща ПЪРВИЯ, който отговори успешно.
+                  Пази се като предпочитание, докато не се промени.
+     - "manual" → потребителят избира ръчно от падащото меню в Настройки.
+   И в двата случая предпочитаният модел се пази в localStorage (не само
+   за текущата сесия/таб, а докато не бъде презаписан/изчистен), и всяко
+   място в кода, което вика модел за дадения provider, автоматично го
+   ползва (виж getClaudeModelList/getGeminiModelList по-долу — те бутат
+   предпочетения модел на първо място в списъка, останалите модели пак
+   стоят като fallback, ако предпочетеният внезапно откаже/изчерпа квота).
+   ========================================================= */
+const MODEL_PREF_KEY = "cdb_model_pref_v1";
+
+const ModelPref = {
+  _load() {
+    try { return JSON.parse(localStorage.getItem(MODEL_PREF_KEY) || "{}"); } catch (e) { return {}; }
+  },
+  _save(data) { localStorage.setItem(MODEL_PREF_KEY, JSON.stringify(data)); },
+
+  // { model, source: "auto" | "manual" } или null, ако няма зададено предпочитание
+  get(provider) {
+    const data = this._load();
+    return data[provider] || null;
+  },
+  set(provider, model, source = "manual") {
+    const data = this._load();
+    data[provider] = { model, source };
+    this._save(data);
+    this._renderIfVisible();
+  },
+  clear(provider) {
+    const data = this._load();
+    delete data[provider];
+    this._save(data);
+    this._renderIfVisible();
+  },
+  // Подрежда списък от модели, слагайки предпочетения (ако има) на първо
+  // място — останалите пазят реда си като fallback.
+  applyTo(provider, models) {
+    const pref = this.get(provider);
+    if (!pref || !models.includes(pref.model)) return models;
+    return [pref.model, ...models.filter(m => m !== pref.model)];
+  },
+  _renderIfVisible() {
+    if (document.getElementById("modelPrefOut")) Settings.renderModelPref();
   }
 };
 
@@ -391,6 +444,8 @@ const Settings = {
     set("gh_branch", k.ghBranch || "main");
     const kt = document.getElementById("keyTestOut");
     if (kt) kt.textContent = "";
+    this.populateModelDropdowns();
+    this.renderModelPref();
   },
 
   save() {
@@ -422,38 +477,65 @@ const Settings = {
     };
     const lines = [];
 
-    // Claude
+    // Claude — пробва моделите от fallback списъка ПО РЕД (не само models[0])
+    // и хваща ПЪРВИЯ, който реално отговори успешно. Той автоматично става
+    // предпочитаният модел за Claude навсякъде в приложението (ModelPref,
+    // source: "auto"), докато не бъде презаписан от нов тест или ръчен избор.
     if (!k.claude) lines.push("Claude: ⚪ няма ключ");
     else {
       try {
-        const models = await getClaudeModelList(k.claude, true); // forceRefresh — тук изрично тестваме
-        const testModel = models[0];
-        const r = await fetchTimeout("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": k.claude,
-                     "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-          body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
-        });
-        lines.push(r.ok ? `Claude: ✅ работи (${testModel})` : `Claude: ❌ ${r.status}`);
+        // getClaudeModelList вече би избутал предишно ръчно/auto избрания модел
+        // на първо място — но тук нарочно тестваме "чист" списък по приоритет,
+        // за да проверим наистина всички модели, ако предпочитаният вече не работи.
+        const rawModels = await getClaudeModelList(k.claude, true); // forceRefresh
+        let found = null;
+        const attempts = [];
+        for (const testModel of rawModels) {
+          try {
+            const r = await fetchTimeout("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-api-key": k.claude,
+                         "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+              body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+            });
+            if (r.ok) { found = testModel; break; }
+            attempts.push(`${testModel} → ❌ ${r.status}`);
+          } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
+        }
+        if (found) {
+          ModelPref.set("claude", found, "auto");
+          lines.push(`Claude: ✅ работи (${found}) — зададен като модел по подразбиране`);
+        } else {
+          lines.push("Claude: ❌ нито един модел от списъка не отговори" + (attempts.length ? "\n   " + attempts.join("\n   ") : ""));
+        }
       } catch (e) { lines.push("Claude: ❌ " + e.message); }
     }
 
-    // Gemini — тества се РЕАЛНО достъпният модел за твоя ключ (виж
-    // getGeminiModelList по-горе), не твърдо закодирано име, за да не
-    // показва "счупено", ако Google е преименувал/оттеглил конкретен модел.
+    // Gemini — същият принцип: пробва РЕАЛНО достъпните модели за твоя ключ
+    // (виж getGeminiModelList по-горе) един по един, докато някой отговори,
+    // и го пази като предпочитание за следващите извиквания.
     if (!k.gemini) lines.push("Gemini: ⚪ няма ключ");
     else {
       try {
-        const models = await getGeminiModelList(k.gemini, true); // forceRefresh — тук изрично тестваме
-        const testModel = models[0];
-        const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${k.gemini}`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
-        });
-        if (r.ok) lines.push(`Gemini: ✅ работи (${testModel})`);
-        else {
-          const body = await r.text();
-          lines.push(`Gemini: ❌ ${r.status} — ${body.slice(0, 300)}`);
+        const rawModels = await getGeminiModelList(k.gemini, true); // forceRefresh
+        let found = null;
+        const attempts = [];
+        for (const testModel of rawModels) {
+          try {
+            const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${k.gemini}`, {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
+            });
+            if (r.ok) { found = testModel; break; }
+            const body = await r.text();
+            attempts.push(`${testModel} → ❌ ${r.status} ${body.slice(0, 120)}`);
+          } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
+        }
+        if (found) {
+          ModelPref.set("gemini", found, "auto");
+          lines.push(`Gemini: ✅ работи (${found}) — зададен като модел по подразбиране`);
+        } else {
+          lines.push("Gemini: ❌ нито един модел от списъка не отговори" + (attempts.length ? "\n   " + attempts.join("\n   ") : ""));
         }
       } catch (e) { lines.push("Gemini: ❌ " + e.message); }
     }
@@ -469,7 +551,72 @@ const Settings = {
 
     lines.push("YouTube OAuth Client ID: проверява се само при 🔑 Вход с Google в Стъпка 3");
     out.textContent = lines.join("\n");
+    // Опресни падащите менюта и текущите "по подразбиране" модели, за да
+    // се вижда веднага какво е хванал теста, без да се налага refresh.
+    await this.populateModelDropdowns();
+    this.renderModelPref();
     return lines;
+  },
+
+  // ---------- Ръчен избор на модел (падащо меню в Настройки) ----------
+  // Пълни двете падащи менюта (Claude/Gemini) с РЕАЛНО достъпните модели за
+  // текущо въведените ключове (или запазените, ако полето е празно), плюс
+  // опция "Автоматично" (= fallback ред / последно хванатия при тест).
+  async populateModelDropdowns() {
+    const saved = Keys.load();
+    const claudeKey = (document.getElementById("key_claude")?.value.trim()) || saved.claude;
+    const geminiKey = (document.getElementById("key_gemini")?.value.trim()) || saved.gemini;
+
+    const fill = async (selectId, key, listFn, provider) => {
+      const sel = document.getElementById(selectId);
+      if (!sel || !key) return;
+      let models = [];
+      try { models = await listFn(key); } catch (e) { return; }
+      const pref = ModelPref.get(provider);
+      const current = sel.value; // пази текущия избор, ако вече е бил направен в тази сесия
+      sel.innerHTML = '<option value="">🔄 Автоматично (fallback ред / последен успешен тест)</option>' +
+        models.map(m => `<option value="${m}">${m}</option>`).join("");
+      // Ако има ръчно зададено предпочитание, го селектираме; иначе оставяме "Автоматично"
+      if (pref && pref.source === "manual" && models.includes(pref.model)) {
+        sel.value = pref.model;
+      } else if (current && models.includes(current)) {
+        sel.value = current;
+      } else {
+        sel.value = "";
+      }
+    };
+
+    await Promise.all([
+      fill("model_select_claude", claudeKey, getClaudeModelList, "claude"),
+      fill("model_select_gemini", geminiKey, getGeminiModelList, "gemini")
+    ]);
+  },
+
+  // Извиква се при onchange на падащото меню — задава/изчиства ръчното
+  // предпочитание за съответния provider и веднага го прилага навсякъде.
+  setManualModel(provider, model) {
+    if (model) {
+      ModelPref.set(provider, model, "manual");
+      toast(`✅ ${provider === "claude" ? "Claude" : "Gemini"} модел зададен ръчно: ${model}`);
+    } else {
+      ModelPref.clear(provider);
+      toast(`🔄 ${provider === "claude" ? "Claude" : "Gemini"} — обратно на автоматичен избор`);
+    }
+    this.renderModelPref();
+  },
+
+  // Показва текущо активния модел по подразбиране (и откъде идва — auto тест
+  // или ръчен избор) под падащите менюта.
+  renderModelPref() {
+    const el = document.getElementById("modelPrefOut");
+    if (!el) return;
+    const label = (p) => {
+      const pref = ModelPref.get(p);
+      if (!pref) return "автоматично (fallback ред)";
+      const src = pref.source === "manual" ? "ръчно избран" : "хванат при тест";
+      return `${pref.model} (${src})`;
+    };
+    el.textContent = `Claude по подразбиране: ${label("claude")}\nGemini по подразбиране: ${label("gemini")}`;
   },
 
   // Показва РЕАЛНИЯ списък модели, достъпни за твоя Gemini ключ — директно на екрана
@@ -519,6 +666,8 @@ const Settings = {
     }
     out.textContent = lines.join("\n");
     toast("Списъците с модели са обновени 🔄");
+    await this.populateModelDropdowns();
+    this.renderModelPref();
   },
 
   // Export/Import САМО на API ключовете (отделно от "Export проект" по-долу,

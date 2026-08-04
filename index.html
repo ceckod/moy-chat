@@ -711,6 +711,25 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.refreshModelLists()">🔄 Обнови fallback списъците с модели</button>
         <div id="keyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+
+        <hr style="margin:18px 0;">
+        <strong>🎯 Модел по подразбиране</strong>
+        <p class="muted" style="margin-top:6px;">
+          Като натиснеш "🧪 Тествай ключовете" по-горе, приложението пробва моделите
+          един по един и хваща ПЪРВИЯ, който реално отговори — той автоматично става
+          модел по подразбиране навсякъде, докато не смениш нещо тук. Може и да избереш
+          конкретен модел ръчно от менютата по-долу — тогава той има приоритет
+          (останалите пак стоят като fallback, ако той внезапно откаже/изчерпа квота).
+        </p>
+        <label>Claude — ръчен избор</label>
+        <select id="model_select_claude" onchange="Settings.setManualModel('claude', this.value)">
+          <option value="">🔄 Автоматично (fallback ред / последен успешен тест)</option>
+        </select>
+        <label>Gemini — ръчен избор</label>
+        <select id="model_select_gemini" onchange="Settings.setManualModel('gemini', this.value)">
+          <option value="">🔄 Автоматично (fallback ред / последен успешен тест)</option>
+        </select>
+        <div id="modelPrefOut" class="muted" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
         <hr style="margin:18px 0;">
         <strong>💾 Резервно копие на API ключовете</strong>
         <p class="muted" style="margin-top:6px;">Отделно от резервното копие на проекта (виж "Проект &amp; Данни") — тук се пазят/възстановяват само ключовете. Файлът е в ЧИСТ ТЕКСТ, пази го на сигурно място.</p>
