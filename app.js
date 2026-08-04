@@ -6,10 +6,147 @@
 const STORAGE_KEY = "cdb_dashboard_state_v1";
 const KEYS_STORAGE = "cdb_dashboard_keys_v1";
 
-// Безплатен Gemini модел, използван навсякъде в приложението.
-// "gemini-2.5-flash-lite" има най-високата дневна квота от безплатните модели (юли 2026).
-// Смени САМО тук, ако искаш друг модел — всички извиквания го четат оттук.
-const GEMINI_MODEL = "gemini-flash-lite-latest";
+/* =========================================================
+   ДИНАМИЧЕН СПИСЪК С GEMINI МОДЕЛИ
+   Вместо да разчитаме на твърдо закодирани имена на модели (Google ги
+   преименува/премахва от време на време и това чупи приложението), питаме
+   директно Gemini API ("/v1beta/models") какви модели РЕАЛНО са достъпни
+   за твоя конкретен ключ, и подреждаме безплатните текстови модели по
+   приоритет (lite → flash → останалите; изключваме pro/embedding/image/
+   tts модели). Резултатът се кешира в localStorage за GEMINI_MODELS_CACHE_HOURS
+   часа, за да не удряме /models endpoint-а при всяка генерация.
+   Ако заявката гръмне (няма интернет, невалиден ключ...), падаме обратно
+   на GEMINI_FALLBACK_MODELS — статичен списък "за всеки случай".
+   ========================================================= */
+const GEMINI_MODELS_CACHE_KEY = "cdb_gemini_models_cache_v1";
+const GEMINI_MODELS_CACHE_HOURS = 12;
+
+// Статичен резервен списък — ползва се САМО ако не успеем да изтеглим
+// реалния списък с модели от Google. Не е гарантирано да е винаги валиден
+// (затова динамичното изтегляне по-долу е предпочитаният път).
+const GEMINI_FALLBACK_MODELS = [
+  "gemini-flash-lite-latest",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash"
+];
+// Използва се само за бързите health-check тестове (Keys.testKeys / silentHealthCheck)
+// като "разумно предположение", преди да е изтеглен реалният списък.
+const GEMINI_MODEL = GEMINI_FALLBACK_MODELS[0];
+
+// Подрежда суров списък с имена на модели по приоритет: lite модели първо
+// (най-висока безплатна дневна квота), после обикновени flash модели,
+// после останалото. Изключва pro (изисква billing), embedding/vision/
+// image/tts/imagen/veo модели, които не стават за обикновени текстови
+// извиквания на приложението.
+function _sortGeminiModelNames(names) {
+  const exclude = /pro|embedding|aqa|vision|image|tts|imagen|veo/i;
+  const score = (n) => {
+    if (/flash-lite/i.test(n)) return 0;
+    if (/flash/i.test(n)) return 1;
+    return 2;
+  };
+  return names
+    .filter(n => !exclude.test(n))
+    .sort((a, b) => score(a) - score(b));
+}
+
+// Връща подредения списък с достъпни Gemini модели за дадения ключ.
+// Първо проверява кеша (localStorage), после реалния /models endpoint,
+// и накрая — при грешка — статичния резервен списък.
+async function getGeminiModelList(apiKey, forceRefresh = false) {
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(GEMINI_MODELS_CACHE_KEY) || "null");
+      if (cached && Array.isArray(cached.models) && cached.models.length &&
+          (Date.now() - cached.ts) < GEMINI_MODELS_CACHE_HOURS * 3600 * 1000) {
+        return cached.models;
+      }
+    } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
+  }
+
+  try {
+    const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {}, 15000);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || ("HTTP " + r.status));
+    const names = (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map(m => m.name.replace("models/", ""));
+    const sorted = _sortGeminiModelNames(names);
+    if (!sorted.length) throw new Error("Няма достъпни generateContent модели за този ключ");
+    localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
+    return sorted;
+  } catch (e) {
+    console.warn("Неуспешно изтегляне на реалния списък Gemini модели, ползвам резервен списък:", e.message);
+    return GEMINI_FALLBACK_MODELS;
+  }
+}
+
+/* =========================================================
+   ДИНАМИЧЕН СПИСЪК С CLAUDE МОДЕЛИ
+   Същият принцип като при Gemini по-горе: питаме директно Anthropic API
+   ("/v1/models") кои модели РЕАЛНО са достъпни за твоя ключ, вместо да
+   разчитаме на едно твърдо закодирано име. Подреждаме sonnet → haiku →
+   opus (opus е по-скъп, ползва се само като последна мярка), изключваме
+   специализирани модели с ограничен достъп (Mythos/Fable — виж system
+   бележките на Anthropic за Project Glasswing). Кешира се аналогично.
+   ========================================================= */
+const CLAUDE_MODELS_CACHE_KEY = "cdb_claude_models_cache_v1";
+const CLAUDE_MODELS_CACHE_HOURS = 12;
+
+// Статичен резервен списък — ползва се САМО ако /v1/models заявката гръмне.
+const CLAUDE_FALLBACK_MODELS = [
+  "claude-sonnet-5",
+  "claude-haiku-4-5-20251001",
+  "claude-opus-4-8"
+];
+
+function _sortClaudeModelNames(ids) {
+  // Mythos/Fable са със специален, ограничен достъп (виж Project Glasswing) —
+  // не стават за автоматичен fallback на обикновени заявки.
+  const exclude = /mythos|fable/i;
+  const score = (n) => {
+    if (/sonnet/i.test(n)) return 0;
+    if (/haiku/i.test(n)) return 1;
+    if (/opus/i.test(n)) return 2;
+    return 3;
+  };
+  return ids
+    .filter(n => !exclude.test(n))
+    .sort((a, b) => score(a) - score(b));
+}
+
+async function getClaudeModelList(apiKey, forceRefresh = false) {
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CLAUDE_MODELS_CACHE_KEY) || "null");
+      if (cached && Array.isArray(cached.models) && cached.models.length &&
+          (Date.now() - cached.ts) < CLAUDE_MODELS_CACHE_HOURS * 3600 * 1000) {
+        return cached.models;
+      }
+    } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
+  }
+
+  try {
+    const r = await fetchTimeout("https://api.anthropic.com/v1/models", {
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      }
+    }, 15000);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || ("HTTP " + r.status));
+    const ids = (data.data || []).map(m => m.id);
+    const sorted = _sortClaudeModelNames(ids);
+    if (!sorted.length) throw new Error("Няма достъпни Claude модели за този ключ");
+    localStorage.setItem(CLAUDE_MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), models: sorted }));
+    return sorted;
+  } catch (e) {
+    console.warn("Неуспешно изтегляне на реалния списък Claude модели, ползвам резервен списък:", e.message);
+    return CLAUDE_FALLBACK_MODELS;
+  }
+}
 
 /* ---------- STATE ---------- */
 const AppState = {
@@ -44,6 +181,137 @@ const Keys = {
   }
 };
 
+/* =========================================================
+   AI CALL LOG — диагностичен лог кой provider/модел РЕАЛНО е
+   отговорил на всяко извикване (и кои опити са гръмнали по пътя).
+   Полезно е за да се вижда напр. "Gemini flash-lite гръмна → падна на
+   flash → отговори". Пази се отделно от проекта (не се export-ва с него),
+   само последните AI_CALL_LOG_MAX записа.
+   ========================================================= */
+const AI_CALL_LOG_KEY = "cdb_ai_call_log_v1";
+const AI_CALL_LOG_MAX = 40;
+
+const AICallLog = {
+  record({ provider, model, ok, note }) {
+    let log = [];
+    try { log = JSON.parse(localStorage.getItem(AI_CALL_LOG_KEY) || "[]"); } catch (e) { /* счупен лог, пренапиши */ }
+    log.unshift({ ts: Date.now(), provider, model, ok: !!ok, note: note || "" });
+    log = log.slice(0, AI_CALL_LOG_MAX);
+    localStorage.setItem(AI_CALL_LOG_KEY, JSON.stringify(log));
+    this._renderIfVisible();
+  },
+  get() {
+    try { return JSON.parse(localStorage.getItem(AI_CALL_LOG_KEY) || "[]"); } catch (e) { return []; }
+  },
+  clear() {
+    localStorage.removeItem(AI_CALL_LOG_KEY);
+    this._renderIfVisible();
+  },
+  _renderIfVisible() {
+    if (document.getElementById("aiCallLogOut")) this.render();
+  },
+  render() {
+    const el = document.getElementById("aiCallLogOut");
+    if (!el) return;
+    const log = this.get();
+    if (!log.length) { el.textContent = "Все още няма записани извиквания в тази сесия/устройство."; return; }
+    el.textContent = log.map(e => {
+      const time = new Date(e.ts).toLocaleTimeString("bg-BG", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const providerLabel = e.provider === "claude" ? "Claude" : "Gemini";
+      return `${time} ${e.ok ? "✅" : "❌"} ${providerLabel} · ${e.model}${e.note ? " — " + e.note : ""}`;
+    }).join("\n");
+  }
+};
+
+/* =========================================================
+   QUOTA TRACKER — приблизителен, ЛОКАЛЕН брояч на извиквания на ден,
+   по provider+модел. Google/Anthropic не връщат "оставаща квота" през
+   API-то, затова това е само груба ориентация (не официална бройка) —
+   нулира се условно "на нов ден" по UTC дата на устройството.
+   ========================================================= */
+const QUOTA_TRACKER_KEY = "cdb_quota_tracker_v1";
+
+const QuotaTracker = {
+  _today() { return new Date().toISOString().slice(0, 10); },
+  _load() {
+    try { return JSON.parse(localStorage.getItem(QUOTA_TRACKER_KEY) || "{}"); } catch (e) { return {}; }
+  },
+  _save(data) { localStorage.setItem(QUOTA_TRACKER_KEY, JSON.stringify(data)); },
+
+  record(provider, model) {
+    const data = this._load();
+    const day = this._today();
+    if (data.day !== day) { data.day = day; data.counts = {}; } // нов ден — чист брояч
+    data.counts = data.counts || {};
+    const key = provider + " · " + model;
+    data.counts[key] = (data.counts[key] || 0) + 1;
+    this._save(data);
+    this._renderIfVisible();
+  },
+
+  summary() {
+    const data = this._load();
+    if (data.day !== this._today()) return {};
+    return data.counts || {};
+  },
+
+  _renderIfVisible() {
+    if (document.getElementById("quotaTrackerOut")) this.render();
+  },
+
+  render() {
+    const el = document.getElementById("quotaTrackerOut");
+    if (!el) return;
+    const counts = this.summary();
+    const keys = Object.keys(counts);
+    el.textContent = keys.length
+      ? "Днес (приблизително, локален брояч — не официална квота):\n" + keys.map(k => `${k}: ${counts[k]}`).join("\n")
+      : "Още няма извиквания днес на това устройство.";
+  }
+};
+
+/* =========================================================
+   AI CACHE — за скъпи структурирани анализи (Viral Lab, Ghost Audience),
+   за да не се хаби квота, ако потребителят натисне бутона повторно върху
+   ТОЧНО СЪЩИЯ текст/жанр/заглавие. Ключиран е по хеш на входните данни;
+   при промяна на текста автоматично прави нова заявка (различен хеш).
+   Бутон "🔄 презареди" в UI-то може да подаде forceRefresh, за да игнорира
+   кеша нарочно.
+   ========================================================= */
+const AI_CACHE_KEY = "cdb_ai_cache_v1";
+const AI_CACHE_MAX_ENTRIES = 20;
+
+function _simpleHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+const AICache = {
+  _load() {
+    try { return JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}"); } catch (e) { return {}; }
+  },
+  _save(data) { localStorage.setItem(AI_CACHE_KEY, JSON.stringify(data)); },
+  _key(type, inputs) { return type + ":" + _simpleHash(JSON.stringify(inputs)); },
+
+  get(type, inputs) {
+    const entry = this._load()[this._key(type, inputs)];
+    return entry ? entry.result : null;
+  },
+
+  set(type, inputs, result) {
+    const data = this._load();
+    data[this._key(type, inputs)] = { ts: Date.now(), result };
+    const keys = Object.keys(data);
+    if (keys.length > AI_CACHE_MAX_ENTRIES) {
+      keys.sort((a, b) => data[a].ts - data[b].ts)
+        .slice(0, keys.length - AI_CACHE_MAX_ENTRIES)
+        .forEach(k => delete data[k]);
+    }
+    this._save(data);
+  }
+};
+
 /* ---------- TOAST ---------- */
 function toast(msg, ms = 3000) {
   const el = document.getElementById("toast");
@@ -53,14 +321,45 @@ function toast(msg, ms = 3000) {
   toast._t = setTimeout(() => (el.style.display = "none"), ms);
 }
 
+/* ---------- GUARD CLICK ---------- */
+// Заключва бутона по време на асинхронна AI заявка, за да не се задвоят
+// генерирания при бавна мрежа (особено лесно се случва на телефон, когато
+// потребителят чука бутона втори път, докато чака). Освобождава бутона
+// винаги накрая — успешно или с грешка — за да не остане "залепнал".
+async function guardClick(btnEl, fn) {
+  if (!btnEl || btnEl.disabled) return;
+  btnEl.disabled = true;
+  btnEl.style.opacity = "0.6";
+  btnEl.style.cursor = "not-allowed";
+  try {
+    await fn();
+  } finally {
+    btnEl.disabled = false;
+    btnEl.style.opacity = "";
+    btnEl.style.cursor = "";
+  }
+}
+
 /* ---------- NAVIGATION (sidebar multi-view router) ---------- */
+// Приложението е PWA (standalone display, виж manifest.json) — на телефон, ако
+// няма browser history entries между view-овете, бутонът "Назад" на телефона
+// излиза директно от приложението вместо да се връща на предишния екран в него.
+// Затова всяка навигация през showView() бута нов history запис (pushState),
+// а popstate (физическото Назад) само рендира view-а от запазения state,
+// без пак да бута нов запис — така стека расте/намалява 1:1 с реалната
+// навигация на потребителя, точно като в нативно мобилно приложение.
 const Nav = {
   current: "dashboard",
   init() {
     AppState.load();
-    this.showView(this.current, /*skipRender*/ false);
+    history.replaceState({ cdbView: this.current }, "", "#" + this.current);
+    window.addEventListener("popstate", (e) => {
+      const id = (e.state && e.state.cdbView) || this.current;
+      this.showView(id, /*fromHistory*/ true);
+    });
+    this.showView(this.current, /*fromHistory*/ true);
   },
-  showView(id) {
+  showView(id, fromHistory = false) {
     this.current = id;
     document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + id));
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === id));
@@ -69,8 +368,10 @@ const Nav = {
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); }
     if (id === "set-project") ProjectArchive.render();
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
+    if (id === "set-keys") { AICallLog.render(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     window.scrollTo(0, 0);
+    if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
   }
 };
 
@@ -125,29 +426,31 @@ const Settings = {
     if (!k.claude) lines.push("Claude: ⚪ няма ключ");
     else {
       try {
+        const models = await getClaudeModelList(k.claude, true); // forceRefresh — тук изрично тестваме
+        const testModel = models[0];
         const r = await fetchTimeout("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": k.claude,
                      "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-          body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+          body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
         });
-        lines.push(r.ok ? "Claude: ✅ работи" : `Claude: ❌ ${r.status}`);
+        lines.push(r.ok ? `Claude: ✅ работи (${testModel})` : `Claude: ❌ ${r.status}`);
       } catch (e) { lines.push("Claude: ❌ " + e.message); }
     }
 
-    // Gemini — ползваме "gemini-2.5-flash-lite" (безплатен tier, най-висока дневна
-    // квота от всички безплатни модели към юли 2026). "gemini-3.5-flash" също е
-    // безплатен, но с по-ниска дневна квота — смени тук, ако предпочиташ него.
-    // Pro моделите (gemini-3.1-pro и др.) вече изискват активен billing.
-    // Ако това пак спре да работи, провери https://ai.google.dev/gemini-api/docs/models
+    // Gemini — тества се РЕАЛНО достъпният модел за твоя ключ (виж
+    // getGeminiModelList по-горе), не твърдо закодирано име, за да не
+    // показва "счупено", ако Google е преименувал/оттеглил конкретен модел.
     if (!k.gemini) lines.push("Gemini: ⚪ няма ключ");
     else {
       try {
-        const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${k.gemini}`, {
+        const models = await getGeminiModelList(k.gemini, true); // forceRefresh — тук изрично тестваме
+        const testModel = models[0];
+        const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${k.gemini}`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
         });
-        if (r.ok) lines.push("Gemini: ✅ работи");
+        if (r.ok) lines.push(`Gemini: ✅ работи (${testModel})`);
         else {
           const body = await r.text();
           lines.push(`Gemini: ❌ ${r.status} — ${body.slice(0, 300)}`);
@@ -191,6 +494,66 @@ const Settings = {
     }
   },
 
+  // Форсира ново изтегляне на fallback-редицата модели (Gemini + Claude) от
+  // техните /models endpoint-и и презаписва localStorage кеша — полезно, ако
+  // Google/Anthropic пуснат нов модел или оттеглят стар, без да чакаш
+  // GEMINI_MODELS_CACHE_HOURS/CLAUDE_MODELS_CACHE_HOURS да изтекат сами.
+  async refreshModelLists() {
+    const out = document.getElementById("keyTestOut");
+    const gemini = document.getElementById("key_gemini").value.trim() || Keys.load().gemini;
+    const claude = document.getElementById("key_claude").value.trim() || Keys.load().claude;
+    if (!gemini && !claude) { out.textContent = "⚠️ Нужен е поне един ключ (Gemini или Claude) по-горе."; return; }
+    out.textContent = "⏳ Обновявам списъците с модели...";
+    const lines = [];
+    if (gemini) {
+      try {
+        const models = await getGeminiModelList(gemini, true);
+        lines.push("Gemini fallback ред: " + models.join(" → "));
+      } catch (e) { lines.push("Gemini: ❌ " + e.message); }
+    }
+    if (claude) {
+      try {
+        const models = await getClaudeModelList(claude, true);
+        lines.push("Claude fallback ред: " + models.join(" → "));
+      } catch (e) { lines.push("Claude: ❌ " + e.message); }
+    }
+    out.textContent = lines.join("\n");
+    toast("Списъците с модели са обновени 🔄");
+  },
+
+  // Export/Import САМО на API ключовете (отделно от "Export проект" по-долу,
+  // защото ключовете са чувствителна информация — с изричен предупредителен
+  // confirm() и преди export, и преди import).
+  exportKeys() {
+    const k = Keys.load();
+    if (!Object.keys(k).length) { toast("⚠️ Няма запазени ключове за export."); return; }
+    if (!confirm("Файлът ще съдържа API ключовете ти в ЧИСТ ТЕКСТ (незашифровани). Пази го на сигурно място, не го споделяй и не го качвай в GitHub/облак без защита. Продължаваш ли?")) return;
+    const blob = new Blob([JSON.stringify(k, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "cdb-api-keys-backup.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast("Export на ключовете готов ⬇️ — пази файла на сигурно място!");
+  },
+
+  importKeys(file) {
+    if (!file) return;
+    if (!confirm("Това ще ПРЕЗАПИШЕ текущите ти API ключове с тези от избрания файл. Продължаваш ли?")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        Keys.save({ ...Keys.load(), ...parsed });
+        this.fillFields();
+        toast("Ключовете са импортирани ✅");
+      } catch (e) {
+        toast("❌ Грешка при импорт: " + e.message);
+      }
+    };
+    reader.readAsText(file);
+  },
+
   // Тиха версия на testKeys, викана автоматично при зареждане (ако е включено в Предпочитания).
   // Не пипа UI-полета — работи директно със запазените ключове, показва само кратък статус горе.
   async silentHealthCheck() {
@@ -204,7 +567,8 @@ const Settings = {
     }
     try {
       if (k.gemini) {
-        const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${k.gemini}`, {
+        const models = await getGeminiModelList(k.gemini); // ползва кеша, не форсира refresh при всяко зареждане
+        const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${models[0]}:generateContent?key=${k.gemini}`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
         });
@@ -362,28 +726,30 @@ function proxied(url) {
   return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
 }
 
-async function callClaude(prompt, maxTokens = 1200, _isRetry = false) {
-  const k = Keys.load();
-  if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
-
+// Единично извикване към КОНКРЕТЕН Claude модел (с вградения max_tokens
+// retry за отрязани отговори). Не пипа списъка с модели — това е грижа на
+// callClaude() по-долу, който обвива това с fallback между модели.
+async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = false) {
   const res = await fetchTimeout(proxied("https://api.anthropic.com/v1/messages"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": k.claude,
+      "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
       // Позволява директно извикване от браузъра (без бекенд прокси)
       "anthropic-dangerous-direct-browser-access": "true"
     },
     body: JSON.stringify({
-      model: "claude-sonnet-5",
+      model,
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }]
     })
   }, 60000); // по-дълъг timeout — генериране на текст отнема повече от кратка проверка
   if (!res.ok) {
     const t = await res.text();
-    throw new Error("Claude API грешка: " + t);
+    const err = new Error("Claude API грешка: " + t);
+    err.status = res.status;
+    throw err;
   }
   const data = await res.json();
 
@@ -392,7 +758,7 @@ async function callClaude(prompt, maxTokens = 1200, _isRetry = false) {
   // автоматично ОЩЕ ВЕДНЪЖ с двойно по-голям бюджет, вместо да върнем счупен
   // JSON и объркваща грешка. Само 1 повторен опит, за да не увисне безкрайно.
   if (data.stop_reason === "max_tokens" && !_isRetry) {
-    return callClaude(prompt, Math.min(maxTokens * 2, 8000), true);
+    return _callClaudeSingle(model, prompt, Math.min(maxTokens * 2, 8000), apiKey, true);
   }
   if (data.stop_reason === "max_tokens" && _isRetry) {
     throw new Error("Отговорът на модела е твърде дълъг дори след удвоен лимит — опитай със по-къса заявка (по-кратък текст/по-малко елементи).");
@@ -400,49 +766,112 @@ async function callClaude(prompt, maxTokens = 1200, _isRetry = false) {
   return data.content.map(b => b.text || "").join("\n").trim();
 }
 
+// Пробва Claude моделите, върнати от getClaudeModelList(), по ред. При 429
+// (изчерпана квота) или 529 (претоварен сървър) на текущия модел, автоматично
+// минава на следващия — с ясен toast, за да се разбира какво реално е
+// генерирало отговора. Други грешки (невалиден ключ/prompt) спират веднага,
+// защото смяна на модела няма да ги реши.
+async function callClaude(prompt, maxTokens = 1200) {
+  const k = Keys.load();
+  if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
+  const models = await getClaudeModelList(k.claude);
+
+  let lastError;
+  for (let m = 0; m < models.length; m++) {
+    const model = models[m];
+    try {
+      const result = await _callClaudeSingle(model, prompt, maxTokens, k.claude);
+      AICallLog.record({ provider: "claude", model, ok: true });
+      QuotaTracker.record("claude", model);
+      return result;
+    } catch (e) {
+      lastError = e;
+      AICallLog.record({ provider: "claude", model, ok: false, note: (e.message || "").slice(0, 140) });
+      const isQuotaOrOverload = e.status === 429 || e.status === 529;
+      if (isQuotaOrOverload && m < models.length - 1) {
+        toast(`⚠️ Claude "${model}" изчерпа квотата/претоварен — превключвам на "${models[m + 1]}"...`, 4500);
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastError || new Error("Claude API грешка: неуспешно след всички модели");
+}
+
+/* =========================================================
+   Общ helper за всички Gemini заявки (текст и multimodal).
+   Пробва моделите, върнати от getGeminiModelList(), по ред. За текущия модел прави
+   кратък retry с exponential backoff при 429 (временен rate-limit).
+   Ако след тези опити моделът ВСЕ ОЩЕ е на 429 (обикновено = изчерпана
+   дневна квота, не временен rate-limit), автоматично минава на СЛЕДВАЩИЯ
+   модел от списъка — с ясен toast, за да се разбира какво реално е
+   генерирало отговора. Само ако всички модели са изчерпани, гърми грешка.
+   Грешки, различни от 429 (невалиден ключ/prompt и т.н.), спират веднага
+   без да пробват други модели, защото смяна на модела няма да ги реши.
+   ========================================================= */
+async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
+  const models = await getGeminiModelList(apiKey);
+  let lastError;
+  for (let m = 0; m < models.length; m++) {
+    const model = models[m];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const maxRetries = 2;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      let res;
+      try {
+        res = await fetchTimeout(proxied(url), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }, timeoutMs);
+      } catch (e) {
+        lastError = e;
+        break; // мрежова/timeout грешка — retry тук няма да помогне, пробвай следващ модел
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        AICallLog.record({ provider: "gemini", model, ok: true });
+        QuotaTracker.record("gemini", model);
+        return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
+      }
+
+      const t = await res.text();
+      if (res.status === 429) {
+        if (attempt < maxRetries) {
+          const waitMs = 2000 * Math.pow(2, attempt); // 2s, 4s
+          toast(`⏳ Gemini (${model}) квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
+          await new Promise(r => setTimeout(r, waitMs));
+          lastError = new Error("Gemini API грешка: " + t);
+          continue;
+        }
+        lastError = new Error(`Gemini API грешка (${model}): ` + t);
+        AICallLog.record({ provider: "gemini", model, ok: false, note: "429 — изчерпана квота" });
+        if (m < models.length - 1) {
+          toast(`⚠️ Gemini "${model}" изчерпа дневната квота — превключвам на "${models[m + 1]}"...`, 4500);
+        }
+        break; // към следващия модел
+      }
+
+      // грешка, различна от квота — няма смисъл да пробваме друг модел
+      AICallLog.record({ provider: "gemini", model, ok: false, note: t.slice(0, 140) });
+      throw new Error("Gemini API грешка: " + t);
+    }
+  }
+  throw lastError || new Error("Gemini API грешка: неуспешно след всички модели");
+}
+
 async function callGemini(prompt, useSearch = false) {
   const k = Keys.load();
   if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${k.gemini}`;
   const body = { contents: [{ parts: [{ text: prompt }] }] };
   // Google Search grounding — дава на Gemini достъп до РЕАЛНИ, актуални резултати
   // от търсачката (вместо само познания от тренировъчните данни).
   if (useSearch) body.tools = [{ google_search: {} }];
 
-  // Retry с exponential backoff при 429 (изчерпана квота) — на безплатния tier
-  // временните rate-limit грешки са чести; изчакването на 2с/4с/8с решава повечето.
-  const maxRetries = 3;
-  let lastError;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    let res;
-    try {
-      res = await fetchTimeout(proxied(url), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }, 45000);
-    } catch (e) {
-      lastError = e;
-      break; // мрежова/timeout грешка — retry тук няма да помогне
-    }
-
-    if (res.ok) {
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
-    }
-
-    const t = await res.text();
-    if (res.status === 429 && attempt < maxRetries) {
-      const waitMs = 2000 * Math.pow(2, attempt); // 2s, 4s, 8s
-      toast(`⏳ Gemini квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
-      await new Promise(r => setTimeout(r, waitMs));
-      lastError = new Error("Gemini API грешка: " + t);
-      continue;
-    }
-    throw new Error("Gemini API грешка: " + t);
-  }
-  throw lastError || new Error("Gemini API грешка: неуспешно след повторни опити");
+  return await callGeminiWithFallback(body, k.gemini, 45000);
 }
 
 /* =========================================================
@@ -484,7 +913,6 @@ async function callGeminiMultimodal(prompt, base64Audio, mimeType, useSearch = f
   const k = Keys.load();
   if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${k.gemini}`;
   const body = {
     contents: [{
       parts: [
@@ -495,37 +923,7 @@ async function callGeminiMultimodal(prompt, base64Audio, mimeType, useSearch = f
   };
   if (useSearch) body.tools = [{ google_search: {} }];
 
-  const maxRetries = 3;
-  let lastError;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    let res;
-    try {
-      res = await fetchTimeout(proxied(url), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }, 90000); // аудио анализ е по-бавен от чист текст
-    } catch (e) {
-      lastError = e;
-      break;
-    }
-
-    if (res.ok) {
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
-    }
-
-    const t = await res.text();
-    if (res.status === 429 && attempt < maxRetries) {
-      const waitMs = 2000 * Math.pow(2, attempt);
-      toast(`⏳ Gemini квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
-      await new Promise(r => setTimeout(r, waitMs));
-      lastError = new Error("Gemini API грешка: " + t);
-      continue;
-    }
-    throw new Error("Gemini API грешка: " + t);
-  }
-  throw lastError || new Error("Gemini API грешка: неуспешно след повторни опити");
+  return await callGeminiWithFallback(body, k.gemini, 90000); // аудио анализ е по-бавен от чист текст
 }
 
 // Превръща File/Blob в base64 текст (без "data:...;base64," префикса) — нужно за inline_data.
@@ -895,6 +1293,15 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
     this.runOutlierScan(best.niche);
     this.runKeywordSuggest(best.niche);
     await this.generateConcept(best.niche);
+
+    // Автопилот (опционален, изключен по подразбиране — виж Настройки → Предпочитания):
+    // верижно продължава автоматично към текст на песента + Viral Lab анализ,
+    // за да не чакаш ръчно всяка стъпка. Винаги ясно съобщено с toast.
+    if (Prefs.data.autopilot) {
+      toast("🤖 Автопилот: генерирам текст + Viral анализ автоматично...", 4000);
+      await this.generateLyrics();
+      await ViralLab.analyze();
+    }
   },
 
   // Малка карта-версия на резултатите за Dashboard-а (Бърз изглед).
@@ -1103,13 +1510,31 @@ ${lyrics}`;
 const ViralLab = {
   // Едно голямо структурирано Claude извикване вместо 8 отделни —
   // по-бързо, по-евтино (по-малко round-trips) и лесно за поддръжка.
-  async analyze() {
+  // forceRefresh=true игнорира кеша (бутон "🔄 Презареди анализа").
+  async analyze(forceRefresh = false) {
     const p = AppState.data.project;
     const lyrics = (document.getElementById("lyricsOut")?.value || p.lyrics || "").trim();
     if (!lyrics) return toast("Първо генерирай текст на песента (по-горе)");
 
     const niche = p.chosenNiche || "modern pop";
     const title = p.title || "(без заглавие)";
+    const out = document.getElementById("viralLabOut");
+
+    // Кешираме по хеш на реалните входни данни — ако текстът/заглавието/нишата
+    // не са се променили от последния анализ, връщаме готовия резултат вместо
+    // да хабим API квота за идентична заявка.
+    const cacheInputs = { lyrics, niche, title, nicheScore: p.nicheScore };
+    if (!forceRefresh) {
+      const cached = AICache.get("viralLab", cacheInputs);
+      if (cached) {
+        AppState.data.project.viralReport = cached;
+        AppState.save();
+        this.render(cached);
+        toast("♻️ Показвам кеширан анализ (текстът не се е променил) — 🔄 Презареди за нов", 4000);
+        return;
+      }
+    }
+
     // Реални пазарни сигнали, които вече имаме от Стъпка 1 (trend snapshot /
     // niche score) — подаваме ги на Claude вместо да гадае от нулата.
     const nicheRow = (p.niches || []).find(n => n.niche === niche) || {};
@@ -1117,7 +1542,6 @@ const ViralLab = {
 Search signal: ${nicheRow.search_signal || "няма данни"}
 Competition signal: ${nicheRow.competition_signal || "няма данни"}`;
 
-    const out = document.getElementById("viralLabOut");
     out.innerHTML = `<p class="muted">⏳ AI Producer анализира песента (Viral Score, hook, chorus, структура, жанр, конкуренция, review)...</p>`;
 
     // Жанрово заземяване: реални заглавия на топ видеа в нишата (ако има YouTube ключ),
@@ -1201,6 +1625,7 @@ ${genreGrounding}
     try {
       const raw = await callAI(prompt, 3200);
       const r = extractJson(raw);
+      AICache.set("viralLab", cacheInputs, r);
       AppState.data.project.viralReport = r;
       AppState.save();
       this.render(r);
@@ -1488,12 +1913,28 @@ ${isFinal
    близо до текста, за да го видиш сам).
    ========================================================= */
 const GhostAudience = {
-  async run() {
+  // forceRefresh=true игнорира кеша (бутон "🔄 Презареди фокус-групата").
+  async run(forceRefresh = false) {
     const p = AppState.data.project;
     const lyrics = (document.getElementById("lyricsOut")?.value || p.lyrics || "").trim();
     if (!lyrics) return toast("Първо генерирай текст на песента (по-горе)");
     const niche = p.chosenNiche || "modern pop";
     const out = document.getElementById("ghostAudienceOut");
+
+    // Кешираме по хеш на текста+нишата — 12 персони е скъпа заявка, не я
+    // повтаряй за идентичен вход.
+    const cacheInputs = { lyrics, niche };
+    if (!forceRefresh) {
+      const cached = AICache.get("ghostAudience", cacheInputs);
+      if (cached) {
+        AppState.data.project.ghostAudience = cached;
+        AppState.save();
+        this.render(cached);
+        toast("♻️ Показвам кеширана фокус-група (текстът не се е променил) — 🔄 Презареди за нова", 4000);
+        return;
+      }
+    }
+
     out.innerHTML = `<p class="muted">👻 Свиквам 12 синтетични слушателя да чуят песента...</p>`;
 
     const prompt = `Ти симулираш РЕАЛНА, разнообразна публика от 12 души, слушащи следната песен
@@ -1521,6 +1962,7 @@ ${lyrics}
     try {
       const raw = await callAI(prompt, 3200);
       const r = extractJson(raw);
+      AICache.set("ghostAudience", cacheInputs, r);
       AppState.data.project.ghostAudience = r;
       AppState.save();
       this.render(r);
@@ -2138,10 +2580,10 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
    ========================================================= */
 const PREFS_STORAGE = "cdb_dashboard_prefs_v1";
 const Prefs = {
-  data: { theme: "dark", healthCheck: true, contentProvider: "claude" },
+  data: { theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false },
   load() {
     const raw = localStorage.getItem(PREFS_STORAGE);
-    this.data = raw ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude" }, JSON.parse(raw)) : this.data;
+    this.data = raw ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false }, JSON.parse(raw)) : this.data;
   },
   save() {
     localStorage.setItem(PREFS_STORAGE, JSON.stringify(this.data));
@@ -2180,11 +2622,28 @@ const Prefs = {
     this.applyContentProvider();
     toast(value === "claude" ? "✍️ Генериране на съдържание: Claude" : "✍️ Генериране на съдържание: Gemini");
   },
+  applyAutopilotSwitch() {
+    document.querySelectorAll("#autopilotSwitch").forEach(s => {
+      if (s) s.classList.toggle("on", this.data.autopilot);
+    });
+  },
+  // Автопилот (по избор, изключен по подразбиране): след като най-добрата ниша
+  // е избрана, автоматично верижно генерира текст на песента + Viral Lab анализ,
+  // без да чакаш ръчно да натискаш всеки бутон поотделно. Вижте _renderNicheResults().
+  toggleAutopilot() {
+    this.data.autopilot = !this.data.autopilot;
+    this.save();
+    this.applyAutopilotSwitch();
+    toast(this.data.autopilot
+      ? "🤖 Автопилот: включен (текст + Viral анализ ще тръгват автоматично)"
+      : "🤖 Автопилот: изключен");
+  },
   init() {
     this.load();
     this.applyTheme();
     this.applyHealthSwitch();
     this.applyContentProvider();
+    this.applyAutopilotSwitch();
     if (this.data.healthCheck) Settings.silentHealthCheck();
     else {
       const txt = document.getElementById("validatorStatusText");
@@ -2381,6 +2840,95 @@ const Stats = {
     }
   },
 
+  trendsCache: null,
+  trendsUrl() {
+    const k = Keys.load();
+    if (!k.ghOwner || !k.ghRepo) return null;
+    const branch = k.ghBranch || "main";
+    return `https://raw.githubusercontent.com/${k.ghOwner}/${k.ghRepo}/${branch}/data/trends-history.json`;
+  },
+  async fetchTrendsData() {
+    if (this.trendsCache) return this.trendsCache;
+    const url = this.trendsUrl();
+    if (!url) return null;
+    try {
+      const res = await fetchTimeout(url);
+      if (!res.ok) return null;
+      this.trendsCache = await res.json();
+      return this.trendsCache;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // Сравнява последните ДВА snapshot-а по video_id и връща видеата с най-голям
+  // прираст на гледания между тях — реален сигнал "какво расте точно сега",
+  // за разлика от абсолютните гледания в таблицата "Всички видеа".
+  _computeTopMovers(snaps) {
+    if (!snaps || snaps.length < 2) return null;
+    const latest = snaps[snaps.length - 1];
+    const prev = snaps[snaps.length - 2];
+    const prevMap = new Map((prev.videos || []).map(v => [v.video_id, v]));
+    return (latest.videos || [])
+      .map(v => {
+        const old = prevMap.get(v.video_id);
+        if (!old) return null; // ново видео от последния snapshot — няма база за сравнение още
+        const delta = (v.views || 0) - (old.views || 0);
+        if (delta <= 0) return null;
+        return { title: v.title, views: v.views || 0, delta, deltaPct: old.views ? (delta / old.views * 100) : null };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.delta - a.delta)
+      .slice(0, 8);
+  },
+
+  async renderTopMovers() {
+    const el = document.getElementById("topMoversCard");
+    if (!el) return;
+    const data = await this.fetchData();
+    const snaps = data?.snapshots || [];
+    if (snaps.length < 2) {
+      el.innerHTML = `<strong>📈 Top Movers (най-бързо растящи видеа)</strong>
+        <p class="muted" style="margin-top:8px;">Трябват поне 2 дневни snapshot-а, за да се смята прираст — тракерът тепърва трупа история (текущо: ${snaps.length}).</p>`;
+      return;
+    }
+    const movers = this._computeTopMovers(snaps);
+    if (!movers || !movers.length) {
+      el.innerHTML = `<strong>📈 Top Movers (най-бързо растящи видеа)</strong>
+        <p class="muted" style="margin-top:8px;">Няма видеа с прираст спрямо предишния snapshot.</p>`;
+      return;
+    }
+    el.innerHTML = `<strong>📈 Top Movers (най-бързо растящи видеа спрямо предния snapshot)</strong>
+      <table class="data" style="margin-top:10px;"><thead><tr><th>Видео</th><th>Гледания</th><th>+ От вчера</th></tr></thead>
+      <tbody>${movers.map(m =>
+        `<tr><td>${m.title}</td><td>${m.views.toLocaleString()}</td><td>+${m.delta.toLocaleString()}${m.deltaPct != null ? ` (${m.deltaPct.toFixed(1)}%)` : ""}</td></tr>`).join("")}
+      </tbody></table>`;
+  },
+
+  async renderTrendNiches() {
+    const el = document.getElementById("trendNichesCard");
+    if (!el) return;
+    const data = await this.fetchTrendsData();
+    const snaps = data?.snapshots || [];
+    if (!snaps.length) {
+      el.innerHTML = `<strong>🔥 Трендващи ниши</strong>
+        <p class="muted" style="margin-top:8px;">Няма данни още — виж <strong>YouTube Тракер</strong> за setup на дневния trend snapshot.</p>`;
+      return;
+    }
+    const latest = snaps[snaps.length - 1];
+    const niches = (latest.niches || []).slice(0, 6);
+    if (!niches.length) {
+      el.innerHTML = `<strong>🔥 Трендващи ниши</strong><p class="muted" style="margin-top:8px;">Последният snapshot няма ниши с данни.</p>`;
+      return;
+    }
+    el.innerHTML = `<strong>🔥 Трендващи ниши</strong> <span class="muted">· snapshot от ${latest.date}</span>
+      ${niches.map(n => {
+        const color = n.score > 75 ? "🟢" : n.score > 50 ? "🟡" : "⚪";
+        return `<div class="copy-field"><span>${color} <strong>${n.niche}</strong> — ${n.score}/100<br>
+          <span class="muted">Търсене: ${n.search_signal || "—"} · Конкуренция: ${n.competition_signal || "—"}</span></span></div>`;
+      }).join("")}`;
+  },
+
   async renderDashboard() {
     const el = document.getElementById("dashStatsArea");
     if (!el) return;
@@ -2448,8 +2996,12 @@ const Stats = {
           return `<tr><td>${v.title}</td><td>${(v.views || 0).toLocaleString()}</td><td>${v.perDay.toFixed(0)}</td><td>${chip}</td></tr>`;
         }).join("")}
         </tbody></table>
-      </div>`;
+      </div>
+      <div class="card" id="topMoversCard" style="margin-top:14px;">⏳ Зареждам Top Movers...</div>
+      <div class="card" id="trendNichesCard" style="margin-top:14px;">⏳ Зареждам трендващи ниши...</div>`;
     this._drawChart("analyticsChart", snaps);
+    this.renderTopMovers();
+    this.renderTrendNiches();
   },
 
   _drawChart(canvasId, snaps) {

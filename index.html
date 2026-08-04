@@ -469,7 +469,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">Остави полето празно и натисни бутона — чете дневния trend snapshot (GitHub Actions, Google Trends + YouTube данни, обновява се веднъж на ден, без Gemini квота) и ти връща нишата с най-добро съотношение търсене/конкуренция. По желание можеш да въведеш свои 2-3 ниши, за да сравниш точно тях вместо авто-сканиране (използва Claude).</p>
         <label>Жанрове/ниши за сравнение (по избор — празно = авто-сканиране)</label>
         <textarea id="nicheInput" placeholder="празно = авто · или напр.&#10;lofi hip hop&#10;phonk drift&#10;sad r&b 2026"></textarea>
-        <button class="btn grad" style="margin-top:14px;" onclick="Step1.scanNiches()">🔍 Предложение за песен</button>
+        <button class="btn grad" style="margin-top:14px;" onclick="guardClick(this, () => Step1.scanNiches())">🔍 Предложение за песен</button>
         <div id="nicheResults" style="margin-top:14px;"></div>
         <div id="outlierResults" style="margin-top:10px;"></div>
         <div id="keywordSuggestOut" style="margin-top:10px;"></div>
@@ -483,14 +483,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
             <select id="albumSprintCount"><option>10</option><option selected>15</option><option>20</option><option>30</option></select>
           </div>
         </div>
-        <button class="btn ghost" onclick="Step1.generateAlbumSprint()">📀 Генерирай Album Sprint</button>
+        <button class="btn ghost" onclick="guardClick(this, () => Step1.generateAlbumSprint())">📀 Генерирай Album Sprint</button>
         <div id="albumSprintOut" style="margin-top:12px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
         <strong>🧬 Hook Evolution Arena</strong>
         <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
-        <button class="btn grad" onclick="HookArena.start()">🧬 Стартирай еволюцията</button>
+        <button class="btn grad" onclick="guardClick(this, () => HookArena.start())">🧬 Стартирай еволюцията</button>
         <div id="hookArenaOut" style="margin-top:14px;"></div>
       </div>
 
@@ -510,7 +510,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <strong>Текст на песента (Claude)</strong>
         <p class="muted">Chorus най-отпред, мета-тагове [Chorus] [Verse] [Drop].</p>
         <div class="row">
-          <button class="btn grad" onclick="Step1.generateLyrics()">✍️ Генерирай текст</button>
+          <button class="btn grad" onclick="guardClick(this, () => Step1.generateLyrics())">✍️ Генерирай текст</button>
           <button class="btn ghost" onclick="LyricsHistory.toggle()">🕐 История на версиите</button>
         </div>
         <textarea id="lyricsOut" style="min-height:220px;margin-top:10px;"></textarea>
@@ -520,14 +520,16 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="card" style="margin-top:14px;">
         <strong>🚀 Viral Lab — AI Music Producer</strong>
         <p class="muted">Пълен анализ на вирусния потенциал: Viral Score, прогноза за успех, оценка на текста, hook/chorus анализ, структура, жанрова проверка, конкуренция и AI Producer Review. Изисква генериран текст (по-горе).</p>
-        <button class="btn grad" onclick="ViralLab.analyze()">🚀 Анализирай вирусния потенциал</button>
+        <button class="btn grad" onclick="guardClick(this, () => ViralLab.analyze())">🚀 Анализирай вирусния потенциал</button>
+        <button class="btn ghost" onclick="guardClick(this, () => ViralLab.analyze(true))">🔄 Презареди (игнорирай кеша)</button>
         <div id="viralLabOut" style="margin-top:14px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
         <strong>👻 Ghost Audience</strong>
         <p class="muted">12 синтетични, но правдоподобни слушателя "чуват" песента и реагират с техния глас — плюс attention heatmap (къде реално губиш вниманието) и meme risk radar (редове, за които публиката би те закачила). Изисква генериран текст.</p>
-        <button class="btn grad" onclick="GhostAudience.run()">👻 Пусни фокус-групата</button>
+        <button class="btn grad" onclick="guardClick(this, () => GhostAudience.run())">👻 Пусни фокус-групата</button>
+        <button class="btn ghost" onclick="guardClick(this, () => GhostAudience.run(true))">🔄 Презареди (игнорирай кеша)</button>
         <div id="ghostAudienceOut" style="margin-top:14px;"></div>
       </div>
 
@@ -545,7 +547,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="card">
         <strong>FX конфигурация (генерирана от Claude според жанра)</strong>
         <p class="muted">Справочен бриф за настроението/ефектите — визуализаторът отдолу си има собствена аудио-реактивна логика (бас пулс, bloom, частици).</p>
-        <button class="btn ghost" onclick="Step2.generateFxConfig()">🎛️ Генерирай FX конфиг</button>
+        <button class="btn ghost" onclick="guardClick(this, () => Step2.generateFxConfig())">🎛️ Генерирай FX конфиг</button>
         <textarea id="fxConfigOut" style="margin-top:10px;font-family:var(--font-mono);font-size:12px;"></textarea>
       </div>
 
@@ -569,9 +571,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
       <div class="card">
         <strong>10 · Обложка (Gemini / Nano Banana)</strong>
-        <button class="btn ghost" style="margin-top:10px;" onclick="Step3.generateCoverPrompt()">🎨 Генерирай визуален промпт</button>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => Step3.generateCoverPrompt())">🎨 Генерирай визуален промпт</button>
         <textarea id="coverPromptOut" style="margin-top:10px;"></textarea>
-        <button class="btn grad" onclick="Step3.generateCoverImage()">🖼️ Генерирай обложка (3000×3000)</button>
+        <button class="btn grad" onclick="guardClick(this, () => Step3.generateCoverImage())">🖼️ Генерирай обложка (3000×3000)</button>
         <div id="coverImgOut" style="margin-top:12px;"></div>
       </div>
 
@@ -585,21 +587,21 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="card" style="margin-top:14px;">
         <strong>12 · Spotify for Artists / Apple Music for Artists</strong>
         <p class="muted">Готов bio текст + описание на пускането за двата профила.</p>
-        <button class="btn ghost" onclick="Step3.generateSpotifyAppleText()">🎵 Генерирай текстове</button>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.generateSpotifyAppleText())">🎵 Генерирай текстове</button>
         <div id="spotifyAppleOut" style="margin-top:12px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
         <strong>13 · YouTube A/B заглавия</strong>
         <p class="muted">3 варианта заглавие + thumbnail текст, с кратък Gemini коментар кой е по-clickable.</p>
-        <button class="btn ghost" onclick="Step3.generateABTitles()">📺 Генерирай A/B варианти</button>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.generateABTitles())">📺 Генерирай A/B варианти</button>
         <div id="abTitlesOut" style="margin-top:12px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
         <strong>14 · Проверка за прилика</strong>
         <p class="muted">Бърза проверка дали заглавието вече не е твърде близко до съществуваща песен в YouTube.</p>
-        <button class="btn ghost" onclick="Step3.checkSimilarity()">🛡️ Провери сега</button>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.checkSimilarity())">🛡️ Провери сега</button>
         <div id="similarityOut" style="margin-top:12px;"></div>
       </div>
 
@@ -639,7 +641,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <input type="text" id="qSongName" placeholder="напр. Само ти">
         <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
         <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
-        <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="QuickUpload.runFull()">🚀 Стартирай пълния процес</button>
+        <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => QuickUpload.runFull())">🚀 Стартирай пълния процес</button>
         <div id="qRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато видеото се записва...</div>
         <div id="qVideoProgressWrap" style="display:none;margin-top:10px;">
           <div id="qVideoProgressLabel" class="muted" style="font-size:12px;margin-bottom:4px;">Видео: записва се…</div>
@@ -707,7 +709,33 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.refreshModelLists()">🔄 Обнови fallback списъците с модели</button>
         <div id="keyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+        <hr style="margin:18px 0;">
+        <strong>💾 Резервно копие на API ключовете</strong>
+        <p class="muted" style="margin-top:6px;">Отделно от резервното копие на проекта (виж "Проект &amp; Данни") — тук се пазят/възстановяват само ключовете. Файлът е в ЧИСТ ТЕКСТ, пази го на сигурно място.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="Settings.exportKeys()">⬇️ Export ключове</button>
+          <button class="btn ghost" onclick="document.getElementById('importKeysFile').click()">⬆️ Import ключове</button>
+        </div>
+        <input type="file" id="importKeysFile" accept="application/json" style="display:none;" onchange="Settings.importKeys(this.files[0]); this.value='';">
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📊 Приблизителен разход днес</strong>
+        <p class="muted">Локален брояч на извикванията по модел (не е официална квота от Google/Anthropic — само ориентир на това устройство, нулира се на нов ден).</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="QuotaTracker.render()">📊 Покажи</button>
+        <div id="quotaTrackerOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 AI Call Log</strong>
+        <p class="muted">Кой provider/модел реално е отговорил на последните извиквания (и кои опити са гръмнали по пътя — напр. fallback между модели).</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="AICallLog.render()">🕐 Покажи лога</button>
+          <button class="btn ghost" onclick="AICallLog.clear()">🗑️ Изчисти лога</button>
+        </div>
+        <div id="aiCallLogOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
       </div>
     </div>
 
@@ -758,6 +786,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
             <option value="gemini">Gemini</option>
           </select>
         </div>
+        <div class="set-row"><div class="txt"><strong>🤖 Автопилот</strong><span>След като избере най-добрата ниша, автоматично продължава верижно към текст на песента + Viral Lab анализ — без да чакаш да натискаш всеки бутон поотделно. Изключен по подразбиране.</span></div><div class="switch" id="autopilotSwitch" onclick="Prefs.toggleAutopilot()"><div class="knob"></div></div></div>
       </div>
     </div>
 
