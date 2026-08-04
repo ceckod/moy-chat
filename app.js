@@ -445,6 +445,37 @@ async function callGemini(prompt, useSearch = false) {
   throw lastError || new Error("Gemini API грешка: неуспешно след повторни опити");
 }
 
+/* =========================================================
+   CALL AI — единна точка за генериране на съдържание (Стъпка 1-3).
+   Избира Claude или Gemini според Prefs.data.contentProvider
+   (превключвател горе вдясно / Настройки → Предпочитания).
+   Ако избраният провайдър гръмне грешка (напр. изчерпан Claude
+   абонамент/квота) И другият провайдър има зареден ключ, автоматично
+   пада на него вместо да чупи целия flow — с ясен toast, за да знаеш
+   какво реално те е генерирало съдържанието.
+   ЗАБЕЛЕЖКА: Gemini Validator-ът (autoReview и т.н.) НЕ минава през
+   тази функция — той нарочно винаги е Gemini, като "втори, независим
+   поглед" върху резултата, дори когато Gemini е и основният генератор.
+   ========================================================= */
+async function callAI(prompt, maxTokens = 1200) {
+  const k = Keys.load();
+  const provider = Prefs.data.contentProvider || "claude";
+  const other = provider === "claude" ? "gemini" : "claude";
+  const hasKey = { claude: !!k.claude, gemini: !!k.gemini };
+
+  const run = (p) => p === "claude" ? callClaude(prompt, maxTokens) : callGemini(prompt);
+
+  try {
+    return await run(provider);
+  } catch (e) {
+    if (hasKey[other]) {
+      toast(`⚠️ ${provider === "claude" ? "Claude" : "Gemini"} гръмна (${e.message}) — превключвам на ${other === "claude" ? "Claude" : "Gemini"} за тази заявка...`, 4000);
+      return await run(other);
+    }
+    throw e;
+  }
+}
+
 // Като callGemini(), но подава и аудио файл (inline base64) като multimodal вход —
 // ползва се от "Бърз ъплоуд за стари песни", за да може Gemini да "чуе" песента
 // директно (жанр/настроение/енергия + разпознаване на текста, ако не е пейстнат ръчно).
@@ -572,71 +603,125 @@ ${content}
 };
 
 /* =========================================================
-   YOUTUBE OUTLIER SCAN
-   Търси видеа по ниша, после сверява views/subscribers —
-   канали с малко абонати, но много гледания = "outlier" =
-   сигнал за висок интерес + слаба конкуренция (VidIQ логика).
+   YOUTUBE TRENDING POOL (споделена, времево-ограничена основа)
+   ---------------------------------------------------------
+   ВАЖНО — тук преди имаше бъг: старите youtubeTopTitles() и
+   youtubeOutlierScan() търсеха с order=viewCount БЕЗ никакъв
+   времеви филтър, което значи "най-гледаните видеа за цялото
+   съществуване на YouTube" по темата — не това, което реално
+   трендва СЕГА. Резултатът: стари вирусни хитове изглеждаха
+   като "актуален тренд" и това пряко влизаше в контекста за
+   генериране на нови песни (ViralLab genreGrounding) — грешен
+   сигнал → грешни песни.
+
+   Този helper:
+   1. Търси само видеа, публикувани в скорошен прозорец от време
+      (publishedAfter), НЕ цялата история на YouTube.
+   2. Ако прозорецът е твърде тесен за дадена ниша (малко скорошни
+      видеа), прогресивно го разширява (30 → 60 → 120 → 180 дни) —
+      НИКОГА не пада обратно на "без филтър", защото точно това
+      беше бъгът. Ако дори 180 дни не дадат достатъчно данни,
+      връща insufficientData=true, за да може UI/промптът честно
+      да каже "няма достатъчно скорошни данни", вместо тихо да
+      подаде подвеждаща информация.
+   3. Смята view VELOCITY (гледания / дни от публикуването) — това
+      е истинският "trending сега" сигнал: видео на 3 дни с 50k
+      views трендва много по-силно от видео на 2 години с 500k.
+      Сортирането по velocity, не по абсолютни views, е това, което
+      прави разликата между "стар хит" и "реален тренд днес".
    ========================================================= */
-/* =========================================================
-   YOUTUBE TOP TITLES (жанрово заземяване)
-   Лек helper — само заглавия на топ видеа по нишата, без outlier
-   логиката. Използва се да "закотви" genre_check-а на ViralLab
-   в реални, актуални данни вместо в паметта на модела.
-   ========================================================= */
-async function youtubeTopTitles(query, max = 12) {
+async function fetchRecentTrendingVideos(query, opts = {}) {
   const k = Keys.load();
-  if (!k.ytApiKey) return []; // тихо пропускаме — ViralLab пада обратно на model knowledge
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=${max}&q=${encodeURIComponent(query)}&key=${k.ytApiKey}`;
-    const res = await fetchTimeout(proxied(url));
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.items || []).map(i => i.snippet.title).filter(Boolean);
-  } catch (e) {
-    return [];
+  const maxResults = opts.maxResults || 25;
+  const minResults = opts.minResults || 6;
+  if (!k.ytApiKey) return { videos: [], windowDays: null, insufficientData: true, noKey: true };
+
+  const windows = [30, 60, 120, 180]; // дни — прогресивно разширяване, никога "без филтър"
+  let items = [];
+  let usedWindow = windows[windows.length - 1];
+
+  for (const days of windows) {
+    const publishedAfter = new Date(Date.now() - days * 86400000).toISOString();
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=${maxResults}&publishedAfter=${encodeURIComponent(publishedAfter)}&q=${encodeURIComponent(query)}&key=${k.ytApiKey}`;
+    const sRes = await fetchTimeout(proxied(searchUrl));
+    if (!sRes.ok) throw new Error("YouTube search грешка: " + (await sRes.text()));
+    const sData = await sRes.json();
+    items = sData.items || [];
+    usedWindow = days;
+    if (items.length >= minResults) break;
   }
-}
 
-async function youtubeOutlierScan(query) {
-  const k = Keys.load();
-  if (!k.ytApiKey) throw new Error("Няма YouTube Data API Key (виж Настройки)");
-
-  const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=15&q=${encodeURIComponent(query)}&key=${k.ytApiKey}`;
-  const sRes = await fetchTimeout(proxied(searchUrl));
-  if (!sRes.ok) throw new Error("YouTube search грешка: " + (await sRes.text()));
-  const sData = await sRes.json();
-  const items = sData.items || [];
-  if (!items.length) return { outliers: [], totalChecked: 0 };
+  if (!items.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
 
   const videoIds = items.map(i => i.id.videoId).filter(Boolean);
   const channelIds = [...new Set(items.map(i => i.snippet.channelId))];
+  if (!videoIds.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
 
-  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoIds.join(",")}&key=${k.ytApiKey}`;
+  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${k.ytApiKey}`;
   const channelsUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelIds.join(",")}&key=${k.ytApiKey}`;
-  const [vRes, cRes] = await Promise.all([fetch(proxied(videosUrl)), fetch(proxied(channelsUrl))]);
+  const [vRes, cRes] = await Promise.all([fetchTimeout(proxied(videosUrl)), fetchTimeout(proxied(channelsUrl))]);
   if (!vRes.ok) throw new Error("YouTube videos.list грешка: " + (await vRes.text()));
   if (!cRes.ok) throw new Error("YouTube channels.list грешка: " + (await cRes.text()));
   const vData = await vRes.json();
   const cData = await cRes.json();
 
-  const viewsById = {};
-  (vData.items || []).forEach(v => viewsById[v.id] = parseInt(v.statistics?.viewCount || "0", 10));
+  const statsById = {};
+  (vData.items || []).forEach(v => statsById[v.id] = v);
   const subsById = {};
   (cData.items || []).forEach(c => subsById[c.id] = parseInt(c.statistics?.subscriberCount || "0", 10));
 
-  const combined = items.map(i => {
-    const views = viewsById[i.id.videoId] || 0;
+  const now = Date.now();
+  const videos = items.map(i => {
+    const stat = statsById[i.id.videoId];
+    const views = parseInt(stat?.statistics?.viewCount || "0", 10);
+    const publishedAt = stat?.snippet?.publishedAt || i.snippet.publishedAt;
+    // мин. 0.5 дни, за да не гърми velocity до безкрайност за видеа отпреди часове
+    const ageDays = Math.max((now - new Date(publishedAt).getTime()) / 86400000, 0.5);
     const subs = subsById[i.snippet.channelId] || 0;
-    const ratio = views / Math.max(subs, 1);
-    return { title: i.snippet.title, channel: i.snippet.channelTitle, views, subs, ratio };
+    return {
+      videoId: i.id.videoId,
+      title: i.snippet.title,
+      channel: i.snippet.channelTitle,
+      channelId: i.snippet.channelId,
+      views, subs,
+      publishedAt,
+      ageDays: Math.round(ageDays * 10) / 10,
+      velocity: Math.round(views / ageDays), // гледания/ден — реалният "трендва СЕГА" сигнал
+      ratio: views / Math.max(subs, 1),
+    };
   });
 
-  const outliers = combined
-    .filter(x => x.subs < 10000 && x.views > 20000 || x.ratio > 15)
-    .sort((a, b) => b.ratio - a.ratio)
+  videos.sort((a, b) => b.velocity - a.velocity);
+  return { videos, windowDays: usedWindow, insufficientData: videos.length < minResults };
+}
+
+/* Жанрово заземяване за ViralLab: заглавия на видеа, които РЕАЛНО
+   набират инерция точно сега (по velocity), не всички-времена топ. */
+async function youtubeTopTitles(query, max = 12) {
+  try {
+    const { videos } = await fetchRecentTrendingVideos(query, { maxResults: max, minResults: 5 });
+    return videos.slice(0, max).map(v => v.title).filter(Boolean);
+  } catch (e) {
+    return []; // тихо пропускаме — ViralLab пада обратно на model knowledge
+  }
+}
+
+/* VidIQ-стил "outlier": малък канал (<10k абонати), чието скорошно
+   видео вече расте непропорционално бързо — реален сигнал за
+   органичен пробив СЕГА, изчислен само от скорошния прозорец. */
+async function youtubeOutlierScan(query) {
+  const k = Keys.load();
+  if (!k.ytApiKey) throw new Error("Няма YouTube Data API Key (виж Настройки)");
+
+  const { videos, windowDays, insufficientData } = await fetchRecentTrendingVideos(query, { maxResults: 25, minResults: 6 });
+  if (!videos.length) return { outliers: [], totalChecked: 0, windowDays, insufficientData: true };
+
+  const outliers = videos
+    .filter(v => (v.ratio > 15 && v.views > 3000) || (v.subs < 10000 && v.views > 20000))
+    .sort((a, b) => b.velocity - a.velocity)
     .slice(0, 5);
 
-  return { outliers, totalChecked: combined.length };
+  return { outliers, totalChecked: videos.length, windowDays, insufficientData };
 }
 
 /* =========================================================
@@ -771,7 +856,7 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 [{"niche":"...", "score":number, "reason":"..."}]`;
 
     try {
-      const raw2 = await callClaude(prompt, 600);
+      const raw2 = await callAI(prompt, 600);
       const results = extractJson(raw2);
       results.sort((a, b) => b.score - a.score);
       this._renderNicheResults(results, false);
@@ -826,16 +911,23 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
   // VidIQ-стил "outlier" анализ: канали с малко абонати, но много гледания в тази ниша.
   async runOutlierScan(niche) {
     const el = document.getElementById("outlierResults");
-    el.innerHTML = "⏳ Проверявам YouTube outliers...";
+    el.innerHTML = "⏳ Проверявам YouTube outliers (само скорошни видеа)...";
     try {
-      const { outliers, totalChecked } = await youtubeOutlierScan(niche);
+      const { outliers, totalChecked, windowDays, insufficientData } = await youtubeOutlierScan(niche);
+      const windowNote = windowDays ? `последните ${windowDays} дни` : "скорошния период";
       if (!outliers.length) {
-        el.innerHTML = `<p class="muted">📊 Провери ${totalChecked} видеа за "${niche}" — няма ясни outliers (нишата е или наситена, или все още много малка).</p>`;
+        const warn = insufficientData
+          ? ` ⚠️ Малко скорошни видеа намерени за тази ниша — сигналът е слаб, не разчитай само на него.`
+          : "";
+        el.innerHTML = `<p class="muted">📊 Провери ${totalChecked} видеа за "${niche}" (${windowNote}) — няма ясни outliers.${warn}</p>`;
         return;
       }
-      let html = `<strong style="font-size:13px;">📊 YouTube Outliers за "${niche}"</strong><p class="muted">Малки канали с непропорционално много гледания — сигнал за търсене без силна конкуренция:</p>`;
+      let html = `<strong style="font-size:13px;">📊 YouTube Outliers за "${niche}"</strong><p class="muted">Малки канали с видео, което расте непропорционално бързо ПРЯВО СЕГА (${windowNote}, ${totalChecked} видеа проверени):</p>`;
+      if (insufficientData) {
+        html += `<p class="muted">⚠️ Скорошните данни за тази ниша са оскъдни — третирай тези резултати с повишено внимание.</p>`;
+      }
       outliers.forEach(o => {
-        html += `<div class="copy-field"><span><strong>${o.channel}</strong> — ${o.views.toLocaleString()} views / ${o.subs.toLocaleString()} абонати (×${o.ratio.toFixed(1)})<br><span class="muted">${o.title}</span></span></div>`;
+        html += `<div class="copy-field"><span><strong>${o.channel}</strong> — ${o.views.toLocaleString()} views / ${o.subs.toLocaleString()} абонати (×${o.ratio.toFixed(1)}) · ${o.ageDays}д от публикуване · ~${o.velocity.toLocaleString()} views/ден<br><span class="muted">${o.title}</span></span></div>`;
       });
       el.innerHTML = html;
     } catch (e) {
@@ -871,7 +963,7 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 Всички трябва да пасват на нишата, но да звучат различно едно от друго (не повтаряй теми).
 Върни ЧИСТ JSON масив: [{"title":"...", "hook":"...", "mood":"..."}]`;
     try {
-      const raw = await callClaude(prompt, 2400);
+      const raw = await callAI(prompt, 2400);
       const list = extractJson(raw);
       AppState.data.project.albumSprint = list;
       AppState.save();
@@ -894,7 +986,7 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
 
 Върни ЧИСТ JSON масив в СЪЩИЯ ред: [{"quick_score": number}]`;
     try {
-      const raw = await callClaude(prompt, 800);
+      const raw = await callAI(prompt, 800);
       const scores = extractJson(raw);
       this._renderAlbumSprint(list, scores);
     } catch (e) {
@@ -934,7 +1026,7 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
 
 Върни ЧИСТ JSON: {"title":"...", "style_prompt":"...", "hashtags":["#...","#...","#..."]}`;
     try {
-      const raw = await callClaude(prompt, 400);
+      const raw = await callAI(prompt, 400);
       const c = extractJson(raw);
       document.getElementById("songTitle").value = c.title;
       document.getElementById("stylePrompt").value = c.style_prompt;
@@ -965,7 +1057,7 @@ ${winningHook ? `- Използвай ТОЧНО този ред като осн
     LyricsHistory.push("Преди ново генериране");
     document.getElementById("lyricsOut").value = "⏳ Генерирам...";
     try {
-      const lyrics = await callClaude(prompt, 1400);
+      const lyrics = await callAI(prompt, 1400);
       document.getElementById("lyricsOut").value = lyrics;
       AppState.data.project.lyrics = lyrics;
       AppState.save();
@@ -1032,7 +1124,7 @@ Competition signal: ${nicheRow.competition_signal || "няма данни"}`;
     // за да не гадае Claude BPM/теми само от тренировъчните си данни.
     const topTitles = await youtubeTopTitles(niche);
     const genreGrounding = topTitles.length
-      ? `\nРЕАЛНИ ЗАГЛАВИЯ НА ТОП ВИДЕА В НИШАТА "${niche}" (YouTube, сортирани по views, използвай ги като реален контекст за genre_check, не гадай):\n${topTitles.map(t => `- ${t}`).join("\n")}\n`
+      ? `\nРЕАЛНИ ЗАГЛАВИЯ НА ВИДЕА, КОИТО РЕАЛНО НАБИРАТ ИНЕРЦИЯ В НИШАТА "${niche}" ТОЧНО СЕГА (YouTube, последните месеци, сортирани по темп на растеж — не стари all-time хитове), използвай ги като реален контекст за genre_check, не гадай:\n${topTitles.map(t => `- ${t}`).join("\n")}\n`
       : "";
 
     const prompt = `Ти си AI музикален продуцент, A&R анализатор и маркетинг стратег за 2026 година.
@@ -1107,7 +1199,7 @@ ${genreGrounding}
 }`;
 
     try {
-      const raw = await callClaude(prompt, 3200);
+      const raw = await callAI(prompt, 3200);
       const r = extractJson(raw);
       AppState.data.project.viralReport = r;
       AppState.save();
@@ -1246,7 +1338,7 @@ ${lyrics}
 Върни ЧИСТ JSON: {"full_lyrics": "целият текст с пренаписаната секция", "new_section_score": number (0-10, честна нова оценка САМО на пренаписаната секция), "what_changed": "1 изречение какво промени"}`;
 
     try {
-      const raw = await callClaude(prompt, 1800);
+      const raw = await callAI(prompt, 1800);
       const res = extractJson(raw);
       LyricsHistory.push(`Преди подобряване: ${w.section}`);
       document.getElementById("lyricsOut").value = res.full_lyrics;
@@ -1327,7 +1419,7 @@ const HookArena = {
 Всеки трябва да звучи различно: различна рима схема, различен ъгъл/емоция, различен ключов образ.
 Не повтаряй теми/думи между тях. Пиши директно репликите, без обяснения.
 Върни ЧИСТ JSON масив: [{"text":"..."}]`;
-    const raw = await callClaude(prompt, 700);
+    const raw = await callAI(prompt, 700);
     return extractJson(raw);
   },
 
@@ -1346,7 +1438,7 @@ ${hooks.map((h, i) => `${i + 1}. "${h.text}"`).join("\n")}
 - why: кратка причина, максимум 8 думи
 
 Върни ЧИСТ JSON масив, В СЪЩИЯ РЕД: [{"hook_score":number,"stops_scroll":boolean,"why":"..."}]`;
-    const raw = await callClaude(prompt, 1300);
+    const raw = await callAI(prompt, 1300);
     return extractJson(raw);
   },
 
@@ -1366,7 +1458,7 @@ ${isFinal
 
 За всеки нов hook дай lineage: кратко обяснение на произхода (кой родител/и и какво взе от всеки), до 15 думи.
 Върни ЧИСТ JSON масив: [{"text":"...", "lineage":"..."}]`;
-    const raw = await callClaude(prompt, 1500);
+    const raw = await callAI(prompt, 1500);
     return extractJson(raw);
   },
 
@@ -1427,7 +1519,7 @@ ${lyrics}
 Върни ЧИСТ JSON: {"personas":[...], "attention_heatmap":[...], "meme_risk":[...]}`;
 
     try {
-      const raw = await callClaude(prompt, 3200);
+      const raw = await callAI(prompt, 3200);
       const r = extractJson(raw);
       AppState.data.project.ghostAudience = r;
       AppState.save();
@@ -1505,7 +1597,7 @@ particle_effect (string или null), transition_style (string).
 Върни САМО чист JSON, без обяснения.`;
     document.getElementById("fxConfigOut").value = "⏳ Генерирам...";
     try {
-      const raw = await callClaude(prompt, 300);
+      const raw = await callAI(prompt, 300);
       const parsed = extractJson(raw);
       document.getElementById("fxConfigOut").value = JSON.stringify(parsed, null, 2);
       AppState.data.project.fxConfig = JSON.stringify(parsed);
@@ -1533,7 +1625,7 @@ const Step3 = {
 Опиши стил, цветова палитра, композиция, настроение. Максимум 4-5 изречения, само промпта.`;
     document.getElementById("coverPromptOut").value = "⏳ Генерирам...";
     try {
-      const p = await callClaude(prompt, 300);
+      const p = await callAI(prompt, 300);
       document.getElementById("coverPromptOut").value = p;
       AppState.data.project.coverPrompt = p;
       AppState.save();
@@ -1619,7 +1711,7 @@ const Step3 = {
 - release_note: 1-2 изречения "бележка към феновете" за социалните мрежи.
 Върни ЧИСТ JSON: {"spotify_bio":"...", "apple_bio":"...", "release_note":"..."}`;
     try {
-      const raw = await callClaude(prompt, 500);
+      const raw = await callAI(prompt, 500);
       const c = extractJson(raw);
       AppState.data.project.spotifyAppleText = c;
       AppState.save();
@@ -1650,7 +1742,7 @@ const Step3 = {
 За всеки: title (до 60 символа, clickable но не clickbait), thumbnail_text (2-4 думи за thumbnail overlay).
 Върни ЧИСТ JSON масив: [{"title":"...", "thumbnail_text":"..."}]`;
     try {
-      const raw = await callClaude(prompt, 500);
+      const raw = await callAI(prompt, 500);
       const variants = extractJson(raw);
       AppState.data.project.abTitles = variants;
       AppState.save();
@@ -1971,7 +2063,7 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
 - tags: масив от 8-12 YouTube тагове (думи/кратки фрази, БЕЗ #), предимно на езика на песента; по избор 1-2 общоприети английски тагове за по-широк обхват (напр. името на жанра), ако е уместно
 
 Върни ЧИСТ JSON: {"title":"...", "description":"...", "tags":["...", "..."]}`;
-    const metaRaw = await callClaude(metaPrompt, 900);
+    const metaRaw = await callAI(metaPrompt, 900);
     const meta = extractJson(metaRaw);
     // Гаранция на кода (не само на промпта) — ако генерираното заглавие не
     // започва точно с реалното име на песента, го поправяме тук вместо да
@@ -2046,10 +2138,10 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
    ========================================================= */
 const PREFS_STORAGE = "cdb_dashboard_prefs_v1";
 const Prefs = {
-  data: { theme: "dark", healthCheck: true },
+  data: { theme: "dark", healthCheck: true, contentProvider: "claude" },
   load() {
     const raw = localStorage.getItem(PREFS_STORAGE);
-    this.data = raw ? JSON.parse(raw) : this.data;
+    this.data = raw ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude" }, JSON.parse(raw)) : this.data;
   },
   save() {
     localStorage.setItem(PREFS_STORAGE, JSON.stringify(this.data));
@@ -2076,10 +2168,23 @@ const Prefs = {
     this.applyHealthSwitch();
     toast(this.data.healthCheck ? "Проверка при зареждане: включена" : "Проверка при зареждане: изключена");
   },
+  applyContentProvider() {
+    document.querySelectorAll("#contentProviderSelect,#contentProviderSelectTop").forEach(s => {
+      if (s) s.value = this.data.contentProvider;
+    });
+  },
+  setContentProvider(value) {
+    if (value !== "claude" && value !== "gemini") return;
+    this.data.contentProvider = value;
+    this.save();
+    this.applyContentProvider();
+    toast(value === "claude" ? "✍️ Генериране на съдържание: Claude" : "✍️ Генериране на съдържание: Gemini");
+  },
   init() {
     this.load();
     this.applyTheme();
     this.applyHealthSwitch();
+    this.applyContentProvider();
     if (this.data.healthCheck) Settings.silentHealthCheck();
     else {
       const txt = document.getElementById("validatorStatusText");
