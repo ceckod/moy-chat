@@ -12,3 +12,4 @@
   ],
   "notes": "youtube_channel_id и trend_niches не са тайна информация — може да са публични в repo-то. YOUTUBE_API_KEY обаче ВИНАГИ е GitHub Secret, никога тук."
 }
+
