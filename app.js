@@ -43,146 +43,15 @@ const Storage = {
 };
 
 /* =========================================================
-   ДИНАМИЧЕН СПИСЪК С GEMINI МОДЕЛИ
-   Вместо да разчитаме на твърдо закодирани имена на модели (Google ги
-   преименува/премахва от време на време и това чупи приложението), питаме
-   директно Gemini API ("/v1beta/models") какви модели РЕАЛНО са достъпни
-   за твоя конкретен ключ, и подреждаме безплатните текстови модели по
-   приоритет (lite → flash → останалите; изключваме pro/embedding/image/
-   tts модели). Резултатът се кешира в localStorage за GEMINI_MODELS_CACHE_HOURS
-   часа, за да не удряме /models endpoint-а при всяка генерация.
-   Ако заявката гръмне (няма интернет, невалиден ключ...), падаме обратно
-   на GEMINI_FALLBACK_MODELS — статичен списък "за всеки случай".
+   PROVIDERS: CLAUDE / GEMINI
+   Целият специфичен код за двата AI доставчика (динамичен списък модели,
+   единични извиквания, fallback между модели) вече живее в:
+     - js/providers/claude.js  → getClaudeModelList(), callClaude()
+     - js/providers/gemini.js  → getGeminiModelList(), callGemini(),
+                                   callGeminiMultimodal()
+   (заредени преди app.js в index.html). Тук остава само общата
+   "оркестрация" (callAI), която избира МЕЖДУ двата провайдъра.
    ========================================================= */
-const GEMINI_MODELS_CACHE_KEY = "cdb_gemini_models_cache_v1";
-const GEMINI_MODELS_CACHE_HOURS = 12;
-
-// Статичен резервен списък — ползва се САМО ако не успеем да изтеглим
-// реалния списък с модели от Google. Не е гарантирано да е винаги валиден
-// (затова динамичното изтегляне по-долу е предпочитаният път).
-const GEMINI_FALLBACK_MODELS = [
-  "gemini-flash-lite-latest",
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-2.0-flash"
-];
-// Използва се само за бързите health-check тестове (Keys.testKeys / silentHealthCheck)
-// като "разумно предположение", преди да е изтеглен реалният списък.
-const GEMINI_MODEL = GEMINI_FALLBACK_MODELS[0];
-
-// Подрежда суров списък с имена на модели по приоритет: lite модели първо
-// (най-висока безплатна дневна квота), после обикновени flash модели,
-// после останалото. Изключва pro (изисква billing), embedding/vision/
-// image/tts/imagen/veo модели, които не стават за обикновени текстови
-// извиквания на приложението.
-function _sortGeminiModelNames(names) {
-  const exclude = /pro|embedding|aqa|vision|image|tts|imagen|veo/i;
-  const score = (n) => {
-    if (/flash-lite/i.test(n)) return 0;
-    if (/flash/i.test(n)) return 1;
-    return 2;
-  };
-  return names
-    .filter(n => !exclude.test(n))
-    .sort((a, b) => score(a) - score(b));
-}
-
-// Връща подредения списък с достъпни Gemini модели за дадения ключ.
-// Първо проверява кеша (localStorage), после реалния /models endpoint,
-// и накрая — при грешка — статичния резервен списък.
-async function getGeminiModelList(apiKey, forceRefresh = false) {
-  if (!forceRefresh) {
-    try {
-      const cached = Storage.get(GEMINI_MODELS_CACHE_KEY);
-      if (cached && Array.isArray(cached.models) && cached.models.length &&
-          (Date.now() - cached.ts) < GEMINI_MODELS_CACHE_HOURS * 3600 * 1000) {
-        return ModelPref.applyTo("gemini", cached.models);
-      }
-    } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
-  }
-
-  try {
-    const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {}, 15000);
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || ("HTTP " + r.status));
-    const names = (data.models || [])
-      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
-      .map(m => m.name.replace("models/", ""));
-    const sorted = _sortGeminiModelNames(names);
-    if (!sorted.length) throw new Error("Няма достъпни generateContent модели за този ключ");
-    Storage.set(GEMINI_MODELS_CACHE_KEY, { ts: Date.now(), models: sorted });
-    return ModelPref.applyTo("gemini", sorted);
-  } catch (e) {
-    console.warn("Неуспешно изтегляне на реалния списък Gemini модели, ползвам резервен списък:", e.message);
-    return ModelPref.applyTo("gemini", GEMINI_FALLBACK_MODELS);
-  }
-}
-
-/* =========================================================
-   ДИНАМИЧЕН СПИСЪК С CLAUDE МОДЕЛИ
-   Същият принцип като при Gemini по-горе: питаме директно Anthropic API
-   ("/v1/models") кои модели РЕАЛНО са достъпни за твоя ключ, вместо да
-   разчитаме на едно твърдо закодирано име. Подреждаме sonnet → haiku →
-   opus (opus е по-скъп, ползва се само като последна мярка), изключваме
-   специализирани модели с ограничен достъп (Mythos/Fable — виж system
-   бележките на Anthropic за Project Glasswing). Кешира се аналогично.
-   ========================================================= */
-const CLAUDE_MODELS_CACHE_KEY = "cdb_claude_models_cache_v1";
-const CLAUDE_MODELS_CACHE_HOURS = 12;
-
-// Статичен резервен списък — ползва се САМО ако /v1/models заявката гръмне.
-const CLAUDE_FALLBACK_MODELS = [
-  "claude-sonnet-5",
-  "claude-haiku-4-5-20251001",
-  "claude-opus-4-8"
-];
-
-function _sortClaudeModelNames(ids) {
-  // Mythos/Fable са със специален, ограничен достъп (виж Project Glasswing) —
-  // не стават за автоматичен fallback на обикновени заявки.
-  const exclude = /mythos|fable/i;
-  const score = (n) => {
-    if (/sonnet/i.test(n)) return 0;
-    if (/haiku/i.test(n)) return 1;
-    if (/opus/i.test(n)) return 2;
-    return 3;
-  };
-  return ids
-    .filter(n => !exclude.test(n))
-    .sort((a, b) => score(a) - score(b));
-}
-
-async function getClaudeModelList(apiKey, forceRefresh = false) {
-  if (!forceRefresh) {
-    try {
-      const cached = Storage.get(CLAUDE_MODELS_CACHE_KEY);
-      if (cached && Array.isArray(cached.models) && cached.models.length &&
-          (Date.now() - cached.ts) < CLAUDE_MODELS_CACHE_HOURS * 3600 * 1000) {
-        return ModelPref.applyTo("claude", cached.models);
-      }
-    } catch (e) { /* счупен кеш — просто продължи към реалната заявка */ }
-  }
-
-  try {
-    const r = await fetchTimeout("https://api.anthropic.com/v1/models", {
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      }
-    }, 15000);
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || ("HTTP " + r.status));
-    const ids = (data.data || []).map(m => m.id);
-    const sorted = _sortClaudeModelNames(ids);
-    if (!sorted.length) throw new Error("Няма достъпни Claude модели за този ключ");
-    Storage.set(CLAUDE_MODELS_CACHE_KEY, { ts: Date.now(), models: sorted });
-    return ModelPref.applyTo("claude", sorted);
-  } catch (e) {
-    console.warn("Неуспешно изтегляне на реалния списък Claude модели, ползвам резервен списък:", e.message);
-    return ModelPref.applyTo("claude", CLAUDE_FALLBACK_MODELS);
-  }
-}
 
 /* ---------- STATE ---------- */
 const AppState = {
@@ -568,33 +437,9 @@ const AICache = {
   }
 };
 
-/* ---------- TOAST ---------- */
-function toast(msg, ms = 3000) {
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.style.display = "block";
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => (el.style.display = "none"), ms);
-}
-
-/* ---------- GUARD CLICK ---------- */
-// Заключва бутона по време на асинхронна AI заявка, за да не се задвоят
-// генерирания при бавна мрежа (особено лесно се случва на телефон, когато
-// потребителят чука бутона втори път, докато чака). Освобождава бутона
-// винаги накрая — успешно или с грешка — за да не остане "залепнал".
-async function guardClick(btnEl, fn) {
-  if (!btnEl || btnEl.disabled) return;
-  btnEl.disabled = true;
-  btnEl.style.opacity = "0.6";
-  btnEl.style.cursor = "not-allowed";
-  try {
-    await fn();
-  } finally {
-    btnEl.disabled = false;
-    btnEl.style.opacity = "";
-    btnEl.style.cursor = "";
-  }
-}
+/* ---------- TOAST / GUARD CLICK ----------
+   toast() и guardClick() вече живеят в js/ui/toast.js и
+   js/ui/guard-click.js (виж index.html). */
 
 /* ---------- NAVIGATION (sidebar multi-view router) ---------- */
 // Приложението е PWA (standalone display, виж manifest.json) — на телефон, ако
@@ -626,6 +471,7 @@ const Nav = {
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
+    if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
   }
@@ -641,6 +487,8 @@ const Settings = {
     set("key_gemini", k.gemini);
     set("key_yt_client_id", k.ytClientId);
     set("key_yt_apikey", k.ytApiKey);
+    set("key_spotify_client_id", k.spotifyClientId);
+    set("key_spotify_client_secret", k.spotifyClientSecret);
     set("key_proxy_url", k.proxyUrl);
     set("gh_owner", k.ghOwner);
     set("gh_repo", k.ghRepo);
@@ -729,6 +577,8 @@ const Settings = {
       gemini: val("key_gemini") ?? prev.gemini,
       ytClientId: val("key_yt_client_id") ?? prev.ytClientId,
       ytApiKey: val("key_yt_apikey") ?? prev.ytApiKey,
+      spotifyClientId: val("key_spotify_client_id") ?? prev.spotifyClientId,
+      spotifyClientSecret: val("key_spotify_client_secret") ?? prev.spotifyClientSecret,
       proxyUrl: ((val("key_proxy_url") ?? prev.proxyUrl) || "").replace(/\/$/, ""),
       ghToken: val("key_github_token") ?? prev.ghToken,
     });
@@ -747,6 +597,9 @@ const Settings = {
       claude: document.getElementById("key_claude").value.trim(),
       gemini: document.getElementById("key_gemini").value.trim(),
       ytApiKey: document.getElementById("key_yt_apikey").value.trim(),
+      spotifyClientId: document.getElementById("key_spotify_client_id")?.value.trim(),
+      spotifyClientSecret: document.getElementById("key_spotify_client_secret")?.value.trim(),
+      proxyUrl: document.getElementById("key_proxy_url")?.value.trim(),
       ghToken: document.getElementById("key_github_token")?.value.trim(),
     };
     const lines = [];
@@ -826,6 +679,24 @@ const Settings = {
     }
 
     lines.push("YouTube OAuth Client ID: проверява се само при 🔑 Вход с Google в Стъпка 3");
+
+    // Spotify Client Credentials (изисква и Proxy URL — token endpoint-ът няма CORS).
+    // Ползва ТУК ЩЕ въведените стойности, не запазените — затова е директен fetch,
+    // не през NicheToolkit._getSpotifyToken() (той чете от Keys.load(), т.е. само
+    // вече запазени ключове).
+    if (!k.spotifyClientId || !k.spotifyClientSecret) lines.push("Spotify: ⚪ няма ключове");
+    else if (!k.proxyUrl) lines.push("Spotify: ⚪ изисква се и Proxy URL (виж Proxy & Мрежа) — token endpoint-ът няма CORS");
+    else {
+      try {
+        const basic = btoa(`${k.spotifyClientId}:${k.spotifyClientSecret}`);
+        const r = await fetchTimeout(`${k.proxyUrl.replace(/\/$/, "")}?target=${encodeURIComponent("https://accounts.spotify.com/api/token")}`, {
+          method: "POST",
+          headers: { "Authorization": `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=client_credentials"
+        });
+        lines.push(r.ok ? "Spotify: ✅ работи (Client Credentials token изтеглен)" : `Spotify: ❌ ${r.status}`);
+      } catch (e) { lines.push("Spotify: ❌ " + e.message); }
+    }
 
     // GitHub Personal Access Token (само проверка дали е валиден и разпознат,
     // без да пипаме репото — GET /user)
@@ -1142,180 +1013,8 @@ const ProjectArchive = {
 
 /* =========================================================
    API HELPERS
+   (fetchTimeout и proxied вече живеят в js/network.js — виж index.html)
    ========================================================= */
-
-// Ако е зададен Proxy URL в Настройки, минаваме заявките през него
-// (полезно при CORS грешки, напр. с някои Imagen endpoint-и).
-// Прокси-то се очаква да приема ?target=ORIGINAL_URL и да препраща
-// метод/хедъри/тяло 1:1 към него.
-// fetch с вграден timeout — без това, при лоша/нестабилна мрежа (особено на телефон)
-// заявката може да увисне БЕЗКРАЙНО (нито успех, нито грешка), и spinner-ът никога не спира.
-async function fetchTimeout(url, options = {}, ms = 15000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } catch (e) {
-    if (e.name === "AbortError") throw new Error(`Заявката отне повече от ${ms / 1000}с и беше прекратена (провери мрежата)`);
-    throw e;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function proxied(url) {
-  const k = Keys.load();
-  if (!k.proxyUrl) return url;
-  return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
-}
-
-// Единично извикване към КОНКРЕТЕН Claude модел (с вградения max_tokens
-// retry за отрязани отговори). Не пипа списъка с модели — това е грижа на
-// callClaude() по-долу, който обвива това с fallback между модели.
-async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = false) {
-  const res = await fetchTimeout(proxied("https://api.anthropic.com/v1/messages"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      // Позволява директно извикване от браузъра (без бекенд прокси)
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }]
-    })
-  }, 60000); // по-дълъг timeout — генериране на текст отнема повече от кратка проверка
-  if (!res.ok) {
-    const t = await res.text();
-    const err = new Error("Claude API грешка: " + t);
-    err.status = res.status;
-    throw err;
-  }
-  const data = await res.json();
-
-  // Ако отговорът е бил отрязан заради max_tokens (чест проблем при по-дълги
-  // структурирани JSON отговори — Viral Lab, Ghost Audience и т.н.), опитваме
-  // автоматично ОЩЕ ВЕДНЪЖ с двойно по-голям бюджет, вместо да върнем счупен
-  // JSON и объркваща грешка. Само 1 повторен опит, за да не увисне безкрайно.
-  if (data.stop_reason === "max_tokens" && !_isRetry) {
-    return _callClaudeSingle(model, prompt, Math.min(maxTokens * 2, 8000), apiKey, true);
-  }
-  if (data.stop_reason === "max_tokens" && _isRetry) {
-    throw new Error("Отговорът на модела е твърде дълъг дори след удвоен лимит — опитай със по-къса заявка (по-кратък текст/по-малко елементи).");
-  }
-  return data.content.map(b => b.text || "").join("\n").trim();
-}
-
-// Пробва Claude моделите, върнати от getClaudeModelList(), по ред. При 429
-// (изчерпана квота) или 529 (претоварен сървър) на текущия модел, автоматично
-// минава на следващия — с ясен toast, за да се разбира какво реално е
-// генерирало отговора. Други грешки (невалиден ключ/prompt) спират веднага,
-// защото смяна на модела няма да ги реши.
-async function callClaude(prompt, maxTokens = 1200) {
-  const k = Keys.load();
-  if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
-  const models = await getClaudeModelList(k.claude);
-
-  let lastError;
-  for (let m = 0; m < models.length; m++) {
-    const model = models[m];
-    try {
-      const result = await _callClaudeSingle(model, prompt, maxTokens, k.claude);
-      AICallLog.record({ provider: "claude", model, ok: true });
-      QuotaTracker.record("claude", model);
-      return result;
-    } catch (e) {
-      lastError = e;
-      AICallLog.record({ provider: "claude", model, ok: false, note: (e.message || "").slice(0, 140) });
-      const isQuotaOrOverload = e.status === 429 || e.status === 529;
-      if (isQuotaOrOverload && m < models.length - 1) {
-        toast(`⚠️ Claude "${model}" изчерпа квотата/претоварен — превключвам на "${models[m + 1]}"...`, 4500);
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw lastError || new Error("Claude API грешка: неуспешно след всички модели");
-}
-
-/* =========================================================
-   Общ helper за всички Gemini заявки (текст и multimodal).
-   Пробва моделите, върнати от getGeminiModelList(), по ред. За текущия модел прави
-   кратък retry с exponential backoff при 429 (временен rate-limit).
-   Ако след тези опити моделът ВСЕ ОЩЕ е на 429 (обикновено = изчерпана
-   дневна квота, не временен rate-limit), автоматично минава на СЛЕДВАЩИЯ
-   модел от списъка — с ясен toast, за да се разбира какво реално е
-   генерирало отговора. Само ако всички модели са изчерпани, гърми грешка.
-   Грешки, различни от 429 (невалиден ключ/prompt и т.н.), спират веднага
-   без да пробват други модели, защото смяна на модела няма да ги реши.
-   ========================================================= */
-async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
-  const models = await getGeminiModelList(apiKey);
-  let lastError;
-  for (let m = 0; m < models.length; m++) {
-    const model = models[m];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const maxRetries = 2;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      let res;
-      try {
-        res = await fetchTimeout(proxied(url), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        }, timeoutMs);
-      } catch (e) {
-        lastError = e;
-        break; // мрежова/timeout грешка — retry тук няма да помогне, пробвай следващ модел
-      }
-
-      if (res.ok) {
-        const data = await res.json();
-        AICallLog.record({ provider: "gemini", model, ok: true });
-        QuotaTracker.record("gemini", model);
-        return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
-      }
-
-      const t = await res.text();
-      if (res.status === 429) {
-        if (attempt < maxRetries) {
-          const waitMs = 2000 * Math.pow(2, attempt); // 2s, 4s
-          toast(`⏳ Gemini (${model}) квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
-          await new Promise(r => setTimeout(r, waitMs));
-          lastError = new Error("Gemini API грешка: " + t);
-          continue;
-        }
-        lastError = new Error(`Gemini API грешка (${model}): ` + t);
-        AICallLog.record({ provider: "gemini", model, ok: false, note: "429 — изчерпана квота" });
-        if (m < models.length - 1) {
-          toast(`⚠️ Gemini "${model}" изчерпа дневната квота — превключвам на "${models[m + 1]}"...`, 4500);
-        }
-        break; // към следващия модел
-      }
-
-      // грешка, различна от квота — няма смисъл да пробваме друг модел
-      AICallLog.record({ provider: "gemini", model, ok: false, note: t.slice(0, 140) });
-      throw new Error("Gemini API грешка: " + t);
-    }
-  }
-  throw lastError || new Error("Gemini API грешка: неуспешно след всички модели");
-}
-
-async function callGemini(prompt, useSearch = false) {
-  const k = Keys.load();
-  if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
-
-  const body = { contents: [{ parts: [{ text: prompt }] }] };
-  // Google Search grounding — дава на Gemini достъп до РЕАЛНИ, актуални резултати
-  // от търсачката (вместо само познания от тренировъчните данни).
-  if (useSearch) body.tools = [{ google_search: {} }];
-
-  return await callGeminiWithFallback(body, k.gemini, 45000);
-}
 
 /* =========================================================
    CALL AI — единна точка за генериране на съдържание (Стъпка 1-3).
@@ -1346,27 +1045,6 @@ async function callAI(prompt, maxTokens = 1200) {
     }
     throw e;
   }
-}
-
-// Като callGemini(), но подава и аудио файл (inline base64) като multimodal вход —
-// ползва се от "Бърз ъплоуд за стари песни", за да може Gemini да "чуе" песента
-// директно (жанр/настроение/енергия + разпознаване на текста, ако не е пейстнат ръчно).
-// ЗАБЕЛЕЖКА: inline base64 работи добре за файлове до ~20MB (типично за mp3 на стара песен).
-async function callGeminiMultimodal(prompt, base64Audio, mimeType, useSearch = false) {
-  const k = Keys.load();
-  if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
-
-  const body = {
-    contents: [{
-      parts: [
-        { text: prompt },
-        { inline_data: { mime_type: mimeType || "audio/mpeg", data: base64Audio } }
-      ]
-    }]
-  };
-  if (useSearch) body.tools = [{ google_search: {} }];
-
-  return await callGeminiWithFallback(body, k.gemini, 90000); // аудио анализ е по-бавен от чист текст
 }
 
 // Превръща File/Blob в base64 текст (без "data:...;base64," префикса) — нужно за inline_data.
@@ -1444,143 +1122,10 @@ ${content}
 };
 
 /* =========================================================
-   YOUTUBE TRENDING POOL (споделена, времево-ограничена основа)
-   ---------------------------------------------------------
-   ВАЖНО — тук преди имаше бъг: старите youtubeTopTitles() и
-   youtubeOutlierScan() търсеха с order=viewCount БЕЗ никакъв
-   времеви филтър, което значи "най-гледаните видеа за цялото
-   съществуване на YouTube" по темата — не това, което реално
-   трендва СЕГА. Резултатът: стари вирусни хитове изглеждаха
-   като "актуален тренд" и това пряко влизаше в контекста за
-   генериране на нови песни (ViralLab genreGrounding) — грешен
-   сигнал → грешни песни.
-
-   Този helper:
-   1. Търси само видеа, публикувани в скорошен прозорец от време
-      (publishedAfter), НЕ цялата история на YouTube.
-   2. Ако прозорецът е твърде тесен за дадена ниша (малко скорошни
-      видеа), прогресивно го разширява (30 → 60 → 120 → 180 дни) —
-      НИКОГА не пада обратно на "без филтър", защото точно това
-      беше бъгът. Ако дори 180 дни не дадат достатъчно данни,
-      връща insufficientData=true, за да може UI/промптът честно
-      да каже "няма достатъчно скорошни данни", вместо тихо да
-      подаде подвеждаща информация.
-   3. Смята view VELOCITY (гледания / дни от публикуването) — това
-      е истинският "trending сега" сигнал: видео на 3 дни с 50k
-      views трендва много по-силно от видео на 2 години с 500k.
-      Сортирането по velocity, не по абсолютни views, е това, което
-      прави разликата между "стар хит" и "реален тренд днес".
+   YOUTUBE
+   fetchRecentTrendingVideos(), youtubeTopTitles(), youtubeOutlierScan()
+   и keywordSuggest() вече живеят в js/youtube.js (виж index.html).
    ========================================================= */
-async function fetchRecentTrendingVideos(query, opts = {}) {
-  const k = Keys.load();
-  const maxResults = opts.maxResults || 25;
-  const minResults = opts.minResults || 6;
-  if (!k.ytApiKey) return { videos: [], windowDays: null, insufficientData: true, noKey: true };
-
-  const windows = [30, 60, 120, 180]; // дни — прогресивно разширяване, никога "без филтър"
-  let items = [];
-  let usedWindow = windows[windows.length - 1];
-
-  for (const days of windows) {
-    const publishedAfter = new Date(Date.now() - days * 86400000).toISOString();
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=${maxResults}&publishedAfter=${encodeURIComponent(publishedAfter)}&q=${encodeURIComponent(query)}&key=${k.ytApiKey}`;
-    const sRes = await fetchTimeout(proxied(searchUrl));
-    if (!sRes.ok) throw new Error("YouTube search грешка: " + (await sRes.text()));
-    const sData = await sRes.json();
-    items = sData.items || [];
-    usedWindow = days;
-    if (items.length >= minResults) break;
-  }
-
-  if (!items.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
-
-  const videoIds = items.map(i => i.id.videoId).filter(Boolean);
-  const channelIds = [...new Set(items.map(i => i.snippet.channelId))];
-  if (!videoIds.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
-
-  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${k.ytApiKey}`;
-  const channelsUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelIds.join(",")}&key=${k.ytApiKey}`;
-  const [vRes, cRes] = await Promise.all([fetchTimeout(proxied(videosUrl)), fetchTimeout(proxied(channelsUrl))]);
-  if (!vRes.ok) throw new Error("YouTube videos.list грешка: " + (await vRes.text()));
-  if (!cRes.ok) throw new Error("YouTube channels.list грешка: " + (await cRes.text()));
-  const vData = await vRes.json();
-  const cData = await cRes.json();
-
-  const statsById = {};
-  (vData.items || []).forEach(v => statsById[v.id] = v);
-  const subsById = {};
-  (cData.items || []).forEach(c => subsById[c.id] = parseInt(c.statistics?.subscriberCount || "0", 10));
-
-  const now = Date.now();
-  const videos = items.map(i => {
-    const stat = statsById[i.id.videoId];
-    const views = parseInt(stat?.statistics?.viewCount || "0", 10);
-    const publishedAt = stat?.snippet?.publishedAt || i.snippet.publishedAt;
-    // мин. 0.5 дни, за да не гърми velocity до безкрайност за видеа отпреди часове
-    const ageDays = Math.max((now - new Date(publishedAt).getTime()) / 86400000, 0.5);
-    const subs = subsById[i.snippet.channelId] || 0;
-    return {
-      videoId: i.id.videoId,
-      title: i.snippet.title,
-      channel: i.snippet.channelTitle,
-      channelId: i.snippet.channelId,
-      views, subs,
-      publishedAt,
-      ageDays: Math.round(ageDays * 10) / 10,
-      velocity: Math.round(views / ageDays), // гледания/ден — реалният "трендва СЕГА" сигнал
-      ratio: views / Math.max(subs, 1),
-    };
-  });
-
-  videos.sort((a, b) => b.velocity - a.velocity);
-  return { videos, windowDays: usedWindow, insufficientData: videos.length < minResults };
-}
-
-/* Жанрово заземяване за ViralLab: заглавия на видеа, които РЕАЛНО
-   набират инерция точно сега (по velocity), не всички-времена топ. */
-async function youtubeTopTitles(query, max = 12) {
-  try {
-    const { videos } = await fetchRecentTrendingVideos(query, { maxResults: max, minResults: 5 });
-    return videos.slice(0, max).map(v => v.title).filter(Boolean);
-  } catch (e) {
-    return []; // тихо пропускаме — ViralLab пада обратно на model knowledge
-  }
-}
-
-/* VidIQ-стил "outlier": малък канал (<10k абонати), чието скорошно
-   видео вече расте непропорционално бързо — реален сигнал за
-   органичен пробив СЕГА, изчислен само от скорошния прозорец. */
-async function youtubeOutlierScan(query) {
-  const k = Keys.load();
-  if (!k.ytApiKey) throw new Error("Няма YouTube Data API Key (виж Настройки)");
-
-  const { videos, windowDays, insufficientData } = await fetchRecentTrendingVideos(query, { maxResults: 25, minResults: 6 });
-  if (!videos.length) return { outliers: [], totalChecked: 0, windowDays, insufficientData: true };
-
-  const outliers = videos
-    .filter(v => (v.ratio > 15 && v.views > 3000) || (v.subs < 10000 && v.views > 20000))
-    .sort((a, b) => b.velocity - a.velocity)
-    .slice(0, 5);
-
-  return { outliers, totalChecked: videos.length, windowDays, insufficientData };
-}
-
-/* =========================================================
-   KEYWORD SUGGESTIONS (musicalSEO-подобен ефект)
-   Ползва неофициалния Google/YouTube autocomplete suggest
-   endpoint — показва какво реално дописва/търси аудиторията.
-   ИЗИСКВА Proxy URL в Настройки (endpoint-ът няма CORS хедъри).
-   ========================================================= */
-async function keywordSuggest(query) {
-  const k = Keys.load();
-  if (!k.proxyUrl) throw new Error("Изисква се Proxy URL в Настройки за тази функция (виж бележката в Настройки)");
-  const url = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(query)}`;
-  const res = await fetchTimeout(proxied(url));
-  if (!res.ok) throw new Error("Suggest заявка неуспешна: " + res.status);
-  const data = await res.json();
-  return Array.isArray(data) && Array.isArray(data[1]) ? data[1].slice(0, 10) : [];
-}
-
 
 /* =========================================================
    LYRICS HISTORY — версии на текста

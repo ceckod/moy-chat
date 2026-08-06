@@ -291,6 +291,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     </div>
 
     <div class="nav-group">
+      <div class="nav-label">Niche Toolkit</div>
+      <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche & Signal (Spotify)</button>
+    </div>
+
+    <div class="nav-group">
       <div class="nav-label">Gemini Validator</div>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Втори поглед (Лог)</button>
     </div>
@@ -476,6 +481,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="nicheResults" style="margin-top:14px;"></div>
         <div id="outlierResults" style="margin-top:10px;"></div>
         <div id="keywordSuggestOut" style="margin-top:10px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="Nav.showView('niche-toolkit')">🎯 Разширен Niche & Signal анализ (Spotify)</button>
       </div>
 
       <div class="card" id="albumSprintCard" style="display:none;margin-top:14px;">
@@ -684,6 +690,62 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <iframe id="quickVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
     </div>
 
+    <!-- ============ NICHE TOOLKIT VIEW ============ -->
+    <div class="view" id="view-niche-toolkit">
+      <div class="section-title">🎯 Niche Toolkit — Spotify + YouTube анализ</div>
+
+      <div class="card">
+        <strong>🎯 Niche & Signal анализ (Profit Niche Score)</strong>
+        <p class="muted">Различен, допълнителен сигнал спрямо Стъпка 1 — тук се смесва Spotify популярност на топ тракове с YouTube трафик потенциал и груб конкурентен сигнал в едно 0-100 число. Прозрачна евристика, не финансов съвет. Изисква Spotify + YouTube ключове (и Proxy URL — виж Настройки).</p>
+        <label>Жанр/поджанр</label>
+        <input type="text" id="ntGenre" placeholder="напр. sad boy hyperpop">
+        <button class="btn grad" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.analyzeNiche())">🎯 Анализирай нишата</button>
+        <div id="ntAnalyzeOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🎼 AI Промпт за Suno/Udio</strong>
+        <p class="muted">Кратък, готов промпт (стил + BPM + инструменти + настроение) — през твоя вече настроен Claude/Gemini pipeline.</p>
+        <div class="row">
+          <div><label>Поджанр</label><input type="text" id="ntSubgenre" placeholder="напр. drift phonk"></div>
+          <div><label>Настроение</label><input type="text" id="ntMood" placeholder="напр. тъмно, агресивно"></div>
+        </div>
+        <div class="row">
+          <div><label>BPM (по избор)</label><input type="text" id="ntBpm" placeholder="напр. 140-150"></div>
+          <div><label>Инструменти (по избор)</label><input type="text" id="ntInstruments" placeholder="напр. 808, cowbell"></div>
+        </div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.generateAudioPrompt())">🎼 Генерирай промпт</button>
+        <div id="ntPromptOut" style="margin-top:12px;white-space:pre-wrap;font-size:13px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📝 AI Структура на текст</strong>
+        <p class="muted">Стих/припев/мост + специфичен вокален речник за нишата (JSON от модела).</p>
+        <div class="row">
+          <div><label>Поджанр</label><input type="text" id="ntLyricsSubgenre" placeholder="напр. dark academia music"></div>
+          <div><label>Тема (по избор)</label><input type="text" id="ntLyricsTheme" placeholder="напр. изгубена любов"></div>
+        </div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.generateLyricsStructure())">📝 Генерирай структура</button>
+        <div id="ntLyricsOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📅 Release Playbook</strong>
+        <p class="muted">Разбива списък песни на график за единични сингли + CSV, готов за дистрибуторска платформа. Работи изцяло локално в браузъра — не изисква AI/API ключове.</p>
+        <div class="row">
+          <div><label>Начална дата</label><input type="date" id="ntPlaybookStart"></div>
+          <div><label>Дни между сингли</label><input type="number" id="ntPlaybookCadence" value="14" min="1"></div>
+        </div>
+        <label style="margin-top:10px;">Песни</label>
+        <div id="ntPlaybookRows"></div>
+        <button class="btn ghost sm" style="margin-top:8px;" onclick="NicheToolkit.Playbook.addRow()">➕ Добави песен</button>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn grad" onclick="NicheToolkit.Playbook.build()">📅 Построй график</button>
+        </div>
+        <div id="ntPlaybookOut" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
     <!-- ============ VALIDATOR LOG VIEW ============ -->
     <div class="view" id="view-validator">
       <div class="section-title">Gemini Validator — Втори поглед (пълен лог)</div>
@@ -707,6 +769,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <input type="password" id="key_yt_client_id">
         <label>YouTube Data API Key</label>
         <input type="password" id="key_yt_apikey">
+        <hr style="margin:18px 0;">
+        <label>Spotify Client ID</label>
+        <input type="password" id="key_spotify_client_id">
+        <label>Spotify Client Secret</label>
+        <input type="password" id="key_spotify_client_secret">
+        <p class="muted" style="margin-top:6px;">За "🎯 Niche & Signal (Spotify)" анализа. Взимат се от <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> → Create app. Токенът се тегли през Proxy URL по-долу (Spotify token endpoint-ът няма CORS за браузър заявки).</p>
         <hr style="margin:18px 0;">
         <label>GitHub Personal Access Token — за AI редакция на това repo (scope: repo)</label>
         <input type="password" id="key_github_token" placeholder="ghp_...">
@@ -898,7 +966,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
 <div class="toast" id="toast"></div>
 
+<script src="js/ui/toast.js"></script>
+<script src="js/ui/guard-click.js"></script>
+<script src="js/network.js"></script>
+<script src="js/providers/claude.js"></script>
+<script src="js/providers/gemini.js"></script>
+<script src="js/youtube.js"></script>
 <script src="app.js"></script>
+<script src="js/niche-toolkit.js"></script>
    <script src="scripts/clock-and-keys.js"></script>
    <script>
      // Регистрира Service Worker за offline достъп до дашборда (само

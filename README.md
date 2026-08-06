@@ -1,5 +1,8 @@
 # AI Music Suite — CD-B Records Dashboard
 
+**Версия:** 1.6.0
+**Последна промяна:** 2026-08-06, 23:22 (Europe/Sofia)
+
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
 Един допълнителен слой (GitHub Actions) следи YouTube статистика на 24ч.
@@ -205,6 +208,12 @@ JSON (`schema_version`), който се трупа във времето (1 з�
 ## Модулна структура (за лесно разширяване без пренаписване)
 
 - `index.html` / `app.js` — таблото. Четат данни, не ги генерират.
+- `js/ui/toast.js`, `js/ui/guard-click.js` — чист DOM, без зависимости.
+- `js/network.js` — `fetchTimeout`, `proxied` (общи мрежови helper-и).
+- `js/providers/claude.js`, `js/providers/gemini.js` — целият AI provider код.
+- `js/youtube.js` — YouTube Data API + autocomplete suggest.
+- `js/niche-toolkit.js` — Spotify-базиран niche score, AI промптове за
+  Suno/Udio, Release Playbook — самостоятелен раздел, не пипа останалото.
 - `visualizer.html` — самостоятелен визуализатор, вграден през `<iframe>`.
 - `scripts/track_stats.py` — самостоятелен tracker за твоя канал (YouTube).
 - `scripts/track_trends.py` — самостоятелен tracker за жанрове/ниши (Google
@@ -231,8 +240,91 @@ JSON (`schema_version`), който се трупа във времето (1 з�
 
 ## Идеи за следващо
 
-- Offline кеширане (service worker).
 - Директна YouTube `search.list` заявка за по-твърди SEO числа, комбинирана
   с Gemini оценката.
 - Проверка на свободен домейн за бранд името на изпълнителя.
 - Voice prompting през вградения browser Web Speech API.
+- Истинско AI четене/писане в GitHub repo-то (GitHub Contents API) — в
+  момента полето за GitHub Token само се пази/тества, реално записване на
+  файлове през AI-то още не е построено.
+- Централизиран `State` (`ui`/`settings`/`currentProject`/...) вместо
+  плосък `AppState.data.project` — последната, най-рискова стъпка от
+  модулното разделяне (виж Changelog v1.5.0). `network/`, `providers/`,
+  `youtube/` и `ui/` вече са извадени от `app.js`.
+
+## Changelog
+
+### v1.6.0 — 2026-08-06
+- 🎯 **Niche Toolkit (нов раздел)** — портнат от отделен Node/Express
+  "music-niche-toolkit" проект в чист браузърен JS (`js/niche-toolkit.js`),
+  за да пасне на статичната архитектура на сайта (без сървър). Съдържа:
+  - **Niche & Signal анализ** — Spotify популярност + YouTube трафик +
+    груб конкурентен сигнал → "Profit Niche Score" (0-100), допълнителен
+    сигнал спрямо съществуващия YouTube+AI niche score от Стъпка 1
+    (с връзка натам).
+  - **AI Промпт за Suno/Udio** и **AI Структура на текст** — през
+    съществуващия Claude/Gemini pipeline на сайта (не отделен OpenAI
+    wrapper, за консистентност).
+  - **Release Playbook + CSV export** — изцяло клиентски (Blob download),
+    без нужда от сървър.
+  - Нови ключове в Настройки: Spotify Client ID/Secret (Client Credentials
+    flow — изисква и Proxy URL, Spotify token endpoint-ът няма CORS за
+    браузър заявки; същия модел на доверие като останалите ключове —
+    личен инстанс, само в localStorage на твоя браузър). Добавен тест в
+    "🧪 Тествай ключовете".
+  - `sw.js` обновен (offline shell v6).
+
+### v1.5.0 — 2026-08-06
+- 🧩 **Архитектура (стъпка 5/6): `ui/`** — `toast()` → `js/ui/toast.js`,
+  `guardClick()` → `js/ui/guard-click.js`. И двата са чист DOM, без
+  зависимости — заредени най-рано в `index.html` (преди `network.js`).
+  `sw.js` обновен (offline shell v5). Следва последната, най-рискова
+  стъпка: централизиран `State` (`ui`/`settings`/`currentProject`/...
+  вместо плосък `AppState.data.project`).
+
+### v1.4.0 — 2026-08-06
+- 🧩 **Архитектура (стъпка 4/6): `youtube/`** — `fetchRecentTrendingVideos()`,
+  `youtubeTopTitles()`, `youtubeOutlierScan()` и `keywordSuggest()` са
+  извадени от `app.js` в `js/youtube.js`. `app.js` олекна до ~3150 реда
+  (от първоначалните ~3600). `sw.js` обновен (offline shell v4).
+  Следва: `ui/` (toast и бъдещи modal/loader), после централизиран `State`.
+
+### v1.3.0 — 2026-08-06
+- 🧩 **Архитектура (стъпка 3/6): `providers/`** — целият Claude-специфичен
+  код (`js/providers/claude.js`: динамичен списък модели, единично
+  извикване, fallback между модели) и Gemini-специфичен код
+  (`js/providers/gemini.js`: списък модели, fallback+retry/backoff, текст
+  и multimodal) са извадени от `app.js` в собствени файлове. `app.js`
+  вече пази само `callAI()` — оркестрацията, която избира между двата
+  провайдъра. `app.js` олекна от ~3600 на ~3280 реда. `sw.js` обновен да
+  кешира и новите файлове (offline shell v3). Следва: `youtube/`, `ui/`,
+  централизиран `State`.
+
+### v1.2.0 — 2026-08-06
+- 🧩 **Архитектура (стъпка 2/6 от модулното разделяне): `network/` слой** —
+  `fetchTimeout` и `proxied` са извадени от `app.js` в отделен файл
+  `js/network.js` (обикновен classic `<script>`, зареден преди `app.js` —
+  без `import`/`export`, за да не се чупят стотиците inline `onclick=""`
+  из `index.html`). `sw.js` обновен да кешира и новия файл (offline shell).
+  Следва: `providers/` (Claude/Gemini), `youtube/`, `ui/`, централизиран `State`.
+
+### v1.1.0 — 2026-08-06
+- 🎯 **Model Pref** — тестът на ключовете вече пробва всички модели наред
+  (не само първия) и хваща първия успешен като модел по подразбиране;
+  добавен и ръчен избор от падащо меню в Настройки.
+- 🏆 **AI Call Log → Leaderboard по надеждност** — тестът пробва моделите по
+  историческа успеваемост на устройството, не само по статичен fallback ред.
+- 🔁 **Track Record → калибрация на Viral Lab** — последните известни реални
+  резултати влизат в промпта, за да се самокоригира прогнозата във времето.
+- 📊 **Quota Tracker** — визуален bar chart вместо суров текст.
+- 📴 **PWA offline** — нов `sw.js` (кешира само черупката; AI/GitHub/YouTube
+  заявките винаги минават през мрежата).
+- 🔐 **Vault** — опционално AES-GCM криптиране на API ключовете в
+  localStorage с парола (Web Crypto), с глобален индикатор при заключен
+  трезор.
+- 🧬 **Hook Evolution Arena** — нов бутон "Сравни с реални hits", тества
+  победителя срещу реални набиращи инерция заглавия от нишата.
+- 🔧 Оправен bug: GitHub Personal Access Token полето не се пазеше/зареждаше;
+  вече се пази и тества (`GET /user`).
+- 🧹 Нов `Storage` wrapper (`Storage.get/set/remove/has`) — премахнати всички
+  35 разпръснати директни `localStorage.*` извиквания в полза на едно място.
