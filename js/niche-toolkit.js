@@ -25,6 +25,8 @@
    Настройки (същото ограничение като keywordSuggest() в js/youtube.js).
    ========================================================= */
 
+const NICHE_TOOLKIT_SCORES_KEY = "cdb_niche_toolkit_scores_v1";
+
 const NicheToolkit = {
 
   /* ---------- SPOTIFY: Client Credentials + search ---------- */
@@ -128,6 +130,41 @@ const NicheToolkit = {
       const competitionSignal = Math.min(100, videos.length * 6);
       const { score, breakdown } = this._computeNicheScore({ spotifyPopularities, youtubeViews, competitionSignal });
 
+      // Пазим последния Spotify-базиран score по жанр, за да може Стъпка 1
+      // (чисто YouTube+AI сигнал) да го покаже като допълнителен, различен
+      // поглед до собствения си резултат за същата ниша — виж combined блока
+      // по-долу и Step1._renderNicheResults() в app.js.
+      try {
+        const scores = Storage.get(NICHE_TOOLKIT_SCORES_KEY) || {};
+        scores[genre.toLowerCase()] = { score, ts: Date.now() };
+        Storage.set(NICHE_TOOLKIT_SCORES_KEY, scores);
+      } catch (e) { /* некритично — просто не се кешира */ }
+
+      // Ако текущо избраната ниша от Стъпка 1 съвпада (грубо, по подниз) с
+      // въведения тук жанр, показваме двата сигнала един до друг с кратък
+      // извод дали се съгласуват — вместо потребителят сам да ги сравнява.
+      const p = AppState?.data?.project;
+      let combinedHtml = "";
+      if (p?.chosenNiche && p?.nicheScore != null) {
+        const a = p.chosenNiche.toLowerCase(), b = genre.toLowerCase();
+        if (a.includes(b) || b.includes(a)) {
+          const diff = Math.abs(p.nicheScore - score);
+          const verdict = diff <= 15
+            ? "✅ Двата сигнала се съгласуват — по-сигурен избор."
+            : diff <= 30
+              ? "🟡 Частично разминаване — провери breakdown-а по-долу преди да продължиш."
+              : "⚠️ Голямо разминаване между сигналите — YouTube+AI и Spotify+YouTube не са единодушни за тази ниша.";
+          combinedHtml = `<div class="card tight" style="margin-bottom:10px;border-color:var(--cyan);">
+            <strong>🔗 Комбиниран поглед за "${p.chosenNiche}"</strong>
+            <div style="display:flex;gap:18px;margin-top:8px;flex-wrap:wrap;">
+              <div><span class="muted" style="font-size:11px;">Стъпка 1 (YouTube+AI)</span><br><strong style="font-size:18px;">${p.nicheScore}/100</strong></div>
+              <div><span class="muted" style="font-size:11px;">Niche Toolkit (Spotify+YouTube)</span><br><strong style="font-size:18px;">${score}/100</strong></div>
+            </div>
+            <p class="muted" style="margin-top:8px;">${verdict}</p>
+          </div>`;
+        }
+      }
+
       const bar = (label, val, color) => `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px;">
           <div style="width:170px;flex-shrink:0;">${label}</div>
           <div style="flex:1;background:var(--panel-2);border-radius:5px;height:12px;overflow:hidden;">
@@ -137,6 +174,7 @@ const NicheToolkit = {
         </div>`;
 
       out.innerHTML = `
+        ${combinedHtml}
         <div class="card tight" style="margin-bottom:10px;">
           <strong style="font-size:22px;">${score}/100 — Profit Niche Score</strong>
           <p class="muted" style="margin-top:6px;">Прозрачна евристика (не финансов съвет): Spotify популярност 35% + YouTube трафик потенциал 40% + свободна ниша 25%.</p>

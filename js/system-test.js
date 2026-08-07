@@ -1,0 +1,325 @@
+/* =========================================================
+   SYSTEM TEST — "стимулира" цялото приложение (доколкото е възможно от
+   чист браузърен JS, без headless browser/test framework), проверява за
+   грешки, и накрая пита цял AI екип (Claude/Gemini/OpenRouter — всеки,
+   за когото има зададен ключ) какво може да се добави като нови функции.
+
+   Зареден МАКСИМАЛНО РАНО в index.html (веднага след ui/toast.js), за да
+   хване JS грешки от възможно най-голяма част от живота на страницата —
+   window.onerror/unhandledrejection се регистрират веднага при парсене на
+   този файл, преди всичко останало да се е заредило.
+
+   Останалите проверки (Storage, Keys, AppState, AI ключове...) реално се
+   изпълняват само при извикване на SystemTest.runAll(), по който момент
+   всички <script> тагове вече са заредени — затова редът в HTML не чупи
+   нищо, както при останалите модули (виж бележките в js/network.js).
+   ========================================================= */
+
+const SystemTest = {
+  // Буфер с JS грешки от текущата сесия (само в паметта — не се пази между
+  // презареждания, тъй като целта е "нещо счупи ли се ДОКАТО тествам сега").
+  _errors: [],
+  _lastResults: null,
+  _lastLogId: null, // id на последния запис в историята — Gemini отговорът се допълва към него
+
+  /* ---------- ИСТОРИЯ (последните 10 теста, с дата/час + Gemini отговор) ---------- */
+  _LOG_KEY: "cdb_system_test_log_v1",
+  _LOG_MAX: 10,
+
+  _loadLog() {
+    return Storage.get(this._LOG_KEY) || [];
+  },
+  _saveLog(list) {
+    Storage.set(this._LOG_KEY, list.slice(0, this._LOG_MAX));
+  },
+  // Добавя нов запис най-отпред, връща генерирания id (използваме ts като id).
+  _pushLogEntry(results) {
+    const log = this._loadLog();
+    const entry = {
+      id: Date.now(),
+      ts: Date.now(),
+      okCount: results.filter(r => r.status === "ok").length,
+      warnCount: results.filter(r => r.status === "warn").length,
+      failCount: results.filter(r => r.status === "fail").length,
+      results: results.map(r => ({ name: r.name, status: r.status, detail: r.detail })),
+      agentIdeas: null // масив {agent, label, text, error} — виж _attachAgentIdeas()
+    };
+    log.unshift(entry);
+    this._saveLog(log);
+    return entry.id;
+  },
+  // Допълва отговорите на AI екипа към записа, генериран от последния runAll().
+  _attachAgentIdeas(agentResults) {
+    if (!this._lastLogId) return;
+    const log = this._loadLog();
+    const entry = log.find(e => e.id === this._lastLogId);
+    if (entry) { entry.agentIdeas = agentResults; this._saveLog(log); }
+  },
+  _fmtDate(ts) {
+    return new Date(ts).toLocaleString("bg-BG", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  },
+
+  renderHistory() {
+    const el = document.getElementById("systemTestHistoryOut");
+    if (!el) return;
+    const log = this._loadLog();
+    if (!log.length) { el.innerHTML = `<p class="muted">Още няма пуснати тестове.</p>`; return; }
+    const icon = (s) => s === "ok" ? "✅" : s === "warn" ? "🟡" : "❌";
+    el.innerHTML = log.map((entry, i) => {
+      const overall = entry.failCount ? "❌" : entry.warnCount ? "🟡" : "✅";
+      const detailsId = `sysTestDetail_${entry.id}`;
+      return `
+        <div class="card tight" style="margin-top:${i === 0 ? 0 : 8}px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;" onclick="document.getElementById('${detailsId}').style.display = document.getElementById('${detailsId}').style.display === 'none' ? 'block' : 'none';">
+            <span><strong>${overall} ${this._fmtDate(entry.ts)}</strong> <span class="muted">— ${entry.okCount} ✅ / ${entry.warnCount} 🟡 / ${entry.failCount} ❌</span></span>
+            <span class="muted" style="font-size:11px;">${entry.agentIdeas?.length ? `🤖 ${entry.agentIdeas.length} AI отговора` : "без AI отговори"} · разгъни ▾</span>
+          </div>
+          <div id="${detailsId}" style="display:none;margin-top:10px;">
+            ${entry.results.map(r => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border-soft);">${icon(r.status)} <strong>${r.name}</strong> — <span class="muted">${r.detail}</span></div>`).join("")}
+            ${(entry.agentIdeas || []).map(a => `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:12.5px;line-height:1.6;"><strong>🤖 ${a.label}:</strong><br>${a.error ? `<span class="muted">❌ ${a.error}</span>` : a.text}</div>`).join("")}
+          </div>
+        </div>`;
+    }).join("");
+  },
+
+  _captureError(kind, message, detail) {
+    this._errors.push({ ts: Date.now(), kind, message: String(message).slice(0, 300), detail });
+    if (this._errors.length > 50) this._errors.shift(); // не расте безкрайно
+  },
+
+  init() {
+    window.addEventListener("error", (e) => {
+      this._captureError("js-error", e.message, `${e.filename || "?"}:${e.lineno || "?"}`);
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      this._captureError("unhandled-promise", e.reason?.message || String(e.reason), "");
+    });
+  },
+
+  /* ---------- отделни проверки — всяка връща {name, status, detail} ----------
+     status: "ok" | "warn" | "fail" */
+
+  _checkStorageRoundtrip() {
+    try {
+      const testKey = "cdb_system_test_probe";
+      const testVal = { probe: true, ts: Date.now() };
+      Storage.set(testKey, testVal);
+      const back = Storage.get(testKey);
+      Storage.remove(testKey);
+      const ok = back && back.probe === true;
+      return { name: "localStorage четене/писане", status: ok ? "ok" : "fail",
+        detail: ok ? "Storage.get/set/remove работят коректно" : "Записаната и прочетената стойност не съвпадат" };
+    } catch (e) {
+      return { name: "localStorage четене/писане", status: "fail", detail: e.message };
+    }
+  },
+
+  _checkStorageSize() {
+    try {
+      let totalChars = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        totalChars += (k?.length || 0) + (localStorage.getItem(k)?.length || 0);
+      }
+      const kb = Math.round(totalChars / 1024);
+      // Типичен браузърен лимит е ~5-10MB на origin — предупреждаваме отрано, не при счупване.
+      const status = kb > 4000 ? "warn" : "ok";
+      return { name: "Обем на localStorage", status, detail: `~${kb} KB използвани (${localStorage.length} ключа)` };
+    } catch (e) {
+      return { name: "Обем на localStorage", status: "fail", detail: e.message };
+    }
+  },
+
+  _checkAppState() {
+    try {
+      const p = AppState?.data?.project;
+      if (!p) return { name: "AppState цялост", status: "fail", detail: "AppState.data.project липсва" };
+      const expectedKeys = ["niches", "title", "lyrics", "distrokid", "youtube"];
+      const missing = expectedKeys.filter(k => !(k in p));
+      return { name: "AppState цялост", status: missing.length ? "warn" : "ok",
+        detail: missing.length ? `Липсващи полета: ${missing.join(", ")}` : "Всички очаквани полета присъстват" };
+    } catch (e) {
+      return { name: "AppState цялост", status: "fail", detail: e.message };
+    }
+  },
+
+  _checkVault() {
+    try {
+      if (!Vault.isEnabled()) return { name: "Vault (криптиране на ключове)", status: "ok", detail: "Изключен (ключовете са чист текст — очаквано, ако не си го включил)" };
+      return { name: "Vault (криптиране на ключове)", status: Vault.isUnlocked() ? "ok" : "warn",
+        detail: Vault.isUnlocked() ? "Включен и отключен за тази сесия" : "Включен, но ЗАКЛЮЧЕН — AI/GitHub функции няма да работят, докато не въведеш паролата" };
+    } catch (e) {
+      return { name: "Vault (криптиране на ключове)", status: "fail", detail: e.message };
+    }
+  },
+
+  _checkServiceWorker() {
+    if (!("serviceWorker" in navigator)) return { name: "Offline (Service Worker)", status: "warn", detail: "Браузърът не поддържа Service Worker" };
+    const active = !!navigator.serviceWorker.controller;
+    return { name: "Offline (Service Worker)", status: active ? "ok" : "warn",
+      detail: active ? "Регистриран и активен — offline достъп до черупката работи" : "Все още не е поел контрол (нормално при първо зареждане — презареди веднъж)" };
+  },
+
+  _checkRuntimeErrors() {
+    if (!this._errors.length) return { name: "JS грешки в тази сесия", status: "ok", detail: "Няма прихванати грешки досега" };
+    const sample = this._errors.slice(-3).map(e => `[${e.kind}] ${e.message}`).join(" · ");
+    return { name: "JS грешки в тази сесия", status: "warn", detail: `${this._errors.length} прихванати — последни: ${sample}` };
+  },
+
+  async _checkApiKeys() {
+    // Реално използваме съществуващия Settings.testKeys() — той вече прави
+    // истински мрежови проверки за Claude/Gemini/YouTube/Spotify/GitHub и
+    // връща масив от текстови редове. Няма смисъл да дублираме логиката.
+    // ВАЖНО: testKeys() чете директно от input полетата в Настройки (не от
+    // localStorage), а те се пълват само при посещение на този view — затова
+    // първо принудително ги синхронизираме тук, за да не показваме грешно
+    // "няма ключ", ако потребителят е дошъл направо в Системен тест.
+    try {
+      Settings.fillFields();
+      const lines = await Settings.testKeys();
+      const failCount = lines.filter(l => l.includes("❌")).length;
+      const okCount = lines.filter(l => l.includes("✅")).length;
+      const vaultNote = (Vault.isEnabled() && !Vault.isUnlocked())
+        ? " ⚠️ Трезорът е заключен — резултатите по-горе може да казват грешно 'няма ключ', вместо 'заключен'."
+        : "";
+      return {
+        name: "API ключове (Claude/Gemini/OpenRouter/YouTube/Spotify/GitHub)",
+        status: failCount ? "warn" : "ok",
+        detail: `${okCount} работещи, ${failCount} с грешка — пълен детайл в Настройки → API Ключове.${vaultNote}`,
+        rawLines: lines
+      };
+    } catch (e) {
+      return { name: "API ключове", status: "fail", detail: e.message };
+    }
+  },
+
+  _checkAiReliability() {
+    const board = [...AICallLog.getLeaderboard("claude"), ...AICallLog.getLeaderboard("gemini"), ...AICallLog.getLeaderboard("openrouter")];
+    if (!board.length) return { name: "AI надеждност (исторически)", status: "ok", detail: "Все още няма история от извиквания на това устройство" };
+    const worst = board.reduce((a, b) => (a.rate < b.rate ? a : b));
+    const status = worst.rate < 0.5 ? "warn" : "ok";
+    return { name: "AI надеждност (исторически)", status,
+      detail: `Най-слаб модел: ${worst.model} (${Math.round(worst.rate * 100)}% успех от ${worst.total} опита)` };
+  },
+
+  _checkCriticalDom() {
+    // Смок тест: проверява дали ключовите контейнери за всеки view съществуват
+    // в DOM-а (те винаги стоят там, само се скриват/показват — виж Nav.showView).
+    const ids = ["view-dashboard", "view-step1", "view-step2", "view-step3", "view-quick",
+      "view-niche-toolkit", "view-validator", "view-set-keys", "view-stats-tracker"];
+    const missing = ids.filter(id => !document.getElementById(id));
+    return { name: "DOM структура (всички view контейнери)", status: missing.length ? "fail" : "ok",
+      detail: missing.length ? `Липсват: ${missing.join(", ")}` : `Всички ${ids.length} проверени view-а присъстват` };
+  },
+
+  /* ---------- оркестрация ---------- */
+
+  async runAll() {
+    const out = document.getElementById("systemTestOut");
+    out.innerHTML = `<p class="muted">⏳ Стимулирам системата — Storage, AppState, DOM, Service Worker, после и реални мрежови проверки на ключовете (по-бавно)...</p>`;
+
+    const syncChecks = [
+      this._checkStorageRoundtrip(),
+      this._checkStorageSize(),
+      this._checkAppState(),
+      this._checkVault(),
+      this._checkServiceWorker(),
+      this._checkCriticalDom(),
+      this._checkRuntimeErrors(),
+      this._checkAiReliability(),
+    ];
+    const apiCheck = await this._checkApiKeys();
+    const results = [...syncChecks, apiCheck];
+    this._lastResults = results;
+    this._lastLogId = this._pushLogEntry(results);
+    this.renderHistory();
+
+    const icon = (s) => s === "ok" ? "✅" : s === "warn" ? "🟡" : "❌";
+    const failCount = results.filter(r => r.status === "fail").length;
+    const warnCount = results.filter(r => r.status === "warn").length;
+    const summary = failCount ? `❌ ${failCount} провалени проверки` : warnCount ? `🟡 ${warnCount} предупреждения, нищо счупено` : "✅ Всичко изглежда наред";
+
+    out.innerHTML = `
+      <div class="card tight" style="margin-bottom:10px;border-color:${failCount ? "var(--red)" : warnCount ? "var(--amber)" : "var(--green)"};">
+        <strong>${summary}</strong>
+      </div>
+      ${results.map(r => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:12.5px;">
+          <div style="flex-shrink:0;">${icon(r.status)}</div>
+          <div><strong>${r.name}</strong><br><span class="muted">${r.detail}</span></div>
+        </div>`).join("")}
+      <button class="btn grad" style="margin-top:14px;" onclick="guardClick(this, () => SystemTest.askAgentPanelForIdeas())">🤖 Питай AI екипа за нови функции</button>
+      <div id="systemTestIdeasOut" style="margin-top:14px;"></div>`;
+  },
+
+  /* ---------- AI ОДИТ: панел от НЯКОЛКО агента едновременно ----------
+     Вика паралелно всеки provider, за който има зададен ключ (Claude,
+     Gemini, OpenRouter — безплатен tier), със СЪЩИЯ prompt, и показва
+     всеки отговор в собствена карта. Ако липсва ключ за даден agent,
+     просто се пропуска (не блокира останалите). useSearch=true за Gemini
+     му дава представа за актуални тенденции в AI музикалните инструменти,
+     не само model knowledge. */
+  async askAgentPanelForIdeas() {
+    const out = document.getElementById("systemTestIdeasOut");
+    if (!this._lastResults) { toast("Първо пусни системния тест по-горе"); return; }
+
+    const k = Keys.load();
+    const agents = [
+      { id: "gemini", label: "Gemini", enabled: !!k.gemini, run: (p) => callGemini(p, true) },
+      { id: "claude", label: "Claude", enabled: !!k.claude, run: (p) => callClaude(p, 900) },
+      { id: "openrouter", label: "OpenRouter (безплатен модел)", enabled: !!k.openrouterKey, run: (p) => callOpenRouter(p, 900) },
+    ].filter(a => a.enabled);
+
+    if (!agents.length) {
+      out.innerHTML = `<p class="muted">⚠️ Няма нито един настроен AI ключ (Claude/Gemini/OpenRouter) — виж Настройки → API Ключове. OpenRouter има реален безплатен tier, ако искаш повече "гласове" без разход.</p>`;
+      return;
+    }
+
+    out.innerHTML = `<p class="muted">🤖 Питам ${agents.length} AI агент${agents.length > 1 ? "а" : ""} паралелно (${agents.map(a => a.label).join(", ")})...</p>`;
+
+    const resultsSummary = this._lastResults.map(r => `- [${r.status}] ${r.name}: ${r.detail}`).join("\n");
+    const featureInventory = [
+      "Стъпка 1: пазарен анализ (YouTube+AI niche score), Album Sprint, Hook Evolution Arena,",
+      "концепция, текст на песен (Claude), Viral Lab (AI Music Producer анализ), Ghost Audience",
+      "(синтетична фокус-група), Gemini Validator.",
+      "Стъпка 2: FX конфигурация + видео визуализатор.",
+      "Стъпка 3: обложка (Gemini/Nano Banana), DistroKid авто-попълване, Spotify/Apple артист текстове,",
+      "YouTube A/B заглавия, upload в YouTube (unlisted).",
+      "Бърз режим: качване на стара песен → авто видео → анализ → upload.",
+      "Niche Toolkit: Spotify+YouTube 'Profit Niche Score', AI промпт за Suno/Udio, AI структура на",
+      "текст, Release Playbook + CSV export.",
+      "Инфраструктура: дневен YouTube/trend tracker (GitHub Actions), Track Record (прогноза срещу",
+      "реалност), AI Call Log + класация по надеждност, Vault криптиране на ключове, offline PWA."
+    ].join(" ");
+
+    const prompt = `Ти си продуктов консултант за AI-базиран музикален dashboard (изцяло клиентско, статично уеб приложение — без сървър, всички AI/YouTube/Spotify извиквания стават директно от браузъра на потребителя).
+
+СЪЩЕСТВУВАЩИ ФУНКЦИИ (не предлагай дублиране на тези):
+${featureInventory}
+
+РЕЗУЛТАТ ОТ ТОКУ-ЩО ПУСНАТ СИСТЕМЕН ТЕСТ НА ПРИЛОЖЕНИЕТО:
+${resultsSummary}
+
+Задача: предложи 3-5 КОНКРЕТНИ нови функции или подобрения, които биха донесли реална стойност на независим музикален изпълнител/продуцент, който сам управлява releases. Приоритизирай по полезност. Ако резултатите от теста намекват за конкретен проблем (напр. нещо липсва/бавно/чупливо), включи и препоръка по темата. Кратко, на български, с маркирани точки (- ), без излишен увод.`;
+
+    const settled = await Promise.allSettled(agents.map(a => a.run(prompt)));
+    const agentResults = agents.map((a, i) => {
+      const r = settled[i];
+      return r.status === "fulfilled"
+        ? { agent: a.id, label: a.label, text: r.value.trim(), error: null }
+        : { agent: a.id, label: a.label, text: null, error: r.reason?.message || String(r.reason) };
+    });
+
+    out.innerHTML = agentResults.map(a => `
+      <div class="card tight" style="margin-bottom:10px;">
+        <strong>🤖 ${a.label}</strong>
+        <div style="margin-top:8px;white-space:pre-wrap;font-size:13px;line-height:1.6;">
+          ${a.error ? `<span class="muted">❌ ${a.error}</span>` : a.text}
+        </div>
+      </div>`).join("");
+
+    this._attachAgentIdeas(agentResults);
+    this.renderHistory();
+  }
+};
+
+SystemTest.init();
