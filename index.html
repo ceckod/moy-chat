@@ -118,6 +118,17 @@ a{color:var(--cyan);}
 .num-card h4{margin:0 0 6px;font-size:13.5px;font-weight:600;}
 .num-card p{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.4;min-height:32px;}
 
+/* Стъпка-1 номерация + "по избор" маркер — за визуален ред вътре в
+   картите, не само на Dashboard-а (виж README "Модулна структура"). */
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;
+  margin-right:8px;flex-shrink:0;vertical-align:middle;}
+.optional-tag{display:inline-block;font-size:10px;letter-spacing:.03em;color:var(--muted-2);
+  border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin-left:8px;
+  vertical-align:middle;font-weight:600;}
+.flow-divider{font-size:10.5px;letter-spacing:.06em;color:var(--muted-2);text-align:center;
+  margin:18px 0 4px;text-transform:uppercase;}
+
 /* buttons */
 .btn{border:none;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;}
 .btn.grad{background:var(--grad);color:#fff;}
@@ -275,29 +286,30 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
     <div class="nav-group">
       <div class="nav-label">Навигация</div>
-      <button class="nav-btn" data-view="dashboard" onclick="Nav.showView('dashboard')"><span class="ic">🏠</span> Dashboard</button>
+      <button class="nav-btn" data-view="dashboard" onclick="Nav.showView('dashboard')"><span class="ic">🏠</span> Табло</button>
     </div>
 
     <div class="nav-group">
-      <div class="nav-label">Стъпка 1 — Създаване</div>
+      <div class="nav-label">Създаване на песен</div>
       <button class="nav-btn" data-view="step1" onclick="Nav.showView('step1')"><span class="ic">🔍</span> 1. Пазарен анализ</button>
       <button class="nav-btn" data-view="step2" onclick="Nav.showView('step2')"><span class="ic">🎬</span> 2. Визуализатор</button>
       <button class="nav-btn" data-view="step3" onclick="Nav.showView('step3')"><span class="ic">📤</span> 3. Публикуване</button>
     </div>
 
     <div class="nav-group">
-      <div class="nav-label">Бърз режим</div>
+      <div class="nav-label">Алтернативен път</div>
       <button class="nav-btn" data-view="quick" onclick="Nav.showView('quick')"><span class="ic">⚡</span> Бърз ъплоуд (стари песни)</button>
     </div>
 
     <div class="nav-group">
-      <div class="nav-label">Niche Toolkit</div>
-      <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche & Signal (Spotify)</button>
+      <div class="nav-label">Инструменти</div>
+      <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
+      <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
     </div>
 
     <div class="nav-group">
-      <div class="nav-label">Gemini Validator</div>
-      <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Втори поглед (Лог)</button>
+      <div class="nav-label">Диагностика</div>
+      <button class="nav-btn" data-view="system-test" onclick="Nav.showView('system-test')"><span class="ic">🧪</span> Системен тест</button>
     </div>
 
     <div class="nav-group">
@@ -473,7 +485,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="section-title">Стъпка 1 — Пазарен анализ &amp; Текст</div>
 
       <div class="card">
-        <strong>Пазарен анализ (SEO)</strong>
+        <strong><span class="step-badge">1</span>Пазарен анализ (SEO)</strong>
         <p class="muted">Остави полето празно и натисни бутона — чете дневния trend snapshot (GitHub Actions, Google Trends + YouTube данни, обновява се веднъж на ден, без Gemini квота) и ти връща нишата с най-добро съотношение търсене/конкуренция. По желание можеш да въведеш свои 2-3 ниши, за да сравниш точно тях вместо авто-сканиране (използва Claude).</p>
         <label>Жанрове/ниши за сравнение (по избор — празно = авто-сканиране)</label>
         <textarea id="nicheInput" placeholder="празно = авто · или напр.&#10;lofi hip hop&#10;phonk drift&#10;sad r&b 2026"></textarea>
@@ -481,11 +493,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="nicheResults" style="margin-top:14px;"></div>
         <div id="outlierResults" style="margin-top:10px;"></div>
         <div id="keywordSuggestOut" style="margin-top:10px;"></div>
-        <button class="btn ghost" style="margin-top:10px;" onclick="Nav.showView('niche-toolkit')">🎯 Разширен Niche & Signal анализ (Spotify)</button>
+        <button class="btn ghost" style="margin-top:10px;" onclick="Nav.showView('niche-toolkit')">🎯 Разширен Niche & Signal анализ (Spotify)<span class="optional-tag">по избор</span></button>
       </div>
 
-      <div class="card" id="albumSprintCard" style="display:none;margin-top:14px;">
-        <strong>📀 Album Sprint</strong>
+      <div class="flow-divider">— по избор, преди текста — по-добри hook-ове/заглавия —</div>
+
+      <div class="card" id="albumSprintCard" style="display:none;margin-top:8px;">
+        <strong>📀 Album Sprint<span class="optional-tag">по избор</span></strong>
         <p class="muted">Наведнъж генерира 10-30 кратки заглавия + hook идеи в избраната ниша — опашка от идеи вместо 1 по 1.</p>
         <div class="row">
           <div><label>Брой концепции</label>
@@ -497,7 +511,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
-        <strong>🧬 Hook Evolution Arena</strong>
+        <strong>🧬 Hook Evolution Arena<span class="optional-tag">по избор</span></strong>
         <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
         <button class="btn grad" onclick="guardClick(this, () => HookArena.start())">🧬 Стартирай еволюцията</button>
         <div id="hookArenaOut" style="margin-top:14px;"></div>
@@ -505,8 +519,10 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="hookArenaCompareOut" style="margin-top:12px;"></div>
       </div>
 
-      <div class="card" id="conceptCard" style="display:none;margin-top:14px;">
-        <strong>Концепция за Suno AI</strong>
+      <div class="flow-divider">— обратно към задължителния път —</div>
+
+      <div class="card" id="conceptCard" style="display:none;margin-top:8px;">
+        <strong><span class="step-badge">2</span>Концепция за Suno AI</strong>
         <div class="row">
           <div><label>Заглавие</label><input type="text" id="songTitle"></div>
           <div><label>Score</label><input type="text" id="nicheScore" disabled></div>
@@ -518,7 +534,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
-        <strong>Текст на песента (Claude)</strong>
+        <strong><span class="step-badge">3</span>Текст на песента (Claude)</strong>
         <p class="muted">Chorus най-отпред, мета-тагове [Chorus] [Verse] [Drop].</p>
         <div class="row">
           <button class="btn grad" onclick="guardClick(this, () => Step1.generateLyrics())">✍️ Генерирай текст</button>
@@ -528,8 +544,10 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="lyricsHistoryOut" style="display:none;margin-top:10px;"></div>
       </div>
 
-      <div class="card" style="margin-top:14px;">
-        <strong>🚀 Viral Lab — AI Music Producer</strong>
+      <div class="flow-divider">— по избор, преди да продължиш — задълбочен анализ на готовия текст —</div>
+
+      <div class="card" style="margin-top:8px;">
+        <strong>🚀 Viral Lab — AI Music Producer<span class="optional-tag">по избор</span></strong>
         <p class="muted">Пълен анализ на вирусния потенциал: Viral Score, прогноза за успех, оценка на текста, hook/chorus анализ, структура, жанрова проверка, конкуренция и AI Producer Review. Изисква генериран текст (по-горе).</p>
         <button class="btn grad" onclick="guardClick(this, () => ViralLab.analyze())">🚀 Анализирай вирусния потенциал</button>
         <button class="btn ghost" onclick="guardClick(this, () => ViralLab.analyze(true))">🔄 Презареди (игнорирай кеша)</button>
@@ -537,7 +555,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
-        <strong>👻 Ghost Audience</strong>
+        <strong>👻 Ghost Audience<span class="optional-tag">по избор</span></strong>
         <p class="muted">12 синтетични, но правдоподобни слушателя "чуват" песента и реагират с техния глас — плюс attention heatmap (къде реално губиш вниманието) и meme risk radar (редове, за които публиката би те закачила). Изисква генериран текст.</p>
         <button class="btn grad" onclick="guardClick(this, () => GhostAudience.run())">👻 Пусни фокус-групата</button>
         <button class="btn ghost" onclick="guardClick(this, () => GhostAudience.run(true))">🔄 Презареди (игнорирай кеша)</button>
@@ -545,9 +563,17 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
-        <strong>🤖 Gemini Validator</strong>
-        <p class="muted">Малък модул за "втори поглед" — анализира сам, автоматично, резултата от всяка стъпка. Пълният лог е в раздел "Втори поглед (Лог)".</p>
+        <strong>🤖 Gemini Validator<span class="optional-tag">помощен</span></strong>
+        <p class="muted">Малък модул за "втори поглед" — анализира сам, автоматично, резултата от всяка стъпка. Пълният лог е в раздел "Инструменти → Gemini Validator".</p>
         <button class="btn ghost" onclick="Step1.validateWithGemini()">🔁 Ръчна повторна проверка на текста</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">Готов с текста и анализа?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Продължи към Стъпка 2 — Визуализатор.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('step2')">Стъпка 2 →</button>
       </div>
     </div>
 
@@ -573,6 +599,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <p class="muted">Заглавието от Стъпка 1 се подава автоматично. Качи аудиото директно тук.</p>
         </div>
         <iframe id="visualizerFrame" src="visualizer.html" style="width:100%;height:900px;border:0;display:block;margin-top:10px;"></iframe>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">Видеото готово?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Продължи към Стъпка 3 — Публикуване.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('step3')">Стъпка 3 →</button>
       </div>
     </div>
 
@@ -636,6 +670,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">privacyStatus е фиксиран на <strong>unlisted</strong> — не подлежи на промяна.</p>
         <button class="btn grad" onclick="Step4.uploadVideo()">⬆️ Качи в YouTube</button>
         <div id="ytUploadProgress" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">🎉 Публикувано?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Готов си за следваща песен — стартирай нов проект (текущите данни се архивират автоматично).</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Settings.newProject()">Нов проект →</button>
       </div>
     </div>
 
@@ -746,6 +788,23 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ SYSTEM TEST VIEW ============ -->
+    <div class="view" id="view-system-test">
+      <div class="section-title">🧪 Системен тест</div>
+      <div class="card">
+        <strong>🧪 Пълна диагностика на приложението</strong>
+        <p class="muted">Проверява localStorage четене/писане, цялост на текущия проект, Vault статус, Service Worker (offline), структурата на екраните, прихванати JS грешки от тази сесия, историческа надеждност на AI моделите, и накрая реални мрежови проверки на всички API ключове (същите, които "🧪 Тествай ключовете" в Настройки прави). В края може да питаш Gemini какви нови функции биха допълнили приложението, съобразени с резултата от теста.</p>
+        <button class="btn grad" style="margin-top:12px;" onclick="guardClick(this, () => SystemTest.runAll())">🧪 Пусни системен тест</button>
+        <div id="systemTestOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 История на тестовете</strong>
+        <p class="muted">Последните 10 пуснати теста, с дата/час и — ако си питал — какво отговори Gemini. Натисни ред, за да разгънеш детайлите.</p>
+        <div id="systemTestHistoryOut" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
     <!-- ============ VALIDATOR LOG VIEW ============ -->
     <div class="view" id="view-validator">
       <div class="section-title">Gemini Validator — Втори поглед (пълен лог)</div>
@@ -765,6 +824,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <input type="password" id="key_claude">
         <label>Google Gemini API Key</label>
         <input type="password" id="key_gemini">
+        <label>OpenRouter API Key <span class="optional-tag">безплатен tier</span></label>
+        <input type="password" id="key_openrouter">
+        <p class="muted" style="margin-top:6px;">За "🧪 Системен тест" AI екипа (втори/трети AI глас, независим от Claude/Gemini). Безплатен ключ от <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> — вика само модели с 0 цена (":free"), никога платени.</p>
         <label>YouTube Data API — Google Client ID (OAuth)</label>
         <input type="password" id="key_yt_client_id">
         <label>YouTube Data API Key</label>
@@ -967,10 +1029,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <div class="toast" id="toast"></div>
 
 <script src="js/ui/toast.js"></script>
+<script src="js/system-test.js"></script>
 <script src="js/ui/guard-click.js"></script>
 <script src="js/network.js"></script>
 <script src="js/providers/claude.js"></script>
 <script src="js/providers/gemini.js"></script>
+<script src="js/providers/openrouter.js"></script>
 <script src="js/youtube.js"></script>
 <script src="app.js"></script>
 <script src="js/niche-toolkit.js"></script>

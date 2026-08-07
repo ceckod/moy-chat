@@ -276,7 +276,7 @@ const AICallLog = {
     if (!log.length) { el.textContent = "Все още няма записани извиквания в тази сесия/устройство."; return; }
     el.textContent = log.map(e => {
       const time = new Date(e.ts).toLocaleTimeString("bg-BG", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      const providerLabel = e.provider === "claude" ? "Claude" : "Gemini";
+      const providerLabel = e.provider === "claude" ? "Claude" : e.provider === "gemini" ? "Gemini" : e.provider === "openrouter" ? "OpenRouter" : e.provider;
       return `${time} ${e.ok ? "✅" : "❌"} ${providerLabel} · ${e.model}${e.note ? " — " + e.note : ""}`;
     }).join("\n");
   },
@@ -317,10 +317,11 @@ const AICallLog = {
     const el = document.getElementById("aiLeaderboardOut");
     if (!el) return;
     const rows = [];
-    for (const provider of ["claude", "gemini"]) {
+    for (const provider of ["claude", "gemini", "openrouter"]) {
       const board = this.getLeaderboard(provider);
       if (!board.length) continue;
-      rows.push(`<div style="font-size:11px;opacity:.7;margin:8px 0 4px;">${provider === "claude" ? "Claude" : "Gemini"}:</div>`);
+      const label = provider === "claude" ? "Claude" : provider === "gemini" ? "Gemini" : "OpenRouter";
+      rows.push(`<div style="font-size:11px;opacity:.7;margin:8px 0 4px;">${label}:</div>`);
       for (const b of board) {
         const pct = Math.round(b.rate * 100);
         const color = pct >= 80 ? "var(--green)" : pct >= 50 ? "var(--amber)" : "var(--red)";
@@ -472,6 +473,7 @@ const Nav = {
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
+    if (id === "system-test") SystemTest.renderHistory();
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
   }
@@ -485,6 +487,7 @@ const Settings = {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
     set("key_claude", k.claude);
     set("key_gemini", k.gemini);
+    set("key_openrouter", k.openrouterKey);
     set("key_yt_client_id", k.ytClientId);
     set("key_yt_apikey", k.ytApiKey);
     set("key_spotify_client_id", k.spotifyClientId);
@@ -575,6 +578,7 @@ const Settings = {
       ...prev,
       claude: val("key_claude") ?? prev.claude,
       gemini: val("key_gemini") ?? prev.gemini,
+      openrouterKey: val("key_openrouter") ?? prev.openrouterKey,
       ytClientId: val("key_yt_client_id") ?? prev.ytClientId,
       ytApiKey: val("key_yt_apikey") ?? prev.ytApiKey,
       spotifyClientId: val("key_spotify_client_id") ?? prev.spotifyClientId,
@@ -596,6 +600,7 @@ const Settings = {
     const k = {
       claude: document.getElementById("key_claude").value.trim(),
       gemini: document.getElementById("key_gemini").value.trim(),
+      openrouterKey: document.getElementById("key_openrouter")?.value.trim(),
       ytApiKey: document.getElementById("key_yt_apikey").value.trim(),
       spotifyClientId: document.getElementById("key_spotify_client_id")?.value.trim(),
       spotifyClientSecret: document.getElementById("key_spotify_client_secret")?.value.trim(),
@@ -679,6 +684,22 @@ const Settings = {
     }
 
     lines.push("YouTube OAuth Client ID: проверява се само при 🔑 Вход с Google в Стъпка 3");
+
+    // OpenRouter — трети AI "агент" (безплатен tier). Тества с реален
+    // безплатен модел, връщан от getOpenRouterFreeModels().
+    if (!k.openrouterKey) lines.push("OpenRouter: ⚪ няма ключ");
+    else {
+      try {
+        const models = await getOpenRouterFreeModels(true);
+        const testModel = models[0];
+        const r = await fetchTimeout("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${k.openrouterKey}` },
+          body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+        });
+        lines.push(r.ok ? `OpenRouter: ✅ работи (${testModel})` : `OpenRouter: ❌ ${r.status}`);
+      } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
+    }
 
     // Spotify Client Credentials (изисква и Proxy URL — token endpoint-ът няма CORS).
     // Ползва ТУК ЩЕ въведените стойности, не запазените — затова е директен fetch,
@@ -1260,11 +1281,18 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
     AppState.save();
 
     let html = fromTrendScan ? `<p class="muted">📈 Дневен trend snapshot (GitHub Actions, без Gemini)</p>` : "";
+    const toolkitScores = Storage.get(NICHE_TOOLKIT_SCORES_KEY) || {};
     results.forEach(r => {
       const color = r.score > 75 ? "🟢" : r.score > 50 ? "🟡" : "⚪";
       const signals = (r.search_signal || r.competition_signal)
         ? `<br><span class="muted">Търсене: ${r.search_signal || "—"} · Конкуренция: ${r.competition_signal || "—"}</span>` : "";
-      html += `<div class="copy-field"><span>${color} <strong>${r.niche}</strong> — ${r.score}/100<br><span class="muted">${r.reason}</span>${signals}</span></div>`;
+      // Ако вече е пусната Niche Toolkit (Spotify) анализ за тази/подобна ниша,
+      // показваме и нея веднага до собствения score — виж NicheToolkit.analyzeNiche().
+      const nicheLower = r.niche.toLowerCase();
+      const toolkitMatch = Object.entries(toolkitScores).find(([g]) => nicheLower.includes(g) || g.includes(nicheLower));
+      const toolkitBadge = toolkitMatch
+        ? `<br><span class="muted">🎯 Niche Toolkit (Spotify): ${toolkitMatch[1].score}/100</span>` : "";
+      html += `<div class="copy-field"><span>${color} <strong>${r.niche}</strong> — ${r.score}/100<br><span class="muted">${r.reason}</span>${signals}${toolkitBadge}</span></div>`;
     });
     document.getElementById("nicheResults").innerHTML = html;
     this._renderDashNicheQuick(results);
