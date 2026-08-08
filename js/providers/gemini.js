@@ -106,7 +106,11 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
     const model = models[m];
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const maxRetries = 2;
+    // Само 1 кратък retry (не 2 с растящо изчакване до 4с) — на практика
+    // 429 на безплатните tier-ове почти винаги значи "изчерпана дневна
+    // квота", не временен rate-limit, така че бързото превключване към
+    // следващия модел е по-полезно от дълго чакане на текущия.
+    const maxRetries = 1;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       let res;
       try {
@@ -130,7 +134,7 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
       const t = await res.text();
       if (res.status === 429) {
         if (attempt < maxRetries) {
-          const waitMs = 2000 * Math.pow(2, attempt); // 2s, 4s
+          const waitMs = 1500;
           toast(`⏳ Gemini (${model}) квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
           await new Promise(r => setTimeout(r, waitMs));
           lastError = new Error("Gemini API грешка: " + t);

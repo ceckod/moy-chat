@@ -56,9 +56,54 @@ async function getOpenRouterFreeModels(forceRefresh = false) {
   }
 }
 
-// Единично извикване + fallback между безплатните модели (ако единият е
-// временно претоварен/недостъпен — при безплатните модели това се случва
-// по-често, тъй като споделят обща опашка между всички потребители).
+// Единично извикване към КОНКРЕТЕН OpenRouter модел (със същия вграден
+// max_tokens retry за отрязани отговори, който има Claude — виж
+// js/providers/claude.js/_callClaudeSingle). Безплатните ("":free"")
+// модели режат по средата на изречение МНОГО по-често от Claude/Gemini,
+// защото реалният им output бюджет често е по-малък от заявения
+// max_tokens — затова "finish_reason === length" тук е важна проверка,
+// не само отсъствие на текст. Само 1 повторен опит, за да не увисне.
+async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry = false) {
+  const res = await fetchTimeout(proxied("https://openrouter.ai/api/v1/chat/completions"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      // Препоръчани от OpenRouter (не задължителни) — за статистика в техния dashboard.
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "AI Music Suite - CD-B Records Dashboard"
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] })
+  }, 60000);
+
+  if (!res.ok) {
+    const t = await res.text();
+    const err = new Error("OpenRouter API грешка: " + t);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const choice = data.choices?.[0];
+  const text = choice?.message?.content;
+  if (!text) throw new Error("OpenRouter не върна съдържание в отговора");
+
+  if (choice.finish_reason === "length" && !_isRetry) {
+    return _callOpenRouterSingle(model, prompt, Math.min(maxTokens * 2, 4000), apiKey, true);
+  }
+  if (choice.finish_reason === "length" && _isRetry) {
+    // Дори с двоен бюджет пак е отрязан — този безплатен модел реално не
+    // може да поеме тази заявка. По-добре да гръмне ясно и да падне на
+    // СЛЕДВАЩИЯ безплатен модел (виж callOpenRouter по-долу), отколкото
+    // да върнем недовършено изречение като че ли е готов резултат.
+    throw new Error(`OpenRouter "${model}" отряза отговора дори след двоен лимит — вероятно твърде малък context за тази заявка`);
+  }
+  return text.trim();
+}
+
+// Fallback между безплатните модели (ако единият е временно
+// претоварен/недостъпен, или реже отговорите — виж _callOpenRouterSingle
+// по-горе — при безплатните модели това се случва по-често, тъй като
+// споделят обща опашка/по-малък бюджет между всички потребители).
 async function callOpenRouter(prompt, maxTokens = 900) {
   const k = Keys.load();
   if (!k.openrouterKey) { toast("⚠️ Липсва OpenRouter API ключ (виж Настройки)"); throw new Error("no key"); }
@@ -68,37 +113,19 @@ async function callOpenRouter(prompt, maxTokens = 900) {
   for (let m = 0; m < models.length; m++) {
     const model = models[m];
     try {
-      const res = await fetchTimeout(proxied("https://openrouter.ai/api/v1/chat/completions"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${k.openrouterKey}`,
-          // Препоръчани от OpenRouter (не задължителни) — за статистика в техния dashboard.
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "AI Music Suite - CD-B Records Dashboard"
-        },
-        body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] })
-      }, 60000);
-
-      if (!res.ok) {
-        const t = await res.text();
-        const err = new Error("OpenRouter API грешка: " + t);
-        err.status = res.status;
-        throw err;
-      }
-      const data = await res.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new Error("OpenRouter не върна съдържание в отговора");
-
+      const text = await _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey);
       AICallLog.record({ provider: "openrouter", model, ok: true });
       QuotaTracker.record("openrouter", model);
-      return text.trim();
+      return text;
     } catch (e) {
       lastError = e;
       AICallLog.record({ provider: "openrouter", model, ok: false, note: (e.message || "").slice(0, 140) });
-      // 429/503 = претоварен безплатен модел точно сега — пробвай следващия.
-      if ((e.status === 429 || e.status === 503) && m < models.length - 1) {
-        toast(`⚠️ OpenRouter "${model}" претоварен — превключвам на "${models[m + 1]}"...`, 4000);
+      // 429/503 = претоварен безплатен модел; без status = отрязан отговор
+      // дори след двоен лимит (виж _callOpenRouterSingle) — и в двата
+      // случая има смисъл да пробваме следващия безплатен модел.
+      const isRetryable = e.status === 429 || e.status === 503 || !e.status;
+      if (isRetryable && m < models.length - 1) {
+        toast(`⚠️ OpenRouter "${model}" не се справи — превключвам на "${models[m + 1]}"...`, 4000);
         continue;
       }
       throw e;
