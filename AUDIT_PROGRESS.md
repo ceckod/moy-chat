@@ -32,7 +32,7 @@
 | 6 | Unit тестове върху вече изолирани чисти функции | ✅ | `js/network.js` (8 теста) + `Storage`/`Keys`/`Vault` от `app.js` (17 теста) — общо 25/25 минали |
 | 6.1 (ново, открито) | Поправка на счупени пътища в тестовата инфраструктура | ✅ | При качването на 2026-08-08 файловата структура на `test/`/`helpers/` не съвпадаше с вътрешните пътища в кода — виж запис по-долу |
 | 6.2 (ново) | GitHub Actions workflow за автоматично пускане на тестовете | ✅ | `run-tests.yml` — пуска `npm test` при всеки push/PR, по модела на `daily-stats.yml` |
-| 7 | Общ retry/fallback helper за providers | ⬜ | Най-високо внимание — пази нюансите между Claude/Gemini/OpenRouter |
+| 7 | Общ retry/fallback helper за providers | ✅ | Нов `js/providers/fallback-loop.js` — виж запис по-долу |
 | 8 | По-нататъшно разбиване на `app.js` (по namespace обект, едно на итерация) | ⬜ | |
 
 ---
@@ -83,6 +83,16 @@
 - **Действие:** добавен нов файл `.github/workflows/run-tests.yml` — пуска `npm test` при всеки push/PR/ръчно (workflow_dispatch), по същия модел като съществуващите `daily-stats.yml`/`daily-trends.yml`.
 - **Защо:** работният процес е през GitHub (без локален Node/Git), затова автоматична проверка при push замества нуждата от ръчно пускане на тестове.
 - **Риск:** нулев — нов файл, не пипа съществуващи workflow-и или код.
+
+### [Стъпка 7] Общ retry/fallback helper за providers
+- **Анализ преди промяна:** и трите provider файла (`claude.js`, `gemini.js`, `openrouter.js`) вече имаха собствено, почти идентично копие на цикъла "пробвай моделите по ред, при грешка провери дали да превключиш на следващия" — с истински разлики само в кои HTTP кодове означават "смени модела" и дали има вътрешен retry (Gemini прави 1 кратък retry с backoff при 429, Claude/OpenRouter нямат такъв на това ниво).
+- **Действие:** нов файл `js/providers/fallback-loop.js` с генерична `runModelFallbackLoop(models, attemptFn, opts)` — цикълът НЕ решава сам кои грешки значат "смени модела"; всичко се решава от provider-специфична `classify(error, model, retries)` функция, подадена от съответния `providers/*.js`.
+  - `claude.js` — добавена `_classifyClaudeError()` (429/529 → next, друго → abort), `callClaude()` пренаписана да ползва `runModelFallbackLoop`. `_callClaudeSingle`/`getClaudeModelList` непипнати.
+  - `openrouter.js` — добавена `_classifyOpenRouterError()` (429/503/400/без-status → next, друго → abort), `callOpenRouter()` пренаписана. `_callOpenRouterSingle`/`getOpenRouterFreeModels` непипнати.
+  - `gemini.js` — единичното извикване е извадено в нова `_callGeminiSingle()` (преди беше inline в цикъла), добавена `_classifyGeminiError()`, която пази ТРИТЕ отделни нюанса от оригинала: мрежова/timeout грешка → тих преход към следващия модел (БЕЗ лог/toast/премахване от ростъра — точно както преди), 429 → 1 кратък retry с 1.5с изчакване после next, 404 → next + чисти кеша на списъка с модели. `callGeminiWithFallback()` пренаписана да ползва `runModelFallbackLoop` с `maxRetriesPerModel: 1`.
+  - `index.html` — добавен `<script src="js/providers/fallback-loop.js">` преди provider файловете.
+- **Тестове:** нов `test/providers-fallback.test.mjs` (15 теста) + `test/load-provider.mjs` (loader helper) — покриват generic цикъла (success/abort/next/retry/log:false пътищата) И трите `classify*Error` функции поотделно (включително Gemini retry-изчерпване, 404 cache-clear, тих мрежов преход), плюс 1 интеграционен тест на `callClaude` с мокнат `fetchTimeout` (429 на първия модел → превключва на втория). Общо `npm test` → **40/40 минали**.
+- **Проверка:** `md5sum app.js js/network.js` преди/след — **идентични**, само `providers/*.js` + `index.html` (1 ред) пипнати умишлено.
 
 ---
 
