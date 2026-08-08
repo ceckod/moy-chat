@@ -563,11 +563,29 @@ const Settings = {
         <div class="row">
           <button class="btn ghost" onclick="AuthGate.lockNow(); toast('🔒 Заключено — презареди страницата.')">🔒 Заключи сега</button>
         </div>
-        <p class="muted" style="margin:10px 0 6px;">Изключване на защитата:</p>
+        <p class="muted" style="margin:16px 0 6px;">📱 <strong>Биометрия (пръстов отпечатък / Face ID)</strong> — по избор, бърз път ВМЕСТО парола на lock screen-а. Важи само за <strong>това устройство/браузър</strong> — не се пренася на друг телефон/лаптоп, там пак ще трябва потребител+парола. Паролата винаги остава работещ резервен вариант.</p>
+        ${AuthGate.bioRegistered()
+          ? `<button class="btn ghost" onclick="Settings.authGateBioForget()">🗑️ Премахни биометрията от това устройство</button>`
+          : `<button class="btn ghost" onclick="Settings.authGateBioRegister()">👆 Регистрирай биометрия на това устройство</button>`}
+        <p class="muted" style="margin:16px 0 6px;">Изключване на защитата:</p>
         <input type="text" id="gate_user_disable" placeholder="Текущ потребител" autocomplete="username">
         <input type="password" id="gate_pass_disable" placeholder="Текуща парола, за да изключиш" style="margin-top:8px;">
         <button class="btn ghost" style="margin-top:10px;" onclick="Settings.authGateDisable()">🔓 Изключи защитата</button>`;
     }
+  },
+
+  async authGateBioRegister() {
+    try {
+      await AuthGate.bioRegister();
+      toast("👆 Биометрията е регистрирана на това устройство");
+      this.renderAuthGateUI();
+    } catch (e) { toast("❌ " + e.message); }
+  },
+
+  authGateBioForget() {
+    AuthGate.bioForget();
+    toast("🗑️ Биометрията е премахната от това устройство");
+    this.renderAuthGateUI();
   },
 
   async authGateSetup() {

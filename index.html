@@ -14,8 +14,30 @@
 // Ако няма зададена парола (никога не е активирана) ИЛИ вече е отключено
 // в тази сесия (sessionStorage — важи докато е отворен табът), показваме
 // dashboard-а веднага. Виж js/auth-gate.js за реалната логика на паролата.
+//
+// ---------- РЕСЕТ НА ЗАКЛЮЧЕНАТА КЛЮЧАЛКА ОТ АДРЕСНАТА ЛЕНТА (телефон) ----------
+// На телефон няма лесен достъп до DevTools конзолата (виж README), а
+// "Изчисти всички данни" на сайта трие ВСИЧКО (проекти, API ключове...),
+// не само ключалката — прекалено грубо за нещо толкова тясно. Затова:
+// ?resetGate=1 в края на адреса + потвърждение (window.confirm) трие
+// САМО записа на ключалката (cdb_auth_gate_hash_v1), нищо друго. Не е
+// бутон в интерфейса (не се вижда, нито се разчита случайно) — трябва
+// изрично да знаеш и да напишеш параметъра сам, което е същият праг като
+// DevTools варианта, само че достъпен и от телефон. Виж README "Известни
+// ограничения" — честната рамка си остава същата: privacy screen, не
+// сървърна защита.
 (function(){
   try {
+    var params = new URLSearchParams(location.search);
+    if (params.has('resetGate')) {
+      if (window.confirm('Да изтрия ли ключалката (потребител+парола)? Останалите ти данни (проекти, API ключове) НЯМА да се пипнат.')) {
+        localStorage.removeItem('cdb_auth_gate_hash_v1');
+        sessionStorage.removeItem('cdb_auth_gate_unlocked_v1');
+      }
+      params.delete('resetGate');
+      var cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+      history.replaceState(null, '', cleanUrl);
+    }
     var hash = localStorage.getItem('cdb_auth_gate_hash_v1');
     var unlocked = sessionStorage.getItem('cdb_auth_gate_unlocked_v1') === '1';
     if (!hash || unlocked) document.documentElement.classList.add('gate-unlocked');
@@ -323,6 +345,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <input type="text" id="authGateUnlockUser" placeholder="Потребител" autocomplete="username" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter') document.getElementById('authGateUnlockPass').focus()">
     <input type="password" id="authGateUnlockPass" placeholder="Парола" autocomplete="current-password" onkeydown="if(event.key==='Enter') AuthGate.unlock()">
     <button class="btn grad" style="margin-top:14px;width:100%;" onclick="AuthGate.unlock()">🔓 Отключи</button>
+    <button class="btn ghost" style="margin-top:8px;width:100%;" onclick="AuthGate.bioUnlockClick()">👆 Отключи с биометрия</button>
     <div id="authGateError" class="muted" style="margin-top:10px;color:var(--red);"></div>
   </div>
 </div>
