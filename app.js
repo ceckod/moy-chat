@@ -802,20 +802,38 @@ const Settings = {
 
     lines.push("YouTube OAuth Client ID: проверява се само при 🔑 Вход с Google в Стъпка 3");
 
-    // OpenRouter — трети AI "агент" (безплатен tier). Тества с реален
-    // безплатен модел, връщан от getOpenRouterFreeModels().
+    // OpenRouter — трети AI "агент" (безплатен tier). Пробва РЕАЛНИТЕ
+    // безплатни модели по ред (не само models[0]) и хваща ПЪРВИЯ, който
+    // реално отговори — същия принцип като Claude/Gemini по-горе. max_tokens
+    // нарочно 16, не 5: някои безплатни модели, рутирани през Google AI
+    // Studio, връщат 400 INVALID_ARGUMENT при твърде малък бюджет
+    // (недостатъчен за вътрешния им "thinking" стъп) — не значи, че моделът
+    // не работи, само че тестовата заявка е била прекалено оскъдна.
     if (!k.openrouterKey) lines.push("OpenRouter: ⚪ няма ключ");
     else {
       try {
-        const models = await getOpenRouterFreeModels(true);
-        const testModel = models[0];
-        const r = await fetchTimeout("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${k.openrouterKey}` },
-          body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
-        });
-        if (r.ok) providerOk.openrouter = true;
-        lines.push(r.ok ? `OpenRouter: ✅ работи (${testModel})` : `OpenRouter: ❌ ${r.status}`);
+        const models = AICallLog.sortByReliability("openrouter", await getOpenRouterFreeModels(true));
+        let found = null;
+        const attempts = [];
+        for (const testModel of models.slice(0, 8)) {
+          try {
+            const r = await fetchTimeout("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${k.openrouterKey}` },
+              body: JSON.stringify({ model: testModel, max_tokens: 16, messages: [{ role: "user", content: "hi" }] })
+            });
+            if (r.ok) { found = testModel; AICallLog.record({ provider: "openrouter", model: testModel, ok: true, note: "тест" }); break; }
+            const body = await r.text();
+            attempts.push(`${testModel} → ❌ ${r.status} ${body.slice(0, 120)}`);
+            AICallLog.record({ provider: "openrouter", model: testModel, ok: false, note: "тест: HTTP " + r.status });
+          } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
+        }
+        if (found) {
+          providerOk.openrouter = true;
+          lines.push(`OpenRouter: ✅ работи (${found})`);
+        } else {
+          lines.push("OpenRouter: ❌ нито един модел от списъка не отговори" + (attempts.length ? "\n   " + attempts.join("\n   ") : ""));
+        }
       } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
     }
 
