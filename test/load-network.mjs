@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const NETWORK_JS_PATH = path.join(__dirname, "..", "..", "js", "network.js");
+const NETWORK_JS_PATH = path.join(__dirname, "..", "js", "network.js");
 
 /**
  * Зарежда js/network.js БЕЗ да го променя — изпълнява оригиналния текст на

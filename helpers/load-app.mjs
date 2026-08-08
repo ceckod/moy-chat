@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { webcrypto } from "node:crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const APP_JS_PATH = path.join(__dirname, "..", "..", "app.js");
+const APP_JS_PATH = path.join(__dirname, "..", "app.js");
 
 /**
  * Проста in-memory реализация на localStorage (Web Storage интерфейс),

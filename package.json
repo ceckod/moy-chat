@@ -3,7 +3,7 @@
   "private": true,
   "description": "Само тестова обвивка (node:test, вграден в Node — без npm зависимости). Не пипа/не bundle-ва сайта — index.html/app.js продължават да работят точно както преди, без build стъпка.",
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test test/*.test.mjs vault-keys.test.mjs"
   },
   "engines": {
     "node": ">=18"

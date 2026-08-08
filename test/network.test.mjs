@@ -1,14 +1,14 @@
 // Unit тестове за js/network.js (fetchTimeout, proxied).
 //
 // НЕ пипат оригиналния файл — зареждат го непроменен през
-// tests/helpers/load-network.mjs (виж коментарите там).
+// test/load-network.mjs (виж коментарите там).
 //
-// Пускане: node --test tests/
+// Пускане: npm test
 // (ползва вградения node:test runner — Node 18+, без npm install)
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { loadNetworkModule } from "./helpers/load-network.mjs";
+import { loadNetworkModule } from "./load-network.mjs";
 
 describe("proxied()", () => {
   test("връща оригиналния URL непроменен, когато няма зададен proxyUrl", () => {
