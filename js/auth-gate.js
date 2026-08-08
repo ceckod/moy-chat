@@ -84,6 +84,7 @@ const AuthGate = {
       if (hashB64 === hash) {
         sessionStorage.setItem(AUTH_GATE_SESSION_KEY, "1");
         document.documentElement.classList.add("gate-unlocked");
+        if (typeof AgentRoster !== "undefined") AgentRoster.maybeShowGate();
       } else if (errEl) {
         errEl.textContent = "❌ Грешен потребител или парола.";
       }
@@ -193,6 +194,7 @@ Object.assign(AuthGate, {
     if (!assertion) throw new Error("Отключването беше отказано");
     sessionStorage.setItem(AUTH_GATE_SESSION_KEY, "1");
     document.documentElement.classList.add("gate-unlocked");
+    if (typeof AgentRoster !== "undefined") AgentRoster.maybeShowGate();
   },
 
   // Обвивка за бутона на lock screen-а — превръща грешките в четим текст
