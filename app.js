@@ -240,6 +240,28 @@ const ModelPref = {
 };
 
 /* =========================================================
+   AI PROVIDER ORDER — в КАКЪВ РЕД да се пробват Claude/Gemini/OpenRouter
+   за ВСЯКО място в приложението, което "иска AI" (виж callAI() по-долу).
+   Попълва се автоматично от Settings.testKeys(): провайдърите, които
+   РЕАЛНО отговориха при последния тест, отиват най-отпред (в реда, в
+   който бяха тествани); тези с ключ, но провалени — след тях; провайдър
+   без зареден ключ изобщо не участва. callAI() минава по този ред и при
+   грешка на текущия автоматично пробва следващия, вместо да спре дотук.
+   Ръчният избор в Настройки → Предпочитания ("AI за генериране на
+   съдържание") просто бута избрания provider на ПЪРВО място в тази
+   поредица — не я заменя изцяло, за да остане fallback-ът жив.
+   ========================================================= */
+const AI_PROVIDER_ORDER_KEY = "cdb_ai_provider_order_v1";
+
+const AIProviderOrder = {
+  get() {
+    try { return Storage.get(AI_PROVIDER_ORDER_KEY) || []; } catch (e) { return []; }
+  },
+  set(order) { Storage.set(AI_PROVIDER_ORDER_KEY, order); },
+  label(p) { return p === "claude" ? "Claude" : p === "gemini" ? "Gemini" : p === "openrouter" ? "OpenRouter" : p; }
+};
+
+/* =========================================================
    AI CALL LOG — диагностичен лог кой provider/модел РЕАЛНО е
    отговорил на всяко извикване (и кои опити са гръмнали по пътя).
    Полезно е за да се вижда напр. "Gemini flash-lite гръмна → падна на
@@ -473,7 +495,8 @@ const Nav = {
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
-    if (id === "system-test") { SystemTest.renderHistory(); SystemTest.renderIdeaBacklog(); }
+    if (id === "system-test") { SystemTest.renderHistory(); }
+    if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
@@ -690,6 +713,9 @@ const Settings = {
       ghToken: document.getElementById("key_github_token")?.value.trim(),
     };
     const lines = [];
+    // Кой provider РЕАЛНО отговори при този тест — влиза в AIProviderOrder
+    // накрая, за да стане новият ред по подразбиране за callAI() навсякъде.
+    const providerOk = { claude: false, gemini: false, openrouter: false };
 
     // Claude — пробва моделите от fallback списъка ПО РЕД (не само models[0])
     // и хваща ПЪРВИЯ, който реално отговори успешно. Той автоматично става
@@ -723,6 +749,7 @@ const Settings = {
           } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
         }
         if (found) {
+          providerOk.claude = true;
           ModelPref.set("claude", found, "auto");
           lines.push(`Claude: ✅ работи (${found}) — зададен като модел по подразбиране`);
         } else {
@@ -754,6 +781,7 @@ const Settings = {
           } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
         }
         if (found) {
+          providerOk.gemini = true;
           ModelPref.set("gemini", found, "auto");
           lines.push(`Gemini: ✅ работи (${found}) — зададен като модел по подразбиране`);
         } else {
@@ -785,6 +813,7 @@ const Settings = {
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${k.openrouterKey}` },
           body: JSON.stringify({ model: testModel, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
         });
+        if (r.ok) providerOk.openrouter = true;
         lines.push(r.ok ? `OpenRouter: ✅ работи (${testModel})` : `OpenRouter: ❌ ${r.status}`);
       } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
     }
@@ -822,6 +851,18 @@ const Settings = {
           lines.push(`GitHub Token: ❌ ${r.status}`);
         }
       } catch (e) { lines.push("GitHub Token: ❌ " + e.message); }
+    }
+
+    // AI PROVIDER ORDER — редът, в който callAI() ще пробва провайдърите
+    // ВСЯКЪДЕ в приложението, докато не се пусне нов тест. Успешните тук
+    // отиват най-отпред (в тествания ред: Claude → Gemini → OpenRouter),
+    // провалените (но с ключ) остават след тях като последен резерв —
+    // никога не се изключват напълно, само отиват най-накрая.
+    const testedOrder = ["claude", "gemini", "openrouter"];
+    const newProviderOrder = [...testedOrder.filter(p => providerOk[p]), ...testedOrder.filter(p => !providerOk[p] && k[p === "openrouter" ? "openrouterKey" : p])];
+    AIProviderOrder.set(newProviderOrder);
+    if (newProviderOrder.length) {
+      lines.push(`🔄 AI ред по подразбиране (навсякъде в таблото): ${newProviderOrder.map(AIProviderOrder.label).join(" → ")}`);
     }
 
     out.textContent = lines.join("\n");
@@ -891,7 +932,11 @@ const Settings = {
       const src = pref.source === "manual" ? "ръчно избран" : "хванат при тест";
       return `${pref.model} (${src})`;
     };
-    el.textContent = `Claude по подразбиране: ${label("claude")}\nGemini по подразбиране: ${label("gemini")}`;
+    const order = AIProviderOrder.get();
+    const orderLine = order.length
+      ? `\n\nAI ред по подразбиране (навсякъде в таблото): ${order.map(AIProviderOrder.label).join(" → ")}${Prefs.data.contentProvider && Prefs.data.contentProvider !== "auto" ? ` (ръчно закачен отпред: ${AIProviderOrder.label(Prefs.data.contentProvider)})` : ""}`
+      : "\n\nAI ред по подразбиране: все още не е тестван — пусни \"🧪 Тествай ключовете\" по-горе.";
+    el.textContent = `Claude по подразбиране: ${label("claude")}\nGemini по подразбиране: ${label("gemini")}${orderLine}`;
   },
 
   // Показва РЕАЛНИЯ списък модели, достъпни за твоя Gemini ключ — директно на екрана
@@ -1126,34 +1171,56 @@ const ProjectArchive = {
    ========================================================= */
 
 /* =========================================================
-   CALL AI — единна точка за генериране на съдържание (Стъпка 1-3).
-   Избира Claude или Gemini според Prefs.data.contentProvider
-   (превключвател горе вдясно / Настройки → Предпочитания).
-   Ако избраният провайдър гръмне грешка (напр. изчерпан Claude
-   абонамент/квота) И другият провайдър има зареден ключ, автоматично
-   пада на него вместо да чупи целия flow — с ясен toast, за да знаеш
-   какво реално те е генерирало съдържанието.
+   CALL AI — единна точка за генериране на съдържание (Стъпка 1-3 и
+   навсякъде другаде, където е нужен AI — Niche Toolkit, System Test и т.н.).
+
+   Реда, в който се пробват Claude / Gemini / OpenRouter, идва от
+   AIProviderOrder (виж по-горе) — попълва се автоматично от "🧪 Тествай
+   ключовете": кои реално отговориха при теста, в тестовия им ред. Ако
+   потребителят е избрал ръчно конкретен provider (Настройки →
+   Предпочитания → "AI за генериране на съдържание"), той просто отива
+   най-отпред, останалите пак стоят като fallback.
+
+   Ако провайдър гръмне грешка (изчерпана квота, невалиден ключ и т.н.),
+   автоматично пада на следващия в реда, вместо да чупи целия flow — с
+   ясен toast, за да знае потребителят кой реално е генерирал резултата.
+   Хвърля грешка само ако НИТО ЕДИН зареден provider не отговори.
+
    ЗАБЕЛЕЖКА: Gemini Validator-ът (autoReview и т.н.) НЕ минава през
    тази функция — той нарочно винаги е Gemini, като "втори, независим
    поглед" върху резултата, дори когато Gemini е и основният генератор.
    ========================================================= */
 async function callAI(prompt, maxTokens = 1200) {
   const k = Keys.load();
-  const provider = Prefs.data.contentProvider || "claude";
-  const other = provider === "claude" ? "gemini" : "claude";
-  const hasKey = { claude: !!k.claude, gemini: !!k.gemini };
+  const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey };
+  const run = { claude: () => callClaude(prompt, maxTokens), gemini: () => callGemini(prompt), openrouter: () => callOpenRouter(prompt, maxTokens) };
 
-  const run = (p) => p === "claude" ? callClaude(prompt, maxTokens) : callGemini(prompt);
-
-  try {
-    return await run(provider);
-  } catch (e) {
-    if (hasKey[other]) {
-      toast(`⚠️ ${provider === "claude" ? "Claude" : "Gemini"} гръмна (${e.message}) — превключвам на ${other === "claude" ? "Claude" : "Gemini"} за тази заявка...`, 4000);
-      return await run(other);
-    }
-    throw e;
+  // Ръчният избор (ако не е "auto") отива първи; после следва редът от
+  // последния реален тест; накрая всеки provider с ключ, който по някаква
+  // причина липсва от горните (напр. ключ, добавен след последния тест).
+  const manual = Prefs.data.contentProvider && Prefs.data.contentProvider !== "auto" ? Prefs.data.contentProvider : null;
+  const order = [];
+  const seen = new Set();
+  for (const p of [manual, ...AIProviderOrder.get(), "claude", "gemini", "openrouter"]) {
+    if (!p || seen.has(p) || !hasKey[p]) continue;
+    seen.add(p);
+    order.push(p);
   }
+
+  if (!order.length) throw new Error("Няма нито един зареден AI ключ (Claude/Gemini/OpenRouter) — виж Настройки → API Ключове.");
+
+  let lastErr = null;
+  for (let i = 0; i < order.length; i++) {
+    try {
+      return await run[order[i]]();
+    } catch (e) {
+      lastErr = e;
+      if (i < order.length - 1) {
+        toast(`⚠️ ${AIProviderOrder.label(order[i])} гръмна (${e.message}) — превключвам на ${AIProviderOrder.label(order[i + 1])}...`, 4000);
+      }
+    }
+  }
+  throw lastErr;
 }
 
 // Превръща File/Blob в base64 текст (без "data:...;base64," префикса) — нужно за inline_data.
@@ -2734,10 +2801,10 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
    ========================================================= */
 const PREFS_STORAGE = "cdb_dashboard_prefs_v1";
 const Prefs = {
-  data: { theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false },
+  data: { theme: "dark", healthCheck: true, contentProvider: "auto", autopilot: false },
   load() {
     const saved = Storage.get(PREFS_STORAGE);
-    this.data = saved ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "claude", autopilot: false }, saved) : this.data;
+    this.data = saved ? Object.assign({ theme: "dark", healthCheck: true, contentProvider: "auto", autopilot: false }, saved) : this.data;
   },
   save() {
     Storage.set(PREFS_STORAGE, this.data);
@@ -2770,11 +2837,11 @@ const Prefs = {
     });
   },
   setContentProvider(value) {
-    if (value !== "claude" && value !== "gemini") return;
+    if (!["auto", "claude", "gemini", "openrouter"].includes(value)) return;
     this.data.contentProvider = value;
     this.save();
     this.applyContentProvider();
-    toast(value === "claude" ? "✍️ Генериране на съдържание: Claude" : "✍️ Генериране на съдържание: Gemini");
+    toast(value === "auto" ? "🔄 Генериране на съдържание: автоматично (по резултата от последния тест на ключовете)" : `✍️ Генериране на съдържание: ${AIProviderOrder.label(value)}`);
   },
   applyAutopilotSwitch() {
     document.querySelectorAll("#autopilotSwitch").forEach(s => {

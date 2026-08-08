@@ -395,6 +395,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <div class="nav-group">
       <div class="nav-label">Диагностика</div>
       <button class="nav-btn" data-view="system-test" onclick="Nav.showView('system-test')"><span class="ic">🧪</span> Системен тест</button>
+      <button class="nav-btn" data-view="ai-ideas" onclick="Nav.showView('ai-ideas')"><span class="ic">🗂️</span> Архив на идеи от AI екипа</button>
     </div>
 
     <div class="nav-group">
@@ -445,9 +446,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         </div>
       </div>
       <div class="topbar-actions">
-        <select id="contentProviderSelectTop" title="Кой AI генерира съдържание (концепции/текстове/анализи)" style="width:auto;min-width:110px;" onchange="Prefs.setContentProvider(this.value)">
+        <select id="contentProviderSelectTop" title="Кой AI генерира съдържание (концепции/текстове/анализи) — 'Автоматично' следва реда от последното 'Тествай ключовете'" style="width:auto;min-width:110px;" onchange="Prefs.setContentProvider(this.value)">
+          <option value="auto">🔄 Автоматично</option>
           <option value="claude">✍️ Claude</option>
           <option value="gemini">✍️ Gemini</option>
+          <option value="openrouter">✍️ OpenRouter</option>
         </select>
         <div class="pill"><span class="dot-live" id="validatorStatusDot"></span> <span>Gemini Validator<br><strong id="validatorStatusText">Проверка...</strong></span></div>
         <button class="btn grad" onclick="Settings.newProject()">+ Нов проект</button>
@@ -892,10 +895,26 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="systemTestHistoryOut" style="margin-top:10px;"></div>
       </div>
 
-      <div class="card" style="margin-top:14px;">
+    </div>
+
+    <!-- ============ AI IDEAS ARCHIVE VIEW ============ -->
+    <div class="view" id="view-ai-ideas">
+      <div class="section-title">🗂️ Архив на идеи от AI екипа</div>
+      <div class="card">
         <strong>🗂️ Архив на идеи от AI екипа</strong>
-        <p class="muted">Всяко реално предложение (не грешка) от "🤖 Питай AI екипа" се записва тук автоматично. Маркирай кои си изградил — тогава AI екипът ги вижда като готови и няма да ги предлага пак.</p>
+        <p class="muted">Всяка отделна идея (не целия отговор наведнъж — всяко ЗАГЛАВИЕ+описание поотделно) от "🤖 Питай AI екипа" (Системен тест) се записва тук автоматично, с точното заглавие, което AI екипът ѝ е дал. Копирай заглавие+текст на идея и я подай на Claude/Claude Code, за да я изградите заедно. Щом е готова, маркирай я "✅ Изградено" тук — AI екипът ще вижда заглавието ѝ следващия път като вече готово и няма да я предлага пак.</p>
+        <input type="text" id="aiIdeaSearch" placeholder="🔎 Търси по заглавие..." style="margin-top:10px;" oninput="SystemTest.renderIdeaBacklog()">
         <div id="aiIdeaBacklogOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>➕ Добави / маркирай идея ръчно</strong>
+        <p class="muted">За идея, изградена извън тази конкретна инсталация (напр. предложена в друг разговор с Claude, или взета директно от README) — впиши ТОЧНОТО заглавие, с което искаш AI екипът да я разпознае занапред. Ако вече съществува запис със същото заглавие, само го маркира изграден вместо да го дублира.</p>
+        <label>Заглавие (точно като "Идея А" / реалното име)</label>
+        <input type="text" id="aiIdeaManualTitle" placeholder="напр. Hook Strength Score">
+        <label style="margin-top:8px;">Кратко описание (по избор)</label>
+        <textarea id="aiIdeaManualText" rows="2" placeholder="Какво прави функцията — 1-2 изречения"></textarea>
+        <button class="btn grad" style="margin-top:10px;" onclick="SystemTest.addManualIdea(document.getElementById('aiIdeaManualTitle').value, document.getElementById('aiIdeaManualText').value); document.getElementById('aiIdeaManualTitle').value=''; document.getElementById('aiIdeaManualText').value='';">✅ Добави като изградена</button>
       </div>
     </div>
 
@@ -1041,10 +1060,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div class="set-row"><div class="txt"><strong>Тъмна / Светла тема</strong><span>Превключи външния вид на цялото табло.</span></div><div class="switch" id="themeSwitch3" onclick="Prefs.toggleTheme()"><div class="knob"></div></div></div>
         <div class="set-row"><div class="txt"><strong>Проверка на ключовете при зареждане</strong><span>Тиха проверка дали някой ключ е "умрял" — предупреждение горе вместо грешка по средата на работа.</span></div><div class="switch on" id="healthSwitch2" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div></div>
         <div class="set-row">
-          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3). Ако избраният няма наличен ключ или гръмне грешка (напр. изчерпан Claude абонамент), автоматично пада на другия — ако има зареден ключ за него.</span></div>
+          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter), докато някой не отговори. Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
           <select id="contentProviderSelect" style="width:auto;min-width:140px;" onchange="Prefs.setContentProvider(this.value)">
+            <option value="auto">🔄 Автоматично (по теста)</option>
             <option value="claude">Claude</option>
             <option value="gemini">Gemini</option>
+            <option value="openrouter">OpenRouter</option>
           </select>
         </div>
         <div class="set-row"><div class="txt"><strong>🤖 Автопилот</strong><span>След като избере най-добрата ниша, автоматично продължава верижно към текст на песента + Viral Lab анализ — без да чакаш да натискаш всеки бутон поотделно. Изключен по подразбиране.</span></div><div class="switch" id="autopilotSwitch" onclick="Prefs.toggleAutopilot()"><div class="knob"></div></div></div>

@@ -106,24 +106,90 @@ const SystemTest = {
   _saveIdeas(list) {
     Storage.set(this._IDEAS_KEY, list.slice(0, this._IDEAS_MAX));
   },
+  // Разбива ЕДИН отговор на AI агент (текст с няколко предложения наведнъж)
+  // на отделни идеи, всяка със СВОЕ заглавие — вместо да пазим целия
+  // отговор като едно голямо "предложение" в архива. Заглавието е важно:
+  // по него потребителят по-късно разпознава коя идея е изградил, и по
+  // него AI екипът се научава кое вече е готово (виж askAgentPanelForIdeas).
+  // Очакван формат от prompt-а: всеки ред от нов номериран/точков елемент
+  // започва с **Заглавие** (удебелено), последвано от тире/двоеточие и
+  // описание — стандартен маркдаун стил, който повечето модели следват
+  // естествено, а тук допълнително им го изискваме изрично в prompt-а.
+  _splitIdeas(text) {
+    const markerRe = /^\s*(?:\d+[.)]|[-•*])\s*\*\*(.+?)\*\*/gm;
+    const marks = [...text.matchAll(markerRe)];
+    if (!marks.length) {
+      // Форматът не съвпадна (моделът не следва инструкцията) — по-добре
+      // една идея с разумно заглавие, отколкото нищо записано в архива.
+      const fallbackTitle = text.replace(/\s+/g, " ").trim().slice(0, 70) || "Идея";
+      return [{ title: fallbackTitle, body: text.trim() }];
+    }
+    const items = [];
+    for (let i = 0; i < marks.length; i++) {
+      const start = marks[i].index;
+      const end = i + 1 < marks.length ? marks[i + 1].index : text.length;
+      const title = marks[i][1].replace(/[:\-–—]+$/, "").trim();
+      const body = text.slice(start, end).trim();
+      if (title && body) items.push({ title, body });
+    }
+    return items.length ? items : [{ title: text.trim().slice(0, 70) || "Идея", body: text.trim() }];
+  },
+
   // Записва само РЕАЛНИ предложения (a.error е null) — не пълним архива с
-  // провалени/грешни отговори. Дедуплицира по (agent + идентичен текст),
-  // за да не се трупа едно и също предложение при всяко повторно пускане.
+  // провалени/грешни отговори. Всеки отговор се разбива на отделни идеи
+  // Общ нормализатор на заглавие, ползван и от _recordIdeas, и от ръчното
+  // добавяне по-долу — едно и също заглавие (без значение на главни/малки
+  // букви и излишни интервали) винаги сочи към ЕДИН и същ запис в архива.
+  _normTitle(s) { return (s || "").toLowerCase().replace(/\s+/g, " ").trim(); },
+
+  // (_splitIdeas), и всяка се дедуплицира по (agent + заглавие, без
+  // главни/малки букви и излишни интервали) — не по целия текст, за да
+  // разпознаваме една и съща идея дори при леко преформулирано описание.
   _recordIdeas(agentResults) {
     const list = this._loadIdeas();
     let added = 0;
     for (const a of agentResults) {
       if (a.error || !a.text) continue;
-      const dup = list.some(it => it.agent === a.agent && it.text === a.text);
-      if (dup) continue;
-      list.unshift({
-        id: `${Date.now()}_${a.agent}_${Math.random().toString(36).slice(2, 7)}`,
-        ts: Date.now(), agent: a.agent, label: a.label, text: a.text, built: false
-      });
-      added++;
+      for (const idea of this._splitIdeas(a.text)) {
+        const dup = list.some(it => it.agent === a.agent && this._normTitle(it.title) === this._normTitle(idea.title));
+        if (dup) continue;
+        list.unshift({
+          id: `${Date.now()}_${a.agent}_${Math.random().toString(36).slice(2, 7)}`,
+          ts: Date.now(), agent: a.agent, label: a.label, title: idea.title, text: idea.body, built: false
+        });
+        added++;
+      }
     }
     if (added) this._saveIdeas(list);
     return added;
+  },
+
+  // Ръчно добавяне/маркиране — за случаите, в които идеята НЕ е минала
+  // първо през "🤖 Питай AI екипа" в тази инсталация (напр. предложена в
+  // друг разговор с Claude, или вече записана в README, но архивът в
+  // browser localStorage е бил изчистен). Ако вече има запис със СЪЩОТО
+  // заглавие (без значение кой агент), просто го маркира изграден вместо
+  // да дублира; иначе създава нов, директно маркиран built:true — така
+  // веднага влиза в списъка "вече изградени", подаван на AI екипа.
+  addManualIdea(title, text) {
+    title = (title || "").trim();
+    if (!title) { toast("⚠️ Трябва заглавие (точно както искаш AI екипът да го разпознава)"); return; }
+    const list = this._loadIdeas();
+    const existing = list.find(it => this._normTitle(it.title) === this._normTitle(title));
+    if (existing) {
+      existing.built = true;
+      if (text && text.trim()) existing.text = text.trim();
+      this._saveIdeas(list);
+      toast(`✅ "${title}" вече е маркирана като изградена`);
+    } else {
+      list.unshift({
+        id: `${Date.now()}_manual_${Math.random().toString(36).slice(2, 7)}`,
+        ts: Date.now(), agent: "manual", label: "Ръчно добавена", title, text: (text || "").trim() || "(без описание)", built: true
+      });
+      this._saveIdeas(list);
+      toast(`✅ "${title}" добавена в архива като изградена`);
+    }
+    this.renderIdeaBacklog();
   },
   toggleIdeaBuilt(id) {
     const list = this._loadIdeas();
@@ -137,21 +203,34 @@ const SystemTest = {
     this._saveIdeas(this._loadIdeas().filter(i => i.id !== id));
     this.renderIdeaBacklog();
   },
+  // Заглавието е задължителен идентификатор за всяка нова идея (виж
+  // _splitIdeas); стари записи от преди тази версия може да го нямат —
+  // за тях просто показваме първите думи от текста вместо заглавие.
+  _titleOf(it) {
+    return it.title || (it.text || "").replace(/\s+/g, " ").trim().slice(0, 60) || "Идея";
+  },
+
   renderIdeaBacklog() {
     const el = document.getElementById("aiIdeaBacklogOut");
     if (!el) return;
     const list = this._loadIdeas();
     if (!list.length) {
-      el.innerHTML = `<p class="muted">Още няма записани предложения — пусни "🤖 Питай AI екипа за нови функции" по-горе; реалните идеи (не грешките) автоматично се записват тук.</p>`;
+      el.innerHTML = `<p class="muted">Още няма записани идеи — пусни "🤖 Питай AI екипа за нови функции" в Системен тест; всяка отделна идея (със заглавие) автоматично се записва тук.</p>`;
       return;
     }
+    const q = (document.getElementById("aiIdeaSearch")?.value || "").toLowerCase().trim();
+    const filtered = q ? list.filter(it => this._titleOf(it).toLowerCase().includes(q)) : list;
     const builtCount = list.filter(i => i.built).length;
-    const header = `<p class="muted" style="margin:0 0 10px;">${list.length} записани общо, ${builtCount} маркирани като изградени (AI екипът вече ги вижда като готови и не ги предлага пак).</p>`;
-    el.innerHTML = header + list.map(it => `
+    const header = `<p class="muted" style="margin:0 0 10px;">${list.length} записани общо, ${builtCount} маркирани като изградени (AI екипът вече вижда заглавията им като готови и не ги предлага пак)${q ? ` · ${filtered.length} съвпадат с търсенето` : ""}.</p>`;
+    if (!filtered.length) { el.innerHTML = header + `<p class="muted">Нищо не съвпада с "${this._esc(q)}".</p>`; return; }
+    el.innerHTML = header + filtered.map(it => `
       <div class="card tight" style="margin-top:8px;${it.built ? "opacity:.55;" : ""}">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span class="muted" style="font-size:11px;">🤖 ${this._esc(it.label)} · ${this._fmtDate(it.ts)}${it.built ? " · ✅ изградено" : ""}</span>
-          <div class="row" style="gap:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;">
+          <div>
+            <strong style="font-size:13.5px;">${it.built ? "✅ " : ""}${this._esc(this._titleOf(it))}</strong><br>
+            <span class="muted" style="font-size:11px;">🤖 ${this._esc(it.label)} · ${this._fmtDate(it.ts)}</span>
+          </div>
+          <div class="row" style="gap:6px;flex-shrink:0;">
             <button class="btn ghost sm" onclick="SystemTest.toggleIdeaBuilt('${it.id}')">${it.built ? "↩️ Върни в опашката" : "✅ Маркирай като изградено"}</button>
             <button class="btn ghost sm" onclick="SystemTest.deleteIdea('${it.id}')">🗑️</button>
           </div>
@@ -284,7 +363,7 @@ const SystemTest = {
     // Смок тест: проверява дали ключовите контейнери за всеки view съществуват
     // в DOM-а (те винаги стоят там, само се скриват/показват — виж Nav.showView).
     const ids = ["view-dashboard", "view-step1", "view-step2", "view-step3", "view-quick",
-      "view-niche-toolkit", "view-validator", "view-set-keys", "view-stats-tracker", "view-system-test"];
+      "view-niche-toolkit", "view-validator", "view-set-keys", "view-stats-tracker", "view-system-test", "view-ai-ideas"];
     const missing = ids.filter(id => !document.getElementById(id));
     return { name: "DOM структура (всички view контейнери)", status: missing.length ? "fail" : "ok",
       detail: missing.length ? `Липсват: ${missing.join(", ")}` : `Всички ${ids.length} проверени view-а присъстват` };
@@ -384,12 +463,12 @@ const SystemTest = {
     ].join(" ");
 
     // Идеи, които потребителят вече е маркирал като "изградени" в архива
-    // (виж _recordIdeas/toggleIdeaBuilt по-долу) — подават се на AI екипа,
-    // за да не предлага пак нещо вече готово. Орязваме всяка до ~240 символа,
-    // за да не наду промпта прекалено при голям архив.
+    // (виж _recordIdeas/toggleIdeaBuilt по-горе) — подават се на AI екипа
+    // по ЗАГЛАВИЕ (+ кратко резюме на описанието), за да не предлага пак
+    // нещо вече готово, дори преформулирано различно следващия път.
     const builtIdeas = this._loadIdeas().filter(i => i.built);
     const builtIdeasSummary = builtIdeas.length
-      ? builtIdeas.map(i => `- ${i.text.replace(/\s+/g, " ").slice(0, 240)}${i.text.length > 240 ? "…" : ""}`).join("\n")
+      ? builtIdeas.map(i => `- "${this._titleOf(i)}" — ${i.text.replace(/\s+/g, " ").slice(0, 140)}${i.text.length > 140 ? "…" : ""}`).join("\n")
       : "(потребителят още не е маркирал нищо от предишни предложения като изградено)";
 
     const prompt = `Ти си продуктов консултант за AI-базиран музикален dashboard (изцяло клиентско, статично уеб приложение — без сървър, всички AI/YouTube/Spotify извиквания стават директно от браузъра на потребителя).
@@ -403,7 +482,9 @@ ${builtIdeasSummary}
 РЕЗУЛТАТ ОТ ТОКУ-ЩО ПУСНАТ СИСТЕМЕН ТЕСТ НА ПРИЛОЖЕНИЕТО:
 ${resultsSummary}
 
-Задача: предложи 3-5 КОНКРЕТНИ нови функции или подобрения, които биха донесли реална стойност на независим музикален изпълнител/продуцент, който сам управлява releases. Приоритизирай по полезност. Ако резултатите от теста намекват за конкретен проблем (напр. нещо липсва/бавно/чупливо), включи и препоръка по темата. Кратко, на български, с маркирани точки (- ), без излишен увод.`;
+Задача: предложи 3-5 КОНКРЕТНИ нови функции или подобрения, които биха донесли реална стойност на независим музикален изпълнител/продуцент, който сам управлява releases. Приоритизирай по полезност. Ако резултатите от теста намекват за конкретен проблем (напр. нещо липсва/бавно/чупливо), включи и препоръка по темата.
+
+ФОРМАТ (ЗАДЪЛЖИТЕЛЕН): всяка идея на СВОЙ номериран ред, който започва с КРАТКО ЗАГЛАВИЕ в **удебелен** текст, после тире и описание — напр. "1. **Hook Strength Score** – кратко описание...". Заглавието е важно — по него потребителят ще разпознава коя идея е изградил, за да не му я предлагаш пак. Кратко, на български, без излишен увод.`;
 
     const settled = await Promise.allSettled(agents.map(a => a.run(prompt)));
     const agentResults = agents.map((a, i) => {
@@ -415,7 +496,7 @@ ${resultsSummary}
 
     const addedCount = this._recordIdeas(agentResults);
     const savedNote = addedCount
-      ? `<p class="muted" style="margin:0 0 10px;">💾 ${addedCount} нов${addedCount === 1 ? "о предложение записано" : "и предложения записани"} в архива по-долу.</p>`
+      ? `<p class="muted" style="margin:0 0 10px;">💾 ${addedCount} нов${addedCount === 1 ? "а идея записана" : "и идеи записани"} в <a href="#" onclick="Nav.showView('ai-ideas');return false;">🗂️ Архива на идеи</a> (с оригиналните им заглавия).</p>`
       : "";
 
     out.innerHTML = savedNote + agentResults.map(a => `
