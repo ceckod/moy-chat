@@ -47,7 +47,11 @@ async function scrapeHuggingFace() {
     while (queue.length) {
       const tag = queue.shift();
       try {
-        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
+        // inference_provider=all → само модели, РЕАЛНО обслужвани от поне един
+        // inference provider — без него връща и модели само за локално
+        // сваляне/инсталация, без работещ онлайн endpoint (виж
+        // https://huggingface.co/docs/inference-providers/hub-api#list-models).
+        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
         const r = await fetch(url);
         if (!r.ok) continue;
         const data = await r.json();
@@ -61,7 +65,7 @@ async function scrapeHuggingFace() {
             source: 'huggingface', id: m.id, name: m.id, provider: m.author || 'Hugging Face',
             category: tag, type: type, license: lic,
             link: 'https://huggingface.co/' + m.id, downloads: m.downloads || 0,
-            endpoint: type === 'embedding' ? 'https://router.huggingface.co/v1'
+            endpoint: (type === 'embedding' || type === 'chat') ? 'https://router.huggingface.co/v1'
                                           : 'https://api-inference.huggingface.co/models/' + m.id,
             auth: { type: 'bearer', key_env: 'HF_API_KEY', key_url: 'https://huggingface.co/settings/tokens', note: 'Безплатен месечен quota' },
             how_to_connect: type === 'chat'

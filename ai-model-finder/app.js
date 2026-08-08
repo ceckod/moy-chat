@@ -76,7 +76,12 @@ async function scrapeHuggingFace() {
     while (queue.length) {
       const tag = queue.shift();
       try {
-        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
+        // inference_provider=all → само модели, РЕАЛНО обслужвани от поне един
+        // inference provider (HF Inference, Groq, Together, Fireworks и т.н.) —
+        // без него /api/models връща и огромни модели, качени само за локално
+        // сваляне/инсталация, без работещ онлайн endpoint (виж
+        // https://huggingface.co/docs/inference-providers/hub-api#list-models).
+        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
         const r = await fetch(url);
         if (!r.ok) continue;
         const data = await r.json();
@@ -97,7 +102,7 @@ async function scrapeHuggingFace() {
             link: 'https://huggingface.co/' + m.id,
             downloads: m.downloads || 0,
             likes: m.likes || 0,
-            endpoint: type === 'embedding' ? HF_CHAT_BASE : HF_NATIVE + m.id,
+            endpoint: (type === 'embedding' || type === 'chat') ? HF_CHAT_BASE : HF_NATIVE + m.id,
             auth: { type: 'bearer', key_url: 'https://huggingface.co/settings/tokens', note: 'HF токен — безплатен месечен quota на Inference API' },
             how_to_connect: type === 'chat'
               ? 'Chat: base_url=' + HF_CHAT_BASE + ' (OpenAI-съвместим), модел: ' + m.id

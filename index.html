@@ -1047,7 +1047,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <input type="text" id="key_cf_account">
         <p class="muted" style="margin-top:6px;">И двете от <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">dash.cloudflare.com</a> — 10 000 neuroni/ден безплатно.</p>
         <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
-        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testModelFinderKeys()">🧪 Тествай ключовете</button>
+        <div id="modelFinderKeyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
         <hr style="margin:18px 0;">
         <p class="muted">
           Еднократна настройка на автоматичното нощно обновяване (по избор):
@@ -1300,6 +1301,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/openrouter.js"></script>
 <script src="js/providers/model-finder.js"></script>
 <script src="js/youtube.js"></script>
+<script src="js/system-log.js"></script>
 <script src="app.js"></script>
 <script src="js/auth-gate.js"></script>
 <script src="js/niche-toolkit.js"></script>

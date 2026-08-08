@@ -919,6 +919,37 @@ const Settings = {
     return lines;
   },
 
+  // Тества САМО 5-те AI Model Finder ключа (Groq/Mistral/GitHub Models/
+  // Cloudflare/Pollinations) и извежда резултата в #modelFinderKeyTestOut —
+  // за бутона "🧪 Тествай ключовете" във view "AI Model Finder".
+  // ЗАЩО отделна функция от testKeys(): testKeys() тества И Claude/Gemini/
+  // OpenRouter/YouTube/Spotify/GitHub Token, но пише резултата САМО в
+  // #keyTestOut, който живее във view "Настройки → API Ключове" — CSS-ът
+  // показва само .view.active (виж Nav.showView), затова докато потребителят
+  // стои във view "AI Model Finder", резултатът от testKeys() се пише в
+  // скрит елемент и изглежда все едно нищо не се случва при клик.
+  async testModelFinderKeys() {
+    const out = document.getElementById("modelFinderKeyTestOut");
+    if (!out) return;
+    out.textContent = "⏳ Тествам Groq/Mistral/GitHub Models/Cloudflare/Pollinations...";
+    const k = {
+      groqKey: document.getElementById("key_groq")?.value.trim(),
+      mistralKey: document.getElementById("key_mistral")?.value.trim(),
+      githubModelsToken: document.getElementById("key_github_models")?.value.trim(),
+      cfApiToken: document.getElementById("key_cf_token")?.value.trim(),
+      cfAccountId: document.getElementById("key_cf_account")?.value.trim(),
+    };
+    try {
+      const mf = await ModelFinder.testKeys(k);
+      out.textContent = mf.lines.join("\n");
+      if (mf.ok) toast("✅ Поне един AI Model Finder източник работи");
+      else toast("❌ Нито един източник не отговори — виж детайлите по-долу");
+    } catch (e) {
+      out.textContent = "❌ " + e.message;
+    }
+    return out.textContent;
+  },
+
   // API Health & Connectivity Dashboard — превръща суровите текстови редове
   // от testKeys() във визуални чипове с диагноза на КАТЕГОРИЯТА проблем
   // (невалиден ключ / изчерпана квота / грешни права / грешка на доставчика),
@@ -3040,38 +3071,6 @@ const Prefs = {
       const txt = document.getElementById("validatorStatusText");
       if (txt) txt.textContent = "Проверката е изключена";
     }
-  }
-};
-
-/* =========================================================
-   SYSTEM LOG — улавя JS грешки в реално време на сесията
-   ========================================================= */
-const SystemLog = {
-  entries: [],
-  init() {
-    window.addEventListener("error", (e) => {
-      this.push("error", `${e.message} (${e.filename}:${e.lineno})`);
-    });
-    window.addEventListener("unhandledrejection", (e) => {
-      this.push("error", "Unhandled promise rejection: " + (e.reason?.message || e.reason));
-    });
-    this.push("info", "Системата стартира нормално.");
-  },
-  push(level, msg) {
-    this.entries.unshift({ level, msg, time: new Date().toLocaleTimeString("bg-BG") });
-    this.entries = this.entries.slice(0, 50);
-    this.render();
-  },
-  clear() {
-    this.entries = [];
-    this.render();
-  },
-  render() {
-    const el = document.getElementById("systemLogOut");
-    if (!el) return;
-    if (!this.entries.length) { el.textContent = "Няма логове в тази сесия."; return; }
-    el.innerHTML = this.entries.map(e =>
-      `<div style="color:${e.level === 'error' ? 'var(--red)' : 'var(--muted)'};margin-bottom:4px;">[${e.time}] ${e.msg}</div>`).join("");
   }
 };
 

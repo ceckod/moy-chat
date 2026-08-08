@@ -33,7 +33,7 @@
 | 6.1 (ново, открито) | Поправка на счупени пътища в тестовата инфраструктура | ✅ | При качването на 2026-08-08 файловата структура на `test/`/`helpers/` не съвпадаше с вътрешните пътища в кода — виж запис по-долу |
 | 6.2 (ново) | GitHub Actions workflow за автоматично пускане на тестовете | ✅ | `run-tests.yml` — пуска `npm test` при всеки push/PR, по модела на `daily-stats.yml` |
 | 7 | Общ retry/fallback helper за providers | ✅ | Нов `js/providers/fallback-loop.js` — виж запис по-долу |
-| 8 | По-нататъшно разбиване на `app.js` (по namespace обект, едно на итерация) | ⬜ | |
+| 8 | По-нататъшно разбиване на `app.js` (по namespace обект, едно на итерация) | 🔵 | Първа итерация направена (`SystemLog` → `js/system-log.js`) — виж запис по-долу. Остават още ~21 namespace-а в `app.js`, следващият по ред (по нисък риск) е по твой избор при следващо продължение. |
 
 ---
 
@@ -122,6 +122,75 @@
   ключовете".
 
 ---
+
+### [Извън плана, по твоя заявка] AI Model Finder — 3 конкретни бъга, докладвани от теб
+- **Контекст:** докладвал си, че AI Model Finder "не работи коректно" — след
+  уточнение, три отделни проблема.
+- **Бъг 1 — HF скрейперът връщаше модели само за локална инсталация:**
+  `ai-model-finder/app.js` и `scraper.mjs` викаха
+  `huggingface.co/api/models?pipeline_tag=...` БЕЗ филтър за реално
+  обслужвани (online) модели — резултатът, сортиран по downloads, е
+  доминиран от огромни модели (Llama 405B и т.н.), качени само за сваляне,
+  без работещ inference endpoint. **Поправка:** добавен `&inference_provider=all`
+  към заявката и в двата файла — според официалната HF документация
+  (huggingface.co/docs/inference-providers/hub-api#list-models) това връща
+  само модели, обслужвани от поне един inference provider.
+- **Бъг 2 (открит при анализа, съпътстващ) — несъответствие endpoint/how_to_connect:**
+  за chat модели `endpoint` полето сочеше остарелия
+  `api-inference.huggingface.co/models/<id>`, докато `how_to_connect` текста
+  до него КАЗВАШЕ да се ползва `router.huggingface.co/v1` — двете си
+  противоречаха. Поправено и в двата файла: `endpoint` вече също сочи
+  router-а за chat модели (embeddings си бяха вече правилни).
+- **Бъг 3 — "Тествай ключовете" в AI Model Finder не показваше нищо:**
+  бутонът викаше глобалния `Settings.testKeys()` (тества И Claude/Gemini/
+  OpenRouter/YouTube/Spotify/GitHub Token), но той пише резултата САМО в
+  `#keyTestOut` — елемент, който живее във view "Настройки → API Ключове"
+  (`.view{display:none} .view.active{display:block}` — виж `Nav.showView`).
+  Докато потребителят стои във view "AI Model Finder", резултатът се пише в
+  скрит елемент → изглежда все едно нищо не се случва. **Поправка:** нова
+  `Settings.testModelFinderKeys()` в `app.js` — тества САМО 5-те Model Finder
+  ключа (вика вече съществуващия `ModelFinder.testKeys()`) и пише резултата
+  в нов `#modelFinderKeyTestOut` (добавен в `index.html`, веднага под бутона,
+  видим в същия view). Бутонът в `index.html` вече вика новата функция;
+  `Settings.testKeys()` и `#keyTestOut` останаха непипнати за view "Настройки".
+- **Пипнати файлове:** `ai-model-finder/app.js`, `ai-model-finder/scraper.mjs`
+  (само HF заявката + endpoint реда), `app.js` (нов метод в `Settings`,
+  съществуващият `testKeys()` непипнат), `index.html` (1 нов `<div>`, 1 сменен
+  `onclick`), `sw.js` (`CACHE_VERSION` → v24).
+- **Проверка:** `npm test` → **40/40 минали** (нито един съществуващ тест
+  пипнат). `node --check` чисто на всички засегнати `.js`/`.mjs` файлове.
+- **Забележка:** реалната HF заявка с `inference_provider=all` не може да се
+  провери оттук (няма мрежов достъп до huggingface.co в средата, в която
+  работя) — филтърът е по официалната HF документация; провери резултата
+  като отвориш AI Model Finder и натиснеш "Намери ми AI модели".
+
+### [Стъпка 8, първа итерация] `SystemLog` изваден в `js/system-log.js`
+- **Анализ преди промяна:** от 22-та останали top-level namespace-а в `app.js`
+  (`Storage`, `AppState`, `Vault`, `Keys`, `ModelPref`, `AIProviderOrder`,
+  `AICallLog`, `QuotaTracker`, `AICache`, `Nav`, `Settings`, `ProjectArchive`,
+  `GeminiValidator`, `LyricsHistory`, `Step1-4`, `ViralLab`, `HookArena`,
+  `GhostAudience`, `QuickUpload`, `Prefs`, `SystemLog`, `TrackRecord`, `Stats`),
+  `SystemLog` имаше най-малко външни връзки (grep потвърди само 2: извикването
+  `SystemLog.init()` в `app.js` вътре в `DOMContentLoaded` листенъра, и
+  `onclick="SystemLog.clear()"` в `index.html`) — най-безопасният кандидат за
+  първа итерация. `Settings` (738 реда, най-голям и най-заплетен — засяга
+  ключове/Vault/Model Finder/тестове) нарочно оставен за по-късно, като
+  най-рисковия namespace.
+- **Действие:** нов файл `js/system-log.js` — съдържанието на `SystemLog` е
+  преместено 1:1 (без промяна на логиката), с header коментар по модела на
+  вече извадените файлове (`network.js`, `agent-roster.js` и т.н.). Премахнат
+  от `app.js` (само тези редове, нищо друго). `index.html` — нов
+  `<script src="js/system-log.js">` ПРЕДИ `app.js` (редът е без значение тук,
+  защото `SystemLog.init()` се извиква вътре в `DOMContentLoaded`, не на
+  top-level, но следва установения ред "helpers преди app.js"). `sw.js` —
+  добавен в `SHELL_FILES` + `CACHE_VERSION` → v25.
+- **Проверка:** `npm test` → **40/40 минали**. `node --check` чисто на
+  `app.js` и новия `js/system-log.js`. `grep "SystemLog" app.js` → само 1 ред
+  останал (`SystemLog.init()`, очаквано). Брой `view`/`nav-btn` елементи в
+  `index.html` непроменен (19/19).
+- **Следваща итерация (при желание):** следващите по нисък риск кандидати са
+  `AppState`, `AICache`, `Prefs` или `QuotaTracker` (всеки под 80 реда, малко
+  външни връзки) — `Settings` последен, като най-рисков.
 
 ## Решения, взети от теб (2026-08-08)
 
