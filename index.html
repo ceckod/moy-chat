@@ -389,6 +389,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <div class="nav-group">
       <div class="nav-label">Инструменти</div>
       <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
+      <button class="nav-btn" data-view="release-roadmap" onclick="Nav.showView('release-roadmap')"><span class="ic">🗓️</span> Release Roadmap</button>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
     </div>
 
@@ -742,6 +743,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
+        <strong>15 · 🎬 Кратки видео сценарии (TikTok/Reels/Shorts)</strong>
+        <p class="muted">3 различни сценария за 15-30 сек промо клип (не hook-а на песента — визуалния/текстов hook на видеото), базирани на настроението на песента. Ползва вече генерирания текст/Viral Lab доклад, ако има такъв.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => Step3.generateShortFormScripts())">🎬 Генерирай сценарии</button>
+        <div id="shortFormScriptsOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
         <strong>Google вход</strong>
         <div class="chip amber g-auth-status" id="gAuthStatus">Не си вписан</div>
         <div id="gSignInBtn" class="g-signin-slot" style="margin-top:10px;"></div>
@@ -837,6 +845,22 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
+        <strong>💰 Приходна прогноза (Revenue Simulator)</strong>
+        <p class="muted">Груба ориентировъчна оценка на месечен приход при дадени стрийм/view числа — изцяло клиентска сметка, не изисква AI ключ. Не финансов съвет.</p>
+        <div class="row">
+          <div><label>Spotify стрийма/мес.</label><input type="number" id="revStreamsSpotify" min="0" value="0"></div>
+          <div><label>YouTube views/мес.</label><input type="number" id="revViewsYoutube" min="0" value="0"></div>
+        </div>
+        <label>TikTok views/мес. (Creator Fund)</label>
+        <input type="number" id="revViewsTiktok" min="0" value="0">
+        <div class="row" style="margin-top:12px;">
+          <button class="btn ghost" onclick="NicheToolkit.Revenue.prefillFromLastAnalysis()">🔄 Взимай от последния анализ</button>
+          <button class="btn grad" onclick="NicheToolkit.Revenue.calculate()">💰 Изчисли прогноза</button>
+        </div>
+        <div id="revOut" style="margin-top:4px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
         <strong>🎼 AI Промпт за Suno/Udio</strong>
         <p class="muted">Кратък, готов промпт (стил + BPM + инструменти + настроение) — през твоя вече настроен Claude/Gemini pipeline.</p>
         <div class="row">
@@ -876,6 +900,24 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <button class="btn grad" onclick="NicheToolkit.Playbook.build()">📅 Построй график</button>
         </div>
         <div id="ntPlaybookOut" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ RELEASE ROADMAP VIEW ============ -->
+    <div class="view" id="view-release-roadmap">
+      <div class="section-title">🗓️ Release Asset Roadmap</div>
+      <div class="card">
+        <strong>🗓️ Динамичен чек-лист по дата на пускане</strong>
+        <p class="muted">Разбива пътя от студио до промо в конкретни задачи, подредени спрямо избраната дата на пускане (не статичен списък) — обложка, DistroKid, Spotify/Apple текстове, YouTube A/B, short-form сценарии и Track Record. Прогресът се пази локално.</p>
+        <div class="row">
+          <div><label>Заглавие на песента</label><input type="text" id="rrTitle" placeholder="напр. Midnight Drive"></div>
+          <div><label>Дата на пускане</label><input type="date" id="rrDate"></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="ReleaseRoadmap.prefillTitle()">🔄 Вземи от текущия проект</button>
+          <button class="btn grad" onclick="ReleaseRoadmap.build()">🗓️ Построй/зареди roadmap</button>
+        </div>
+        <div id="rrOut" style="margin-top:14px;"></div>
       </div>
     </div>
 
@@ -959,6 +1001,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.refreshModelLists()">🔄 Обнови fallback списъците с модели</button>
         <div id="keyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+        <div id="keyHealthOut" style="margin-top:10px;"></div>
 
         <hr style="margin:18px 0;">
         <strong>🎯 Модел по подразбиране</strong>
@@ -1157,6 +1200,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="app.js"></script>
 <script src="js/auth-gate.js"></script>
 <script src="js/niche-toolkit.js"></script>
+<script src="js/release-roadmap.js"></script>
    <script src="scripts/clock-and-keys.js"></script>
    <script>
      // Регистрира Service Worker за offline достъп до дашборда (само

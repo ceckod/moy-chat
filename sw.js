@@ -15,7 +15,7 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v16";
+const CACHE_VERSION = "cdb-shell-v17";
 
 const SHELL_FILES = [
   "./",
@@ -31,6 +31,7 @@ const SHELL_FILES = [
   "./js/providers/openrouter.js",
   "./js/youtube.js",
   "./js/niche-toolkit.js",
+  "./js/release-roadmap.js",
   "./manifest.json",
   "./scripts/clock-and-keys.js"
 ];

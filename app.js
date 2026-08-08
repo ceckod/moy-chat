@@ -866,12 +866,46 @@ const Settings = {
     }
 
     out.textContent = lines.join("\n");
+    this.renderKeyHealth(lines);
     // Опресни падащите менюта и текущите "по подразбиране" модели, за да
     // се вижда веднага какво е хванал теста, без да се налага refresh.
     await this.populateModelDropdowns();
     this.renderModelPref();
     AICallLog.renderLeaderboard();
     return lines;
+  },
+
+  // API Health & Connectivity Dashboard — превръща суровите текстови редове
+  // от testKeys() във визуални чипове с диагноза на КАТЕГОРИЯТА проблем
+  // (невалиден ключ / изчерпана квота / грешни права / грешка на доставчика),
+  // вместо потребителят сам да чете суров HTTP статус/JSON тяло. Чисто
+  // клиентски parse на текста, който testKeys() вече е събрал — не прави
+  // нови мрежови заявки.
+  renderKeyHealth(lines) {
+    const el = document.getElementById("keyHealthOut");
+    if (!el) return;
+    // Всеки ред за конкретен provider започва с "Provider: ..." — редовете
+    // с продължение (напр. отделните опити по модел) са с водещ intent, не с "Provider:".
+    const providerLines = lines.filter(l => /^[A-Za-zА-Яа-я ]+:/.test(l.split("\n")[0]));
+
+    const diagnose = (text) => {
+      const t = text.toLowerCase();
+      if (/✅/.test(text)) return { label: "Работи", cls: "green" };
+      if (/⚪/.test(text)) return { label: "Няма ключ", cls: "amber" };
+      if (/401|invalid.*key|invalid x-api-key|unauthorized/.test(t)) return { label: "Невалиден ключ", cls: "red" };
+      if (/403|permission|forbidden|scope/.test(t)) return { label: "Забранен достъп / грешен scope", cls: "red" };
+      if (/429|quota|rate limit|credit balance|insufficient_quota/.test(t)) return { label: "Изчерпана квота/кредит", cls: "amber" };
+      if (/50\d/.test(t)) return { label: "Грешка от страна на доставчика", cls: "amber" };
+      return { label: "Провери детайлите по-долу", cls: "red" };
+    };
+
+    el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;">${
+      providerLines.map(l => {
+        const name = l.split(":")[0].trim();
+        const d = diagnose(l);
+        return `<span class="chip ${d.cls}"><span class="d"></span>${name}: ${d.label}</span>`;
+      }).join("")
+    }</div>`;
   },
 
   // ---------- Ръчен избор на модел (падащо меню в Настройки) ----------
@@ -2431,6 +2465,48 @@ ${variants.map((v, i) => `${i + 1}. "${v.title}"`).join("\n")}
     if (!v) return;
     document.getElementById("ytTitle").value = v.title;
     toast(`YouTube заглавие сменено на Вариант ${i + 1}`);
+  },
+
+  // 15 — Short-Form Viral Scripting Engine: НЕ песенния hook, а визуален/
+  // текстов hook за 15-30 сек TikTok/Reels/Shorts клип, за да превърне
+  // готовото аудио в промо видео идея (POV / behind-the-scenes / visual hook).
+  async generateShortFormScripts() {
+    const p = AppState.data.project;
+    if (!p.title) return toast("Първо генерирай концепция в Стъпка 1");
+    const el = document.getElementById("shortFormScriptsOut");
+    el.innerHTML = "⏳ Генерирам сценарии...";
+    // Взимаме emotional context от вече наличен Viral Lab доклад (ако има),
+    // иначе просто жанр+заглавие — не дублира самия текст на песента.
+    const emotionHint = p.viralReport?.emotional_impact?.summary
+      || p.viralReport?.chorus_analysis?.summary
+      || "";
+    const chorusLine = (p.lyrics || "").split("\n").find(l => l.trim().length > 0) || "";
+    const prompt = `За песен "${p.title}" в жанр "${p.chosenNiche || "pop"}"${emotionHint ? `, емоционален тон: ${emotionHint}` : ""}, генерирай 3 РАЗЛИЧНИ кратки видео сценария (15-30 сек, за TikTok/Reels/YouTube Shorts) за ПРОМОТИРАНЕ на песента — не текста на самата песен.
+Всеки сценарий трябва да е различен формат: 1) POV сценарий, 2) Behind-the-scenes/студио момент, 3) чист visual hook (силен кадър/текст overlay в първите 2 секунди).
+За всеки: format (кратко име), hook_line (какво се случва/пише се на екрана в първите 2 секунди — критично за задържане на вниманието), beats (масив от 3-4 кратки визуални стъпки/кадъра по време на клипа), caption (готов социален caption текст), hashtags (масив от 4-5 хаштага).
+Върни ЧИСТ JSON масив: [{"format":"...", "hook_line":"...", "beats":["...","..."], "caption":"...", "hashtags":["...","..."]}]`;
+    try {
+      const raw = await callAI(prompt, 1000);
+      const scripts = extractJson(raw);
+      AppState.data.project.shortFormScripts = scripts;
+      AppState.save();
+      el.innerHTML = scripts.map((s, i) => `
+        <div class="card tight" style="margin-top:${i === 0 ? 0 : 10}px;">
+          <strong>🎬 ${s.format}</strong>
+          <p style="margin-top:6px;"><strong>Първите 2 сек:</strong> ${s.hook_line}</p>
+          <ol style="margin:8px 0 0 18px;padding:0;font-size:13px;">${(s.beats || []).map(b => `<li>${b}</li>`).join("")}</ol>
+          <div class="copy-field" style="margin-top:8px;"><span id="sfs-cap-${i}">${s.caption}</span><button onclick="Step3._copyShortForm(${i}, 'caption')">📋</button></div>
+          <div class="copy-field" style="margin-top:6px;"><span id="sfs-tags-${i}">${(s.hashtags || []).join(" ")}</span><button onclick="Step3._copyShortForm(${i}, 'hashtags')">📋</button></div>
+        </div>`).join("");
+      GeminiValidator.autoReview("Стъпка 3 — Short-form видео сценарии", JSON.stringify(scripts));
+    } catch (e) {
+      el.innerHTML = "❌ " + e.message;
+    }
+  },
+  _copyShortForm(i, field) {
+    const id = field === "caption" ? `sfs-cap-${i}` : `sfs-tags-${i}`;
+    const text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(() => toast("Копирано ✅"));
   },
 
   // 14 — Бърза проверка за прилика със съществуваща песен (YouTube search)
