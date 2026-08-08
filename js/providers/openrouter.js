@@ -130,11 +130,13 @@ async function callOpenRouter(prompt, maxTokens = 900) {
       lastError = e;
       AICallLog.record({ provider: "openrouter", model, ok: false, note: (e.message || "").slice(0, 140) });
       // 429/503 = претоварен безплатен модел; без status = отрязан отговор
-      // дори след двоен лимит (виж _callOpenRouterSingle) — и в двата
-      // случая има смисъл да пробваме следващия безплатен модел, И да
-      // махнем текущия от днешния ростър ВЕДНАГА (не чака утрешното
-      // опресняване — виж AgentRoster.removeModel).
-      const isRetryable = e.status === 429 || e.status === 503 || !e.status;
+      // дори след двоен лимит (виж _callOpenRouterSingle); 400 = невалидна
+      // заявка КЪМ ТОЗИ КОНКРЕТЕН модел (чест случай при безплатни модели,
+      // рутирани през Google AI Studio — вътрешният "thinking" бюджет им
+      // трябва различни параметри) — не значи проблем с ключа/квотата,
+      // само че този модел не приема заявката както е подадена, затова има
+      // смисъл да пробваме следващия, вместо да спрем цялото извикване.
+      const isRetryable = e.status === 429 || e.status === 503 || e.status === 400 || !e.status;
       if (isRetryable && typeof AgentRoster !== "undefined") {
         AgentRoster.removeModel("openrouter", model, e.status ? ("HTTP " + e.status) : "отрязан отговор дори след двоен лимит");
       }
