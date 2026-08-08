@@ -422,6 +422,59 @@ const SystemTest = {
       <div id="systemTestIdeasOut" style="margin-top:14px;"></div>`;
   },
 
+  /* =========================================================
+     LIVE FEATURE INVENTORY — сканира РЕАЛНИЯ DOM (nav групи + всяко
+     card заглавие във всеки view), вместо ръчно поддържан текстов
+     списък. Решава конкретния проблем, установен на 2026-08-08: ръчно
+     писаният списък, подаван на AI екипа (по-долу в
+     askAgentPanelForIdeas), изостава зад реално добавените функции —
+     напр. вече изградени карти (Vault, Hook Evolution Arena, Revenue
+     Simulator, Release Roadmap) биваха предлагани пак от AI/външни
+     консултанти, защото четяха стар/непълен списък.
+
+     Тъй като чете директно от заредения index.html в момента на
+     извикване, НИКОГА не може да изостане — нова карта в интерфейса
+     автоматично се появява тук, без този файл да се пипа.
+     ========================================================= */
+  scanFeatureInventory() {
+    const groups = document.querySelectorAll(".nav-group");
+    const sections = [];
+    groups.forEach(g => {
+      const groupLabel = g.querySelector(".nav-label")?.textContent.trim() || "";
+      const items = [];
+      g.querySelectorAll(".nav-btn[data-view]").forEach(btn => {
+        const viewId = btn.getAttribute("data-view");
+        const navLabel = btn.textContent.trim();
+        const view = document.getElementById(`view-${viewId}`);
+        // Само СТАТИЧНИТЕ card заглавия, налични в HTML-а от самото начало
+        // (не динамично генерирано съдържание след клик — то не е "функция",
+        // а резултат от вече съществуваща функция, би било шум тук).
+        const cardTitles = view
+          ? Array.from(view.querySelectorAll(":scope > .card > strong")).map(s => s.textContent.trim()).filter(Boolean)
+          : [];
+        items.push(cardTitles.length ? `${navLabel} [${cardTitles.join(" · ")}]` : navLabel);
+      });
+      if (items.length) sections.push(`${groupLabel}:\n  ${items.join("\n  ")}`);
+    });
+    return sections.join("\n\n");
+  },
+
+  // Визуален preview + copy бутон — за да МОЖЕ потребителят да провери
+  // точно какво ще (или би могъл ръчно да подаде на външен AI консултант)
+  // се изпраща, вместо да се доверява сляпо. Ползва се и от
+  // askAgentPanelForIdeas() по-долу (същия scan, само рендерирано).
+  renderFeatureInventoryPreview() {
+    const el = document.getElementById("featureInventoryOut");
+    if (!el) return;
+    const text = this.scanFeatureInventory();
+    this._lastInventoryText = text;
+    el.innerHTML = `<textarea readonly style="min-height:220px;font-size:11.5px;">${text}</textarea>
+      <button class="btn ghost sm" style="margin-top:8px;" onclick="SystemTest._copyInventory()">📋 Копирай (за да го дадеш на външен AI консултант)</button>`;
+  },
+  _copyInventory() {
+    navigator.clipboard.writeText(this._lastInventoryText || "").then(() => toast("Копирано ✅"));
+  },
+
   /* ---------- AI ОДИТ: панел от НЯКОЛКО агента едновременно ----------
      Вика паралелно всеки provider, за който има зададен ключ (Claude,
      Gemini, OpenRouter — безплатен tier), със СЪЩИЯ prompt, и показва
@@ -448,19 +501,9 @@ const SystemTest = {
     out.innerHTML = `<p class="muted">🤖 Питам ${agents.length} AI агент${agents.length > 1 ? "а" : ""} паралелно (${agents.map(a => a.label).join(", ")})...</p>`;
 
     const resultsSummary = this._lastResults.map(r => `- [${r.status}] ${r.name}: ${r.detail}`).join("\n");
-    const featureInventory = [
-      "Стъпка 1: пазарен анализ (YouTube+AI niche score), Album Sprint, Hook Evolution Arena,",
-      "концепция, текст на песен (Claude), Viral Lab (AI Music Producer анализ), Ghost Audience",
-      "(синтетична фокус-група), Gemini Validator.",
-      "Стъпка 2: FX конфигурация + видео визуализатор.",
-      "Стъпка 3: обложка (Gemini/Nano Banana), DistroKid авто-попълване, Spotify/Apple артист текстове,",
-      "YouTube A/B заглавия, upload в YouTube (unlisted).",
-      "Бърз режим: качване на стара песен → авто видео → анализ → upload.",
-      "Niche Toolkit: Spotify+YouTube 'Profit Niche Score', AI промпт за Suno/Udio, AI структура на",
-      "текст, Release Playbook + CSV export.",
-      "Инфраструктура: дневен YouTube/trend tracker (GitHub Actions), Track Record (прогноза срещу",
-      "реалност), AI Call Log + класация по надеждност, Vault криптиране на ключове, offline PWA."
-    ].join(" ");
+    // Живо сканиран DOM inventory — виж scanFeatureInventory() по-горе —
+    // вместо предишния ръчно поддържан текст, който изоставаше.
+    const featureInventory = this.scanFeatureInventory();
 
     // Идеи, които потребителят вече е маркирал като "изградени" в архива
     // (виж _recordIdeas/toggleIdeaBuilt по-горе) — подават се на AI екипа
