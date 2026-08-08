@@ -415,6 +415,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
       <button class="nav-btn" data-view="release-roadmap" onclick="Nav.showView('release-roadmap')"><span class="ic">🗓️</span> Release Roadmap</button>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
+      <button class="nav-btn" data-view="model-finder" onclick="Nav.showView('model-finder')"><span class="ic">🧠</span> AI Model Finder</button>
     </div>
 
     <div class="nav-group">
@@ -1001,6 +1002,39 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ AI MODEL FINDER VIEW ============ -->
+    <div class="view" id="view-model-finder">
+      <div class="section-title">🧠 AI Model Finder</div>
+      <div class="card">
+        <p class="muted">
+          Отделен скрапер (обединен в това repo на 2026-08-08), който всяка нощ
+          (GitHub Actions, 03:00 UTC) обхожда Hugging Face, OpenRouter, Gemini,
+          Groq, Mistral, Cloudflare Workers AI, GitHub Models, Pollinations и
+          Jina и генерира <code>ai-model-finder/ai-models.json</code> —
+          готов списък с безплатни AI модели, endpoint-и и инструкции за
+          връзка. Не заменя Claude/Gemini/OpenRouter по-горе — това е
+          самостоятелен, допълнителен инструмент за откриване на нови
+          безплатни опции.
+        </p>
+        <div class="row" style="margin-top:10px;">
+          <a class="btn grad" href="ai-model-finder/index.html" target="_blank" rel="noopener">🔎 Отвори AI Model Finder →</a>
+          <button class="btn ghost" onclick="ModelFinder.refresh()">🔄 Обнови списъка тук</button>
+        </div>
+        <div id="modelFinderOut" style="margin-top:14px;font-size:13px;"></div>
+        <hr style="margin:18px 0;">
+        <p class="muted">
+          Еднократна настройка (по избор — Pollinations работи и без нито един
+          ключ): Settings → Secrets and variables → Actions → добави
+          <code>HF_API_KEY</code>, <code>OPENROUTER_API_KEY</code>,
+          <code>GEMINI_API_KEY</code>, <code>GROQ_API_KEY</code>,
+          <code>MISTRAL_API_KEY</code>, <code>CF_API_TOKEN</code>,
+          <code>CF_ACCOUNT_ID</code>, <code>GH_MODELS_PAT</code>,
+          <code>JINA_API_KEY</code> — виж пълните инструкции и линкове за
+          всеки ключ в <code>ai-model-finder/README.md</code>.
+        </p>
+      </div>
+    </div>
+
     <!-- ============ SETTINGS: API KEYS ============ -->
     <div class="view" id="view-set-keys">
       <div class="section-title">Настройки — API Ключове</div>
@@ -1235,6 +1269,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/claude.js"></script>
 <script src="js/providers/gemini.js"></script>
 <script src="js/providers/openrouter.js"></script>
+<script src="js/providers/model-finder.js"></script>
 <script src="js/youtube.js"></script>
 <script src="app.js"></script>
 <script src="js/auth-gate.js"></script>

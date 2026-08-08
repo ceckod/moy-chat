@@ -1,7 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
-**Версия:** 1.20.1
-**Последна промяна:** 2026-08-08, 20:25 (Europe/Sofia)
+**Версия:** 1.21.0
+**Последна промяна:** 2026-08-08, 21:40 (Europe/Sofia) — обединен с AI Model Finder (виж "AI Model Finder (ново)" по-долу и CHANGELOG в края на файла)
 
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
@@ -96,6 +96,35 @@
 и е видим в "Втори поглед (Лог)" в sidebar-а.
 
 ---
+
+## 🧠 AI Model Finder (ново, обединено на 2026-08-08)
+
+Отделен проект (`SCRAPER.zip`), сега обединен в това repo като самостоятелна
+папка `ai-model-finder/` — **не пипа и не заменя** съществуващите
+Claude/Gemini/OpenRouter provider-и от Стъпка 1-3. Той е допълнителен
+инструмент за откриване на нови безплатни AI модели/endpoint-и (не само
+трите вградени provider-а).
+
+- Достъпен е от sidebar-а: **Инструменти → 🧠 AI Model Finder**.
+- Има собствена, публикувана през GitHub Pages страница
+  (`ai-model-finder/index.html`) с бутон „Намери ми AI модели" — скрейпва
+  Hugging Face, OpenRouter, Gemini, Groq, Mistral, Cloudflare Workers AI,
+  GitHub Models, Pollinations и Jina директно в браузъра.
+- Има и Node вариант (`ai-model-finder/scraper.mjs`) + GitHub Action
+  (`.github/workflows/scrape-ai-models.yml`), който всяка нощ в 03:00 UTC
+  сам обновява `ai-model-finder/ai-models.json` в repo-то и проверява
+  ключовете (`ai-model-finder/check-keys.mjs`) — при счупен ключ отваря
+  GitHub issue.
+- Основното табло чете резултата (read-only) през новия
+  `js/providers/model-finder.js` и го показва във view-а по-горе — просто
+  информация кои допълнителни безплатни модели/endpoint-и има в момента.
+- Pollinations работи без никакъв ключ. За останалите — еднократна ръчна
+  регистрация (~15-20 мин), после **GitHub Secrets** ги пази и Action-ът
+  ги проверява автоматично всяка нощ. Пълна таблица със secret имена и
+  линкове за регистрация: `ai-model-finder/README.md`.
+- `ai-model-finder/keys.json` е само за локален `node scraper.mjs` тест на
+  твоята машина и **никога** не се качва в git (виж root `.gitignore`); в
+  GitHub Actions се създава на момента от Secrets.
 
 ## CORS Proxy (по избор)
 
@@ -221,6 +250,15 @@ JSON (`schema_version`), който се трупа във времето (1 з�
   да могат providers/*.js да си останат "как се вика конкретен модел",
   а не и "кои модели изобщо да пробваме".
 - `js/providers/claude.js`, `js/providers/gemini.js`, `js/providers/openrouter.js` — целият AI provider код (Claude/Gemini + трети "безплатен tier" agent).
+- `js/providers/model-finder.js` (`ModelFinder`) — само чете
+  `ai-model-finder/ai-models.json` и го показва в новия view "AI Model
+  Finder" (виж Changelog v1.21.0). НЕ участва във fallback-а на
+  Claude/Gemini/OpenRouter — самостоятелен, информационен bridge.
+- `ai-model-finder/` — отделен, самостоятелен инструмент (обединен в това
+  repo на 2026-08-08, виж Changelog v1.21.0): браузърен + Node скрапер за
+  безплатни AI модели (HF, OpenRouter, Gemini, Groq, Mistral, Cloudflare
+  Workers AI, GitHub Models, Pollinations, Jina). Собствен `README.md`
+  вътре с пълни инструкции за ключове/secrets.
 - `js/youtube.js` — YouTube Data API + autocomplete suggest.
 - `js/niche-toolkit.js` — Spotify-базиран niche score, AI промптове за
   Suno/Udio, Release Playbook — самостоятелен раздел, не пипа останалото.
@@ -336,6 +374,45 @@ README на живо (offline PWA кеш + различни среди биха 
   `youtube/` и `ui/` вече са извадени от `app.js`.
 
 ## Changelog
+
+### v1.21.0 — 2026-08-08 (обединяване с отделния проект "AI Model Finder")
+- 🧩 **Нова папка `ai-model-finder/`** — цял отделен проект (браузърен +
+  Node скрапер за безплатни AI модели: HF, OpenRouter, Gemini, Groq,
+  Mistral, Cloudflare Workers AI, GitHub Models, Pollinations, Jina),
+  копиран в repo-то като самостоятелен подпът (собствени
+  `index.html`/`app.js`/`worker.js`/`scraper.mjs`/`check-keys.mjs`/
+  `README.md`/`keys.json`/`.gitignore`). Няма конфликт с root файловете
+  на таблото (`index.html`/`app.js` на таблото са напълно отделни от
+  `ai-model-finder/index.html`/`ai-model-finder/app.js`).
+- ⏰ **Нов workflow `.github/workflows/scrape-ai-models.yml`** (взет от
+  оригиналния `scrape.yml`, преименуван и пътищата пренасочени към
+  `ai-model-finder/…`, за да не се сблъска с вече съществуващите
+  `daily-stats.yml`/`daily-trends.yml`) — крон всяка нощ в 03:00 UTC:
+  генерира `ai-model-finder/ai-models.json`, проверява ключовете, отваря
+  issue `⚠️ Счупен API ключ (AI Model Finder)` при провал.
+- 🔗 **Нов bridge модул `js/providers/model-finder.js` (`ModelFinder`)** —
+  чете (read-only) `ai-model-finder/ai-models.json` и го показва в новия
+  sidebar view **Инструменти → 🧠 AI Model Finder** (бутон „Обнови
+  списъка тук" + линк към пълния инструмент в нов таб). Кешира резултата
+  6ч в `localStorage`, по същия принцип като останалите provider кешове.
+  **Не се качва във fallback реда на Claude/Gemini/OpenRouter** — чисто
+  информационен слой, нулев риск за съществуващата AI логика на таблото.
+- 🗂️ Нов view `view-model-finder` в `index.html` + hook в `Nav.showView`
+  (`app.js`) + нов `<script src="js/providers/model-finder.js">` (зареден
+  веднага след `openrouter.js`).
+- 📦 Service Worker (`sw.js`): `CACHE_VERSION` вдигнат на `cdb-shell-v22`,
+  добавен `js/providers/model-finder.js` в `SHELL_FILES` (за offline
+  черупка); `ai-model-finder/ai-models.json` НЕ е в shell списъка нарочно
+  — минава директно през мрежата (същия принцип като AI/YouTube/GitHub
+  API отговорите), за да не показва остарял списък модели.
+- 🙈 Нов root `.gitignore` (repo-то преди нямаше такъв) — само за
+  `ai-model-finder/keys.json`, за да не влязат ключове в git по невнимание
+  при локален тест на скрапъра.
+- ✅ Всички съществуващи файлове/логика (Claude/Gemini/OpenRouter provider
+  код, Viral Lab, Track Record, YouTube Тракер и т.н.) — **непроменени**.
+  Проверено: всички JS файлове минават `node --check` без грешки, двата
+  YAML workflow-а са валиден YAML, броят view/nav-btn елементи в
+  `index.html` съвпада (19/19).
 
 ### v1.20.1 — 2026-08-08 (bugfix — фалшиво "не работи" при OpenRouter Google AI Studio модели)
 - 🐛 Тестовите пинг-заявки (AgentRoster роустър проверка + "🧪 Тествай

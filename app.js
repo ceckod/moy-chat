@@ -497,6 +497,7 @@ const Nav = {
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     if (id === "system-test") { SystemTest.renderHistory(); }
     if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }
+    if (id === "model-finder") { ModelFinder.render(); }
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
