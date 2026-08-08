@@ -8,6 +8,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="AI Music Suite">
 <meta name="theme-color" content="#0a0a14">
+<script>
+// Изпълнява се СИНХРОННО, преди останалото да се render-не — за да не
+// проблесне съдържанието за части от секундата преди да сложим ключалката.
+// Ако няма зададена парола (никога не е активирана) ИЛИ вече е отключено
+// в тази сесия (sessionStorage — важи докато е отворен табът), показваме
+// dashboard-а веднага. Виж js/auth-gate.js за реалната логика на паролата.
+(function(){
+  try {
+    var hash = localStorage.getItem('cdb_auth_gate_hash_v1');
+    var unlocked = sessionStorage.getItem('cdb_auth_gate_unlocked_v1') === '1';
+    if (!hash || unlocked) document.documentElement.classList.add('gate-unlocked');
+  } catch(e) { document.documentElement.classList.add('gate-unlocked'); }
+})();
+</script>
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -41,6 +55,16 @@ a{color:var(--cyan);}
 
 /* ---------- SHELL ---------- */
 .shell{display:flex;min-height:100vh;}
+
+/* AUTH GATE — виж js/auth-gate.js. По подразбиране (без клас "gate-unlocked"
+   на <html>) целият dashboard е скрит и overlay-я се показва вместо него. */
+html:not(.gate-unlocked) .shell{display:none;}
+#authGateOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);
+  align-items:center;justify-content:center;padding:24px;}
+html:not(.gate-unlocked) #authGateOverlay{display:flex;}
+.gate-card{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;width:380px;max-width:100%;}
+.gate-card h3{margin:0 0 6px;font-family:var(--font-head);}
 
 /* ---------- SIDEBAR ---------- */
 .sidebar{width:250px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border-soft);
@@ -104,8 +128,26 @@ a{color:var(--cyan);}
 @media (max-width:1100px){
   .grid.cols-6,.grid.cols-5,.grid.cols-4{grid-template-columns:repeat(3,1fr);}
 }
+/* ---------- MOBILE NAV (hamburger + overlay sidebar) ----------
+   На десктоп .sidebar е нормален sticky колона елемент (виж по-горе).
+   На мобилен (<=760px) я превръщаме във fixed overlay, скрит по подразбиране
+   (translateX извън екрана — не display:none, за да може transition-ът да
+   плъзга), и добавяме ☰ бутон + тъмен backdrop за отварянето ѝ. Виж
+   Nav.toggleMobileSidebar() в app.js. */
+.mobile-nav-toggle{display:none;}
+.sidebar-backdrop{display:none;}
 @media (max-width:760px){
-  .sidebar{display:none;}
+  .mobile-nav-toggle{display:flex;}
+  .sidebar{
+    display:flex; position:fixed; inset:0 auto 0 0; z-index:120; width:78vw; max-width:300px;
+    transform:translateX(-100%); transition:transform .2s ease; box-shadow:2px 0 24px rgba(0,0,0,.4);
+  }
+  .sidebar.mobile-open{transform:translateX(0);}
+  .sidebar-backdrop{
+    display:block; position:fixed; inset:0; z-index:110; background:rgba(0,0,0,.5);
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .sidebar-backdrop.mobile-open{opacity:1; pointer-events:auto;}
   .grid.cols-6,.grid.cols-5,.grid.cols-4,.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}
 }
 
@@ -269,10 +311,29 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 </head>
    
 <body>
+
+<!-- AUTH GATE overlay — виж js/auth-gate.js. Показва се само ако е зададена
+     парола (Настройки → "🔒 Достъп до dashboard-а") и още не е отключено
+     в тази сесия. НЯМА "забравена парола" бутон тук — нарочно, виж
+     README "Известни ограничения" и коментара в js/auth-gate.js. -->
+<div id="authGateOverlay">
+  <div class="gate-card">
+    <h3>🔒 Заключено</h3>
+    <p class="muted">Въведи паролата, за да продължиш към dashboard-а.</p>
+    <input type="password" id="authGateUnlockPass" placeholder="Парола" onkeydown="if(event.key==='Enter') AuthGate.unlock()">
+    <button class="btn grad" style="margin-top:14px;width:100%;" onclick="AuthGate.unlock()">🔓 Отключи</button>
+    <div id="authGateError" class="muted" style="margin-top:10px;color:var(--red);"></div>
+  </div>
+</div>
+
 <div id="vaultBanner" style="display:none;position:sticky;top:0;left:0;right:0;z-index:70;background:var(--amber);color:#1a1200;padding:8px 16px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;" onclick="Nav.showView('set-keys')">
   🔒 Ключовете са заключени за тази сесия — натисни тук, за да въведеш паролата на трезора
 </div>
 <div class="shell">
+
+  <!-- Backdrop зад mobile sidebar-а — клик върху него затваря менюто.
+       Само визуален елемент на <=760px (виж CSS media query по-горе). -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="Nav.closeMobileSidebar()"></div>
 
   <!-- ================= SIDEBAR ================= -->
   <div class="sidebar">
@@ -352,9 +413,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
   <div class="main">
 
     <div class="topbar">
-      <div>
-        <h1>Здравей, Музикален Визионер! 👋</h1>
-        <div class="sub">Създавай. Анализирай. Публикувай. Расти.</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" onclick="Nav.toggleMobileSidebar()" title="Меню" aria-label="Отвори менюто">☰</button>
+        <div>
+          <h1>Здравей, Музикален Визионер! 👋</h1>
+          <div class="sub">Създавай. Анализирай. Публикувай. Расти.</div>
+        </div>
       </div>
       <div class="topbar-actions">
         <select id="contentProviderSelectTop" title="Кой AI генерира съдържание (концепции/текстове/анализи)" style="width:auto;min-width:110px;" onchange="Prefs.setContentProvider(this.value)">
@@ -869,6 +933,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <strong>🔐 Криптиране на ключовете (Vault)</strong>
         <div id="vaultOut" style="margin-top:8px;"></div>
         <hr style="margin:18px 0;">
+        <strong>🔒 Достъп до dashboard-а (екран за поверителност)</strong>
+        <div id="authGateSettingsOut" style="margin-top:8px;"></div>
+        <hr style="margin:18px 0;">
         <strong>💾 Резервно копие на API ключовете</strong>
         <p class="muted" style="margin-top:6px;">Отделно от резервното копие на проекта (виж "Проект &amp; Данни") — тук се пазят/възстановяват само ключовете. Файлът е в ЧИСТ ТЕКСТ, пази го на сигурно място.</p>
         <div class="row" style="margin-top:10px;">
@@ -1037,6 +1104,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/openrouter.js"></script>
 <script src="js/youtube.js"></script>
 <script src="app.js"></script>
+<script src="js/auth-gate.js"></script>
 <script src="js/niche-toolkit.js"></script>
    <script src="scripts/clock-and-keys.js"></script>
    <script>

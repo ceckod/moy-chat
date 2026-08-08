@@ -476,6 +476,25 @@ const Nav = {
     if (id === "system-test") SystemTest.renderHistory();
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
+    // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
+    // избор на view трябва сам да се затвори, иначе би стоял отгоре на
+    // съдържанието. На десктоп тези класове никога не се слагат, така че
+    // тук е безобидно да ги махнем и там (viж closeMobileSidebar).
+    this.closeMobileSidebar();
+  },
+  /* ---------- MOBILE NAV (hamburger overlay) ----------
+     .sidebar е нормална sticky колона на десктоп; само на <=760px CSS я
+     превръща в fixed overlay (виж index.html <style>). Тези две функции
+     просто toggle-ват класа "mobile-open" на sidebar-а + backdrop-а зад
+     него — няма нужда от JS media-query проверка, защото на десктоп
+     класът просто не прави нищо (там .sidebar няма transform в CSS-а). */
+  toggleMobileSidebar() {
+    document.querySelector(".sidebar")?.classList.toggle("mobile-open");
+    document.getElementById("sidebarBackdrop")?.classList.toggle("mobile-open");
+  },
+  closeMobileSidebar() {
+    document.querySelector(".sidebar")?.classList.remove("mobile-open");
+    document.getElementById("sidebarBackdrop")?.classList.remove("mobile-open");
   }
 };
 
@@ -502,6 +521,7 @@ const Settings = {
     this.populateModelDropdowns();
     this.renderModelPref();
     this.renderVaultUI();
+    this.renderAuthGateUI();
   },
 
   // ---------- Трезор (криптиране на ключовете, виж модул Vault) ----------
@@ -526,6 +546,46 @@ const Settings = {
         <input type="password" id="vault_pass_disable" placeholder="Парола, за да изключиш">
         <button class="btn ghost" style="margin-top:10px;" onclick="Settings.vaultDisable()">🔓 Изключи криптирането</button>`;
     }
+  },
+
+  // ---------- Достъп до dashboard-а (екран за поверителност, виж модул AuthGate) ----------
+  renderAuthGateUI() {
+    const el = document.getElementById("authGateSettingsOut");
+    if (!el) return;
+    if (!AuthGate.isEnabled()) {
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">По желание — задай парола пред целия dashboard, за да не се отваря директно за всеки, който вземе устройството ти. <strong>Честно:</strong> това е само екран за поверителност (чисто клиентско), не истинска сървърна защита — виж README "Известни ограничения". Няма "забравена парола" бутон нарочно (би бил байпас за всеки друг) — инструкции за ръчно нулиране през DevTools са в README.</p>
+        <input type="password" id="gate_pass_new" placeholder="Нова парола (мин. 4 символа)">
+        <input type="password" id="gate_pass_new2" placeholder="Повтори паролата">
+        <button class="btn ghost" style="margin-top:10px;" onclick="Settings.authGateSetup()">🔒 Защити dashboard-а</button>`;
+    } else {
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">✅ Dashboard-ът е защитен с парола. Отключен е за тази сесия/таб — при затваряне на таба или "Заключи сега" по-долу ще поиска паролата отново.</p>
+        <div class="row">
+          <button class="btn ghost" onclick="AuthGate.lockNow(); toast('🔒 Заключено — презареди страницата.')">🔒 Заключи сега</button>
+        </div>
+        <p class="muted" style="margin:10px 0 6px;">Изключване на защитата:</p>
+        <input type="password" id="gate_pass_disable" placeholder="Текуща парола, за да изключиш">
+        <button class="btn ghost" style="margin-top:10px;" onclick="Settings.authGateDisable()">🔓 Изключи защитата</button>`;
+    }
+  },
+
+  async authGateSetup() {
+    const p1 = document.getElementById("gate_pass_new")?.value || "";
+    const p2 = document.getElementById("gate_pass_new2")?.value || "";
+    if (p1 !== p2) return toast("Паролите не съвпадат ❌");
+    try {
+      await AuthGate.setup(p1);
+      toast("🔒 Dashboard-ът вече е защитен — паролата ще се пита от следващото отваряне");
+      this.renderAuthGateUI();
+    } catch (e) { toast("❌ " + e.message); }
+  },
+
+  async authGateDisable() {
+    const p = document.getElementById("gate_pass_disable")?.value || "";
+    try {
+      await AuthGate.disable(p);
+      toast("🔓 Защитата е изключена");
+      this.renderAuthGateUI();
+    } catch (e) { toast("❌ " + e.message); }
   },
 
   async vaultEnable() {
@@ -621,6 +681,7 @@ const Settings = {
         // за да проверим наистина всички модели, ако предпочитаният вече не работи.
         const rawModels = AICallLog.sortByReliability("claude", await getClaudeModelList(k.claude, true));
         let found = null;
+        let firstErrorBody = null;
         const attempts = [];
         for (const testModel of rawModels) {
           try {
@@ -633,13 +694,18 @@ const Settings = {
             if (r.ok) { found = testModel; AICallLog.record({ provider: "claude", model: testModel, ok: true, note: "тест" }); break; }
             attempts.push(`${testModel} → ❌ ${r.status}`);
             AICallLog.record({ provider: "claude", model: testModel, ok: false, note: "тест: HTTP " + r.status });
+            // Пазим само ПЪРВОТО тяло на грешката — ако всички модели гърмят
+            // с еднакъв статус, причината почти сигурно е една и съща
+            // (невалиден/изтекъл ключ, изчерпан кредит и т.н.), не 9 различни.
+            if (!firstErrorBody) { try { firstErrorBody = (await r.text()).slice(0, 300); } catch (e) { /* игнорирай */ } }
           } catch (e) { attempts.push(`${testModel} → ❌ ${e.message}`); }
         }
         if (found) {
           ModelPref.set("claude", found, "auto");
           lines.push(`Claude: ✅ работи (${found}) — зададен като модел по подразбиране`);
         } else {
-          lines.push("Claude: ❌ нито един модел от списъка не отговори" + (attempts.length ? "\n   " + attempts.join("\n   ") : ""));
+          lines.push("Claude: ❌ нито един модел от списъка не отговори" + (attempts.length ? "\n   " + attempts.join("\n   ") : "")
+            + (firstErrorBody ? `\n   Причина (от първата грешка): ${firstErrorBody}` : ""));
         }
       } catch (e) { lines.push("Claude: ❌ " + e.message); }
     }

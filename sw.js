@@ -15,12 +15,13 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v10";
+const CACHE_VERSION = "cdb-shell-v11";
 
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./app.js",
+  "./js/auth-gate.js",
   "./js/ui/toast.js",
   "./js/system-test.js",
   "./js/ui/guard-click.js",
