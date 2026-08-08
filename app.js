@@ -1059,23 +1059,68 @@ const Settings = {
 
   // Тиха версия на testKeys, викана автоматично при зареждане (ако е включено в Предпочитания).
   // Не пипа UI-полета — работи директно със запазените ключове, показва само кратък статус горе.
+  //
+  // ВАЖНО (v1.18.0): вече НЕ прави реална AI заявка при всяко зареждане по
+  // подразбиране. Първо гледа AICallLog — ако най-скорошният запис (от
+  // РЕАЛНА употреба, всеки provider) е бил успешен и не е твърде стар,
+  // просто показва "активно" веднага, без нова мрежова заявка/квота.
+  // Само ако нямаме скорошна успешна следа (нов ключ, последният опит е
+  // гръмнал, или е минало твърде време), правим ЕДНА евтина жива проверка —
+  // с първия provider по AIProviderOrder, не с всички.
+  HEALTH_CHECK_TRUST_HOURS: 24,
   async silentHealthCheck() {
     const k = Keys.load();
     const dot = document.getElementById("validatorStatusDot");
     const txt = document.getElementById("validatorStatusText");
-    if (!k.gemini && !k.claude) {
+    const hasAnyKey = !!(k.claude || k.gemini || k.openrouterKey);
+    if (!hasAnyKey) {
       if (txt) txt.textContent = "Няма ключове";
       if (dot) dot.style.background = "var(--amber)";
       return;
     }
+
+    const lastKnown = AICallLog.get()[0]; // най-скорошен запис, всеки provider (viж record(): unshift)
+    const trustMs = this.HEALTH_CHECK_TRUST_HOURS * 3600 * 1000;
+    if (lastKnown && lastKnown.ok && (Date.now() - lastKnown.ts) < trustMs) {
+      if (txt) txt.textContent = `Всички системи активни (потвърдено: ${AIProviderOrder.label(lastKnown.provider)})`;
+      if (dot) dot.style.background = "var(--green)";
+      return;
+    }
+
+    // Няма скорошна успешна следа — жива проверка, но само с ЕДИН provider
+    // (първия работещ по ред), не с всички наведнъж.
+    const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey };
+    const provider = [...AIProviderOrder.get(), "claude", "gemini", "openrouter"].find(p => hasKey[p]);
     try {
-      if (k.gemini) {
-        const models = await getGeminiModelList(k.gemini); // ползва кеша, не форсира refresh при всяко зареждане
+      if (provider === "claude") {
+        const models = await getClaudeModelList(k.claude);
+        const r = await fetchTimeout("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": k.claude,
+                     "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify({ model: models[0], max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+        });
+        if (!r.ok) throw new Error("Claude ключ не работи (" + r.status + ")");
+        AICallLog.record({ provider: "claude", model: models[0], ok: true, note: "тих health check" });
+      } else if (provider === "gemini") {
+        const models = await getGeminiModelList(k.gemini);
         const r = await fetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${models[0]}:generateContent?key=${k.gemini}`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
         });
         if (!r.ok) throw new Error("Gemini ключ не работи (" + r.status + ")");
+        AICallLog.record({ provider: "gemini", model: models[0], ok: true, note: "тих health check" });
+      } else if (provider === "openrouter") {
+        const models = await getOpenRouterFreeModels();
+        const r = await fetchTimeout("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${k.openrouterKey}` },
+          body: JSON.stringify({ model: models[0], max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+        });
+        if (!r.ok) throw new Error("OpenRouter ключ не работи (" + r.status + ")");
+        AICallLog.record({ provider: "openrouter", model: models[0], ok: true, note: "тих health check" });
+      } else {
+        throw new Error("Няма зареден ключ за проверка");
       }
       if (txt) txt.textContent = "Всички системи активни";
       if (dot) dot.style.background = "var(--green)";
