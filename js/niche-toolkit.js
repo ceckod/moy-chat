@@ -130,6 +130,12 @@ const NicheToolkit = {
       const competitionSignal = Math.min(100, videos.length * 6);
       const { score, breakdown } = this._computeNicheScore({ spotifyPopularities, youtubeViews, competitionSignal });
 
+      // Пазим последния breakdown в паметта (не localStorage — само за
+      // текущата сесия), за да може Revenue Simulator-ът по-долу да
+      // предложи авто-попълване на "текущи views/popularity" вместо
+      // потребителят да гадае числата ръчно.
+      this._lastAnalysis = { genre, avgSpotifyPopularity: breakdown.avgSpotifyPopularity, avgYoutubeViews: breakdown.avgYoutubeViews, score };
+
       // Пазим последния Spotify-базиран score по жанр, за да може Стъпка 1
       // (чисто YouTube+AI сигнал) да го покаже като допълнителен, различен
       // поглед до собствения си резултат за същата ниша — виж combined блока
@@ -338,6 +344,70 @@ const NicheToolkit = {
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
       toast("📥 CSV свален");
+    }
+  },
+
+  /* ---------- REVENUE & STREAM PROJECTION SIMULATOR ----------
+     Изцяло клиентска аритметика (без AI/API извиквания — не пести
+     Gemini/Claude квота). Прозрачна евристика с публично известни
+     ориентировъчни RPM диапазони за независими артисти (не финансов
+     съвет, не гарантирани стойности — реалните ставки варират по
+     страна/дистрибутор/период и не са публично фиксирани от Spotify/
+     YouTube/TikTok). Целта е груба ориентация "струва ли си нишата",
+     не точна финансова прогноза. */
+  Revenue: {
+    // Ориентировъчни диапазони — $ на 1 стрийм/view (консервативно/оптимистично).
+    // Източник: широко цитирани публични оценки за независими артисти (без
+    // major label дял) — виж README за бележка и линкове.
+    RATES: {
+      spotify:  { lo: 0.003, hi: 0.005, unit: "стрийм" },
+      youtube:  { lo: 0.0005, hi: 0.002, unit: "view (monetized)" },
+      tiktok:   { lo: 0.00002, hi: 0.00004, unit: "view (Creator Fund)" },
+    },
+
+    // Предлага авто-попълване от последния "🎯 Анализирай нишата" резултат
+    // в същата сесия (avgYoutubeViews директно; Spotify populatity → груба
+    // месечна стрийм оценка чрез евристика popularity*multiplier).
+    prefillFromLastAnalysis() {
+      const a = NicheToolkit._lastAnalysis;
+      if (!a) return toast("Първо пусни '🎯 Анализирай нишата' по-горе поне веднъж в тази сесия");
+      // Груба евристика: Spotify popularity (0-100) → примерни месечни стрийми
+      // за нов independent single в тази ниша (НЕ официална Spotify формула —
+      // Spotify не публикува такава връзка; произволен, но прозрачен множител).
+      document.getElementById("revStreamsSpotify").value = Math.round(a.avgSpotifyPopularity * 300);
+      document.getElementById("revViewsYoutube").value = Math.round(a.avgYoutubeViews * 0.05);
+      toast(`Попълнено от последния анализ на "${a.genre}"`);
+    },
+
+    calculate() {
+      const streams = Number(document.getElementById("revStreamsSpotify").value) || 0;
+      const views = Number(document.getElementById("revViewsYoutube").value) || 0;
+      const tiktokViews = Number(document.getElementById("revViewsTiktok").value) || 0;
+      const out = document.getElementById("revOut");
+
+      const row = (label, count, rate, unit) => {
+        const lo = count * rate.lo, hi = count * rate.hi;
+        return { label, lo, hi, line: `<div style="display:flex;justify-content:space-between;font-size:13px;margin:5px 0;">
+          <span>${label} <span class="muted">(${count.toLocaleString("bg-BG")} ${unit})</span></span>
+          <strong>$${lo.toFixed(2)} – $${hi.toFixed(2)}</strong></div>` };
+      };
+
+      const rSpotify = row("🎵 Spotify", streams, this.RATES.spotify, "стрийма/мес.");
+      const rYoutube = row("▶️ YouTube (monetized)", views, this.RATES.youtube, "views/мес.");
+      const rTiktok = row("🎬 TikTok Creator Fund", tiktokViews, this.RATES.tiktok, "views/мес.");
+      const totalLo = rSpotify.lo + rYoutube.lo + rTiktok.lo;
+      const totalHi = rSpotify.hi + rYoutube.hi + rTiktok.hi;
+
+      out.innerHTML = `
+        <div class="card tight" style="margin-top:10px;">
+          <strong>💰 Прогнозен месечен приход (консервативно – оптимистично)</strong>
+          ${rSpotify.line}${rYoutube.line}${rTiktok.line}
+          <hr style="margin:8px 0;">
+          <div style="display:flex;justify-content:space-between;font-size:15px;">
+            <strong>Общо / месец</strong><strong>$${totalLo.toFixed(2)} – $${totalHi.toFixed(2)}</strong>
+          </div>
+          <p class="muted" style="margin-top:10px;font-size:11.5px;">⚠️ Груба ориентировъчна оценка с публично известни диапазони за независими артисти — НЕ финансов съвет, НЕ гаранция. Реалните ставки варират по страна, период и дистрибутор и не се публикуват официално от платформите.</p>
+        </div>`;
     }
   }
 };
