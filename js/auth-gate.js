@@ -110,5 +110,101 @@ const AuthGate = {
     if (hashB64 !== hash) throw new Error("Грешен потребител или парола");
     localStorage.removeItem(AUTH_GATE_HASH_KEY);
     sessionStorage.removeItem(AUTH_GATE_SESSION_KEY);
+    this.bioForget(); // без парола, старата биометрия няма смисъл да остане регистрирана
   }
 };
+
+/* =========================================================
+   БИОМЕТРИЯ (WebAuthn, "platform authenticator") — по избор, бърз път
+   ВМЕСТО потребител+парола на lock screen-а. Паролата винаги остава
+   работещ резервен вариант (напр. при смяна на устройство/браузър).
+
+   ВАЖНО — честно какво прави и какво не:
+     - Използва вградения пръстов отпечатък/Face ID/Windows Hello на
+       УСТРОЙСТВОТО — самата биометрична проверка минава изцяло през ОС-а
+       и браузъра, никога не се вижда/пази от нашия код (нямаме достъп
+       до самите биометрични данни, само резултата "успя/не успя").
+     - РЕГИСТРАЦИЯТА Е ПО УСТРОЙСТВО/БРАУЗЪР, не се пренася. Ако сложиш
+       биометрия на телефона си в Chrome, тя няма да работи в Safari на
+       същия телефон, нито на друг телефон/лаптоп — там пак ще трябва
+       потребител+парола (или отделна регистрация от Настройки).
+     - Изисква HTTPS (или localhost) — WebAuthn не работи по http://.
+     - Няма сървър, който да проверява криптографски "attestation"-а
+       (нямаме бекенд) — просто разчитаме на browser/OS резултата от
+       navigator.credentials.get(), точно както прави всяко чисто
+       клиентско приложение без бекенд. За dashboard, заключен само на
+       локалното устройство на собственика си, това е достатъчно честна
+       разменна сделка — виж README "Известни ограничения".
+   ========================================================= */
+const AUTH_GATE_BIO_KEY = "cdb_auth_gate_bio_v1";
+
+Object.assign(AuthGate, {
+  bioAvailable() {
+    return !!(window.PublicKeyCredential && navigator.credentials);
+  },
+  bioRegistered() {
+    try { return !!localStorage.getItem(AUTH_GATE_BIO_KEY); } catch (e) { return false; }
+  },
+  async bioPlatformReady() {
+    if (!this.bioAvailable()) return false;
+    try { return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+    catch (e) { return false; }
+  },
+
+  // Регистрира биометрия на ТОВА устройство/браузър — вика се от
+  // Настройки, само след като потребителят вече е влязъл нормално.
+  async bioRegister() {
+    if (!this.bioAvailable()) throw new Error("Браузърът/устройството не поддържа биометрично отключване (WebAuthn)");
+    const ready = await this.bioPlatformReady();
+    if (!ready) throw new Error("Не е намерен пръстов отпечатък/Face ID, настроен на това устройство");
+    const uname = this.getUsername() || "dashboard";
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: "AI Music Suite Dashboard" },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: uname, displayName: uname },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+        timeout: 60000,
+        attestation: "none"
+      }
+    });
+    if (!cred) throw new Error("Регистрацията беше отказана");
+    localStorage.setItem(AUTH_GATE_BIO_KEY, _b64(cred.rawId));
+  },
+
+  // Премахва регистрацията от ТОВА устройство (паролата не се пипа).
+  bioForget() {
+    try { localStorage.removeItem(AUTH_GATE_BIO_KEY); } catch (e) {}
+  },
+
+  // Реалният опит за отключване с биометрия.
+  async bioUnlock() {
+    const rawIdB64 = localStorage.getItem(AUTH_GATE_BIO_KEY);
+    if (!rawIdB64) throw new Error("Няма регистрирана биометрия на това устройство");
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: [{ type: "public-key", id: _unb64(rawIdB64) }],
+        userVerification: "required",
+        timeout: 60000
+      }
+    });
+    if (!assertion) throw new Error("Отключването беше отказано");
+    sessionStorage.setItem(AUTH_GATE_SESSION_KEY, "1");
+    document.documentElement.classList.add("gate-unlocked");
+  },
+
+  // Обвивка за бутона на lock screen-а — превръща грешките в четим текст
+  // в #authGateError, вместо да чупи конзолата.
+  async bioUnlockClick() {
+    const errEl = document.getElementById("authGateError");
+    if (errEl) errEl.textContent = "";
+    if (!this.bioRegistered()) {
+      if (errEl) errEl.textContent = "ℹ️ Няма регистрирана биометрия на това устройство — влез с потребител+парола, после я включи от Настройки.";
+      return;
+    }
+    try { await this.bioUnlock(); }
+    catch (e) { if (errEl) errEl.textContent = "❌ " + (e.message || "Биометричното отключване се провали."); }
+  }
+});
