@@ -34,7 +34,6 @@ const GEMINI_MODELS_CACHE_HOURS = 12;
 // (затова динамичното изтегляне по-долу е предпочитаният път).
 const GEMINI_FALLBACK_MODELS = [
   "gemini-flash-lite-latest",
-  "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.0-flash"
 ];
@@ -145,7 +144,21 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
         break; // към следващия модел
       }
 
-      // грешка, различна от квота — няма смисъл да пробваме друг модел
+      // 404 = моделът вече не съществува/преименуван от Google (случва се с
+      // кешираните/резервните имена с времето) — безсмислено да спираме
+      // цялото извикване заради това, пробваме следващия модел в списъка.
+      if (res.status === 404) {
+        lastError = new Error(`Gemini API грешка (${model}): ` + t);
+        AICallLog.record({ provider: "gemini", model, ok: false, note: "404 — моделът вече не съществува" });
+        try { Storage.remove(GEMINI_MODELS_CACHE_KEY); } catch (e) { /* noop */ }
+        if (m < models.length - 1) {
+          toast(`⚠️ Gemini "${model}" вече не съществува — превключвам на "${models[m + 1]}"...`, 4500);
+        }
+        break; // към следващия модел
+      }
+
+      // грешка, различна от квота/несъществуващ модел — няма смисъл да
+      // пробваме друг модел
       AICallLog.record({ provider: "gemini", model, ok: false, note: t.slice(0, 140) });
       throw new Error("Gemini API грешка: " + t);
     }
