@@ -94,6 +94,33 @@
 - **Тестове:** нов `test/providers-fallback.test.mjs` (15 теста) + `test/load-provider.mjs` (loader helper) — покриват generic цикъла (success/abort/next/retry/log:false пътищата) И трите `classify*Error` функции поотделно (включително Gemini retry-изчерпване, 404 cache-clear, тих мрежов преход), плюс 1 интеграционен тест на `callClaude` с мокнат `fetchTimeout` (429 на първия модел → превключва на втория). Общо `npm test` → **40/40 минали**.
 - **Проверка:** `md5sum app.js js/network.js` преди/след — **идентични**, само `providers/*.js` + `index.html` (1 ред) пипнати умишлено.
 
+### [Извън плана, по твоя заявка] AI Model Finder става реален, извикваем provider
+- **Контекст:** отделна заявка успоредно с одита — "искам AI Model Finder да
+  се използва навсякъде, където сайтът ползва AI", не само да показва
+  списък. Приложено ВЪРХУ вече одитираната кодова база (не отменя нищо
+  от Стъпки 1-7 по-горе).
+- **Действие:** `js/providers/model-finder.js` пренаписан от информационен
+  bridge на пълен 4-ти provider (Groq/Mistral/GitHub Models/Cloudflare
+  Workers AI/Pollinations), закачен в `callAI()` (app.js) като последен
+  fallback. Единичното извикване минава през **същия** `runModelFallbackLoop()`
+  от Стъпка 7 — нов `_classifyModelFinderError()`, аналогичен на
+  `_classifyClaudeError()`/`_classifyOpenRouterError()`.
+- **Пипнати файлове:** `app.js` (callAI, Settings.fillFields/save/testKeys,
+  AIProviderOrder.label, Prefs.setContentProvider whitelist — всички
+  targeted добавки, не преработка), `index.html` (2 нови `<option>`, 5
+  нови `<input>` полета в view "AI Model Finder"), `sw.js` (CACHE_VERSION
+  → v23 + добавен липсващ `fallback-loop.js` в SHELL_FILES),
+  `.github/workflows/scrape-ai-models.yml` (върнат — липсваше от това
+  качване).
+- **Проверка:** `npm test` → **40/40 минали преди И след** промените
+  (нито един съществуващ тест пипнат). `node --check` чисто на всички JS
+  файлове. Броят view/nav елементи в `index.html` съвпада (19/19).
+- **Забележка:** истинско извикване към Groq/Mistral/GitHub Models/
+  Cloudflare не може да се тества оттук (няма мрежов достъп до тези
+  домейни в средата, в която работя) — логиката следва точно установения
+  в Стъпка 7 модел, но реалната проверка е "качи и натисни 🧪 Тествай
+  ключовете".
+
 ---
 
 ## Решения, взети от теб (2026-08-08)

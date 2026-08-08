@@ -477,6 +477,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <option value="claude">✍️ Claude</option>
           <option value="gemini">✍️ Gemini</option>
           <option value="openrouter">✍️ OpenRouter</option>
+          <option value="modelfinder">✍️ AI Model Finder</option>
         </select>
         <div class="pill"><span class="dot-live" id="validatorStatusDot"></span> <span>Gemini Validator<br><strong id="validatorStatusText">Проверка...</strong></span></div>
         <button class="btn grad" onclick="Settings.newProject()">+ Нов проект</button>
@@ -1022,9 +1023,35 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         </div>
         <div id="modelFinderOut" style="margin-top:14px;font-size:13px;"></div>
         <hr style="margin:18px 0;">
+        <strong>🔑 Ключове — за да могат тези модели РЕАЛНО да се извикват от таблото</strong>
+        <p class="muted" style="margin-top:6px;">
+          Тези модели вече участват като <strong>резервен AI provider</strong> навсякъде,
+          където таблото "иска AI" (Стъпка 1-3, System Test и т.н.) — виж
+          Настройки → Предпочитания → "AI за генериране на съдържание".
+          <strong>Pollinations работи без нито един ключ по-долу</strong> — така
+          таблото винаги има поне един работещ AI път. Останалите ключове са по избор,
+          но разширяват избора и намаляват шанса всичко да е претоварено едновременно.
+        </p>
+        <label>Groq API Key <span class="optional-tag">безплатен</span></label>
+        <input type="password" id="key_groq">
+        <p class="muted" style="margin-top:6px;">От <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+        <label>Mistral API Key <span class="optional-tag">безплатен план</span></label>
+        <input type="password" id="key_mistral">
+        <p class="muted" style="margin-top:6px;">От <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>.</p>
+        <label>GitHub Models — Personal Access Token <span class="optional-tag">безплатен с GitHub акаунт</span></label>
+        <input type="password" id="key_github_models" placeholder="ghp_... (различен от GitHub токена в API Ключове)">
+        <p class="muted" style="margin-top:6px;">От <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> — може да е същият PAT, който ползваш и за AI редакция на repo-то, стига да няма ограничени scope-ове.</p>
+        <label>Cloudflare API Token</label>
+        <input type="password" id="key_cf_token">
+        <label>Cloudflare Account ID</label>
+        <input type="text" id="key_cf_account">
+        <p class="muted" style="margin-top:6px;">И двете от <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">dash.cloudflare.com</a> — 10 000 neuroni/ден безплатно.</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
+        <hr style="margin:18px 0;">
         <p class="muted">
-          Еднократна настройка (по избор — Pollinations работи и без нито един
-          ключ): Settings → Secrets and variables → Actions → добави
+          Еднократна настройка на автоматичното нощно обновяване (по избор):
+          Settings → Secrets and variables → Actions → добави
           <code>HF_API_KEY</code>, <code>OPENROUTER_API_KEY</code>,
           <code>GEMINI_API_KEY</code>, <code>GROQ_API_KEY</code>,
           <code>MISTRAL_API_KEY</code>, <code>CF_API_TOKEN</code>,
@@ -1175,12 +1202,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div class="set-row"><div class="txt"><strong>Тъмна / Светла тема</strong><span>Превключи външния вид на цялото табло.</span></div><div class="switch" id="themeSwitch3" onclick="Prefs.toggleTheme()"><div class="knob"></div></div></div>
         <div class="set-row"><div class="txt"><strong>Проверка на ключовете при зареждане</strong><span>Тиха проверка дали някой ключ е "умрял" — предупреждение горе вместо грешка по средата на работа.</span></div><div class="switch on" id="healthSwitch2" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div></div>
         <div class="set-row">
-          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter), докато някой не отговори. Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
+          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter/AI Model Finder), докато някой не отговори. AI Model Finder е винаги последен резерв — работи дори без нито един конфигуриран ключ (Pollinations). Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
           <select id="contentProviderSelect" style="width:auto;min-width:140px;" onchange="Prefs.setContentProvider(this.value)">
             <option value="auto">🔄 Автоматично (по теста)</option>
             <option value="claude">Claude</option>
             <option value="gemini">Gemini</option>
             <option value="openrouter">OpenRouter</option>
+            <option value="modelfinder">🧠 AI Model Finder</option>
           </select>
         </div>
         <div class="set-row"><div class="txt"><strong>🤖 Автопилот</strong><span>След като избере най-добрата ниша, автоматично продължава верижно към текст на песента + Viral Lab анализ — без да чакаш да натискаш всеки бутон поотделно. Изключен по подразбиране.</span></div><div class="switch" id="autopilotSwitch" onclick="Prefs.toggleAutopilot()"><div class="knob"></div></div></div>

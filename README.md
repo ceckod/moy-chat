@@ -1,7 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
-**Версия:** 1.21.0
-**Последна промяна:** 2026-08-08, 21:40 (Europe/Sofia) — обединен с AI Model Finder (виж "AI Model Finder (ново)" по-долу и CHANGELOG в края на файла)
+**Версия:** 1.22.0
+**Последна промяна:** 2026-08-08, 23:15 (Europe/Sofia) — AI Model Finder вече е РЕАЛЕН, извикваем AI provider (не само списък) + съвместимост с одитната инфраструктура (fallback-loop.js, тестове) — виж Changelog
 
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
@@ -100,28 +100,37 @@
 ## 🧠 AI Model Finder (ново, обединено на 2026-08-08)
 
 Отделен проект (`SCRAPER.zip`), сега обединен в това repo като самостоятелна
-папка `ai-model-finder/` — **не пипа и не заменя** съществуващите
-Claude/Gemini/OpenRouter provider-и от Стъпка 1-3. Той е допълнителен
-инструмент за откриване на нови безплатни AI модели/endpoint-и (не само
-трите вградени provider-а).
+папка `ai-model-finder/` — **и вграден директно в AI логиката на таблото**
+като четвърти, реален provider (виж v1.22.0 в Changelog). Не заменя
+Claude/Gemini/OpenRouter — стои като допълнителен, автоматичен резервен
+път навсякъде, където таблото "иска AI" (Стъпка 1-3, System Test, Gemini
+Validator и т.н.), през общата функция `callAI()`.
 
-- Достъпен е от sidebar-а: **Инструменти → 🧠 AI Model Finder**.
-- Има собствена, публикувана през GitHub Pages страница
-  (`ai-model-finder/index.html`) с бутон „Намери ми AI модели" — скрейпва
-  Hugging Face, OpenRouter, Gemini, Groq, Mistral, Cloudflare Workers AI,
-  GitHub Models, Pollinations и Jina директно в браузъра.
-- Има и Node вариант (`ai-model-finder/scraper.mjs`) + GitHub Action
+- Достъпен е от sidebar-а: **Инструменти → 🧠 AI Model Finder** — там са и
+  ключовете (Groq/Mistral/GitHub Models/Cloudflare), и линк към отделния
+  инструмент за откриване на нови модели.
+- **Реално извикваеми източници** (5): Groq, Mistral AI, GitHub Models,
+  Cloudflare Workers AI (всички изискват безплатен ключ) и **Pollinations
+  (БЕЗ никакъв ключ)** — благодарение на Pollinations, таблото винаги има
+  поне един работещ AI път, дори с нулева конфигурация никъде другаде.
+  Извикването минава през същия споделен `runModelFallbackLoop()`
+  (`js/providers/fallback-loop.js`), който вече ползват Claude/Gemini/
+  OpenRouter — вижте т.7 от одита в `AUDIT_PROGRESS.md`.
+- Hugging Face участва само в информационния списък (не в автоматичното
+  извикване) — твърде много произволни community модели с непредвидим
+  chat формат, за да е безопасно за автоматичен fallback.
+- Отделна страница (`ai-model-finder/index.html`, публикувана през GitHub
+  Pages) с бутон „Намери ми AI модели" — скрейпва и осемте източника
+  директно в браузъра, за информационния списък по-горе.
+- Node вариант (`ai-model-finder/scraper.mjs`) + GitHub Action
   (`.github/workflows/scrape-ai-models.yml`), който всяка нощ в 03:00 UTC
-  сам обновява `ai-model-finder/ai-models.json` в repo-то и проверява
-  ключовете (`ai-model-finder/check-keys.mjs`) — при счупен ключ отваря
-  GitHub issue.
-- Основното табло чете резултата (read-only) през новия
-  `js/providers/model-finder.js` и го показва във view-а по-горе — просто
-  информация кои допълнителни безплатни модели/endpoint-и има в момента.
-- Pollinations работи без никакъв ключ. За останалите — еднократна ръчна
-  регистрация (~15-20 мин), после **GitHub Secrets** ги пази и Action-ът
-  ги проверява автоматично всяка нощ. Пълна таблица със secret имена и
-  линкове за регистрация: `ai-model-finder/README.md`.
+  сам обновява `ai-model-finder/ai-models.json` и проверява ключовете
+  (`ai-model-finder/check-keys.mjs`) — при счупен ключ отваря GitHub issue.
+- Настройки → Предпочитания → "AI за генериране на съдържание" вече има и
+  опция **"🧠 AI Model Finder"** за ръчен избор, редом до Claude/Gemini/
+  OpenRouter.
+- Пълна таблица със secret имена и линкове за регистрация за нощното
+  автоматично обновяване: `ai-model-finder/README.md`.
 - `ai-model-finder/keys.json` е само за локален `node scraper.mjs` тест на
   твоята машина и **никога** не се качва в git (виж root `.gitignore`); в
   GitHub Actions се създава на момента от Secrets.
@@ -374,6 +383,48 @@ README на живо (offline PWA кеш + различни среди биха 
   `youtube/` и `ui/` вече са извадени от `app.js`.
 
 ## Changelog
+
+### v1.22.0 — 2026-08-08 (AI Model Finder става РЕАЛЕН, извикваем provider — не само списък)
+- 🔌 **`js/providers/model-finder.js` пренаписан** — вече не е само
+  информационен панел, а истински 4-ти AI provider с 5 извикваеми
+  източника: **Groq, Mistral AI, GitHub Models, Cloudflare Workers AI**
+  (изискват безплатен ключ) и **Pollinations (БЕЗ никакъв ключ)**.
+  Hugging Face остава само в информационния списък (твърде непредвидим
+  chat формат за автоматичен fallback). Единичното извикване минава през
+  споделения `runModelFallbackLoop()` (`js/providers/fallback-loop.js`,
+  т.7 от одита) — по същия принцип като Claude/Gemini/OpenRouter, вместо
+  собствен цикъл.
+- 🔁 **`callAI()` в `app.js`** (единствената функция, през която ВСЯКО
+  място в таблото иска AI — Стъпка 1-3, System Test, Gemini Validator...)
+  вече включва `modelfinder` в края на fallback реда:
+  Claude → Gemini → OpenRouter → **AI Model Finder**. Резултат: таблото
+  винаги има поне един работещ AI път, дори с нулева конфигурация никъде
+  другаде, благодарение на Pollinations.
+- 🧪 **`Settings.testKeys()`** вече тества и петте нови източника (реална
+  тестова заявка към всеки с ключ) и вкарва `modelfinder` в
+  `AIProviderOrder`, ако РЕАЛНО е отговорил — по същия принцип като
+  Claude/Gemini/OpenRouter по-горе.
+- 🔑 **5 нови полета за ключове** в sidebar view "🧠 AI Model Finder":
+  Groq API Key, Mistral API Key, GitHub Models PAT, Cloudflare API Token +
+  Account ID. Съхраняват се в същия `Keys` обект (localStorage/Vault) като
+  останалите. `Settings.fillFields()`/`Settings.save()` разширени
+  съответно.
+- 🎛️ **Ново меню** "🧠 AI Model Finder" в двата dropdown-а "AI за
+  генериране на съдържание" (горен бар + Настройки → Предпочитания) — за
+  ръчно закачане отпред, ако искаш точно тези модели да пишат навсякъде.
+- 📋 `AICallLog`/`QuotaTracker`/`renderKeyHealth` разширени да разпознават
+  provider `"modelfinder"` (лейбъл, цветен chip диагноза, leaderboard).
+- 🌙 Върнат липсващият `.github/workflows/scrape-ai-models.yml` (нощно
+  автоматично обновяване на `ai-model-finder/ai-models.json`, 03:00 UTC).
+- 📦 `sw.js`: `CACHE_VERSION` вдигнат на `cdb-shell-v23`, добавен
+  `js/providers/fallback-loop.js` в `SHELL_FILES` (липсваше от кеш
+  списъка, макар вече да се зареждаше в `index.html`).
+- ✅ **Съвместимост с одитната инфраструктура от `AUDIT_PROGRESS.md`**:
+  цялата интеграция е приложена ВЪРХУ вече одитираната кодова база
+  (fallback-loop.js рефакторинга, тестовете, `.gitignore`) — `npm test`
+  минава **40/40 преди И след** промените, `node --check` чисто на
+  всички JS файлове, броят view/nav елементи в `index.html` съвпада
+  (19/19).
 
 ### v1.21.0 — 2026-08-08 (обединяване с отделния проект "AI Model Finder")
 - 🧩 **Нова папка `ai-model-finder/`** — цял отделен проект (браузърен +

@@ -258,7 +258,7 @@ const AIProviderOrder = {
     try { return Storage.get(AI_PROVIDER_ORDER_KEY) || []; } catch (e) { return []; }
   },
   set(order) { Storage.set(AI_PROVIDER_ORDER_KEY, order); },
-  label(p) { return p === "claude" ? "Claude" : p === "gemini" ? "Gemini" : p === "openrouter" ? "OpenRouter" : p; }
+  label(p) { return p === "claude" ? "Claude" : p === "gemini" ? "Gemini" : p === "openrouter" ? "OpenRouter" : p === "modelfinder" ? "🧠 AI Model Finder" : p; }
 };
 
 /* =========================================================
@@ -298,7 +298,7 @@ const AICallLog = {
     if (!log.length) { el.textContent = "Все още няма записани извиквания в тази сесия/устройство."; return; }
     el.textContent = log.map(e => {
       const time = new Date(e.ts).toLocaleTimeString("bg-BG", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      const providerLabel = e.provider === "claude" ? "Claude" : e.provider === "gemini" ? "Gemini" : e.provider === "openrouter" ? "OpenRouter" : e.provider;
+      const providerLabel = e.provider === "claude" ? "Claude" : e.provider === "gemini" ? "Gemini" : e.provider === "openrouter" ? "OpenRouter" : e.provider === "modelfinder" ? "AI Model Finder" : e.provider;
       return `${time} ${e.ok ? "✅" : "❌"} ${providerLabel} · ${e.model}${e.note ? " — " + e.note : ""}`;
     }).join("\n");
   },
@@ -497,7 +497,7 @@ const Nav = {
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     if (id === "system-test") { SystemTest.renderHistory(); }
     if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }
-    if (id === "model-finder") { ModelFinder.render(); }
+    if (id === "model-finder") { Settings.fillFields(); ModelFinder.render(); }
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
@@ -531,6 +531,11 @@ const Settings = {
     set("key_claude", k.claude);
     set("key_gemini", k.gemini);
     set("key_openrouter", k.openrouterKey);
+    set("key_groq", k.groqKey);
+    set("key_mistral", k.mistralKey);
+    set("key_github_models", k.githubModelsToken);
+    set("key_cf_token", k.cfApiToken);
+    set("key_cf_account", k.cfAccountId);
     set("key_yt_client_id", k.ytClientId);
     set("key_yt_apikey", k.ytApiKey);
     set("key_spotify_client_id", k.spotifyClientId);
@@ -686,6 +691,11 @@ const Settings = {
       claude: val("key_claude") ?? prev.claude,
       gemini: val("key_gemini") ?? prev.gemini,
       openrouterKey: val("key_openrouter") ?? prev.openrouterKey,
+      groqKey: val("key_groq") ?? prev.groqKey,
+      mistralKey: val("key_mistral") ?? prev.mistralKey,
+      githubModelsToken: val("key_github_models") ?? prev.githubModelsToken,
+      cfApiToken: val("key_cf_token") ?? prev.cfApiToken,
+      cfAccountId: val("key_cf_account") ?? prev.cfAccountId,
       ytClientId: val("key_yt_client_id") ?? prev.ytClientId,
       ytApiKey: val("key_yt_apikey") ?? prev.ytApiKey,
       spotifyClientId: val("key_spotify_client_id") ?? prev.spotifyClientId,
@@ -708,6 +718,11 @@ const Settings = {
       claude: document.getElementById("key_claude").value.trim(),
       gemini: document.getElementById("key_gemini").value.trim(),
       openrouterKey: document.getElementById("key_openrouter")?.value.trim(),
+      groqKey: document.getElementById("key_groq")?.value.trim(),
+      mistralKey: document.getElementById("key_mistral")?.value.trim(),
+      githubModelsToken: document.getElementById("key_github_models")?.value.trim(),
+      cfApiToken: document.getElementById("key_cf_token")?.value.trim(),
+      cfAccountId: document.getElementById("key_cf_account")?.value.trim(),
       ytApiKey: document.getElementById("key_yt_apikey").value.trim(),
       spotifyClientId: document.getElementById("key_spotify_client_id")?.value.trim(),
       spotifyClientSecret: document.getElementById("key_spotify_client_secret")?.value.trim(),
@@ -717,7 +732,7 @@ const Settings = {
     const lines = [];
     // Кой provider РЕАЛНО отговори при този тест — влиза в AIProviderOrder
     // накрая, за да стане новият ред по подразбиране за callAI() навсякъде.
-    const providerOk = { claude: false, gemini: false, openrouter: false };
+    const providerOk = { claude: false, gemini: false, openrouter: false, modelfinder: false };
 
     // Claude — пробва моделите от fallback списъка ПО РЕД (не само models[0])
     // и хваща ПЪРВИЯ, който реално отговори успешно. Той автоматично става
@@ -838,6 +853,15 @@ const Settings = {
       } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
     }
 
+    // AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare Workers AI/
+    // Pollinations (виж js/providers/model-finder.js). Pollinations няма
+    // ключ и се пробва ВИНАГИ, дори ако нищо друго тук не е попълнено.
+    try {
+      const mf = await ModelFinder.testKeys(k);
+      providerOk.modelfinder = mf.ok;
+      lines.push("AI Model Finder:\n   " + mf.lines.join("\n   "));
+    } catch (e) { lines.push("AI Model Finder: ❌ " + e.message); }
+
     // Spotify Client Credentials (изисква и Proxy URL — token endpoint-ът няма CORS).
     // Ползва ТУК ЩЕ въведените стойности, не запазените — затова е директен fetch,
     // не през NicheToolkit._getSpotifyToken() (той чете от Keys.load(), т.е. само
@@ -878,8 +902,8 @@ const Settings = {
     // отиват най-отпред (в тествания ред: Claude → Gemini → OpenRouter),
     // провалените (но с ключ) остават след тях като последен резерв —
     // никога не се изключват напълно, само отиват най-накрая.
-    const testedOrder = ["claude", "gemini", "openrouter"];
-    const newProviderOrder = [...testedOrder.filter(p => providerOk[p]), ...testedOrder.filter(p => !providerOk[p] && k[p === "openrouter" ? "openrouterKey" : p])];
+    const testedOrder = ["claude", "gemini", "openrouter", "modelfinder"];
+    const newProviderOrder = [...testedOrder.filter(p => providerOk[p]), ...testedOrder.filter(p => !providerOk[p] && (p === "modelfinder" || k[p === "openrouter" ? "openrouterKey" : p]))];
     AIProviderOrder.set(newProviderOrder);
     if (newProviderOrder.length) {
       lines.push(`🔄 AI ред по подразбиране (навсякъде в таблото): ${newProviderOrder.map(AIProviderOrder.label).join(" → ")}`);
@@ -1291,16 +1315,21 @@ const ProjectArchive = {
    ========================================================= */
 async function callAI(prompt, maxTokens = 1200) {
   const k = Keys.load();
-  const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey };
-  const run = { claude: () => callClaude(prompt, maxTokens), gemini: () => callGemini(prompt), openrouter: () => callOpenRouter(prompt, maxTokens) };
+  const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey, modelfinder: true };
+  const run = { claude: () => callClaude(prompt, maxTokens), gemini: () => callGemini(prompt), openrouter: () => callOpenRouter(prompt, maxTokens), modelfinder: () => callModelFinder(prompt, maxTokens) };
 
   // Ръчният избор (ако не е "auto") отива първи; после следва редът от
   // последния реален тест; накрая всеки provider с ключ, който по някаква
   // причина липсва от горните (напр. ключ, добавен след последния тест).
+  // "modelfinder" (AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare/
+  // Pollinations) винаги стои в самия край на списъка по подразбиране —
+  // Pollinations работи без никакъв ключ, така че таблото има работещ AI
+  // път дори с нулева конфигурация, докато основните 3 провайдъра не бъдат
+  // настроени. testKeys() може да го избута напред, ако РЕАЛНО е по-надежден.
   const manual = Prefs.data.contentProvider && Prefs.data.contentProvider !== "auto" ? Prefs.data.contentProvider : null;
   const order = [];
   const seen = new Set();
-  for (const p of [manual, ...AIProviderOrder.get(), "claude", "gemini", "openrouter"]) {
+  for (const p of [manual, ...AIProviderOrder.get(), "claude", "gemini", "openrouter", "modelfinder"]) {
     if (!p || seen.has(p) || !hasKey[p]) continue;
     seen.add(p);
     order.push(p);
@@ -2978,7 +3007,7 @@ const Prefs = {
     });
   },
   setContentProvider(value) {
-    if (!["auto", "claude", "gemini", "openrouter"].includes(value)) return;
+    if (!["auto", "claude", "gemini", "openrouter", "modelfinder"].includes(value)) return;
     this.data.contentProvider = value;
     this.save();
     this.applyContentProvider();
