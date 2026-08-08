@@ -107,7 +107,16 @@ async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry 
 async function callOpenRouter(prompt, maxTokens = 900) {
   const k = Keys.load();
   if (!k.openrouterKey) { toast("⚠️ Липсва OpenRouter API ключ (виж Настройки)"); throw new Error("no key"); }
-  const models = await getOpenRouterFreeModels();
+
+  // OpenRouter може да върне ДЕСЕТКИ безплатни модели (виж бележката в
+  // js/agent-roster.js) — вместо да преравяме всички при всяка задача,
+  // ползваме първо малкия, вече проверен списък от днешния AgentRoster.
+  // Пълният списък остава резерва накрая, ако всичко от ростъра гръмне.
+  const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("openrouter") : null;
+  const fullList = await getOpenRouterFreeModels();
+  const models = (roster && roster.length)
+    ? [...roster, ...fullList.filter(m => !roster.includes(m))]
+    : fullList;
 
   let lastError;
   for (let m = 0; m < models.length; m++) {
@@ -122,8 +131,13 @@ async function callOpenRouter(prompt, maxTokens = 900) {
       AICallLog.record({ provider: "openrouter", model, ok: false, note: (e.message || "").slice(0, 140) });
       // 429/503 = претоварен безплатен модел; без status = отрязан отговор
       // дори след двоен лимит (виж _callOpenRouterSingle) — и в двата
-      // случая има смисъл да пробваме следващия безплатен модел.
+      // случая има смисъл да пробваме следващия безплатен модел, И да
+      // махнем текущия от днешния ростър ВЕДНАГА (не чака утрешното
+      // опресняване — виж AgentRoster.removeModel).
       const isRetryable = e.status === 429 || e.status === 503 || !e.status;
+      if (isRetryable && typeof AgentRoster !== "undefined") {
+        AgentRoster.removeModel("openrouter", model, e.status ? ("HTTP " + e.status) : "отрязан отговор дори след двоен лимит");
+      }
       if (isRetryable && m < models.length - 1) {
         toast(`⚠️ OpenRouter "${model}" не се справи — превключвам на "${models[m + 1]}"...`, 4000);
         continue;

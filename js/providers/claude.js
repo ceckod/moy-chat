@@ -132,7 +132,17 @@ async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = fa
 async function callClaude(prompt, maxTokens = 1200) {
   const k = Keys.load();
   if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
-  const models = await getClaudeModelList(k.claude);
+
+  // Първо пробваме САМО вече проверените "работещи" модели от днешния
+  // AgentRoster (виж js/agent-roster.js) — малък, реално тестван списък,
+  // вместо да теглим/пробваме целия суров списък при ВСЯКА задача. Ако
+  // ростърът липсва/е празен за Claude (напр. още не е строен), директно
+  // падаме към пълния списък — старото поведение, нищо не се чупи.
+  const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("claude") : null;
+  const fullList = await getClaudeModelList(k.claude);
+  const models = (roster && roster.length)
+    ? [...ModelPref.applyTo("claude", roster), ...fullList.filter(m => !roster.includes(m))]
+    : fullList;
 
   let lastError;
   for (let m = 0; m < models.length; m++) {
@@ -146,6 +156,12 @@ async function callClaude(prompt, maxTokens = 1200) {
       lastError = e;
       AICallLog.record({ provider: "claude", model, ok: false, note: (e.message || "").slice(0, 140) });
       const isQuotaOrOverload = e.status === 429 || e.status === 529;
+      // Квота/претоварване = "няма как да се подмине" за ОСТАТЪКА от деня —
+      // маха модела от ростъра ВЕДНАГА, вместо да чака следващото дневно
+      // опресняване (виж AgentRoster.removeModel).
+      if (isQuotaOrOverload && typeof AgentRoster !== "undefined") {
+        AgentRoster.removeModel("claude", model, "квота/претоварване (HTTP " + e.status + ")");
+      }
       if (isQuotaOrOverload && m < models.length - 1) {
         toast(`⚠️ Claude "${model}" изчерпа квотата/претоварен — превключвам на "${models[m + 1]}"...`, 4500);
         continue;

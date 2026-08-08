@@ -100,7 +100,14 @@ async function getGeminiModelList(apiKey, forceRefresh = false) {
    Грешки, различни от 429 (невалиден ключ/prompt и т.н.), спират веднага
    без да пробват други модели, защото смяна на модела няма да ги реши. */
 async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
-  const models = await getGeminiModelList(apiKey);
+  // Виж бележката в providers/claude.js/callClaude — същият принцип: първо
+  // само проверените "работещи" модели от днешния AgentRoster, пълният
+  // списък е резерва накрая, само ако всичко от ростъра гръмне.
+  const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("gemini") : null;
+  const fullList = await getGeminiModelList(apiKey);
+  const models = (roster && roster.length)
+    ? [...ModelPref.applyTo("gemini", roster), ...fullList.filter(m => !roster.includes(m))]
+    : fullList;
   let lastError;
   for (let m = 0; m < models.length; m++) {
     const model = models[m];
@@ -142,6 +149,9 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
         }
         lastError = new Error(`Gemini API грешка (${model}): ` + t);
         AICallLog.record({ provider: "gemini", model, ok: false, note: "429 — изчерпана квота" });
+        // Изчерпана дневна квота = "няма как да се подмине" за остатъка от
+        // деня — маха модела от ростъра ВЕДНАГА (виж AgentRoster.removeModel).
+        if (typeof AgentRoster !== "undefined") AgentRoster.removeModel("gemini", model, "429 — изчерпана дневна квота");
         if (m < models.length - 1) {
           toast(`⚠️ Gemini "${model}" изчерпа дневната квота — превключвам на "${models[m + 1]}"...`, 4500);
         }
@@ -155,6 +165,7 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
         lastError = new Error(`Gemini API грешка (${model}): ` + t);
         AICallLog.record({ provider: "gemini", model, ok: false, note: "404 — моделът вече не съществува" });
         try { Storage.remove(GEMINI_MODELS_CACHE_KEY); } catch (e) { /* noop */ }
+        if (typeof AgentRoster !== "undefined") AgentRoster.removeModel("gemini", model, "404 — моделът вече не съществува");
         if (m < models.length - 1) {
           toast(`⚠️ Gemini "${model}" вече не съществува — превключвам на "${models[m + 1]}"...`, 4500);
         }
