@@ -319,8 +319,9 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <div id="authGateOverlay">
   <div class="gate-card">
     <h3>🔒 Заключено</h3>
-    <p class="muted">Въведи паролата, за да продължиш към dashboard-а.</p>
-    <input type="password" id="authGateUnlockPass" placeholder="Парола" onkeydown="if(event.key==='Enter') AuthGate.unlock()">
+    <p class="muted">Въведи потребител и парола, за да продължиш към dashboard-а.</p>
+    <input type="text" id="authGateUnlockUser" placeholder="Потребител" autocomplete="username" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter') document.getElementById('authGateUnlockPass').focus()">
+    <input type="password" id="authGateUnlockPass" placeholder="Парола" autocomplete="current-password" onkeydown="if(event.key==='Enter') AuthGate.unlock()">
     <button class="btn grad" style="margin-top:14px;width:100%;" onclick="AuthGate.unlock()">🔓 Отключи</button>
     <div id="authGateError" class="muted" style="margin-top:10px;color:var(--red);"></div>
   </div>

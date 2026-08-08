@@ -553,36 +553,40 @@ const Settings = {
     const el = document.getElementById("authGateSettingsOut");
     if (!el) return;
     if (!AuthGate.isEnabled()) {
-      el.innerHTML = `<p class="muted" style="margin:6px 0;">По желание — задай парола пред целия dashboard, за да не се отваря директно за всеки, който вземе устройството ти. <strong>Честно:</strong> това е само екран за поверителност (чисто клиентско), не истинска сървърна защита — виж README "Известни ограничения". Няма "забравена парола" бутон нарочно (би бил байпас за всеки друг) — инструкции за ръчно нулиране през DevTools са в README.</p>
-        <input type="password" id="gate_pass_new" placeholder="Нова парола (мин. 4 символа)">
-        <input type="password" id="gate_pass_new2" placeholder="Повтори паролата">
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">По желание — задай потребител и парола пред целия dashboard, за да не се отваря директно за всеки, който вземе устройството ти. <strong>Честно:</strong> това е само екран за поверителност (чисто клиентско), не истинска сървърна защита — виж README "Известни ограничения". Няма "забравена парола" бутон нарочно (би бил байпас за всеки друг) — инструкции за ръчно нулиране през DevTools са в README.</p>
+        <input type="text" id="gate_user_new" placeholder="Потребител" autocomplete="username">
+        <input type="password" id="gate_pass_new" placeholder="Нова парола (мин. 4 символа)" style="margin-top:8px;">
+        <input type="password" id="gate_pass_new2" placeholder="Повтори паролата" style="margin-top:8px;">
         <button class="btn ghost" style="margin-top:10px;" onclick="Settings.authGateSetup()">🔒 Защити dashboard-а</button>`;
     } else {
-      el.innerHTML = `<p class="muted" style="margin:6px 0;">✅ Dashboard-ът е защитен с парола. Отключен е за тази сесия/таб — при затваряне на таба или "Заключи сега" по-долу ще поиска паролата отново.</p>
+      el.innerHTML = `<p class="muted" style="margin:6px 0;">✅ Dashboard-ът е защитен с потребител "<strong>${AuthGate.getUsername()}</strong>" и парола. Отключен е за тази сесия/таб — при затваряне на таба или "Заключи сега" по-долу ще поиска логин отново.</p>
         <div class="row">
           <button class="btn ghost" onclick="AuthGate.lockNow(); toast('🔒 Заключено — презареди страницата.')">🔒 Заключи сега</button>
         </div>
         <p class="muted" style="margin:10px 0 6px;">Изключване на защитата:</p>
-        <input type="password" id="gate_pass_disable" placeholder="Текуща парола, за да изключиш">
+        <input type="text" id="gate_user_disable" placeholder="Текущ потребител" autocomplete="username">
+        <input type="password" id="gate_pass_disable" placeholder="Текуща парола, за да изключиш" style="margin-top:8px;">
         <button class="btn ghost" style="margin-top:10px;" onclick="Settings.authGateDisable()">🔓 Изключи защитата</button>`;
     }
   },
 
   async authGateSetup() {
+    const u = document.getElementById("gate_user_new")?.value || "";
     const p1 = document.getElementById("gate_pass_new")?.value || "";
     const p2 = document.getElementById("gate_pass_new2")?.value || "";
     if (p1 !== p2) return toast("Паролите не съвпадат ❌");
     try {
-      await AuthGate.setup(p1);
-      toast("🔒 Dashboard-ът вече е защитен — паролата ще се пита от следващото отваряне");
+      await AuthGate.setup(u, p1);
+      toast("🔒 Dashboard-ът вече е защитен — логинът ще се пита от следващото отваряне");
       this.renderAuthGateUI();
     } catch (e) { toast("❌ " + e.message); }
   },
 
   async authGateDisable() {
+    const u = document.getElementById("gate_user_disable")?.value || "";
     const p = document.getElementById("gate_pass_disable")?.value || "";
     try {
-      await AuthGate.disable(p);
+      await AuthGate.disable(u, p);
       toast("🔓 Защитата е изключена");
       this.renderAuthGateUI();
     } catch (e) { toast("❌ " + e.message); }
