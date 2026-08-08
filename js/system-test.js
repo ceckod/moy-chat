@@ -92,6 +92,74 @@ const SystemTest = {
     }).join("");
   },
 
+  /* ---------- АРХИВ ОТ ИДЕИ (всяко реално предложение от AI екипа, не
+     грешки) — пази се трайно в localStorage, независимо от 10-те последни
+     теста в _LOG_KEY по-горе. Потребителят маркира кои е изградил, и точно
+     тези "изградени" се подават обратно на AI екипа в следващия prompt,
+     за да не предлага пак нещо вече готово. ---------- */
+  _IDEAS_KEY: "cdb_ai_ideas_v1",
+  _IDEAS_MAX: 200,
+
+  _loadIdeas() {
+    try { return Storage.get(this._IDEAS_KEY) || []; } catch (e) { return []; }
+  },
+  _saveIdeas(list) {
+    Storage.set(this._IDEAS_KEY, list.slice(0, this._IDEAS_MAX));
+  },
+  // Записва само РЕАЛНИ предложения (a.error е null) — не пълним архива с
+  // провалени/грешни отговори. Дедуплицира по (agent + идентичен текст),
+  // за да не се трупа едно и също предложение при всяко повторно пускане.
+  _recordIdeas(agentResults) {
+    const list = this._loadIdeas();
+    let added = 0;
+    for (const a of agentResults) {
+      if (a.error || !a.text) continue;
+      const dup = list.some(it => it.agent === a.agent && it.text === a.text);
+      if (dup) continue;
+      list.unshift({
+        id: `${Date.now()}_${a.agent}_${Math.random().toString(36).slice(2, 7)}`,
+        ts: Date.now(), agent: a.agent, label: a.label, text: a.text, built: false
+      });
+      added++;
+    }
+    if (added) this._saveIdeas(list);
+    return added;
+  },
+  toggleIdeaBuilt(id) {
+    const list = this._loadIdeas();
+    const it = list.find(i => i.id === id);
+    if (!it) return;
+    it.built = !it.built;
+    this._saveIdeas(list);
+    this.renderIdeaBacklog();
+  },
+  deleteIdea(id) {
+    this._saveIdeas(this._loadIdeas().filter(i => i.id !== id));
+    this.renderIdeaBacklog();
+  },
+  renderIdeaBacklog() {
+    const el = document.getElementById("aiIdeaBacklogOut");
+    if (!el) return;
+    const list = this._loadIdeas();
+    if (!list.length) {
+      el.innerHTML = `<p class="muted">Още няма записани предложения — пусни "🤖 Питай AI екипа за нови функции" по-горе; реалните идеи (не грешките) автоматично се записват тук.</p>`;
+      return;
+    }
+    const builtCount = list.filter(i => i.built).length;
+    const header = `<p class="muted" style="margin:0 0 10px;">${list.length} записани общо, ${builtCount} маркирани като изградени (AI екипът вече ги вижда като готови и не ги предлага пак).</p>`;
+    el.innerHTML = header + list.map(it => `
+      <div class="card tight" style="margin-top:8px;${it.built ? "opacity:.55;" : ""}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="muted" style="font-size:11px;">🤖 ${this._esc(it.label)} · ${this._fmtDate(it.ts)}${it.built ? " · ✅ изградено" : ""}</span>
+          <div class="row" style="gap:6px;">
+            <button class="btn ghost sm" onclick="SystemTest.toggleIdeaBuilt('${it.id}')">${it.built ? "↩️ Върни в опашката" : "✅ Маркирай като изградено"}</button>
+            <button class="btn ghost sm" onclick="SystemTest.deleteIdea('${it.id}')">🗑️</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;white-space:pre-wrap;font-size:12.5px;line-height:1.6;">${this._esc(it.text)}</div>
+      </div>`).join("");
+  },
+
   _captureError(kind, message, detail) {
     this._errors.push({ ts: Date.now(), kind, message: String(message).slice(0, 300), detail });
     if (this._errors.length > 50) this._errors.shift(); // не расте безкрайно
@@ -315,10 +383,22 @@ const SystemTest = {
       "реалност), AI Call Log + класация по надеждност, Vault криптиране на ключове, offline PWA."
     ].join(" ");
 
+    // Идеи, които потребителят вече е маркирал като "изградени" в архива
+    // (виж _recordIdeas/toggleIdeaBuilt по-долу) — подават се на AI екипа,
+    // за да не предлага пак нещо вече готово. Орязваме всяка до ~240 символа,
+    // за да не наду промпта прекалено при голям архив.
+    const builtIdeas = this._loadIdeas().filter(i => i.built);
+    const builtIdeasSummary = builtIdeas.length
+      ? builtIdeas.map(i => `- ${i.text.replace(/\s+/g, " ").slice(0, 240)}${i.text.length > 240 ? "…" : ""}`).join("\n")
+      : "(потребителят още не е маркирал нищо от предишни предложения като изградено)";
+
     const prompt = `Ти си продуктов консултант за AI-базиран музикален dashboard (изцяло клиентско, статично уеб приложение — без сървър, всички AI/YouTube/Spotify извиквания стават директно от браузъра на потребителя).
 
 СЪЩЕСТВУВАЩИ ФУНКЦИИ (не предлагай дублиране на тези):
 ${featureInventory}
+
+ФУНКЦИИ, КОИТО ПОТРЕБИТЕЛЯТ ВЕЧЕ Е ИЗГРАДИЛ ОТ ПРЕДИШНИ ТВОИ ПРЕДЛОЖЕНИЯ (НЕ ги предлагай пак, дори преформулирани):
+${builtIdeasSummary}
 
 РЕЗУЛТАТ ОТ ТОКУ-ЩО ПУСНАТ СИСТЕМЕН ТЕСТ НА ПРИЛОЖЕНИЕТО:
 ${resultsSummary}
@@ -333,7 +413,12 @@ ${resultsSummary}
         : { agent: a.id, label: a.label, text: null, error: r.reason?.message || String(r.reason) };
     });
 
-    out.innerHTML = agentResults.map(a => `
+    const addedCount = this._recordIdeas(agentResults);
+    const savedNote = addedCount
+      ? `<p class="muted" style="margin:0 0 10px;">💾 ${addedCount} нов${addedCount === 1 ? "о предложение записано" : "и предложения записани"} в архива по-долу.</p>`
+      : "";
+
+    out.innerHTML = savedNote + agentResults.map(a => `
       <div class="card tight" style="margin-bottom:10px;">
         <strong>🤖 ${a.label}</strong>
         <div style="margin-top:8px;white-space:pre-wrap;font-size:13px;line-height:1.6;">
@@ -343,6 +428,7 @@ ${resultsSummary}
 
     this._attachAgentIdeas(agentResults);
     this.renderHistory();
+    this.renderIdeaBacklog();
   }
 };
 
