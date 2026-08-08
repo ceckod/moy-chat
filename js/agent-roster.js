@@ -238,7 +238,12 @@ const AgentRoster = {
         const r = await fetchTimeout("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-          body: JSON.stringify({ model, max_tokens: 5, messages: [{ role: "user", content: "hi" }] })
+          // max_tokens по-висок от 5 нарочно: някои безплатни модели, рутирани
+          // през Google AI Studio (Gemini free варианти), връщат 400
+          // INVALID_ARGUMENT при много малък max_tokens (недостатъчен бюджет
+          // за вътрешния им "thinking" стъп) — 16 е достатъчно за "hi" теста,
+          // без да бави реално проверката.
+          body: JSON.stringify({ model, max_tokens: 16, messages: [{ role: "user", content: "hi" }] })
         }, 15000);
         if (r.ok) { working.push(model); AICallLog.record({ provider: "openrouter", model, ok: true, note: "ростър" }); }
         else AICallLog.record({ provider: "openrouter", model, ok: false, note: "ростър: HTTP " + r.status });
