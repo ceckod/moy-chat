@@ -26,6 +26,15 @@ const SystemTest = {
   // произволен текст (може да съдържа "<", ">", "&"), и без това биха се
   // интерпретирали като HTML и чупили визуално картата вместо да се покажат
   // като текст.
+  // Общ helper за "📋 Копирай" бутоните по-долу — един clipboard извикване,
+  // еднакво съобщение/грешка навсякъде, вместо инлайн navigator.clipboard
+  // на 3 различни места.
+  _copyText(text, label) {
+    navigator.clipboard.writeText(text || "")
+      .then(() => toast(`📋 ${label || "Копирано"} ✅`))
+      .catch(() => toast("⚠️ Неуспешно копиране — браузърът отказа достъп до clipboard"));
+  },
+
   _esc(s) {
     const d = document.createElement("div");
     d.textContent = s == null ? "" : String(s);
@@ -69,6 +78,13 @@ const SystemTest = {
     return new Date(ts).toLocaleString("bg-BG", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   },
 
+  copyHistoryAgentResult(entryId, agentIndex) {
+    const entry = this._loadLog().find(e => e.id === entryId);
+    const a = entry?.agentIdeas?.[agentIndex];
+    if (!a || !a.text) return;
+    this._copyText(a.text, `${a.label} отговор`);
+  },
+
   renderHistory() {
     const el = document.getElementById("systemTestHistoryOut");
     if (!el) return;
@@ -86,7 +102,14 @@ const SystemTest = {
           </div>
           <div id="${detailsId}" style="display:none;margin-top:10px;">
             ${entry.results.map(r => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border-soft);">${icon(r.status)} <strong>${this._esc(r.name)}</strong> — <span class="muted">${this._esc(r.detail)}</span></div>`).join("")}
-            ${(entry.agentIdeas || []).map(a => `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:12.5px;line-height:1.6;"><strong>🤖 ${a.label}:</strong><br>${a.error ? `<span class="muted">❌ ${this._esc(a.error)}</span>` : this._esc(a.text)}</div>`).join("")}
+            ${(entry.agentIdeas || []).map((a, ai) => `
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+                  <strong style="font-size:12.5px;">🤖 ${this._esc(a.label)}:</strong>
+                  ${a.error ? "" : `<button class="btn ghost sm" onclick="SystemTest.copyHistoryAgentResult(${entry.id}, ${ai})">📋 Копирай</button>`}
+                </div>
+                <div style="white-space:pre-wrap;font-size:12.5px;line-height:1.6;margin-top:4px;">${a.error ? `<span class="muted">❌ ${this._esc(a.error)}</span>` : this._esc(a.text)}</div>
+              </div>`).join("")}
           </div>
         </div>`;
     }).join("");
@@ -210,6 +233,12 @@ const SystemTest = {
     return it.title || (it.text || "").replace(/\s+/g, " ").trim().slice(0, 60) || "Идея";
   },
 
+  copyIdea(id) {
+    const it = this._loadIdeas().find(i => i.id === id);
+    if (!it) return;
+    this._copyText(`${this._titleOf(it)}\n\n${it.text}`, "Идея копирана");
+  },
+
   renderIdeaBacklog() {
     const el = document.getElementById("aiIdeaBacklogOut");
     if (!el) return;
@@ -231,6 +260,7 @@ const SystemTest = {
             <span class="muted" style="font-size:11px;">🤖 ${this._esc(it.label)} · ${this._fmtDate(it.ts)}</span>
           </div>
           <div class="row" style="gap:6px;flex-shrink:0;">
+            <button class="btn ghost sm" onclick="SystemTest.copyIdea('${it.id}')">📋 Копирай</button>
             <button class="btn ghost sm" onclick="SystemTest.toggleIdeaBuilt('${it.id}')">${it.built ? "↩️ Върни в опашката" : "✅ Маркирай като изградено"}</button>
             <button class="btn ghost sm" onclick="SystemTest.deleteIdea('${it.id}')">🗑️</button>
           </div>
@@ -542,9 +572,13 @@ ${resultsSummary}
       ? `<p class="muted" style="margin:0 0 10px;">💾 ${addedCount} нов${addedCount === 1 ? "а идея записана" : "и идеи записани"} в <a href="#" onclick="Nav.showView('ai-ideas');return false;">🗂️ Архива на идеи</a> (с оригиналните им заглавия).</p>`
       : "";
 
-    out.innerHTML = savedNote + agentResults.map(a => `
+    this._lastAgentPanelResults = agentResults; // за copyLiveAgentResult() по-долу
+    out.innerHTML = savedNote + agentResults.map((a, i) => `
       <div class="card tight" style="margin-bottom:10px;">
-        <strong>🤖 ${a.label}</strong>
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+          <strong>🤖 ${a.label}</strong>
+          ${a.error ? "" : `<button class="btn ghost sm" onclick="SystemTest.copyLiveAgentResult(${i})">📋 Копирай</button>`}
+        </div>
         <div style="margin-top:8px;white-space:pre-wrap;font-size:13px;line-height:1.6;">
           ${a.error ? `<span class="muted">❌ ${this._esc(a.error)}</span>` : this._esc(a.text)}
         </div>
@@ -553,6 +587,12 @@ ${resultsSummary}
     this._attachAgentIdeas(agentResults);
     this.renderHistory();
     this.renderIdeaBacklog();
+  },
+
+  copyLiveAgentResult(i) {
+    const r = this._lastAgentPanelResults?.[i];
+    if (!r || !r.text) return;
+    this._copyText(r.text, `${r.label} отговор`);
   }
 };
 
