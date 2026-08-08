@@ -1,0 +1,21 @@
+name: Unit Tests (network.js / Storage-Keys-Vault)
+
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}  # позволява и ръчно пускане от Actions таба
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run tests
+        run: npm test
