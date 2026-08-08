@@ -932,6 +932,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
+        <strong>🔍 Точен списък от функции (за AI екипа / външен консултант)</strong>
+        <p class="muted">Сканира РЕАЛНИЯ интерфейс в момента (nav разделите + всяка card в тях) — точно това, което автоматично се подава на "🤖 Питай AI екипа" по-горе, за да не предлага дублиращи се идеи. Копирай го и го дай на всеки друг AI (напр. в нов разговор с Claude), когато искаш нови предложения отвън — за да не изостава от реалните функции.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="SystemTest.renderFeatureInventoryPreview()">🔍 Покажи текущия списък</button>
+        <div id="featureInventoryOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
         <strong>🕐 История на тестовете</strong>
         <p class="muted">Последните 10 пуснати теста, с дата/час и — ако си питал — какво отговори Gemini. Натисни ред, за да разгънеш детайлите.</p>
         <div id="systemTestHistoryOut" style="margin-top:10px;"></div>
