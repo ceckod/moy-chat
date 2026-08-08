@@ -22,6 +22,16 @@ const SystemTest = {
   _lastResults: null,
   _lastLogId: null, // id на последния запис в историята — Gemini отговорът се допълва към него
 
+  // Ескейпва текст преди да влезе в innerHTML — AI отговорите/грешките са
+  // произволен текст (може да съдържа "<", ">", "&"), и без това биха се
+  // интерпретирали като HTML и чупили визуално картата вместо да се покажат
+  // като текст.
+  _esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  },
+
   /* ---------- ИСТОРИЯ (последните 10 теста, с дата/час + Gemini отговор) ---------- */
   _LOG_KEY: "cdb_system_test_log_v1",
   _LOG_MAX: 10,
@@ -75,8 +85,8 @@ const SystemTest = {
             <span class="muted" style="font-size:11px;">${entry.agentIdeas?.length ? `🤖 ${entry.agentIdeas.length} AI отговора` : "без AI отговори"} · разгъни ▾</span>
           </div>
           <div id="${detailsId}" style="display:none;margin-top:10px;">
-            ${entry.results.map(r => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border-soft);">${icon(r.status)} <strong>${r.name}</strong> — <span class="muted">${r.detail}</span></div>`).join("")}
-            ${(entry.agentIdeas || []).map(a => `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:12.5px;line-height:1.6;"><strong>🤖 ${a.label}:</strong><br>${a.error ? `<span class="muted">❌ ${a.error}</span>` : a.text}</div>`).join("")}
+            ${entry.results.map(r => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border-soft);">${icon(r.status)} <strong>${this._esc(r.name)}</strong> — <span class="muted">${this._esc(r.detail)}</span></div>`).join("")}
+            ${(entry.agentIdeas || []).map(a => `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:12.5px;line-height:1.6;"><strong>🤖 ${a.label}:</strong><br>${a.error ? `<span class="muted">❌ ${this._esc(a.error)}</span>` : this._esc(a.text)}</div>`).join("")}
           </div>
         </div>`;
     }).join("");
@@ -206,7 +216,7 @@ const SystemTest = {
     // Смок тест: проверява дали ключовите контейнери за всеки view съществуват
     // в DOM-а (те винаги стоят там, само се скриват/показват — виж Nav.showView).
     const ids = ["view-dashboard", "view-step1", "view-step2", "view-step3", "view-quick",
-      "view-niche-toolkit", "view-validator", "view-set-keys", "view-stats-tracker"];
+      "view-niche-toolkit", "view-validator", "view-set-keys", "view-stats-tracker", "view-system-test"];
     const missing = ids.filter(id => !document.getElementById(id));
     return { name: "DOM структура (всички view контейнери)", status: missing.length ? "fail" : "ok",
       detail: missing.length ? `Липсват: ${missing.join(", ")}` : `Всички ${ids.length} проверени view-а присъстват` };
@@ -218,18 +228,32 @@ const SystemTest = {
     const out = document.getElementById("systemTestOut");
     out.innerHTML = `<p class="muted">⏳ Стимулирам системата — Storage, AppState, DOM, Service Worker, после и реални мрежови проверки на ключовете (по-бавно)...</p>`;
 
-    const syncChecks = [
-      this._checkStorageRoundtrip(),
-      this._checkStorageSize(),
-      this._checkAppState(),
-      this._checkVault(),
-      this._checkServiceWorker(),
-      this._checkCriticalDom(),
-      this._checkRuntimeErrors(),
-      this._checkAiReliability(),
-    ];
-    const apiCheck = await this._checkApiKeys();
-    const results = [...syncChecks, apiCheck];
+    let results;
+    try {
+      const syncChecks = [
+        this._checkStorageRoundtrip(),
+        this._checkStorageSize(),
+        this._checkAppState(),
+        this._checkVault(),
+        this._checkServiceWorker(),
+        this._checkCriticalDom(),
+        this._checkRuntimeErrors(),
+        this._checkAiReliability(),
+      ];
+      const apiCheck = await this._checkApiKeys();
+      results = [...syncChecks, apiCheck];
+    } catch (e) {
+      // Всяка отделна проверка вече се пази сама (връща {status:"fail"} вместо
+      // да гърми), но ако нещо неочаквано все пак пропадне тук, не оставяме
+      // потребителя завинаги на "⏳ Стимулирам системата..." — показваме
+      // ясна грешка вместо да увисне.
+      this._captureError("system-test-run", e.message, e.stack || "");
+      out.innerHTML = `<div class="card tight" style="border-color:var(--red);">
+        <strong>❌ Системният тест гръмна неочаквано</strong><br>
+        <span class="muted">${(e.message || String(e)).slice(0, 400)}</span>
+      </div>`;
+      return;
+    }
     this._lastResults = results;
     this._lastLogId = this._pushLogEntry(results);
     this.renderHistory();
@@ -245,7 +269,7 @@ const SystemTest = {
       </div>
       ${results.map(r => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:12.5px;">
           <div style="flex-shrink:0;">${icon(r.status)}</div>
-          <div><strong>${r.name}</strong><br><span class="muted">${r.detail}</span></div>
+          <div><strong>${this._esc(r.name)}</strong><br><span class="muted">${this._esc(r.detail)}</span></div>
         </div>`).join("")}
       <button class="btn grad" style="margin-top:14px;" onclick="guardClick(this, () => SystemTest.askAgentPanelForIdeas())">🤖 Питай AI екипа за нови функции</button>
       <div id="systemTestIdeasOut" style="margin-top:14px;"></div>`;
@@ -313,7 +337,7 @@ ${resultsSummary}
       <div class="card tight" style="margin-bottom:10px;">
         <strong>🤖 ${a.label}</strong>
         <div style="margin-top:8px;white-space:pre-wrap;font-size:13px;line-height:1.6;">
-          ${a.error ? `<span class="muted">❌ ${a.error}</span>` : a.text}
+          ${a.error ? `<span class="muted">❌ ${this._esc(a.error)}</span>` : this._esc(a.text)}
         </div>
       </div>`).join("");
 
