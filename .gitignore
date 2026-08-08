@@ -1,0 +1,8 @@
+# AI Model Finder — локални API ключове, никога не се качват в git
+# (виж ai-model-finder/README.md, раздел "keys.json")
+ai-model-finder/keys.json
+
+# Често срещани локални/OS файлове (безопасно, не засяга съществуващ код)
+.DS_Store
+Thumbs.db
+node_modules/
