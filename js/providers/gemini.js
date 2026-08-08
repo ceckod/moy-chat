@@ -89,16 +89,73 @@ async function getGeminiModelList(apiKey, forceRefresh = false) {
   }
 }
 
+/* ---------- ЕДИНИЧНО ИЗВИКВАНЕ ----------
+   Един fetch към КОНКРЕТЕН Gemini модел. Хвърля Error с .status = HTTP кода
+   при неуспешен отговор от сървъра; при мрежова/timeout грешка (fetchTimeout
+   гърми директно, преди да имаме res) хвърля грешка БЕЗ .status — това е
+   нарочно, _classifyGeminiError по-долу разчита на тази разлика. */
+async function _callGeminiSingle(model, body, apiKey, timeoutMs) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const res = await fetchTimeout(proxied(url), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  }, timeoutMs);
+
+  if (!res.ok) {
+    const t = await res.text();
+    const err = new Error("Gemini API грешка: " + t);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
+}
+
 /* ---------- FALLBACK МЕЖДУ МОДЕЛИ + RETRY/BACKOFF ----------
-   Общ helper за всички Gemini заявки (текст и multimodal).
-   Пробва моделите, върнати от getGeminiModelList(), по ред. За текущия модел прави
-   кратък retry с exponential backoff при 429 (временен rate-limit).
-   Ако след тези опити моделът ВСЕ ОЩЕ е на 429 (обикновено = изчерпана
-   дневна квота, не временен rate-limit), автоматично минава на СЛЕДВАЩИЯ
-   модел от списъка — с ясен toast, за да се разбира какво реално е
-   генерирало отговора. Само ако всички модели са изчерпани, гърми грешка.
-   Грешки, различни от 429 (невалиден ключ/prompt и т.н.), спират веднага
-   без да пробват други модели, защото смяна на модела няма да ги реши. */
+   Решава какво да прави общия fallback цикъл (js/providers/fallback-loop.js)
+   при грешка от _callGeminiSingle:
+     - мрежова/timeout грешка (без .status) — retry тук няма да помогне,
+       ТИХО (без лог/toast/премахване от ростъра — точно както преди)
+       минаваме на следващия модел;
+     - 429 — кратък retry с изчакване (само 1 път — на практика 429 на
+       безплатните tier-ове почти винаги значи "изчерпана дневна квота",
+       не временен rate-limit), после превключване на следващия модел;
+     - 404 — моделът вече не съществува/преименуван от Google — чисти
+       кеша на списъка с модели и превключва на следващия;
+     - друга грешка (невалиден ключ/prompt и т.н.) — спира веднага. */
+function _classifyGeminiError(e, model, retries) {
+  if (!e.status) {
+    return { action: "next", log: false, removeFromRoster: false };
+  }
+  if (e.status === 429) {
+    if (retries < 1) {
+      return { action: "retry", waitMs: 1500, waitMsg: `⏳ Gemini (${model}) квота — изчаквам 1.5с и опитвам пак...` };
+    }
+    return {
+      action: "next",
+      note: "429 — изчерпана квота",
+      // Изчерпана дневна квота = "няма как да се подмине" за остатъка от
+      // деня — маха модела от ростъра ВЕДНАГА (виж AgentRoster.removeModel).
+      removeReason: "429 — изчерпана дневна квота",
+      switchMsg: (next) => `⚠️ Gemini "${model}" изчерпа дневната квота — превключвам на "${next}"...`
+    };
+  }
+  if (e.status === 404) {
+    return {
+      action: "next",
+      note: "404 — моделът вече не съществува",
+      removeReason: "404 — моделът вече не съществува",
+      cacheClearKey: GEMINI_MODELS_CACHE_KEY,
+      switchMsg: (next) => `⚠️ Gemini "${model}" вече не съществува — превключвам на "${next}"...`
+    };
+  }
+  return { action: "abort" };
+}
+
+// Общ helper за всички Gemini заявки (текст и multimodal) — пробва
+// моделите, върнати от getGeminiModelList(), по ред; виж
+// _classifyGeminiError по-горе за реда, по който се превключва между тях.
 async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
   // Виж бележката в providers/claude.js/callClaude — същият принцип: първо
   // само проверените "работещи" модели от днешния AgentRoster, пълният
@@ -108,77 +165,17 @@ async function callGeminiWithFallback(body, apiKey, timeoutMs = 45000) {
   const models = (roster && roster.length)
     ? [...ModelPref.applyTo("gemini", roster), ...fullList.filter(m => !roster.includes(m))]
     : fullList;
-  let lastError;
-  for (let m = 0; m < models.length; m++) {
-    const model = models[m];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    // Само 1 кратък retry (не 2 с растящо изчакване до 4с) — на практика
-    // 429 на безплатните tier-ове почти винаги значи "изчерпана дневна
-    // квота", не временен rate-limit, така че бързото превключване към
-    // следващия модел е по-полезно от дълго чакане на текущия.
-    const maxRetries = 1;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      let res;
-      try {
-        res = await fetchTimeout(proxied(url), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        }, timeoutMs);
-      } catch (e) {
-        lastError = e;
-        break; // мрежова/timeout грешка — retry тук няма да помогне, пробвай следващ модел
-      }
-
-      if (res.ok) {
-        const data = await res.json();
-        AICallLog.record({ provider: "gemini", model, ok: true });
-        QuotaTracker.record("gemini", model);
-        return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
-      }
-
-      const t = await res.text();
-      if (res.status === 429) {
-        if (attempt < maxRetries) {
-          const waitMs = 1500;
-          toast(`⏳ Gemini (${model}) квота — изчаквам ${waitMs / 1000}с и опитвам пак...`, waitMs + 500);
-          await new Promise(r => setTimeout(r, waitMs));
-          lastError = new Error("Gemini API грешка: " + t);
-          continue;
-        }
-        lastError = new Error(`Gemini API грешка (${model}): ` + t);
-        AICallLog.record({ provider: "gemini", model, ok: false, note: "429 — изчерпана квота" });
-        // Изчерпана дневна квота = "няма как да се подмине" за остатъка от
-        // деня — маха модела от ростъра ВЕДНАГА (виж AgentRoster.removeModel).
-        if (typeof AgentRoster !== "undefined") AgentRoster.removeModel("gemini", model, "429 — изчерпана дневна квота");
-        if (m < models.length - 1) {
-          toast(`⚠️ Gemini "${model}" изчерпа дневната квота — превключвам на "${models[m + 1]}"...`, 4500);
-        }
-        break; // към следващия модел
-      }
-
-      // 404 = моделът вече не съществува/преименуван от Google (случва се с
-      // кешираните/резервните имена с времето) — безсмислено да спираме
-      // цялото извикване заради това, пробваме следващия модел в списъка.
-      if (res.status === 404) {
-        lastError = new Error(`Gemini API грешка (${model}): ` + t);
-        AICallLog.record({ provider: "gemini", model, ok: false, note: "404 — моделът вече не съществува" });
-        try { Storage.remove(GEMINI_MODELS_CACHE_KEY); } catch (e) { /* noop */ }
-        if (typeof AgentRoster !== "undefined") AgentRoster.removeModel("gemini", model, "404 — моделът вече не съществува");
-        if (m < models.length - 1) {
-          toast(`⚠️ Gemini "${model}" вече не съществува — превключвам на "${models[m + 1]}"...`, 4500);
-        }
-        break; // към следващия модел
-      }
-
-      // грешка, различна от квота/несъществуващ модел — няма смисъл да
-      // пробваме друг модел
-      AICallLog.record({ provider: "gemini", model, ok: false, note: t.slice(0, 140) });
-      throw new Error("Gemini API грешка: " + t);
+  return runModelFallbackLoop(
+    models,
+    (model) => _callGeminiSingle(model, body, apiKey, timeoutMs),
+    {
+      provider: "gemini",
+      classify: _classifyGeminiError,
+      maxRetriesPerModel: 1,
+      exhaustedMsg: "Gemini API грешка: неуспешно след всички модели"
     }
-  }
-  throw lastError || new Error("Gemini API грешка: неуспешно след всички модели");
+  );
 }
 
 async function callGemini(prompt, useSearch = false) {

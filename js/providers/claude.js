@@ -124,11 +124,22 @@ async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = fa
   return data.content.map(b => b.text || "").join("\n").trim();
 }
 
-// Пробва Claude моделите, върнати от getClaudeModelList(), по ред. При 429
-// (изчерпана квота) или 529 (претоварен сървър) на текущия модел, автоматично
-// минава на следващия — с ясен toast, за да се разбира какво реално е
-// генерирало отговора. Други грешки (невалиден ключ/prompt) спират веднага,
-// защото смяна на модела няма да ги реши.
+// Решава какво да прави общия fallback цикъл (js/providers/fallback-loop.js)
+// при грешка от _callClaudeSingle. При 429 (изчерпана квота) или 529
+// (претоварен сървър) минава на следващия модел. Други грешки (невалиден
+// ключ/prompt) спират веднага, защото смяна на модела няма да ги реши.
+function _classifyClaudeError(e, model) {
+  const isQuotaOrOverload = e.status === 429 || e.status === 529;
+  if (!isQuotaOrOverload) return { action: "abort" };
+  return {
+    action: "next",
+    removeReason: "квота/претоварване (HTTP " + e.status + ")",
+    switchMsg: (next) => `⚠️ Claude "${model}" изчерпа квотата/претоварен — превключвам на "${next}"...`
+  };
+}
+
+// Пробва Claude моделите, върнати от getClaudeModelList(), по ред — виж
+// _classifyClaudeError по-горе за реда, по който се превключва между модели.
 async function callClaude(prompt, maxTokens = 1200) {
   const k = Keys.load();
   if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
@@ -144,30 +155,13 @@ async function callClaude(prompt, maxTokens = 1200) {
     ? [...ModelPref.applyTo("claude", roster), ...fullList.filter(m => !roster.includes(m))]
     : fullList;
 
-  let lastError;
-  for (let m = 0; m < models.length; m++) {
-    const model = models[m];
-    try {
-      const result = await _callClaudeSingle(model, prompt, maxTokens, k.claude);
-      AICallLog.record({ provider: "claude", model, ok: true });
-      QuotaTracker.record("claude", model);
-      return result;
-    } catch (e) {
-      lastError = e;
-      AICallLog.record({ provider: "claude", model, ok: false, note: (e.message || "").slice(0, 140) });
-      const isQuotaOrOverload = e.status === 429 || e.status === 529;
-      // Квота/претоварване = "няма как да се подмине" за ОСТАТЪКА от деня —
-      // маха модела от ростъра ВЕДНАГА, вместо да чака следващото дневно
-      // опресняване (виж AgentRoster.removeModel).
-      if (isQuotaOrOverload && typeof AgentRoster !== "undefined") {
-        AgentRoster.removeModel("claude", model, "квота/претоварване (HTTP " + e.status + ")");
-      }
-      if (isQuotaOrOverload && m < models.length - 1) {
-        toast(`⚠️ Claude "${model}" изчерпа квотата/претоварен — превключвам на "${models[m + 1]}"...`, 4500);
-        continue;
-      }
-      throw e;
+  return runModelFallbackLoop(
+    models,
+    (model) => _callClaudeSingle(model, prompt, maxTokens, k.claude),
+    {
+      provider: "claude",
+      classify: _classifyClaudeError,
+      exhaustedMsg: "Claude API грешка: неуспешно след всички модели"
     }
-  }
-  throw lastError || new Error("Claude API грешка: неуспешно след всички модели");
+  );
 }

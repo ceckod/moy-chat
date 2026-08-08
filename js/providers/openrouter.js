@@ -100,6 +100,26 @@ async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry 
   return text.trim();
 }
 
+// Решава какво да прави общия fallback цикъл (js/providers/fallback-loop.js)
+// при грешка от _callOpenRouterSingle. 429/503 = претоварен безплатен модел;
+// без status = отрязан отговор дори след двоен лимит (виж
+// _callOpenRouterSingle); 400 = невалидна заявка КЪМ ТОЗИ КОНКРЕТЕН модел
+// (чест случай при безплатни модели, рутирани през Google AI Studio —
+// вътрешният "thinking" бюджет им трябва различни параметри) — не значи
+// проблем с ключа/квотата, само че този модел не приема заявката както е
+// подадена, затова има смисъл да пробваме следващия, вместо да спрем
+// цялото извикване.
+function _classifyOpenRouterError(e, model) {
+  const isRetryable = e.status === 429 || e.status === 503 || e.status === 400 || !e.status;
+  if (!isRetryable) return { action: "abort" };
+  return {
+    action: "next",
+    removeReason: e.status ? ("HTTP " + e.status) : "отрязан отговор дори след двоен лимит",
+    switchMsg: (next) => `⚠️ OpenRouter "${model}" не се справи — превключвам на "${next}"...`,
+    switchMsgDuration: 4000
+  };
+}
+
 // Fallback между безплатните модели (ако единият е временно
 // претоварен/недостъпен, или реже отговорите — виж _callOpenRouterSingle
 // по-горе — при безплатните модели това се случва по-често, тъй като
@@ -118,34 +138,13 @@ async function callOpenRouter(prompt, maxTokens = 900) {
     ? [...roster, ...fullList.filter(m => !roster.includes(m))]
     : fullList;
 
-  let lastError;
-  for (let m = 0; m < models.length; m++) {
-    const model = models[m];
-    try {
-      const text = await _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey);
-      AICallLog.record({ provider: "openrouter", model, ok: true });
-      QuotaTracker.record("openrouter", model);
-      return text;
-    } catch (e) {
-      lastError = e;
-      AICallLog.record({ provider: "openrouter", model, ok: false, note: (e.message || "").slice(0, 140) });
-      // 429/503 = претоварен безплатен модел; без status = отрязан отговор
-      // дори след двоен лимит (виж _callOpenRouterSingle); 400 = невалидна
-      // заявка КЪМ ТОЗИ КОНКРЕТЕН модел (чест случай при безплатни модели,
-      // рутирани през Google AI Studio — вътрешният "thinking" бюджет им
-      // трябва различни параметри) — не значи проблем с ключа/квотата,
-      // само че този модел не приема заявката както е подадена, затова има
-      // смисъл да пробваме следващия, вместо да спрем цялото извикване.
-      const isRetryable = e.status === 429 || e.status === 503 || e.status === 400 || !e.status;
-      if (isRetryable && typeof AgentRoster !== "undefined") {
-        AgentRoster.removeModel("openrouter", model, e.status ? ("HTTP " + e.status) : "отрязан отговор дори след двоен лимит");
-      }
-      if (isRetryable && m < models.length - 1) {
-        toast(`⚠️ OpenRouter "${model}" не се справи — превключвам на "${models[m + 1]}"...`, 4000);
-        continue;
-      }
-      throw e;
+  return runModelFallbackLoop(
+    models,
+    (model) => _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey),
+    {
+      provider: "openrouter",
+      classify: _classifyOpenRouterError,
+      exhaustedMsg: "OpenRouter API грешка: неуспешно след всички безплатни модели"
     }
-  }
-  throw lastError || new Error("OpenRouter API грешка: неуспешно след всички безплатни модели");
+  );
 }
