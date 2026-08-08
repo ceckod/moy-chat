@@ -88,6 +88,16 @@ html:not(.gate-unlocked) #authGateOverlay{display:flex;}
   padding:28px;width:380px;max-width:100%;}
 .gate-card h3{margin:0 0 6px;font-family:var(--font-head);}
 
+/* AGENT ROSTER GATE — виж js/agent-roster.js. За разлика от AUTH GATE
+   по-горе (заключено/отключено по подразбиране чрез CSS клас), тук
+   display-ът се управлява директно от JS (AgentRoster.maybeShowGate()) —
+   overlay-ят се показва само ако вече има зададен AI ключ И дневният
+   ростър липсва/е изтекъл, затова е скрит по подразбиране (display:none),
+   не обвързан с клас на <html>. z-index е ПОД auth gate-а (200), за да
+   се появи едва СЛЕД отключване на privacy екрана, ако и двата са активни. */
+#rosterGateOverlay{display:none;position:fixed;inset:0;z-index:190;background:var(--bg);
+  align-items:center;justify-content:center;padding:24px;}
+
 /* ---------- SIDEBAR ---------- */
 .sidebar{width:250px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border-soft);
          padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
@@ -347,6 +357,20 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <button class="btn grad" style="margin-top:14px;width:100%;" onclick="AuthGate.unlock()">🔓 Отключи</button>
     <button class="btn ghost" style="margin-top:8px;width:100%;" onclick="AuthGate.bioUnlockClick()">👆 Отключи с биометрия</button>
     <div id="authGateError" class="muted" style="margin-top:10px;color:var(--red);"></div>
+  </div>
+</div>
+
+<!-- AGENT ROSTER GATE overlay — виж js/agent-roster.js. Показва се (JS,
+     не CSS клас) само ако има зададен поне 1 AI ключ И дневният списък с
+     "работещи" модели липсва/е по-стар от 24ч — задължителна стъпка
+     преди да продължиш към dashboard-а, за да не чака после всяка задача
+     докато AI екипът рови между целия списък модели. -->
+<div id="rosterGateOverlay">
+  <div class="gate-card">
+    <h3>🤖 Обнови AI агентите</h3>
+    <p class="muted">Дневната проверка кои Claude/Gemini/OpenRouter модели РЕАЛНО отговарят точно сега липсва или е стара. Без нея всяка задача би претърсвала целия списък модели наново (бавно). Натисни бутона, за да построиш днешния списък — прави се само веднъж на 24ч.</p>
+    <div id="rosterGateStatus" class="muted" style="margin:10px 0;font-size:12.5px;white-space:pre-wrap;"></div>
+    <button class="btn grad" id="rosterGateBtn" style="width:100%;" onclick="AgentRoster.runGateRefresh()">🔄 Обнови списъците с модели</button>
   </div>
 </div>
 
@@ -1062,6 +1086,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
+        <strong>🗂️ AI Агент Ростър (работещи модели днес)</strong>
+        <p class="muted">Компактен, реално тестван списък — само моделите, които РЕАЛНО отговориха при последната проверка. Задачите (напр. "🤖 Питай AI екипа" в Системния тест) първо ползват ТОЗИ списък, вместо да претърсват целия списък модели наново. Строи се автоматично максимум веднъж на 24ч (или задължително при влизане, ако е изтекъл) — тук може и ръчно.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="AgentRoster.manualRefresh()">🔄 Обнови сега</button>
+        <div id="agentRosterOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
         <strong>🏆 Класация по надеждност</strong>
         <p class="muted">Процент успешни извиквания на всеки модел на това устройство. При "🧪 Тествай ключовете" моделите с най-добра история се пробват първи.</p>
         <button class="btn ghost" style="margin-top:10px;" onclick="AICallLog.renderLeaderboard()">🏆 Покажи класацията</button>
@@ -1200,6 +1231,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/system-test.js"></script>
 <script src="js/ui/guard-click.js"></script>
 <script src="js/network.js"></script>
+<script src="js/agent-roster.js"></script>
 <script src="js/providers/claude.js"></script>
 <script src="js/providers/gemini.js"></script>
 <script src="js/providers/openrouter.js"></script>

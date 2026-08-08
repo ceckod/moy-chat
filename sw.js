@@ -15,7 +15,7 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v20";
+const CACHE_VERSION = "cdb-shell-v21";
 
 const SHELL_FILES = [
   "./",
@@ -26,6 +26,7 @@ const SHELL_FILES = [
   "./js/system-test.js",
   "./js/ui/guard-click.js",
   "./js/network.js",
+  "./js/agent-roster.js",
   "./js/providers/claude.js",
   "./js/providers/gemini.js",
   "./js/providers/openrouter.js",

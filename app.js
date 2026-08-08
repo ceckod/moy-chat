@@ -492,7 +492,7 @@ const Nav = {
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); }
     if (id === "set-project") ProjectArchive.render();
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
-    if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
+    if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); AgentRoster.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     if (id === "system-test") { SystemTest.renderHistory(); }
@@ -652,6 +652,7 @@ const Settings = {
       toast("🔓 Трезорът е отключен за тази сесия");
       this.fillFields();
       updateVaultBanner();
+      AgentRoster.maybeShowGate(); // ключовете вече са достъпни — провери дали ростърът трябва опресняване
     } catch (e) { toast("❌ " + e.message); }
   },
 
@@ -3437,6 +3438,11 @@ window.addEventListener("DOMContentLoaded", () => {
   Stats.renderDashboard();
   QuickUpload.initListener();
   updateVaultBanner();
+  // Задължителна проверка "работещи AI агенти днес" (виж js/agent-roster.js) —
+  // само ако вече има зададен AI ключ И ростърът липсва/е изтекъл. Ако Vault
+  // е активен и още заключен, ключовете не са достъпни оттук — проверката се
+  // повтаря след Settings.vaultUnlock() по-долу.
+  AgentRoster.maybeShowGate();
 
   // Зареждаме Google Identity Services скрипта динамично
   const gsi = document.createElement("script");
