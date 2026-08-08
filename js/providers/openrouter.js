@@ -75,7 +75,7 @@ async function callOpenRouter(prompt, maxTokens = 900) {
           "Authorization": `Bearer ${k.openrouterKey}`,
           // Препоръчани от OpenRouter (не задължителни) — за статистика в техния dashboard.
           "HTTP-Referer": window.location.origin,
-          "X-Title": "AI Music Suite — CD-B Records Dashboard"
+          "X-Title": "AI Music Suite - CD-B Records Dashboard"
         },
         body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] })
       }, 60000);
