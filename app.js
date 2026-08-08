@@ -473,7 +473,7 @@ const Nav = {
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
-    if (id === "system-test") SystemTest.renderHistory();
+    if (id === "system-test") { SystemTest.renderHistory(); SystemTest.renderIdeaBacklog(); }
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
