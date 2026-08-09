@@ -15,12 +15,14 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v25";
+const CACHE_VERSION = "cdb-shell-v47";
 
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./app.js",
+  "./js/storage.js",
+  "./js/ai-helpers.js",
   "./js/auth-gate.js",
   "./js/ui/toast.js",
   "./js/system-test.js",
@@ -34,6 +36,27 @@ const SHELL_FILES = [
   "./js/providers/model-finder.js",
   "./js/youtube.js",
   "./js/system-log.js",
+  "./js/app-state.js",
+  "./js/ai-cache.js",
+  "./js/quota-tracker.js",
+  "./js/prefs.js",
+  "./js/model-pref.js",
+  "./js/ai-provider-order.js",
+  "./js/ai-call-log.js",
+  "./js/nav.js",
+  "./js/settings.js",
+  "./js/stats.js",
+  "./js/gemini-validator.js",
+  "./js/project-archive.js",
+  "./js/quick-upload.js",
+  "./js/track-record.js",
+  "./js/lyrics-history.js",
+  "./js/step2.js",
+  "./js/step4.js",
+  "./js/step3.js",
+  "./js/viral-lab.js",
+  "./js/step1.js",
+  "./js/ui-bootstrap.js",
   "./js/niche-toolkit.js",
   "./js/release-roadmap.js",
   "./manifest.json",

@@ -6,6 +6,8 @@ import { webcrypto } from "node:crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_JS_PATH = path.join(__dirname, "..", "app.js");
+const APP_STATE_JS_PATH = path.join(__dirname, "..", "js", "app-state.js");
+const STORAGE_JS_PATH = path.join(__dirname, "..", "js", "storage.js");
 
 /**
  * Проста in-memory реализация на localStorage (Web Storage интерфейс),
@@ -26,9 +28,10 @@ function createMemoryLocalStorage() {
 }
 
 /**
- * Зарежда app.js (ЦЕЛИЯ файл, непроменен) във vm контекст с минимални
- * browser-like stub-ове (window/document/localStorage/crypto/btoa/atob),
- * за да можем да достъпим Vault/Keys/Storage/AppState за тестове.
+ * Зарежда app.js + js/app-state.js (ЦЕЛИ, непроменени) в ОБЩ vm контекст —
+ * по същия ред, по който index.html ги реферира — с минимални browser-like
+ * stub-ове (window/document/localStorage/crypto/btoa/atob), за да можем да
+ * достъпим Vault/Keys/Storage/AppState за тестове.
  *
  * ПРОВЕРЕНО (виж AUDIT_PROGRESS.md): app.js има само ЕДНО изпълнимо нещо
  * на топ ниво — регистрация на 'DOMContentLoaded' listener — затова
@@ -39,10 +42,12 @@ function createMemoryLocalStorage() {
  * sandbox обекта директно — затова ги "изваждаме" с допълнителен
  * vm.runInContext() след първоначалното изпълнение (легитимна vm техника:
  * лексикалният global scope се пази между отделни runInContext извиквания
- * в един и същ context).
+ * в един и същ context — включително между app-state.js и app.js по-долу).
  */
 export function loadAppModule({ localStorage: localStorageOverride } = {}) {
   const code = fs.readFileSync(APP_JS_PATH, "utf8");
+  const appStateCode = fs.readFileSync(APP_STATE_JS_PATH, "utf8");
+  const storageCode = fs.readFileSync(STORAGE_JS_PATH, "utf8");
   const localStorageStub = localStorageOverride || createMemoryLocalStorage();
 
   const documentStub = {
@@ -81,6 +86,11 @@ export function loadAppModule({ localStorage: localStorageOverride } = {}) {
     Chart: undefined, // Chart.js от CDN — не се ползва при зареждане, само при рендер
   };
   vm.createContext(sandbox);
+  // Зареждаме по СЪЩИЯ ред като index.html: js/storage.js е ПЪРВИЯТ script
+  // (всичко зависи от него - виж ARCHITECTURE.md), после app-state.js
+  // (и другите вече извадени helper файлове), после app.js последен.
+  vm.runInContext(storageCode, sandbox, { filename: STORAGE_JS_PATH });
+  vm.runInContext(appStateCode, sandbox, { filename: APP_STATE_JS_PATH });
   vm.runInContext(code, sandbox, { filename: APP_JS_PATH });
 
   // "Изваждаме" нужните top-level const-ове от лексикалния global scope

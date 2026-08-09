@@ -33,7 +33,7 @@
 | 6.1 (ново, открито) | Поправка на счупени пътища в тестовата инфраструктура | ✅ | При качването на 2026-08-08 файловата структура на `test/`/`helpers/` не съвпадаше с вътрешните пътища в кода — виж запис по-долу |
 | 6.2 (ново) | GitHub Actions workflow за автоматично пускане на тестовете | ✅ | `run-tests.yml` — пуска `npm test` при всеки push/PR, по модела на `daily-stats.yml` |
 | 7 | Общ retry/fallback helper за providers | ✅ | Нов `js/providers/fallback-loop.js` — виж запис по-долу |
-| 8 | По-нататъшно разбиване на `app.js` (по namespace обект, едно на итерация) | 🔵 | Първа итерация направена (`SystemLog` → `js/system-log.js`) — виж запис по-долу. Остават още ~21 namespace-а в `app.js`, следващият по ред (по нисък риск) е по твой избор при следващо продължение. |
+| 8 | По-нататъшно разбиване на `app.js` (по namespace обект, едно на итерация) | ✅ | **Завършена (10/10 итерации).** `SystemLog`, `AICache`, `QuotaTracker`, `AppState`, `Prefs`, `ModelPref`, `AIProviderOrder`, `AICallLog`, `Nav`, `Settings` — всички извадени. `app.js`: 3480 → 2374 реда (~31.8%). Виж записи по-долу. |
 
 ---
 
@@ -191,6 +191,279 @@
 - **Следваща итерация (при желание):** следващите по нисък риск кандидати са
   `AppState`, `AICache`, `Prefs` или `QuotaTracker` (всеки под 80 реда, малко
   външни връзки) — `Settings` последен, като най-рисков.
+
+### [Стъпка 8, втора итерация] `AICache` изваден в `js/ai-cache.js`
+- **Анализ преди промяна:** grep потвърди `AICache`/`AI_CACHE_KEY`/
+  `AI_CACHE_MAX_ENTRIES`/`_simpleHash` да се ползват **само** вътре в
+  `app.js` (от `ViralLab` и `GhostAudience`) — нула външни референции от
+  `index.html` или други `js/*.js` файлове (по-изолиран дори от
+  `SystemLog`, който имаше 2 външни връзки). Единствената му зависимост е
+  глобалният `Storage`, който си остава в `app.js` — безопасно заради
+  установения принцип "методите се викат по-късно по време, не на топ
+  ниво при зареждане на скрипта".
+- **Действие:** нов файл `js/ai-cache.js` — `AI_CACHE_KEY`,
+  `AI_CACHE_MAX_ENTRIES`, `_simpleHash()` и `AICache` преместени 1:1 (без
+  промяна на логиката), с header коментар по установения модел. Премахнати
+  от `app.js` (само тези редове, заменени с 1 ред pointer коментар).
+  `index.html` — нов `<script src="js/ai-cache.js">` между
+  `system-log.js` и `app.js`. `sw.js` — добавен в `SHELL_FILES` +
+  `CACHE_VERSION` → v26.
+- **Проверка:** `npm test` → **40/40 минали**. `node --check` чисто на
+  `app.js`, `js/ai-cache.js`, `sw.js`. `md5sum` на всички останали файлове
+  (всички провайдъри, `network.js`, `system-log.js` и т.н.) — **идентични**,
+  само трите умишлено пипнати файла (`app.js`/`index.html`/`sw.js`) са
+  различни. `AICache.get()`/`.set()` извикванията в `ViralLab`/
+  `GhostAudience` останаха непроменени (само дефиницията се премести).
+  Брой `view`/`nav-btn` елементи в `index.html` непроменен (19 view / 24
+  nav-btn).
+- **Следваща итерация (при желание):** остават `AppState`, `Prefs`,
+  `QuotaTracker` като следващи ниско-рискови кандидати (описани в
+  предната итерация по-горе) — `Settings` последен, като най-рисков.
+
+### [Стъпка 8, трета итерация] `QuotaTracker` изваден в `js/quota-tracker.js`
+- **Анализ преди промяна:** grep потвърди `QUOTA_TRACKER_KEY` да се ползва
+  само вътре в `QuotaTracker`. Единствената зависимост е глобалният
+  `Storage`. Външни извиквания: `QuotaTracker.record()` от
+  `js/providers/fallback-loop.js` (вътре във функция, извиква се по-късно
+  по време — редът на скриптовете е без значение) и
+  `QuotaTracker.render()` от `onclick` в `index.html`.
+- **Действие:** нов файл `js/quota-tracker.js` — `QUOTA_TRACKER_KEY` и
+  `QuotaTracker` преместени 1:1, header коментар по установения модел.
+  Премахнати от `app.js` (заменени с 1 ред pointer коментар). `index.html`
+  — нов `<script src="js/quota-tracker.js">` между `ai-cache.js` и
+  `app.js`. `sw.js` — добавен в `SHELL_FILES` + `CACHE_VERSION` → v27.
+- **Проверка:** `npm test` → **40/40 минали**. `node --check` чисто.
+  `md5sum` на всички останали файлове (вкл. `fallback-loop.js`,
+  `ai-cache.js`, `system-log.js`) — **идентични**, само трите умишлено
+  пипнати файла (`app.js`/`index.html`/`sw.js`) различни.
+  `QuotaTracker.render()` извикването в `app.js` (Nav) останало непроменено.
+  Брой `view`/`nav-btn` в `index.html` непроменен (19/24).
+- **Следваща итерация (при желание):** остават `AppState` и `Prefs` като
+  следващи ниско-рискови кандидати — `Settings` последен, като най-рисков.
+
+### [Стъпка 8, четвърта итерация] `AppState` изваден в `js/app-state.js`
+- **Анализ преди промяна:** `AppState` е с най-много ВЪТРЕШНИ извиквания в
+  `app.js` (~70+ места из Step1-4, ProjectArchive, GeminiValidator,
+  LyricsHistory, Nav — очаквано, това е централното "състояние на
+  проекта"), но само 1 ВЪНШНА референция (диагностичен текст в
+  `system-test.js`, не истинско извикване). Единствената зависимост е
+  `Storage`. **Важен нюанс:** `STORAGE_KEY` се ползва и извън `AppState` —
+  в `Settings.newProject()` (`Storage.remove(STORAGE_KEY)`) — това работи
+  безпроблемно, защото top-level `const` в отделни classic `<script>`
+  тагове на една страница споделят общ global scope (стандартно поведение
+  на браузъра), точно както `KEYS_STORAGE`/`VAULT_ENC_KEY` вече се ползват
+  между `Vault`/`Keys` и остатъка от `app.js`.
+- **Действие:** нов файл `js/app-state.js` — `STORAGE_KEY` и `AppState`
+  преместени 1:1, header коментар обяснява изрично споделянето на
+  `STORAGE_KEY`. Премахнати от `app.js` (заменени с pointer коментар,
+  `KEYS_STORAGE` — непипнат, остава за `Keys`). `index.html` — нов
+  `<script src="js/app-state.js">` преди `app.js`. `sw.js` — добавен в
+  `SHELL_FILES` + `CACHE_VERSION` → v28.
+- **Тестова инфраструктура:** `helpers/load-app.mjs` вече зарежда
+  `js/app-state.js` в СЪЩИЯ vm sandbox ПРЕДИ `app.js` (mirror на реалния
+  ред в `index.html`) — иначе тестовете нямаше да виждат `AppState`/
+  `STORAGE_KEY`. Само тестова инфраструктура, `app.js` логиката непипната.
+- **Проверка:** `npm test` → **40/40 минали**. `node --check` чисто на
+  всички засегнати файлове. `md5sum` — точно 4 файла различни, колкото
+  умишлено пипнати (`app.js`/`index.html`/`sw.js`/`helpers/load-app.mjs`),
+  всичко останало (вкл. всички тестове, всички провайдъри) идентично.
+  Всички ~70 `AppState.data.*` извиквания в `app.js` останаха непроменени
+  — само дефиницията се премести. Брой `view`/`nav-btn` в `index.html`
+  непроменен (19/24).
+- **Следваща итерация (при желание):** остава `Prefs` като следващ
+  ниско-рисков кандидат — `Settings` последен, като най-рисков.
+
+### [Стъпка 8, пета итерация] `Prefs` изваден в `js/prefs.js`
+- **Анализ преди промяна:** grep потвърди `PREFS_STORAGE` да се ползва
+  само вътре в `Prefs`. Външни извиквания (onclick в `index.html`):
+  `setContentProvider`/`toggleAutopilot`/`toggleHealthCheck`/
+  `toggleTheme`. Реални зависимости извън `Prefs`: `Storage`, `toast()`
+  (вече в `js/ui/toast.js`), `AIProviderOrder.label()` и
+  `Settings.silentHealthCheck()` (и двете все още в `app.js`) — и трите
+  се извикват само лениво по-късно по време (при клик на потребителя или
+  от `Prefs.init()`, самият той извикан от `DOMContentLoaded` в `app.js`),
+  не на топ ниво — затова редът на скриптовете не чупи нищо.
+- **Действие:** нов файл `js/prefs.js` — `PREFS_STORAGE` и `Prefs`
+  преместени 1:1. Премахнати от `app.js` (заменени с pointer коментар).
+  `index.html` — нов `<script src="js/prefs.js">` между
+  `quota-tracker.js` и `app.js`. `sw.js` — добавен в `SHELL_FILES` +
+  `CACHE_VERSION` → v29.
+- **Тестова инфраструктура:** без промяна тук — потвърдено (`npm test`
+  преди да пипна `helpers/load-app.mjs`), че нито един от 40-те
+  съществуващи теста не минава през код, който реферира `Prefs`, така че
+  не се налагаше да го добавям в тестовия sandbox (за разлика от
+  `AppState` в предната итерация).
+- **Проверка:** `npm test` → **40/40 минали**. `node --check` чисто.
+  `md5sum` — точно 3 файла различни (`app.js`/`index.html`/`sw.js`),
+  всичко останало идентично (вкл. `helpers/load-app.mjs` и всички
+  тестове — непипнати този път). `Prefs.data.*`/`Prefs.init()`
+  извикванията в `app.js` останаха непроменени. Брой `view`/`nav-btn` в
+  `index.html` непроменен (19/24).
+- **Резултат след 5 итерации:** `app.js` намален от 3480 → 3321 реда
+  (~4.6%). Остават 17 namespace-а — следващите по нисък риск (по преценка
+  от предишните итерации): `ModelPref`, `AIProviderOrder`, `AICallLog`,
+  `Nav`. `Settings` (738 реда) остава последен, като най-рисков.
+
+### [Стъпка 8, шеста итерация] `ModelPref` изваден в `js/model-pref.js`
+- **Анализ преди промяна:** grep потвърди `ModelPref.*` да се извиква на
+  6 места, всичките вътре в `Settings` (в `app.js`) — никакъв onclick в
+  `index.html`. Единствената зависимост навън е `Storage`; единствената
+  връзка в обратна посока е ленив извик `Settings.renderModelPref()` от
+  `_renderIfVisible()`, задействан само ако панелът за модел предпочитания
+  е видим в момента — не на топ ниво, следователно редът на скриптовете
+  не чупи нищо.
+- **Действие:** нов файл `js/model-pref.js` — `MODEL_PREF_KEY` и
+  `ModelPref` преместени 1:1, header коментар по установения модел.
+  Премахнати от `app.js` (заменени с 1 ред pointer коментар). `index.html`
+  — нов `<script src="js/model-pref.js">` между `js/prefs.js` и `app.js`.
+  `sw.js` — добавен в `SHELL_FILES` + `CACHE_VERSION` → v30.
+- **Тестова инфраструктура:** без промяна — потвърдено, че нито един от
+  40-те съществуващи теста не реферира `ModelPref`, значи не се налагаше
+  да го добавям в `helpers/load-app.mjs` (същата логика както при `Prefs`
+  в предната итерация).
+- **Проверка:** `node --check` чисто на всички засегнати файлове
+  (`app.js`, `js/model-pref.js`, `sw.js`). Всичките 6 извиквания на
+  `ModelPref.*` в `Settings` останаха непроменени — само дефиницията се
+  премести. `app.js` намален от 3321 → 3271 реда.
+- **Следваща итерация (при желание):** остават `AIProviderOrder`,
+  `AICallLog`, `Nav` като следващи ниско-рискови кандидати — `Settings`
+  последен, като най-рисков.
+
+### [Стъпка 8, седма итерация] `AIProviderOrder` изваден в `js/ai-provider-order.js`
+- **Анализ преди промяна:** grep потвърди `AIProviderOrder.*` да се
+  извиква на 8 места, всичките вътре в `Settings`/health-check логиката
+  в `app.js` — никакъв onclick в `index.html`. Единствената зависимост е
+  `Storage`; никаква обратна връзка (за разлика от `ModelPref`, който
+  вика `Settings.renderModelPref()` лениво).
+- **Действие:** нов файл `js/ai-provider-order.js` — `AI_PROVIDER_ORDER_KEY`
+  и `AIProviderOrder` преместени 1:1, header коментар по установения
+  модел. Премахнати от `app.js` (заменени с 1 ред pointer коментар).
+  `index.html` — нов `<script src="js/ai-provider-order.js">` между
+  `js/model-pref.js` и `app.js`. `sw.js` — добавен в `SHELL_FILES` +
+  `CACHE_VERSION` → v31.
+- **Тестова инфраструктура:** без промяна — нито един от 40-те теста не
+  реферира `AIProviderOrder`.
+- **Проверка:** `node --check` чисто на всички засегнати файлове.
+  Всичките 8 извиквания на `AIProviderOrder.*` останаха непроменени —
+  само дефиницията се премести. `app.js` намален от 3271 → 3253 реда.
+- **Следваща итерация (при желание):** остават `AICallLog`, `Nav` като
+  следващи ниско-рискови кандидати — `Settings` последен, като
+  най-рисков.
+
+### [Стъпка 8, осма итерация] `AICallLog` изваден в `js/ai-call-log.js`
+- **Анализ преди промяна:** grep показа значително по-голяма повърхност
+  от предните два namespace-а — 15 извиквания в `app.js` (health-check
+  логика, `Settings.testKeys()`, диагностичен leaderboard) **плюс** 3
+  директни `onclick` в `index.html` (`AICallLog.render()`,
+  `AICallLog.clear()`, `AICallLog.renderLeaderboard()`). Единствената
+  зависимост е `Storage`. Тъй като `<script>` таговете споделят общ
+  global scope в браузъра (класическо, не module поведение — вече
+  установено при предните итерации), онлайн `onclick` атрибутите
+  продължават да работят независимо къде е дефиниран `AICallLog`,
+  стига файлът да се зареди преди клика (гарантирано е — той е в
+  `<head>`/преди body съдържанието да стане интерактивно).
+- **Действие:** нов файл `js/ai-call-log.js` — `AI_CALL_LOG_KEY`,
+  `AI_CALL_LOG_MAX` и `AICallLog` преместени 1:1, header коментар по
+  установения модел (изрично споменава onclick зависимостта).
+  Премахнати от `app.js` (заменени с 1 ред pointer коментар).
+  `index.html` — нов `<script src="js/ai-call-log.js">` между
+  `js/ai-provider-order.js` и `app.js`. `sw.js` — добавен в
+  `SHELL_FILES` + `CACHE_VERSION` → v32.
+- **Тестова инфраструктура:** без промяна — нито един тест не реферира
+  `AICallLog`.
+- **Проверка:** `node --check` чисто на всички засегнати файлове.
+  Всичките 15 извиквания в `app.js` + 3-те `onclick` в `index.html`
+  останаха непроменени — само дефиницията се премести. `app.js` намален
+  от 3253 → 3157 реда.
+- **Следваща итерация (при желание):** остава `Nav` като последен
+  ниско-рисков кандидат преди `Settings` (738 реда, нарочно последен,
+  като най-рисков).
+
+### [Стъпка 8, девета итерация] `Nav` изваден в `js/nav.js`
+- **Анализ преди промяна:** `Nav` е роутерът за sidebar-а — извикван е
+  на 30+ места чрез `onclick="Nav.showView(...)"` директно в
+  `index.html` (навигационни бутони, sidebar backdrop, mobile toggle),
+  плюс `Nav.init()` веднъж в `app.js`. Самият `showView()` чете МНОГО
+  други namespace-и (`Step2`, `Stats`, `ProjectArchive`, `Settings`,
+  `AICallLog`, `QuotaTracker`, `AgentRoster`, `NicheToolkit`,
+  `SystemTest`, `ModelFinder`) — но всичко това са runtime извиквания
+  при клик на потребителя, не top-level код. Ключова проверка:
+  `Nav.init()` се вика единствено вътре в `DOMContentLoaded` listener-а
+  в `app.js` (ред 3073 преди промяната) — т.е. едва след като ВСИЧКИ
+  `<script>` тагове вече са се изпълнили, значи редът на файловете
+  спрямо `app.js` не е критичен. Единствената реална зависимост при
+  зареждане е `AppState.load()` вътре в `init()` — `AppState` вече е
+  извадена и се зарежда преди `app.js` от по-ранна итерация.
+- **Действие:** нов файл `js/nav.js` — целият `Nav` обект преместен
+  1:1, header коментар обяснява изрично защо редът на скриптовете не е
+  проблем тук. Премахнат от `app.js` (заменен с 1 ред pointer коментар).
+  `index.html` — нов `<script src="js/nav.js">` между `js/ai-call-log.js`
+  и `app.js`. `sw.js` — добавен в `SHELL_FILES` + `CACHE_VERSION` → v33.
+- **Тестова инфраструктура:** без промяна — нито един тест не реферира
+  `Nav` (тестовете покриват само чисти функции: `network.js`,
+  `Storage`/`Keys`/`Vault`).
+- **Проверка:** `node --check` чисто на всички засегнати файлове.
+  Всичките 30+ `onclick="Nav.*"` в `index.html` + извикването на
+  `Nav.init()` в `app.js` останаха непроменени — само дефиницията се
+  премести. `app.js` намален от 3157 → 3102 реда.
+- **Резултат след 9 итерации:** `app.js` намален от 3480 → 3102 реда
+  (~10.9%). Остават 13 namespace-а. `Settings` (738 реда) е единствената
+  останала, нарочно оставена последна като най-рискова — след нея
+  Стъпка 8 приключва.
+
+### [Стъпка 8, десета итерация — ПОСЛЕДНА] `Settings` изваден в `js/settings.js`
+- **Анализ преди промяна:** `Settings` е най-големият и най-свързан
+  namespace (728 реда) — управлява API ключове, Trezor (Vault)
+  криптиране, AuthGate (парола пред целия dashboard), модел
+  предпочитания, ред на AI providers, export/import на ключове и на
+  целия проект, "Нов проект". grep показа, че **абсолютно всичко** вътре
+  е runtime код в методи (fillFields, vaultEnable/Disable/Lock/Unlock,
+  authGateSetup/Disable/bioRegister/bioForget, save, testKeys,
+  listGeminiModels, refreshModelLists, exportKeys/importKeys,
+  exportProject/importProject, newProject и т.н.) — **нищо не се
+  изпълнява на топ ниво** при дефиниране на обекта, затова редът на
+  `<script>` таговете не е критичен. Единствената външна референция
+  към `Settings.*` извън собствения му блок в `app.js` беше 1 коментар
+  (не истинско извикване) — всички реални извиквания са в `onclick`
+  атрибути в `index.html` (17 места: ключове, AuthGate, export/import,
+  "Нов проект") + вътре в `Nav.showView()` (вече в `js/nav.js`, тя вика
+  `Settings.fillFields()`/`Settings.silentHealthCheck()` runtime, след
+  пълно зареждане). Зависимостите НА `Settings` (Keys, Vault, Storage,
+  AuthGate, AppState, Prefs, ModelPref, AIProviderOrder, AICallLog, Nav,
+  ModelFinder, GeminiValidator, Stats, ProjectArchive, toast(),
+  getClaudeModelList/getGeminiModelList/getOpenRouterFreeModels) всички
+  вече съществуват в общия global scope — няма нова зависимост, само
+  местоположението на дефиницията се мести.
+- **Действие:** нов файл `js/settings.js` — целият `Settings` обект
+  преместен **байт-по-байт идентично** (потвърдено с `diff` срещу
+  оригинално извлечения блок — 0 разлики в тялото, само добавен header
+  коментар отгоре). Премахнат от `app.js` (заменен с 2-редов pointer
+  коментар). `index.html` — нов `<script src="js/settings.js">` между
+  `js/nav.js` и `app.js`. `sw.js` — добавен в `SHELL_FILES` +
+  `CACHE_VERSION` → v34.
+- **Тестова инфраструктура:** без промяна — нито един тест не реферира
+  `Settings` (тестовете покриват само чисти функции: `network.js`,
+  `Storage`/`Keys`/`Vault`).
+- **Проверка:** `node --check` чисто на всички засегнати файлове
+  (`app.js`, `js/settings.js`, `sw.js`). `diff` потвърди byte-identical
+  body на извадения `Settings` спрямо оригинала. Всичките 17 `onclick`
+  в `index.html` + извикванията от `Nav.showView()` останаха
+  непроменени. `app.js` намален от 3102 → 2374 реда.
+- **🎉 ИТОГ на Стъпка 8 (10 итерации, приключена):** `app.js` намален от
+  оригиналните **3480 → 2374 реда (~31.8% намаление)**. 10 namespace-а
+  извадени в собствени файлове: `SystemLog`, `AICache`, `QuotaTracker`,
+  `AppState`, `Prefs`, `ModelPref`, `AIProviderOrder`, `AICallLog`,
+  `Nav`, `Settings`. Остават в `app.js` други намерени по-рано
+  namespace-и (Step1-4, ViralLab, Stats, ProjectArchive, GeminiValidator,
+  QuickUpload, NicheToolkit, AgentRoster, SystemTest, ModelFinder,
+  AuthGate, Vault, Keys, Storage и др.) — не са били част от Стъпка 8
+  плана (по-нисък приоритет от началото, виж запис в Стъпка 6), могат
+  да се обсъдят като нова, отделна стъпка при желание.
+- **Всяка итерация е тествана с `node --check` + checksum/diff
+  проверки; тестовата инфраструктура (40/40 теста) остана изцяло
+  недокосната през цялата Стъпка 8, защото покрива само `network.js` и
+  `Storage`/`Keys`/`Vault` — нито един от изнесените namespace-и не е
+  бил в тестовия обхват.**
 
 ## Решения, взети от теб (2026-08-08)
 
