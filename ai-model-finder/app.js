@@ -81,7 +81,13 @@ async function scrapeHuggingFace() {
         // без него /api/models връща и огромни модели, качени само за локално
         // сваляне/инсталация, без работещ онлайн endpoint (виж
         // https://huggingface.co/docs/inference-providers/hub-api#list-models).
-        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
+        //
+        // FIX: sort=downloads извеждаше най-сваляните (за local инсталация)
+        // модели най-отгоре — визуално четеше се като "модели за сваляне",
+        // дори филтърът по-горе вече да гарантира, че имат онлайн endpoint.
+        // sort=trending отразява текуща онлайн активност, не исторически
+        // брой сваляния.
+        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=trending&direction=-1&limit=${HF_LIMIT}&gated=false`;
         const r = await fetch(url);
         if (!r.ok) continue;
         const data = await r.json();
@@ -91,6 +97,13 @@ async function scrapeHuggingFace() {
                      : ['text-to-image','image-to-image'].includes(tag) ? 'image'
                      : ['automatic-speech-recognition','text-to-speech','text-to-audio','audio-to-audio','audio-classification'].includes(tag) ? 'audio'
                      : 'chat';
+          // verified=true само за chat/embedding — router.huggingface.co/v1 е
+          // ЕДИНЕН endpoint, потвърдено работещ за всеки provider (HF рутира
+          // вътрешно). За image/audio/др. НЯМА такъв универсален път —
+          // api-inference.huggingface.co често връща "not deployed by any
+          // Inference Provider" за модели, обслужвани от друг provider —
+          // затова НЕ представяме този URL като сигурен.
+          const verified = (type === 'embedding' || type === 'chat');
           out.push({
             source: 'huggingface',
             id: m.id,
@@ -99,14 +112,15 @@ async function scrapeHuggingFace() {
             category: tag,
             type: type,
             license: lic,
+            verified: verified,
             link: 'https://huggingface.co/' + m.id,
             downloads: m.downloads || 0,
             likes: m.likes || 0,
-            endpoint: (type === 'embedding' || type === 'chat') ? HF_CHAT_BASE : HF_NATIVE + m.id,
+            endpoint: verified ? HF_CHAT_BASE : HF_NATIVE + m.id,
             auth: { type: 'bearer', key_url: 'https://huggingface.co/settings/tokens', note: 'HF токен — безплатен месечен quota на Inference API' },
-            how_to_connect: type === 'chat'
+            how_to_connect: verified
               ? 'Chat: base_url=' + HF_CHAT_BASE + ' (OpenAI-съвместим), модел: ' + m.id
-              : 'Inference API: POST ' + HF_NATIVE + m.id + ' с Authorization: Bearer <токен>. Детайли: huggingface.co/' + m.id
+              : '⚠️ Неверифициран endpoint (provider-специфичен) — провери реалния endpoint в Model Card: huggingface.co/' + m.id
           });
         }
       } catch (e) { /* продължавай с другите категории */ }
@@ -138,6 +152,7 @@ async function scrapeOpenRouter() {
         category: isImg ? 'image-generation' : (isAud ? 'automatic-speech-recognition' : 'text-generation'),
         type: type,
         license: null,
+        verified: true,
         link: 'https://openrouter.ai/' + m.id,
         downloads: 0,
         context: m.context_length || null,
@@ -152,7 +167,10 @@ async function scrapeOpenRouter() {
 
 function staticModels() {
   const out = [];
-  const push = m => out.push(m);
+  // verified: true по подразбиране — всички куратирани записи по-долу ползват
+  // документирани, официални endpoints (Gemini/Groq/Mistral/Cloudflare/GitHub
+  // Models/Pollinations/Jina), не скрейпнати/недостоверни.
+  const push = m => out.push({ verified: true, ...m });
   const bearer = (key_url, note) => ({ type: 'bearer', key_url: key_url, note: note });
 
   // --- Gemini (Google AI Studio) ---
@@ -316,7 +334,12 @@ function staticModels() {
 function dedupe(models) {
   const seen = new Map();
   for (const m of models) if (!seen.has(m.source + '|' + m.id)) seen.set(m.source + '|' + m.id, m);
-  return [...seen.values()].sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+  // FIX: verified (реално потвърден онлайн endpoint) винаги напред —
+  // downloads е само tie-breaker вътре в двете групи, не главен критерий.
+  return [...seen.values()].sort((a, b) => {
+    if (!!b.verified !== !!a.verified) return (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
+    return (b.downloads || 0) - (a.downloads || 0);
+  });
 }
 
 function buildOutput(models, status) {
@@ -394,6 +417,7 @@ function render(models) {
 
   $('search').style.display = 'block';
   $('search').value = '';
+  $('filterRow').style.display = 'flex';
 
   const chips = $('catChips');
   chips.innerHTML = '';
@@ -419,13 +443,15 @@ function getActiveCat() {
 
 function applyFilter(models, byCat, activeCat) {
   const q = ($('search').value || '').toLowerCase().trim();
+  const verifiedOnly = $('verifiedOnly').checked;
   const box = $('results');
   box.innerHTML = '';
   let shown = 0;
   for (const label of Object.keys(byCat)) {
     if (activeCat && label !== activeCat) continue;
     const list = byCat[label].filter(m =>
-      !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
+      (!q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)) &&
+      (!verifiedOnly || m.verified));
     if (!list.length) continue;
     shown += list.length;
     const det = document.createElement('details');
@@ -440,7 +466,12 @@ function applyFilter(models, byCat, activeCat) {
       a.href = m.link; a.target = '_blank'; a.rel = 'noopener';
       a.textContent = m.name;
       li.appendChild(a);
-      if (m.downloads) li.appendChild(document.createTextNode(' — ' + fmt(m.downloads) + ' сваляния'));
+      // FIX: "N сваляния" четеше се като "модел за сваляне" — заменено с
+      // ясен badge дали endpoint-ът реално е потвърден за директно извикване.
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (m.verified ? 'ok' : 'warn');
+      badge.textContent = m.verified ? '✅ онлайн' : '⚠️ провери endpoint';
+      li.appendChild(badge);
       if (m.license) {
         const s = document.createElement('span');
         s.className = 'lic';
@@ -453,7 +484,8 @@ function applyFilter(models, byCat, activeCat) {
     det.appendChild(ul);
     box.appendChild(det);
   }
-  if (!shown) box.innerHTML = '<p class="hint">Няма резултати за тази филтрация.</p>';
+  if (!shown) box.innerHTML = '<p class="hint">Няма резултати за тази филтрация' +
+    (verifiedOnly ? ' — пробвай да изключиш "Само проверени" за пълния списък' : '') + '.</p>';
 }
 
 function downloadJson() {
@@ -500,6 +532,10 @@ async function scrapeCustom(rules) {
 $('btnFind').addEventListener('click', findAll);
 $('btnDownload').addEventListener('click', downloadJson);
 $('search').addEventListener('input', () => {
+  const st = window.__renderState;
+  if (st) applyFilter(st.models, st.byCat, getActiveCat());
+});
+$('verifiedOnly').addEventListener('change', () => {
   const st = window.__renderState;
   if (st) applyFilter(st.models, st.byCat, getActiveCat());
 });

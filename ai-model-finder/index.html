@@ -24,7 +24,11 @@
   ul { margin:8px 0; padding-left:20px; max-height:280px; overflow:auto; }
   a { color:#58a6ff; }
   .lic { color:#8b949e; font-size:.8rem; }
+  .badge { font-size:.75rem; border-radius:10px; padding:1px 8px; margin-left:6px; }
+  .badge.ok { background:#0d3321; color:#3fb950; }
+  .badge.warn { background:#3d2b06; color:#d29922; }
   #search { width:100%; box-sizing:border-box; padding:10px 12px; border-radius:8px; border:1px solid #30363d; background:#010409; color:#e6edf3; margin:12px 0; }
+  #filterRow { display:none; align-items:center; gap:8px; font-size:.9rem; color:#c9d1d9; margin:4px 0 12px; }
   textarea { width:100%; box-sizing:border-box; background:#010409; color:#e6edf3; border:1px solid #30363d; border-radius:8px; padding:8px; font-family:monospace; }
   .hint { color:#8b949e; font-size:.85rem; }
   code { background:#21262d; padding:1px 5px; border-radius:4px; }
@@ -44,6 +48,7 @@
   <div id="stats" class="stats"></div>
 
   <input id="search" type="search" placeholder="Филтрирай по име на модел..." style="display:none;">
+  <label id="filterRow"><input type="checkbox" id="verifiedOnly" checked> Само проверени — потвърден, готов за директно извикване endpoint (изключи за пълния списък, вкл. модели с endpoint, който трябва да провериш ръчно)</label>
   <div id="catChips"></div>
   <div id="results"></div>
 

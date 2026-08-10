@@ -51,7 +51,14 @@ async function scrapeHuggingFace() {
         // inference provider — без него връща и модели само за локално
         // сваляне/инсталация, без работещ онлайн endpoint (виж
         // https://huggingface.co/docs/inference-providers/hub-api#list-models).
-        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=downloads&direction=-1&limit=${HF_LIMIT}&gated=false`;
+        //
+        // ВАЖНО (fix): sort=downloads извеждаше най-сваляните (за local
+        // инсталация) модели най-отгоре, дори техните inference endpoints
+        // рядко да се ползват — визуално изглеждаше като "модели за сваляне".
+        // sort=trending отразява реална ТЕКУЩА онлайн активност (API + UI
+        // извиквания), не исторически брой сваляния — по-честен сигнал за
+        // "този модел реално се ползва онлайн сега".
+        const url = `https://huggingface.co/api/models?pipeline_tag=${encodeURIComponent(tag)}&inference_provider=all&sort=trending&direction=-1&limit=${HF_LIMIT}&gated=false`;
         const r = await fetch(url);
         if (!r.ok) continue;
         const data = await r.json();
@@ -61,16 +68,24 @@ async function scrapeHuggingFace() {
                      : ['text-to-image','image-to-image'].includes(tag) ? 'image'
                      : ['automatic-speech-recognition','text-to-speech','text-to-audio','audio-to-audio','audio-classification'].includes(tag) ? 'audio'
                      : 'chat';
+          // "verified" (fix): за chat/embedding router.huggingface.co/v1 е
+          // ЕДИНЕН endpoint, който работи за ВСЕКИ provider автоматично
+          // (HF рутира вътрешно) — реално потвърдено онлайн. За image/audio/
+          // др. НЯМА такъв универсален път — api-inference.huggingface.co
+          // често връща "not deployed by any Inference Provider", защото
+          // конкретният provider (fal/Replicate/Together и т.н.) може да
+          // изисква различен endpoint формат. Вместо да представяме
+          // недостоверен URL като сигурен, маркираме го явно.
+          const verified = (type === 'embedding' || type === 'chat');
           out.push({
             source: 'huggingface', id: m.id, name: m.id, provider: m.author || 'Hugging Face',
-            category: tag, type: type, license: lic,
+            category: tag, type: type, license: lic, verified,
             link: 'https://huggingface.co/' + m.id, downloads: m.downloads || 0,
-            endpoint: (type === 'embedding' || type === 'chat') ? 'https://router.huggingface.co/v1'
-                                          : 'https://api-inference.huggingface.co/models/' + m.id,
+            endpoint: verified ? 'https://router.huggingface.co/v1' : 'https://api-inference.huggingface.co/models/' + m.id,
             auth: { type: 'bearer', key_env: 'HF_API_KEY', key_url: 'https://huggingface.co/settings/tokens', note: 'Безплатен месечен quota' },
-            how_to_connect: type === 'chat'
+            how_to_connect: verified
               ? 'OpenAI-съвместим: base_url=https://router.huggingface.co/v1, модел: ' + m.id
-              : 'POST https://api-inference.huggingface.co/models/' + m.id + ' с Bearer токен'
+              : '⚠️ Неверифициран endpoint (provider-специфичен) — провери реалния endpoint в Model Card: https://huggingface.co/' + m.id
           });
         }
       } catch (e) { /* продължавай със следващата категория */ }
@@ -96,7 +111,7 @@ async function scrapeOpenRouter() {
       return {
         source: 'openrouter', id: m.id, name: m.name || m.id, provider: 'OpenRouter',
         category: isImg ? 'image-generation' : 'text-generation', type: isImg ? 'image' : 'chat',
-        license: null, link: 'https://openrouter.ai/' + m.id, downloads: 0,
+        license: null, verified: true, link: 'https://openrouter.ai/' + m.id, downloads: 0,
         endpoint: 'https://openrouter.ai/api/v1' + (isImg ? '/images/generations' : '/chat/completions'),
         auth: { type: 'bearer', key_env: 'OPENROUTER_API_KEY', key_url: 'https://openrouter.ai/keys', note: 'Безплатен tier с rate limits' },
         how_to_connect: 'OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: ' + m.id
@@ -112,7 +127,7 @@ function staticModels() {
 
   // --- Gemini (Google AI Studio) ---
   const baseGemini = {
-    source: 'gemini', provider: 'Google AI Studio', license: null,
+    source: 'gemini', provider: 'Google AI Studio', license: null, verified: true,
     link: 'https://ai.google.dev/gemini-api/docs/models',
     auth: { type: 'bearer', key_env: 'GEMINI_API_KEY', key_url: 'https://aistudio.google.com/apikey', note: 'Безплатен ключ от AI Studio' }
   };
@@ -138,7 +153,7 @@ function staticModels() {
 
   // --- Groq ---
   const baseGroq = {
-    source: 'groq', provider: 'Groq', license: null,
+    source: 'groq', provider: 'Groq', license: null, verified: true,
     link: 'https://console.groq.com/docs/models',
     auth: { type: 'bearer', key_env: 'GROQ_API_KEY', key_url: 'https://console.groq.com/keys', note: 'Безплатен ключ' }
   };
@@ -161,7 +176,7 @@ function staticModels() {
 
   // --- Mistral ---
   const baseMistral = {
-    source: 'mistral', provider: 'Mistral AI', license: null,
+    source: 'mistral', provider: 'Mistral AI', license: null, verified: true,
     link: 'https://console.mistral.ai/',
     auth: { type: 'bearer', key_env: 'MISTRAL_API_KEY', key_url: 'https://console.mistral.ai/api-keys', note: 'Безплатен план с rate limits' }
   };
@@ -183,7 +198,7 @@ function staticModels() {
 
   // --- Cloudflare Workers AI ---
   const baseCf = {
-    source: 'cloudflare', provider: 'Cloudflare Workers AI', license: null,
+    source: 'cloudflare', provider: 'Cloudflare Workers AI', license: null, verified: true,
     link: 'https://developers.cloudflare.com/workers-ai/models/',
     auth: { type: 'bearer', key_env: 'CF_API_TOKEN', key_url: 'https://dash.cloudflare.com/profile/api-tokens', note: 'Нужен е и CF_ACCOUNT_ID от dashboard-а. 10 000 neuroni/ден на free план' }
   };
@@ -209,7 +224,7 @@ function staticModels() {
 
   // --- GitHub Models ---
   const baseGh = {
-    source: 'github', provider: 'GitHub Models', license: null,
+    source: 'github', provider: 'GitHub Models', license: null, verified: true,
     link: 'https://github.com/marketplace/models',
     auth: { type: 'bearer', key_env: 'GITHUB_PAT', key_url: 'https://github.com/settings/tokens', note: 'GitHub PAT, безплатно с акаунт' }
   };
@@ -248,7 +263,7 @@ function staticModels() {
   for (const [id, cat, type, note] of poll) {
     add({
       source: 'pollinations', provider: 'Pollinations', id, name: id, category: cat, type: type,
-      license: null, link: 'https://pollinations.ai/', downloads: 0,
+      license: null, verified: true, link: 'https://pollinations.ai/', downloads: 0,
       endpoint: type === 'image' ? 'https://image.pollinations.ai/prompt/{prompt}' : 'https://text.pollinations.ai/openai',
       auth: { type: 'none', key_env: null, key_url: null, note: 'Без ключ и без плащане. ' + note },
       how_to_connect: type === 'image'
@@ -260,7 +275,7 @@ function staticModels() {
   // --- Jina Embeddings ---
   add({
     source: 'jina', provider: 'Jina AI', id: 'jina-embeddings-v3', name: 'jina-embeddings-v3',
-    category: 'feature-extraction', type: 'embedding', license: null,
+    category: 'feature-extraction', type: 'embedding', license: null, verified: true,
     link: 'https://jina.ai/embeddings/', downloads: 0,
     endpoint: 'https://api.jina.ai/v1/embeddings',
     auth: { type: 'bearer', key_env: 'JINA_API_KEY', key_url: 'https://jina.ai/', note: 'Безплатни начални кредити' },
@@ -275,7 +290,13 @@ function staticModels() {
 function dedupe(models) {
   const seen = new Map();
   for (const m of models) if (!seen.has(m.source + '|' + m.id)) seen.set(m.source + '|' + m.id, m);
-  return [...seen.values()].sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+  // Fix: verified (реално потвърден, работещ онлайн endpoint) винаги напред —
+  // downloads вече е само tie-breaker вътре в двете групи, не главен критерий
+  // (иначе най-сваляните-за-локално модели изместваха реално ползваемите).
+  return [...seen.values()].sort((a, b) => {
+    if (!!b.verified !== !!a.verified) return (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
+    return (b.downloads || 0) - (a.downloads || 0);
+  });
 }
 
 async function main() {
