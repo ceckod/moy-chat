@@ -16,13 +16,17 @@
         OpenAI wrapper — за консистентност с останалото приложение)
      3. NicheToolkit.Playbook.*        — Release Playbook + CSV export
 
-   ЗАБЕЛЕЖКА за Spotify ключовете: Client Credentials flow изисква
-   CLIENT_SECRET. За разлика от оригиналния toolkit (пазен в сървърен
-   .env), тук стои в localStorage на твоя браузър — същия модел на
-   доверие като Claude/Gemini/GitHub ключовете ти вече използват
-   (личен инстанс, само твой браузър). Spotify token endpoint-ът няма
-   CORS за browser заявки, затова тази функция ИЗИСКВА Proxy URL в
-   Настройки (същото ограничение като keywordSuggest() в js/youtube.js).
+   ЗАБЕЛЕЖКА за Spotify: официалният Client Credentials flow (Client ID +
+   Secret от Настройки) е предпочитан, ако е наличен — по-стабилен, по-висок
+   rate limit. Ако липсва, 2026-08-10: автоматично се пробва анонимен
+   web-player token (без регистрация/ключове) — неофициален, по-крехък
+   endpoint, но премахва твърдата зависимост от Spotify ключове. Ако и двата
+   не сработят, анализът продължава само с YouTube данни (виж
+   _computeNicheScore — тежестите се преразпределят, не показва фантомна
+   нула). И двата Spotify пътя минават през proxied(), защото
+   accounts.spotify.com/open.spotify.com нямат CORS за browser заявки от
+   чужд домейн — изисква се Proxy URL в Настройки, иначе Spotify сигналът
+   просто отсъства (YouTube частта работи независимо).
    ========================================================= */
 
 const NICHE_TOOLKIT_SCORES_KEY = "cdb_niche_toolkit_scores_v1";
@@ -36,9 +40,21 @@ const NicheToolkit = {
   async _getSpotifyToken() {
     if (this._spotifyToken && Date.now() < this._spotifyTokenExpiresAt) return this._spotifyToken;
     const k = Keys.load();
-    if (!k.spotifyClientId || !k.spotifyClientSecret) {
-      throw new Error("Липсват Spotify Client ID / Client Secret (виж Настройки → API Ключове)");
+    if (k.spotifyClientId && k.spotifyClientSecret) {
+      return this._getSpotifyTokenOfficial(k);
     }
+    // Fallback: анонимен web-player token — без Client ID/Secret регистрация.
+    // Това е неофициален, reverse-engineered endpoint (същия, който самата
+    // open.spotify.com страница ползва за нелогнати посетители) — по-крехък
+    // от официалния Client Credentials flow и Spotify може да го промени по
+    // всяко време без предупреждение. Затова: официалният flow (ако има
+    // ключове) винаги е предпочитан; това е само за да работи "из кутията"
+    // без регистрация. При провал хвърляме грешка нагоре — извикващият код
+    // (_searchSpotifyTracksByGenre) я хваща и просто пропуска Spotify сигнала.
+    return this._getSpotifyTokenAnonymous();
+  },
+
+  async _getSpotifyTokenOfficial(k) {
     if (!k.proxyUrl) {
       throw new Error("Spotify token endpoint-ът няма CORS за браузър заявки — изисква се Proxy URL в Настройки");
     }
@@ -55,16 +71,49 @@ const NicheToolkit = {
     return this._spotifyToken;
   },
 
-  async _searchSpotifyTracksByGenre(genre, limit = 20) {
-    const token = await this._getSpotifyToken();
-    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(`genre:"${genre}"`)}&type=track&limit=${limit}`;
-    const res = await fetchTimeout(proxied(url), { headers: { "Authorization": `Bearer ${token}` } }, 15000);
-    if (!res.ok) throw new Error("Spotify search грешка: " + res.status + " " + (await res.text()));
+  async _getSpotifyTokenAnonymous() {
+    const url = "https://open.spotify.com/get_access_token?reason=transport&productType=web_player";
+    const res = await fetchTimeout(proxied(url), {}, 15000);
+    if (!res.ok) throw new Error("Анонимен Spotify token — грешка " + res.status + " (възможно е Spotify да е спрял/сменил този endpoint; ако имаш Client ID/Secret, добави ги в Настройки за по-стабилен достъп)");
     const data = await res.json();
-    return (data.tracks?.items || []).map(t => ({
-      id: t.id, name: t.name, artist: t.artists?.[0]?.name,
-      popularity: t.popularity, previewUrl: t.preview_url, releaseDate: t.album?.release_date
-    }));
+    if (!data.accessToken) throw new Error("Анонимен Spotify token — неочакван отговор (endpoint вероятно е сменен от Spotify)");
+    this._spotifyToken = data.accessToken;
+    // accessTokenExpirationTimestampMs е абсолютен ms timestamp, ако липсва
+    // (различен формат на отговора) — резервно 55 мин., типичния Spotify TTL.
+    this._spotifyTokenExpiresAt = data.accessTokenExpirationTimestampMs
+      ? data.accessTokenExpirationTimestampMs - 60000
+      : Date.now() + 55 * 60 * 1000;
+    return this._spotifyToken;
+  },
+
+  async _searchSpotifyTracksByGenre(genre, limit = 20) {
+    // Fix: преди всяка грешка тук (липсващи ключове, счупен анонимен token,
+    // rate limit) гърмеше и спираше ЦЕЛИЯ анализ, включително YouTube частта,
+    // която няма нищо общо със Spotify. Сега хващаме грешката тук и връщаме
+    // празен резултат — analyzeNiche() решава как да продължи (YouTube-only,
+    // с ясна бележка "Spotify: insufficient data" вместо мълчаливо 0).
+    let token;
+    try {
+      token = await this._getSpotifyToken();
+    } catch (e) {
+      console.warn("[NicheToolkit] Spotify token недостъпен:", e.message);
+      return { tracks: [], error: e.message };
+    }
+    try {
+      const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(`genre:"${genre}"`)}&type=track&limit=${limit}`;
+      const res = await fetchTimeout(proxied(url), { headers: { "Authorization": `Bearer ${token}` } }, 15000);
+      if (!res.ok) throw new Error("Spotify search грешка: " + res.status + " " + (await res.text()));
+      const data = await res.json();
+      return {
+        tracks: (data.tracks?.items || []).map(t => ({
+          id: t.id, name: t.name, artist: t.artists?.[0]?.name,
+          popularity: t.popularity, previewUrl: t.preview_url, releaseDate: t.album?.release_date
+        }))
+      };
+    } catch (e) {
+      console.warn("[NicheToolkit] Spotify search неуспешен:", e.message);
+      return { tracks: [], error: e.message };
+    }
   },
 
   /* ---------- YOUTUBE: проста версия (без velocity/времеви прозорец) ----------
@@ -86,28 +135,52 @@ const NicheToolkit = {
     if (!stRes.ok) throw new Error("YouTube videos.list грешка: " + (await stRes.text()));
     const stData = await stRes.json();
     return (stData.items || []).map(v => ({
-      videoId: v.id, title: v.snippet?.title, channelTitle: v.snippet?.channelTitle,
+      videoId: v.id, title: v.snippet?.title, channelTitle: v.snippet?.channelTitle, channelId: v.snippet?.channelId,
       publishedAt: v.snippet?.publishedAt,
       views: parseInt(v.statistics?.viewCount || "0", 10),
       likes: parseInt(v.statistics?.likeCount || "0", 10)
     }));
   },
 
-  /* ---------- PROFIT NICHE SCORE (портната формула, 1:1 със сървърната) ---------- */
-  _computeNicheScore({ spotifyPopularities = [], youtubeViews = [], competitionSignal = 50 }) {
+  /* ---------- PROFIT NICHE SCORE ----------
+     Fix: преди липсващ Spotify сигнал (без ключове/счупен token) тихо
+     влизаше в сметката като avgPopularity=0 * 0.35 тегло — изкуствено
+     понижаваше всеки score с до 35 точки, без потребителят да разбере
+     защо. Сега: ако Spotify данни липсват, тежестта му (0.35) се
+     преразпределя пропорционално към YouTube views (0.4) и competition
+     (0.25) сигналите, вместо да наказва score-а с фантомна нула. */
+  _computeNicheScore({ spotifyPopularities = [], youtubeViews = [], competitionSignal = 50, spotifyAvailable = true }) {
     const avg = (nums) => nums.length ? nums.reduce((s, n) => s + n, 0) / nums.length : 0;
     const avgPopularity = avg(spotifyPopularities);
     const avgViews = avg(youtubeViews);
     const viewsScore = Math.min(100, (Math.log10(avgViews + 1) / 7) * 100); // log10(10M)=7
     const competitionScore = 100 - competitionSignal;
-    const raw = avgPopularity * 0.35 + viewsScore * 0.4 + competitionScore * 0.25;
+
+    const BASE_WEIGHTS = { popularity: 0.35, views: 0.4, competition: 0.25 };
+    let w = { ...BASE_WEIGHTS };
+    if (!spotifyAvailable) {
+      const remaining = w.views + w.competition; // 0.65
+      w = { popularity: 0, views: w.views + w.popularity * (w.views / remaining), competition: w.competition + w.popularity * (w.competition / remaining) };
+    }
+
+    const raw = avgPopularity * w.popularity + viewsScore * w.views + competitionScore * w.competition;
+
+    // Confidence: честна оценка колко от нужните данни реално имаме —
+    // не измисляме стойност, само отбелязваме колко сме сигурни в нея.
+    const signalsAvailable = (spotifyAvailable ? 1 : 0) + (youtubeViews.length > 0 ? 1 : 0);
+    const confidence = signalsAvailable === 2 && youtubeViews.length >= 5 ? "HIGH"
+                      : signalsAvailable >= 1 ? "MEDIUM" : "LOW";
+
     return {
       score: Math.round(Math.min(100, Math.max(0, raw))),
+      confidence,
+      spotifyAvailable,
       breakdown: {
-        avgSpotifyPopularity: Math.round(avgPopularity),
+        avgSpotifyPopularity: spotifyAvailable ? Math.round(avgPopularity) : null,
         avgYoutubeViews: Math.round(avgViews),
         viewsScore: Math.round(viewsScore),
-        competitionScore: Math.round(competitionScore)
+        competitionScore: Math.round(competitionScore),
+        weightsUsed: { popularity: Math.round(w.popularity * 100) / 100, views: Math.round(w.views * 100) / 100, competition: Math.round(w.competition * 100) / 100 }
       }
     };
   },
@@ -119,22 +192,32 @@ const NicheToolkit = {
     out.innerHTML = `<p class="muted">📡 Тегля данни от Spotify + YouTube за "${genre}"...</p>`;
 
     try {
-      const [tracks, videos] = await Promise.all([
+      // Fix: YouTube частта вече не зависи от Spotify — ако Spotify
+      // (ключове/анонимен token) не сработи, _searchSpotifyTracksByGenre
+      // връща { tracks: [], error } вместо да хвърли грешка, затова
+      // Promise.all стига (нищо повече не може да гръмне оттук).
+      const [spotifyResult, videos] = await Promise.all([
         this._searchSpotifyTracksByGenre(genre),
         this._searchYoutubeByGenre(`${genre} music`)
       ]);
+      const tracks = spotifyResult.tracks;
+      const spotifyAvailable = tracks.length > 0;
       const spotifyPopularities = tracks.map(t => t.popularity);
       const youtubeViews = videos.map(v => v.views);
       // Груб сигнал за конкуренция: колко резултати изобщо връща YouTube за темата
       // (същата евристика като оригиналния toolkit — виж бележката в неговия README).
       const competitionSignal = Math.min(100, videos.length * 6);
-      const { score, breakdown } = this._computeNicheScore({ spotifyPopularities, youtubeViews, competitionSignal });
+      const { score, confidence, breakdown } = this._computeNicheScore({ spotifyPopularities, youtubeViews, competitionSignal, spotifyAvailable });
 
       // Пазим последния breakdown в паметта (не localStorage — само за
       // текущата сесия), за да може Revenue Simulator-ът по-долу да
       // предложи авто-попълване на "текущи views/popularity" вместо
       // потребителят да гадае числата ръчно.
-      this._lastAnalysis = { genre, avgSpotifyPopularity: breakdown.avgSpotifyPopularity, avgYoutubeViews: breakdown.avgYoutubeViews, score };
+      // Пазим ПЪЛНИЯ резултат (не само средните), за да може разширеният
+      // 5-под-индекс панел (NicheToolkit.analyzeNicheExtended, 2026-08-10)
+      // да построи HHI/diversity Opportunity и по-богат Demand сигнал, без
+      // да праща същите Spotify/YouTube заявки втори път.
+      this._lastAnalysis = { genre, avgSpotifyPopularity: breakdown.avgSpotifyPopularity, avgYoutubeViews: breakdown.avgYoutubeViews, score, tracks, videos };
 
       // Пазим последния Spotify-базиран score по жанр, за да може Стъпка 1
       // (чисто YouTube+AI сигнал) да го покаже като допълнителен, различен
@@ -179,20 +262,33 @@ const NicheToolkit = {
           <div style="width:40px;text-align:right;flex-shrink:0;">${Math.round(val)}</div>
         </div>`;
 
+      const confBadge = confidence === "HIGH" ? '<span class="optional-tag" style="color:var(--green,#3fb950);">Confidence: HIGH</span>'
+                       : confidence === "MEDIUM" ? '<span class="optional-tag" style="color:var(--amber,#d29922);">Confidence: MEDIUM</span>'
+                       : '<span class="optional-tag" style="color:var(--red,#f85149);">Confidence: LOW</span>';
+
+      // Fix: ако Spotify не е налично, показваме честна бележка защо (вместо
+      // мълчаливо да отсъства реда) — вкл. текста на грешката, за да е ясно
+      // дали е липсващ ключ, счупен анонимен token, или временен rate limit.
+      const spotifyNote = spotifyAvailable
+        ? ""
+        : `<p class="muted" style="margin-top:8px;font-size:11.5px;color:var(--amber,#d29922);">⚠️ Spotify: insufficient data (${spotifyResult.error || "няма резултати"}) — score-ът е преизчислен само от YouTube сигнали (тегла: views ${Math.round(breakdown.weightsUsed.views * 100)}%, свободна ниша ${Math.round(breakdown.weightsUsed.competition * 100)}%). За по-стабилен Spotify достъп добави Client ID/Secret в Настройки.</p>`;
+
       out.innerHTML = `
         ${combinedHtml}
         <div class="card tight" style="margin-bottom:10px;">
           <strong style="font-size:22px;">${score}/100 — Profit Niche Score</strong>
-          <p class="muted" style="margin-top:6px;">Прозрачна евристика (не финансов съвет): Spotify популярност 35% + YouTube трафик потенциал 40% + свободна ниша 25%.</p>
-          ${bar("Spotify популярност", breakdown.avgSpotifyPopularity, "var(--cyan)")}
+          ${confBadge}
+          <p class="muted" style="margin-top:6px;">Прозрачна евристика (не финансов съвет): Spotify популярност ${Math.round(breakdown.weightsUsed.popularity * 100)}% + YouTube трафик потенциал ${Math.round(breakdown.weightsUsed.views * 100)}% + свободна ниша ${Math.round(breakdown.weightsUsed.competition * 100)}%.</p>
+          ${spotifyAvailable ? bar("Spotify популярност", breakdown.avgSpotifyPopularity, "var(--cyan)") : ""}
           ${bar("YouTube трафик потенциал", breakdown.viewsScore, "var(--p1)")}
           ${bar("Свободна ниша (по-малко = по-задръстено)", breakdown.competitionScore, "var(--green)")}
-          <p class="muted" style="margin-top:8px;font-size:11.5px;">Средно Spotify popularity: ${breakdown.avgSpotifyPopularity}/100 · средно YouTube views: ${breakdown.avgYoutubeViews.toLocaleString("bg-BG")}</p>
+          <p class="muted" style="margin-top:8px;font-size:11.5px;">${spotifyAvailable ? `Средно Spotify popularity: ${breakdown.avgSpotifyPopularity}/100 · ` : ""}средно YouTube views: ${breakdown.avgYoutubeViews.toLocaleString("bg-BG")}</p>
+          ${spotifyNote}
         </div>
-        <div class="card tight" style="margin-bottom:10px;">
+        ${spotifyAvailable ? `<div class="card tight" style="margin-bottom:10px;">
           <strong>🎵 Топ Spotify тракове в нишата</strong>
-          ${tracks.slice(0, 8).map(t => `<div style="font-size:12.5px;margin:5px 0;">🎧 <strong>${t.name}</strong> — ${t.artist || "?"} <span class="muted">(popularity ${t.popularity})</span></div>`).join("") || '<p class="muted">Няма резултати.</p>'}
-        </div>
+          ${tracks.slice(0, 8).map(t => `<div style="font-size:12.5px;margin:5px 0;">🎧 <strong>${t.name}</strong> — ${t.artist || "?"} <span class="muted">(popularity ${t.popularity})</span></div>`).join("")}
+        </div>` : ""}
         <div class="card tight">
           <strong>📺 Топ YouTube видеа в нишата</strong>
           ${videos.slice(0, 8).map(v => `<div style="font-size:12.5px;margin:5px 0;">▶️ ${v.title} <span class="muted">— ${v.views.toLocaleString("bg-BG")} views · ${v.channelTitle || "?"}</span></div>`).join("") || '<p class="muted">Няма резултати.</p>'}
@@ -202,7 +298,116 @@ const NicheToolkit = {
     }
   },
 
-  /* ---------- AI: промпт за Suno/Udio ---------- */
+  /* ---------- РАЗШИРЕН PNS (2026-08-10) ----------
+     Нов, допълнителен модел върху js/niche-scoring.js — 5 обясними
+     под-индекса + безключови допълнителни сигнали (js/niche-data-sources.js).
+     НАРОЧНО отделен от analyzeNiche() по-горе (не го заменя) — реюзва
+     последния YouTube/Spotify резултат от паметта (this._lastAnalysis),
+     за да не праща същите заявки втори път. */
+  async analyzeNicheExtended() {
+    const out = document.getElementById("ntExtendedOut");
+    const a = this._lastAnalysis;
+    if (!a) { out.innerHTML = ""; return toast("Първо пусни '🎯 Анализирай нишата' по-горе поне веднъж"); }
+    out.innerHTML = `<p class="muted">📡 Тегля допълнителни сигнали (Deezer/MusicBrainz/YouTube RSS) за "${a.genre}"...</p>`;
+
+    const feasibilityRating = parseInt(document.getElementById("ntFeasibility")?.value || "3", 10);
+
+    // Допълнителни, безключови източници — всеки връща {available:false,
+    // error} при провал, никога не хвърля грешка (виж niche-data-sources.js).
+    const [deezer, musicbrainz] = await Promise.all([
+      NicheDataSources.fetchDeezerArtists(a.genre, 15),
+      NicheDataSources.fetchMusicBrainzArtists(a.genre, 8)
+    ]);
+
+    // YouTube RSS активност на топ канала от последния YouTube резултат —
+    // допълнителна, показвана информация (freshness), не участва пряко в
+    // score-а (RSS дава само последните ~15 видеа на 1 канал, недостатъчно
+    // представително за цялостен Momentum сигнал за нишата).
+    const topChannelId = a.videos?.[0]?.channelId;
+    const ytActivity = topChannelId ? await NicheDataSources.fetchYoutubeChannelActivity(topChannelId) : { available: false, error: "няма наличен канал от последния анализ" };
+
+    /* ---------- DEMAND ---------- */
+    const demand = NicheScoring.computeDemand({
+      youtubeAvgViews: a.avgYoutubeViews || null,
+      spotifyAvgPopularity: a.avgSpotifyPopularity ?? null,
+      deezerAvgFans: deezer.available ? Math.round(deezer.artists.reduce((s, x) => s + x.fans, 0) / deezer.artists.length) : null
+    });
+
+    /* ---------- OPPORTUNITY (HHI от Deezer fans, fallback = YouTube channel diversity) ---------- */
+    const youtubeChannelDiversity = a.videos?.length
+      ? { unique: new Set(a.videos.map(v => v.channelId || v.channelTitle)).size, total: a.videos.length }
+      : null;
+    const opportunity = NicheScoring.computeOpportunity({
+      topShares: deezer.available && deezer.artists.length >= 2 ? deezer.artists.map(x => x.fans) : null,
+      youtubeChannelDiversity
+    });
+
+    /* ---------- MOMENTUM (от data/trends-history.json, ако нишата съвпада с проследяваните 15) ----------
+       Fix спрямо track_trends.py: тук четем НЯКОЛКО snapshot-а (не само
+       последния) и подаваме на classifyMomentum() за acceleration, вместо
+       грубо "расте/пада" от 1 число. */
+    let momentum = { value: null, trend: "UNKNOWN", confidence: "LOW" };
+    try {
+      const histRes = await fetchTimeout("data/trends-history.json", {}, 10000);
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        const snapshots = (histData.snapshots || []).slice(-8); // последните до 8 snapshot-а
+        const points = [];
+        for (const snap of snapshots) {
+          const match = (snap.niches || []).find(n =>
+            n.niche.toLowerCase().includes(a.genre.toLowerCase()) || a.genre.toLowerCase().includes(n.niche.toLowerCase()));
+          if (match) points.push({ date: snap.date, value: match.score });
+        }
+        if (points.length >= 2) {
+          const cls = NicheScoring.classifyMomentum(points);
+          momentum = { value: NicheScoring.momentumToScore(cls), trend: cls.trend, confidence: cls.confidence, growthPct: cls.growthPct };
+        }
+      }
+    } catch (e) { /* некритично — trends-history.json може да липсва в локална разработка */ }
+
+    /* ---------- MONETIZATION (реюз на Revenue.RATES) ---------- */
+    const estStreams = a.avgSpotifyPopularity != null ? Math.round(a.avgSpotifyPopularity * 300) : 0;
+    const monetization = NicheScoring.computeMonetization({ avgViews: a.avgYoutubeViews, avgStreams: estStreams, rates: this.Revenue.RATES });
+
+    /* ---------- FEASIBILITY (ръчна, от слайдера) ---------- */
+    const feasibility = NicheScoring.computeFeasibility(feasibilityRating);
+
+    const pns = NicheScoring.computePNS({ demand, momentum: { value: momentum.value }, opportunity, monetization, feasibility });
+    const bucket = NicheScoring.opportunityBucket(pns.score);
+    const rec = NicheScoring.recommendation(pns.score, pns.confidence);
+
+    const bar = (label, val) => val == null ? `<div style="font-size:12px;margin:4px 0;color:var(--muted-2);">${label}: <em>insufficient data</em></div>` : `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px;">
+        <div style="width:150px;flex-shrink:0;">${label}</div>
+        <div style="flex:1;background:var(--panel-2);border-radius:5px;height:12px;overflow:hidden;"><div style="width:${Math.max(4, Math.min(100, val))}%;height:100%;background:var(--p1);"></div></div>
+        <div style="width:36px;text-align:right;flex-shrink:0;">${Math.round(val)}</div>
+      </div>`;
+
+    const recColor = { ATTACK: "var(--green)", TEST: "var(--cyan)", WATCH: "var(--amber,#d29922)", AVOID: "var(--red,#f85149)" }[rec] || "var(--muted-2)";
+    const confColor = { HIGH: "var(--green)", MEDIUM: "var(--amber,#d29922)", LOW: "var(--red,#f85149)" }[pns.confidence] || "var(--muted-2)";
+
+    out.innerHTML = `
+      <div class="card tight" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+          <strong style="font-size:22px;">${pns.score ?? "—"}/100 — Разширен Profit Niche Score</strong>
+          <span style="font-weight:700;color:${recColor};">${rec}</span>
+        </div>
+        <p class="muted" style="margin-top:4px;">Opportunity: <strong>${bucket}</strong> · Confidence: <strong style="color:${confColor};">${pns.confidence}</strong> · Data coverage: <strong>${pns.dataCoveragePct}%</strong></p>
+        ${bar("Demand", demand.value)}
+        ${bar("Momentum" + (momentum.trend !== "UNKNOWN" ? ` (${momentum.trend})` : ""), momentum.value)}
+        ${bar("Opportunity" + (opportunity.method === "hhi" ? " (HHI)" : opportunity.method === "youtube-diversity-fallback" ? " (YT diversity)" : ""), opportunity.value)}
+        ${bar("Monetization", monetization.value)}
+        ${bar("Feasibility (твоята оценка)", feasibility.value)}
+        ${pns.missingSignals?.length ? `<p class="muted" style="margin-top:8px;font-size:11.5px;">⚠️ insufficient data: ${pns.missingSignals.join(", ")} — тегло преразпределено към наличните сигнали (виж AUDIT_PROGRESS.md за логиката).</p>` : ""}
+      </div>
+      <div class="card tight">
+        <strong>📎 Допълнителни източници (само информативно)</strong>
+        <div style="font-size:12.5px;margin-top:8px;line-height:1.7;">
+          <div>🎧 Deezer: ${deezer.available ? `${deezer.artists.length} изпълнителя, средно ${Math.round(deezer.artists.reduce((s, x) => s + x.fans, 0) / deezer.artists.length).toLocaleString("bg-BG")} фена` : `<span class="muted">недостъпно (${deezer.error})</span>`}</div>
+          <div>🎼 MusicBrainz: ${musicbrainz.available ? `${musicbrainz.artists.length} съвпадения · тагове: ${[...new Set(musicbrainz.artists.flatMap(x => x.tags))].slice(0, 6).join(", ") || "—"}` : `<span class="muted">недостъпно (${musicbrainz.error})</span>`}</div>
+          <div>📺 YouTube RSS (топ канал): ${ytActivity.available ? `${ytActivity.videoCount} скорошни видеа, последно преди ${ytActivity.daysSinceLastUpload} дни` : `<span class="muted">недостъпно (${ytActivity.error})</span>`}</div>
+        </div>
+      </div>`;
+  },
   async generateAudioPrompt() {
     const subgenre = document.getElementById("ntSubgenre")?.value.trim();
     const mood = document.getElementById("ntMood")?.value.trim();
