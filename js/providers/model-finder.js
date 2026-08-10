@@ -157,8 +157,16 @@ const ModelFinder = {
       const provider = m.provider || m.source || "";
       const auth = m.auth?.type || m.auth || "";
       const keyEnv = m.key_env || m.auth?.key_env || "";
+      // verified: потвърден, готов за директно извикване endpoint (виж
+      // ai-model-finder/scraper.mjs) — за модели без явно поле (по-стар
+      // ai-models.json, генериран преди тази промяна) третираме като
+      // verified, за да не изчезнат внезапно от списъка.
+      const verified = m.verified !== false;
+      const badge = verified
+        ? `<span class="optional-tag" style="color:var(--green,#3fb950);">✅ онлайн</span>`
+        : `<span class="optional-tag" style="color:var(--amber,#d29922);">⚠️ провери endpoint</span>`;
       return `<div style="padding:6px 0;border-bottom:1px solid var(--border,#2a2a3a);">` +
-        `<strong>${id}</strong>` +
+        `<strong>${id}</strong> ${badge}` +
         (provider ? ` <span class="muted">· ${provider}</span>` : "") +
         (auth ? ` <span class="optional-tag">${auth}${keyEnv ? " (" + keyEnv + ")" : ""}</span>` : "") +
         `</div>`;
