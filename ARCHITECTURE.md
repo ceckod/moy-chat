@@ -236,7 +236,7 @@ script таговете) и имат pointer коментари в `app.js`, н�
 | `js/providers/claude.js` | — | `callClaude()`. |
 | `js/providers/gemini.js` | — | `callGemini()`, `callGeminiMultimodal()`. |
 | `js/providers/openrouter.js` | — | OpenRouter provider логика. |
-| `js/providers/model-finder.js` | `ModelFinder` | Динамичен списък AI модели. |
+| `js/providers/model-finder.js` | `ModelFinder`, `callModelFinder()` | Реален 4-ти AI provider (Groq/Mistral/GitHub Models/Cloudflare/Pollinations) + информационен панел за `ai-model-finder/ai-models.json`. **2026-08-10:** панелът вече показва ✅/⚠️ `verified` badge на всеки модел (виж запис в `AUDIT_PROGRESS.md`). |
 | `js/providers/fallback-loop.js` | — | Fallback логика между провайдъри. |
 | `js/network.js` | — | `fetchTimeout()`, `proxied()`. |
 | `js/youtube.js` | — | `fetchRecentTrendingVideos()`, `youtubeTopTitles()`, `youtubeOutlierScan()`, `keywordSuggest()`. |
@@ -338,6 +338,17 @@ scripts/clock-and-keys.js
    код"** — качи го в разговора първо. Работа по него "на сляпо",
    само по описанието тук, носи риск от счупване, защото описанието
    е по памет от pointer коментари, не от прочетен код.
+
+---
+
+## GitHub Actions workflows (`.github/workflows/`)
+
+| Файл | Какво прави | Кога |
+|---|---|---|
+| `daily-stats.yml` | `scripts/track_stats.py` — статистика на твоя YouTube канал → `data/stats-history.json` | нощно + ръчно |
+| `daily-trends.yml` | `scripts/track_trends.py` — growth/competition по ниши от `config.json` → `data/trends-history.json` | 08:00 UTC + ръчно |
+| `run-tests.yml` | `npm test` при всеки push/PR | push/PR |
+| `scrape-ai-models.yml` | `ai-model-finder/scraper.mjs` → `ai-model-finder/ai-models.json` — **добавен на 2026-08-10** (липсваше изцяло, виж `AUDIT_PROGRESS.md`) | 03:00 UTC + ръчно |
 
 ---
 
