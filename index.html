@@ -863,11 +863,21 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
       <div class="card">
         <strong>🎯 Niche & Signal анализ (Profit Niche Score)</strong>
-        <p class="muted">Различен, допълнителен сигнал спрямо Стъпка 1 — тук се смесва Spotify популярност на топ тракове с YouTube трафик потенциал и груб конкурентен сигнал в едно 0-100 число. Прозрачна евристика, не финансов съвет. Изисква Spotify + YouTube ключове (и Proxy URL — виж Настройки).</p>
+        <p class="muted">Различен, допълнителен сигнал спрямо Стъпка 1 — тук се смесва Spotify популярност на топ тракове с YouTube трафик потенциал и груб конкурентен сигнал в едно 0-100 число. Прозрачна евристика, не финансов съвет. Изисква YouTube ключ (задължително) и Proxy URL (виж Настройки). Spotify Client ID/Secret е опционален — без него автоматично се пробва анонимен достъп; ако и той не сработи, score-ът се смята само от YouTube данни.</p>
         <label>Жанр/поджанр</label>
         <input type="text" id="ntGenre" placeholder="напр. sad boy hyperpop">
         <button class="btn grad" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.analyzeNiche())">🎯 Анализирай нишата</button>
         <div id="ntAnalyzeOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <strong>📊 Разширени сигнали (Demand / Momentum / Opportunity / Monetization / Feasibility)</strong>
+        <p class="muted">2026-08-10: нов, допълнителен PNS модел (виж AUDIT_PROGRESS.md за пълния дизайн) — 5 обясними под-индекса вместо единна формула, HHI-базирана "свободна ниша" оценка, безключови допълнителни сигнали (Deezer/iTunes/MusicBrainz/YouTube RSS). Пусни "🎯 Анализирай нишата" по-горе поне веднъж първо — този панел преизползва YouTube/Spotify резултата от там.</p>
+        <label>Осъществимост за теб лично (1 = много трудно/скъпо, 5 = лесно и бързо)</label>
+        <input type="range" id="ntFeasibility" min="1" max="5" value="3" step="1" oninput="document.getElementById('ntFeasibilityVal').textContent=this.value">
+        <div class="muted" style="text-align:center;">Избрано: <span id="ntFeasibilityVal">3</span>/5</div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.analyzeNicheExtended())">📊 Изчисли разширен PNS</button>
+        <div id="ntExtendedOut" style="margin-top:14px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
@@ -1327,6 +1337,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/ui-bootstrap.js"></script>
 <script src="app.js"></script>
 <script src="js/auth-gate.js"></script>
+<script src="js/niche-scoring.js"></script>
+<script src="js/niche-data-sources.js"></script>
 <script src="js/niche-toolkit.js"></script>
 <script src="js/release-roadmap.js"></script>
    <script src="scripts/clock-and-keys.js"></script>

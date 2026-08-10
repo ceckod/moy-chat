@@ -1,7 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
-**Версия:** 1.23.0
-**Последна промяна:** 2026-08-10 (Europe/Sofia) — AI Model Finder bugfix: реално върнат липсващия GitHub Action (v1.22.0 го отбелязваше като върнат, но файлът така и не беше в repo-то), честен "verified" филтър вместо подвеждащо сортиране по сваляния — виж Changelog
+**Версия:** 1.25.0
+**Последна промяна:** 2026-08-10 (Europe/Sofia) — Niche & Signal: нов, допълнителен 5-под-индекс Profit Niche Score модел (js/niche-scoring.js, тестван) + безключови Deezer/iTunes/MusicBrainz/YouTube RSS сигнали (js/niche-data-sources.js) — виж Changelog
 
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
@@ -384,7 +384,71 @@ README на живо (offline PWA кеш + различни среди биха 
 
 ## Changelog
 
+### v1.25.0 — 2026-08-10 (Niche & Signal — нов 5-под-индекс модел + безключови сигнали, ADDITIVE)
+- 🆕 **`js/niche-scoring.js`** — чист, детерминистичен scoring модул (виж
+  пълния дизайн, договорен по-рано същия ден в `AUDIT_PROGRESS.md`):
+  Demand / Momentum (rising→collapsing, с acceleration от няколко
+  snapshot-а, не само последния) / Opportunity (HHI-базирана
+  концентрация — НЕ линейно "100-конкуренция") / Monetization /
+  Feasibility (ръчна, субективна). Централни тегла (`DEFAULT_WEIGHTS`),
+  insufficient-data → тежестта се преразпределя пропорционално, никога
+  измислена стойност. `compareNiches()` — сравнение с "защо A > B" по
+  най-голямата разлика в под-индекс, не просто по-голямо число.
+- 🆕 **`js/niche-data-sources.js`** — безключови допълнителни сигнали:
+  Deezer (`api.deezer.com`, artist fans), iTunes Search API
+  (`itunes.apple.com/search`), MusicBrainz (`musicbrainz.org/ws/2`,
+  метаданни/тагове), YouTube RSS (`/feeds/videos.xml`, channel
+  activity без API quota). Всяка функция връща `{available:false,
+  error}` при провал вместо да хвърля грешка — един счупен източник
+  никога не спира анализа.
+  - CORS бележка: Deezer и YouTube RSS минават през `proxied()`
+    (нямат CORS хедъри); iTunes Search API и MusicBrainz — директен
+    fetch (документирано CORS-enabled).
+- 🆕 **`NicheToolkit.analyzeNicheExtended()`** в `js/niche-toolkit.js` —
+  нов, ДОПЪЛНИТЕЛЕН панел "📊 Разширени сигнали" в UI (не заменя
+  стария `analyzeNiche()`/"🎯 Анализирай нишата" — и двата остават,
+  ползвателят вижда и двата резултата). Momentum тук чете **няколко**
+  snapshot-а от `data/trends-history.json` (ако нишата съвпада с
+  проследяваните 15 в `config.json`), не само последния ден.
+  Feasibility — нов ръчен слайдър (1-5) в UI.
+- ✅ **27 нови unit теста** в `test/niche-scoring.test.mjs` — точно
+  сценариите от оригиналното задание: high demand+low/high
+  competition, ключовият "малка бързорастяща ниша бие голяма
+  пренаситена" сценарий, low demand+high growth, declining,
+  напълно/частично липсващи данни, преразпределение на тежести,
+  екстремни стойности, детерминизъм (еднакъв вход→еднакъв изход),
+  сравнение на ниши. `npm test` → **73/73** (46 стари + 27 нови).
+- 📝 `ARCHITECTURE.md` — добавени редове за двата нови модула.
+
+### v1.24.0 — 2026-08-10 (Niche & Signal / Profit Niche Score — Spotify вече е опционален)
+- 🔓 **Spotify Client ID/Secret вече не е твърдо изискване** в
+  `js/niche-toolkit.js` (`ntGenre` → "🎯 Анализирай нишата" гърмеше
+  `❌ Липсват Spotify Client ID / Client Secret`, без значение какво
+  друго е конфигурирано). Ако официалните ключове липсват, автоматично
+  се пробва анонимен `open.spotify.com` web-player token (неофициален,
+  без регистрация) — минава през същия `proxied()` механизъм, изисква
+  Proxy URL в Настройки.
+- 🛡️ **Spotify грешка вече не блокира целия анализ.** Преди: всяка
+  Spotify грешка (липсващ ключ, счупен token, rate limit) хвърляше
+  изключение, което спираше и YouTube частта. Сега:
+  `_searchSpotifyTracksByGenre()` хваща грешката вътрешно и връща
+  `{ tracks: [], error }` — YouTube анализът продължава независимо.
+- ⚖️ **Динамично преразпределяне на тежести**, ако Spotify данни
+  липсват — вместо `avgPopularity=0 * 0.35` тихо да наказва score-а с
+  до 35 точки, тежестта се преразпределя пропорционално към YouTube
+  views (0.4→0.62) и свободна ниша (0.25→0.38) сигналите.
+- 🏷️ Нов **Confidence badge** (HIGH/MEDIUM/LOW) на резултата — честна
+  оценка колко сигнала реално са налични, вместо винаги да изглежда
+  еднакво сигурен.
+- 📝 UI текстът в `index.html` е коригиран — вече казва "Spotify е
+  опционален" вместо "Изисква Spotify + YouTube ключове".
+- ✅ `npm test` → 46/46 преди и след.
+
 ### v1.23.0 — 2026-08-10 (AI Model Finder bugfix — 404 надпис + подвеждащ филтър "модели за сваляне")
+- ⚙️ **Node.js 20 deprecation warning оправен** в `scrape-ai-models.yml`
+  **и** `run-tests.yml` (същия проблем и в двата) — `node-version: "20"`
+  сменено на `"lts/*"`, за да не се налага ръчна поправка при всяко
+  следващо GitHub deprecation на конкретна Node версия.
 - 🌙 **`.github/workflows/scrape-ai-models.yml` реално добавен** (не само
   спомен в стар changelog запис — v1.22.0 го отбелязваше като "върнат",
   но файлът така и не съществуваше в `.github/workflows/`, затова

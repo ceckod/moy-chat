@@ -243,7 +243,9 @@ script таговете) и имат pointer коментари в `app.js`, н�
 | `js/system-log.js` | — | Системен лог. |
 | `js/system-test.js` | `SystemTest` | Диагностика/self-test. |
 | `js/auth-gate.js` | `AuthGate` | Login gate преди достъп до dashboard-а. |
-| `js/niche-toolkit.js` | `NicheToolkit` (+`NICHE_TOOLKIT_SCORES_KEY`) | Ползва се от `Step1`. |
+| `js/niche-scoring.js` | `NicheScoring` | **2026-08-10:** чист, детерминистичен scoring модул (без fetch/DOM) — 5 под-индекса (Demand/Momentum/Opportunity-HHI/Monetization/Feasibility), централни тегла, insufficient-data логика. Тествано в `test/niche-scoring.test.mjs` (27 теста). Ползва се от `NicheToolkit.analyzeNicheExtended()`. |
+| `js/niche-data-sources.js` | `NicheDataSources` | **2026-08-10:** безключови допълнителни сигнали — Deezer, iTunes Search API, MusicBrainz, YouTube RSS. Никога не хвърля грешка нагоре (връща `{available:false,error}`). Ползва се от `NicheToolkit.analyzeNicheExtended()`. |
+| `js/niche-toolkit.js` | `NicheToolkit` (+`NICHE_TOOLKIT_SCORES_KEY`) | Ползва се от `Step1`. **2026-08-10:** нов `analyzeNicheExtended()` — допълнителен 5-под-индекс панел върху `NicheScoring`/`NicheDataSources`, не заменя стария `analyzeNiche()`. |
 | `js/agent-roster.js` | `AgentRoster` | "Работещи AI агенти днес" проверка. |
 | `js/release-roadmap.js` | — | Roadmap функционалност. |
 | `js/ui/toast.js` | — | `toast()`. |
