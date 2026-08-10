@@ -1,0 +1,39 @@
+
+name: AI Model Finder — обновяване на модели
+
+on:
+  schedule:
+    # 03:00 UTC всяка нощ (описано в ai-model-finder/README.md)
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}  # позволява и ръчно пускане от Actions таба
+
+permissions:
+  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ЗАБЕЛЕЖКА: скраперът работи и с НУЛА ключове — HF/OpenRouter каталозите
+      # и куратираните списъци (Gemini/Groq/Mistral/Cloudflare/GitHub Models/
+      # Pollinations/Jina) са публични метаданни, не изискват auth за самото
+      # откриване на моделите. keys.json (ако липсва) просто дава предупреждение
+      # в конзолата кои ключове потребителят все още не е сложил — не спира скрипта.
+      - name: Run scraper
+        run: node ai-model-finder/scraper.mjs
+
+      - name: Commit updated models list
+        run: |
+          git config user.name "cdb-model-finder-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ai-model-finder/ai-models.json
+          git diff --quiet --cached || git commit -m "🧠 AI Model Finder — обновен списък ($(date -u +%Y-%m-%d))"
+          git push
