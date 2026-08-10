@@ -1,0 +1,1196 @@
+{
+  "generated_at": "2026-08-10T08:47:57.280Z",
+  "total": 60,
+  "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
+  "sources": {
+    "huggingface": {
+      "ok": true,
+      "count": 0
+    },
+    "openrouter": {
+      "ok": true,
+      "count": 17
+    },
+    "static": {
+      "ok": true,
+      "count": 43
+    }
+  },
+  "keys_needed": [
+    "OPENROUTER_API_KEY",
+    "GEMINI_API_KEY",
+    "GROQ_API_KEY",
+    "MISTRAL_API_KEY",
+    "CF_API_TOKEN",
+    "GITHUB_PAT",
+    "JINA_API_KEY"
+  ],
+  "models": [
+    {
+      "source": "openrouter",
+      "id": "inclusionai/ling-3.0-tiny:free",
+      "name": "inclusionAI: Ling 3.0 Tiny (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/inclusionai/ling-3.0-tiny:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.0-tiny:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "poolside/laguna-s-2.1:free",
+      "name": "Poolside: Laguna S 2.1 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/poolside/laguna-s-2.1:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: poolside/laguna-s-2.1:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "poolside/laguna-xs-2.1:free",
+      "name": "Poolside: Laguna XS 2.1 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/poolside/laguna-xs-2.1:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: poolside/laguna-xs-2.1:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "cohere/north-mini-code:free",
+      "name": "Cohere: North Mini Code (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/cohere/north-mini-code:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: cohere/north-mini-code:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3.5-content-safety:free",
+      "name": "NVIDIA: Nemotron 3.5 Content Safety (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3.5-content-safety:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3.5-content-safety:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "name": "NVIDIA: Nemotron 3 Ultra (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-ultra-550b-a55b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "name": "NVIDIA: Nemotron 3 Nano Omni (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "google/gemma-4-26b-a4b-it:free",
+      "name": "Google: Gemma 4 26B A4B  (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/google/gemma-4-26b-a4b-it:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: google/gemma-4-26b-a4b-it:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "google/gemma-4-31b-it:free",
+      "name": "Google: Gemma 4 31B (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/google/gemma-4-31b-it:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: google/gemma-4-31b-it:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "google/lyria-3-pro-preview",
+      "name": "Google: Lyria 3 Pro Preview",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/google/lyria-3-pro-preview",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: google/lyria-3-pro-preview"
+    },
+    {
+      "source": "openrouter",
+      "id": "google/lyria-3-clip-preview",
+      "name": "Google: Lyria 3 Clip Preview",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/google/lyria-3-clip-preview",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: google/lyria-3-clip-preview"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3-super-120b-a12b:free",
+      "name": "NVIDIA: Nemotron 3 Super (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3-super-120b-a12b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-super-120b-a12b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "openrouter/free",
+      "name": "Free Models Router",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/openrouter/free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: openrouter/free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3-nano-30b-a3b:free",
+      "name": "NVIDIA: Nemotron 3 Nano 30B A3B (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3-nano-30b-a3b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-nano-30b-a3b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-nano-12b-v2-vl:free",
+      "name": "NVIDIA: Nemotron Nano 12B 2 VL (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-nano-12b-v2-vl:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-nano-12b-v2-vl:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-nano-9b-v2:free",
+      "name": "NVIDIA: Nemotron Nano 9B V2 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-nano-9b-v2:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-nano-9b-v2:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "openai/gpt-oss-20b:free",
+      "name": "OpenAI: gpt-oss-20b (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/openai/gpt-oss-20b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: openai/gpt-oss-20b:free"
+    },
+    {
+      "source": "gemini",
+      "provider": "Google AI Studio",
+      "license": null,
+      "verified": true,
+      "link": "https://ai.google.dev/gemini-api/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GEMINI_API_KEY",
+        "key_url": "https://aistudio.google.com/apikey",
+        "note": "Безплатен tier. Бърз, мултимодален (текст + зрение)"
+      },
+      "id": "gemini-2.5-flash",
+      "name": "gemini-2.5-flash",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://generativelanguage.googleapis.com/v1beta/openai/, модел: gemini-2.5-flash"
+    },
+    {
+      "source": "gemini",
+      "provider": "Google AI Studio",
+      "license": null,
+      "verified": true,
+      "link": "https://ai.google.dev/gemini-api/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GEMINI_API_KEY",
+        "key_url": "https://aistudio.google.com/apikey",
+        "note": "Безплатен tier. Най-лекият Flash"
+      },
+      "id": "gemini-2.5-flash-lite",
+      "name": "gemini-2.5-flash-lite",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://generativelanguage.googleapis.com/v1beta/openai/, модел: gemini-2.5-flash-lite"
+    },
+    {
+      "source": "gemini",
+      "provider": "Google AI Studio",
+      "license": null,
+      "verified": true,
+      "link": "https://ai.google.dev/gemini-api/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GEMINI_API_KEY",
+        "key_url": "https://aistudio.google.com/apikey",
+        "note": "Безплатен tier. Най-умен, ограничен quota"
+      },
+      "id": "gemini-2.5-pro",
+      "name": "gemini-2.5-pro",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://generativelanguage.googleapis.com/v1beta/openai/, модел: gemini-2.5-pro"
+    },
+    {
+      "source": "gemini",
+      "provider": "Google AI Studio",
+      "license": null,
+      "verified": true,
+      "link": "https://ai.google.dev/gemini-api/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GEMINI_API_KEY",
+        "key_url": "https://aistudio.google.com/apikey",
+        "note": "Безплатен tier. Генериране/редакция на изображения"
+      },
+      "id": "gemini-2.5-flash-image",
+      "name": "gemini-2.5-flash-image",
+      "category": "image-generation",
+      "type": "image",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+      "how_to_connect": "REST: POST .../v1beta/models/gemini-2.5-flash-image:generateContent?key=<КЛЮЧ>"
+    },
+    {
+      "source": "gemini",
+      "provider": "Google AI Studio",
+      "license": null,
+      "verified": true,
+      "link": "https://ai.google.dev/gemini-api/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GEMINI_API_KEY",
+        "key_url": "https://aistudio.google.com/apikey",
+        "note": "Безплатен tier. Embeddings 768-d"
+      },
+      "id": "text-embedding-004",
+      "name": "text-embedding-004",
+      "category": "feature-extraction",
+      "type": "embedding",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://generativelanguage.googleapis.com/v1beta/openai/, модел: text-embedding-004"
+    },
+    {
+      "source": "groq",
+      "provider": "Groq",
+      "license": null,
+      "verified": true,
+      "link": "https://console.groq.com/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GROQ_API_KEY",
+        "key_url": "https://console.groq.com/keys",
+        "note": "Безплатен ключ. Llama 3.3 70B"
+      },
+      "id": "llama-3.3-70b-versatile",
+      "name": "llama-3.3-70b-versatile",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.groq.com/openai/v1, модел: llama-3.3-70b-versatile"
+    },
+    {
+      "source": "groq",
+      "provider": "Groq",
+      "license": null,
+      "verified": true,
+      "link": "https://console.groq.com/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GROQ_API_KEY",
+        "key_url": "https://console.groq.com/keys",
+        "note": "Безплатен ключ. Llama 3.1 8B"
+      },
+      "id": "llama-3.1-8b-instant",
+      "name": "llama-3.1-8b-instant",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.groq.com/openai/v1, модел: llama-3.1-8b-instant"
+    },
+    {
+      "source": "groq",
+      "provider": "Groq",
+      "license": null,
+      "verified": true,
+      "link": "https://console.groq.com/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GROQ_API_KEY",
+        "key_url": "https://console.groq.com/keys",
+        "note": "Безплатен ключ. Llama 3.2 11B Vision (зрение)"
+      },
+      "id": "llama-3.2-11b-vision-preview",
+      "name": "llama-3.2-11b-vision-preview",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.groq.com/openai/v1, модел: llama-3.2-11b-vision-preview"
+    },
+    {
+      "source": "groq",
+      "provider": "Groq",
+      "license": null,
+      "verified": true,
+      "link": "https://console.groq.com/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GROQ_API_KEY",
+        "key_url": "https://console.groq.com/keys",
+        "note": "Безплатен ключ. DeepSeek R1 — разсъждения"
+      },
+      "id": "deepseek-r1-distill-llama-70b",
+      "name": "deepseek-r1-distill-llama-70b",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.groq.com/openai/v1, модел: deepseek-r1-distill-llama-70b"
+    },
+    {
+      "source": "groq",
+      "provider": "Groq",
+      "license": null,
+      "verified": true,
+      "link": "https://console.groq.com/docs/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GROQ_API_KEY",
+        "key_url": "https://console.groq.com/keys",
+        "note": "Безплатен ключ. Whisper — транскрипция"
+      },
+      "id": "whisper-large-v3-turbo",
+      "name": "whisper-large-v3-turbo",
+      "category": "automatic-speech-recognition",
+      "type": "audio",
+      "endpoint": "https://api.groq.com/openai/v1/audio/transcriptions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.groq.com/openai/v1, модел: whisper-large-v3-turbo"
+    },
+    {
+      "source": "mistral",
+      "provider": "Mistral AI",
+      "license": null,
+      "verified": true,
+      "link": "https://console.mistral.ai/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "MISTRAL_API_KEY",
+        "key_url": "https://console.mistral.ai/api-keys",
+        "note": "Безплатен план. Mistral Nemo 12B"
+      },
+      "id": "open-mistral-nemo",
+      "name": "open-mistral-nemo",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.mistral.ai/v1, модел: open-mistral-nemo"
+    },
+    {
+      "source": "mistral",
+      "provider": "Mistral AI",
+      "license": null,
+      "verified": true,
+      "link": "https://console.mistral.ai/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "MISTRAL_API_KEY",
+        "key_url": "https://console.mistral.ai/api-keys",
+        "note": "Безплатен план. Mixtral 8x22B (MoE)"
+      },
+      "id": "open-mixtral-8x22b",
+      "name": "open-mixtral-8x22b",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.mistral.ai/v1, модел: open-mixtral-8x22b"
+    },
+    {
+      "source": "mistral",
+      "provider": "Mistral AI",
+      "license": null,
+      "verified": true,
+      "link": "https://console.mistral.ai/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "MISTRAL_API_KEY",
+        "key_url": "https://console.mistral.ai/api-keys",
+        "note": "Безплатен план. Ministral 8B"
+      },
+      "id": "ministral-8b-2410",
+      "name": "ministral-8b-2410",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.mistral.ai/v1, модел: ministral-8b-2410"
+    },
+    {
+      "source": "mistral",
+      "provider": "Mistral AI",
+      "license": null,
+      "verified": true,
+      "link": "https://console.mistral.ai/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "MISTRAL_API_KEY",
+        "key_url": "https://console.mistral.ai/api-keys",
+        "note": "Безплатен план. Codestral — код"
+      },
+      "id": "codestral-latest",
+      "name": "codestral-latest",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.mistral.ai/v1, модел: codestral-latest"
+    },
+    {
+      "source": "mistral",
+      "provider": "Mistral AI",
+      "license": null,
+      "verified": true,
+      "link": "https://console.mistral.ai/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "MISTRAL_API_KEY",
+        "key_url": "https://console.mistral.ai/api-keys",
+        "note": "Безплатен план. Pixtral — зрение"
+      },
+      "id": "pixtral-12b-2409",
+      "name": "pixtral-12b-2409",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://api.mistral.ai/v1, модел: pixtral-12b-2409"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Llama 3.3 70B"
+      },
+      "id": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "name": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Llama 3.1 8B"
+      },
+      "id": "@cf/meta/llama-3.1-8b-instruct-fp8",
+      "name": "@cf/meta/llama-3.1-8b-instruct-fp8",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8 с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Qwen 2.5 Coder 32B"
+      },
+      "id": "@cf/qwen/qwen2.5-coder-32b-instruct",
+      "name": "@cf/qwen/qwen2.5-coder-32b-instruct",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/qwen/qwen2.5-coder-32b-instruct",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/qwen/qwen2.5-coder-32b-instruct с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. FLUX — изображения"
+      },
+      "id": "@cf/black-forest-labs/flux-1-schnell",
+      "name": "@cf/black-forest-labs/flux-1-schnell",
+      "category": "image-generation",
+      "type": "image",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/black-forest-labs/flux-1-schnell",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/black-forest-labs/flux-1-schnell с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. SDXL"
+      },
+      "id": "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+      "name": "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+      "category": "image-generation",
+      "type": "image",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/stabilityai/stable-diffusion-xl-base-1.0",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/stabilityai/stable-diffusion-xl-base-1.0 с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Whisper — ASR"
+      },
+      "id": "@cf/microsoft/whisper-small",
+      "name": "@cf/microsoft/whisper-small",
+      "category": "automatic-speech-recognition",
+      "type": "audio",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/microsoft/whisper-small",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/microsoft/whisper-small с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Превод 100+ езика"
+      },
+      "id": "@cf/meta/m2m100-1.2b",
+      "name": "@cf/meta/m2m100-1.2b",
+      "category": "translation",
+      "type": "chat",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/m2m100-1.2b",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/m2m100-1.2b с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Резюмиране"
+      },
+      "id": "@cf/facebook/bart-large-cnn",
+      "name": "@cf/facebook/bart-large-cnn",
+      "category": "summarization",
+      "type": "chat",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/facebook/bart-large-cnn",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/facebook/bart-large-cnn с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "cloudflare",
+      "provider": "Cloudflare Workers AI",
+      "license": null,
+      "verified": true,
+      "link": "https://developers.cloudflare.com/workers-ai/models/",
+      "auth": {
+        "type": "bearer",
+        "key_env": "CF_API_TOKEN",
+        "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+        "note": "10k neuroni/ден. Embeddings"
+      },
+      "id": "@cf/baai/bge-small-en-v1.5",
+      "name": "@cf/baai/bge-small-en-v1.5",
+      "category": "feature-extraction",
+      "type": "embedding",
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/baai/bge-small-en-v1.5",
+      "how_to_connect": "POST .../accounts/<CF_ACCOUNT_ID>/ai/run/@cf/baai/bge-small-en-v1.5 с Authorization: Bearer <токен>"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. GPT-4o mini"
+      },
+      "id": "gpt-4o-mini",
+      "name": "gpt-4o-mini",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: gpt-4o-mini"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. GPT-4.1 mini"
+      },
+      "id": "gpt-4.1-mini",
+      "name": "gpt-4.1-mini",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: gpt-4.1-mini"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. GPT-4.1 nano"
+      },
+      "id": "gpt-4.1-nano",
+      "name": "gpt-4.1-nano",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: gpt-4.1-nano"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. o3-mini (разсъждения)"
+      },
+      "id": "o3-mini",
+      "name": "o3-mini",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: o3-mini"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. Llama 3.3 70B"
+      },
+      "id": "meta-llama-3.3-70b-instruct",
+      "name": "meta-llama-3.3-70b-instruct",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: meta-llama-3.3-70b-instruct"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. DeepSeek R1"
+      },
+      "id": "deepseek-r1",
+      "name": "deepseek-r1",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: deepseek-r1"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. DeepSeek V3"
+      },
+      "id": "deepseek-v3-0324",
+      "name": "deepseek-v3-0324",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: deepseek-v3-0324"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. Phi-4 — код/математика"
+      },
+      "id": "phi-4",
+      "name": "phi-4",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: phi-4"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. Gemma 3 27B"
+      },
+      "id": "gemma-3-27b-it",
+      "name": "gemma-3-27b-it",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: gemma-3-27b-it"
+    },
+    {
+      "source": "github",
+      "provider": "GitHub Models",
+      "license": null,
+      "verified": true,
+      "link": "https://github.com/marketplace/models",
+      "auth": {
+        "type": "bearer",
+        "key_env": "GITHUB_PAT",
+        "key_url": "https://github.com/settings/tokens",
+        "note": "Безплатно с GitHub акаунт. Qwen3 32B"
+      },
+      "id": "qwen3-32b",
+      "name": "qwen3-32b",
+      "category": "text-generation",
+      "type": "chat",
+      "endpoint": "https://models.github.ai/inference",
+      "how_to_connect": "OpenAI-съвместим: base_url=https://models.github.ai/inference, модел: qwen3-32b"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "openai",
+      "name": "openai",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. GPT-4o-mini клас"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: openai (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "openai-large",
+      "name": "openai-large",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. По-голям модел"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: openai-large (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "mistral",
+      "name": "mistral",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. Mistral клас"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: mistral (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "llama",
+      "name": "llama",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. Llama клас"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: llama (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "deepseek",
+      "name": "deepseek",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. DeepSeek клас"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: deepseek (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "qwen-coder",
+      "name": "qwen-coder",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://text.pollinations.ai/openai",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. Qwen Coder — код"
+      },
+      "how_to_connect": "OpenAI-съвместим: POST https://text.pollinations.ai/openai, модел: qwen-coder (без ключ)"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "flux",
+      "name": "flux",
+      "category": "image-generation",
+      "type": "image",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://image.pollinations.ai/prompt/{prompt}",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. FLUX — изображения"
+      },
+      "how_to_connect": "GET https://image.pollinations.ai/prompt/<описание>?model=flux&width=1024&height=1024 → PNG"
+    },
+    {
+      "source": "pollinations",
+      "provider": "Pollinations",
+      "id": "turbo",
+      "name": "turbo",
+      "category": "image-generation",
+      "type": "image",
+      "license": null,
+      "verified": true,
+      "link": "https://pollinations.ai/",
+      "downloads": 0,
+      "endpoint": "https://image.pollinations.ai/prompt/{prompt}",
+      "auth": {
+        "type": "none",
+        "key_env": null,
+        "key_url": null,
+        "note": "Без ключ и без плащане. Stable Diffusion Turbo"
+      },
+      "how_to_connect": "GET https://image.pollinations.ai/prompt/<описание>?model=turbo&width=1024&height=1024 → PNG"
+    },
+    {
+      "source": "jina",
+      "provider": "Jina AI",
+      "id": "jina-embeddings-v3",
+      "name": "jina-embeddings-v3",
+      "category": "feature-extraction",
+      "type": "embedding",
+      "license": null,
+      "verified": true,
+      "link": "https://jina.ai/embeddings/",
+      "downloads": 0,
+      "endpoint": "https://api.jina.ai/v1/embeddings",
+      "auth": {
+        "type": "bearer",
+        "key_env": "JINA_API_KEY",
+        "key_url": "https://jina.ai/",
+        "note": "Безплатни начални кредити"
+      },
+      "how_to_connect": "OpenAI-съвместим embeddings: POST https://api.jina.ai/v1/embeddings, модел: jina-embeddings-v3"
+    }
+  ]
+}
