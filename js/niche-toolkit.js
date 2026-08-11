@@ -441,7 +441,7 @@ const NicheToolkit = {
           <td style="padding:6px 8px;text-align:right;">${r.demand_score}</td>
           <td style="padding:6px 8px;text-align:right;">${r.momentum_score}</td>
           <td style="padding:6px 8px;text-align:right;">${r.opportunity_score}</td>
-          <td style="padding:6px 8px;text-align:right;">${r.community_score}</td>
+          <td style="padding:6px 8px;text-align:right;" title="Източник: ${r.community_source || "—"}">${r.community_score}</td>
           <td style="padding:6px 8px;text-align:right;color:${cc};font-size:11px;">${r.demand_confidence}</td>
         </tr>`;
       }).join("");
