@@ -58,6 +58,7 @@ USER_AGENT = "CDB-NicheScanner/1.0 (+https://github.com/; contact: repo-owner)"
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config.json")
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "niche-scores-history.json")
+DISCOVERED_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "discovered-niches.json")
 
 DEFAULT_WEIGHTS = {
     "demand": 0.25,
@@ -327,6 +328,8 @@ def score_niche(niche_cfg, prev_snapshot=None):
     return {
         "niche": name,
         "keyword": keyword,
+        "discovered": niche_cfg.get("discovered", False),
+        "discovery_confidence": niche_cfg.get("discovery_confidence"),
         "demand_score": round(demand_score, 1),
         "demand_confidence": demand_confidence,
         "demand_sources_used": [s["source"] for s in demand_sources] or ["archive/none"],
@@ -350,8 +353,34 @@ def load_config():
     # fallback към trend_niches с default feasibility/monetization, за да
     # скриптът да е тестваем ВЕДНАГА без чакане на config edit.
     if "niche_scan_niches" in cfg:
-        return cfg["niche_scan_niches"]
-    return [{"name": n, "keyword": n} for n in cfg.get("trend_niches", [])]
+        base = list(cfg["niche_scan_niches"])
+    else:
+        base = [{"name": n, "keyword": n} for n in cfg.get("trend_niches", [])]
+
+    # Автоматично откритите кандидати (discover_niches.py, върви ПРЕДИ този
+    # скрипт в workflow-а) — добавят се ВЪРХУ base списъка, не го заменят.
+    # Потребителят изрично не иска ръчна база/одобрение — потвърдените
+    # кандидати влизат директно в скена.
+    known_names = {n["name"] for n in base}
+    if os.path.exists(DISCOVERED_PATH):
+        try:
+            with open(DISCOVERED_PATH, encoding="utf-8") as f:
+                disc = json.load(f)
+            for c in disc.get("discovered", []):
+                name = c["term"].title()
+                if name not in known_names:
+                    base.append({
+                        "name": name,
+                        "keyword": c["term"],
+                        "discovered": True,
+                        "discovery_confidence": c.get("confidence", "LOW"),
+                    })
+                    known_names.add(name)
+            print(f"  + {len(disc.get('discovered', []))} автоматично открити кандидата добавени към скена.")
+        except Exception as e:
+            print(f"  ⚠ discovered-niches.json не можа да се прочете ({e}) — продължавам само с base списъка.")
+
+    return base
 
 
 def load_history():
