@@ -370,6 +370,19 @@ README на живо (offline PWA кеш + различни среди биха 
 
 ## Идеи за следващо
 
+- **Discovery слой за Profit Niche Scanner** (следващ приоритет) — 4
+  независими, безключови източника (YouTube Trending Chart, Wikipedia
+  растящи статии от категория "Music genres", MusicBrainz скорошна
+  тагова активност, Reddit нови/растящи subreddit-и), за да намира
+  сам актуални ниши вместо статичния `trend_niches` списък. Термин,
+  засечен от ≥2 източника, автоматично влиза в следващия скен — нула
+  ръчна намеса, потвърдено изрично от потребителя. Виж пълния дизайн в
+  `AUDIT_PROGRESS.md`, запис 2026-08-11.
+- Discogs, ListenBrainz, YouTube RSS — допълнителни Demand/Community
+  сигнали за `track_niche_scores.py`, съзнателно оставени за после.
+- `config.json` → ново поле `niche_scan_niches` с per-ниша feasibility/
+  monetization (скриптът засега пада обратно към `trend_niches` с
+  неутрални стойности).
 - Директна YouTube `search.list` заявка за по-твърди SEO числа, комбинирана
   с Gemini оценката.
 - Проверка на свободен домейн за бранд името на изпълнителя.
@@ -383,6 +396,29 @@ README на живо (offline PWA кеш + различни среди биха 
   `youtube/` и `ui/` вече са извадени от `app.js`.
 
 ## Changelog
+
+### v1.26.0 — 2026-08-11 (Profit Niche Scanner — автоматичен седмичен скенер, БЕЗ Spotify)
+- 🆕 **`scripts/track_niche_scores.py`** — сам анализира ВСИЧКИ ниши от
+  `config.json` наведнъж, всеки понеделник (за разлика от `analyzeNiche()`/
+  `analyzeNicheExtended()` в таблото — ръчен клик, по 1 ниша, и двата
+  остават непипнати). Demand = медиана от 3 независими източника (Deezer +
+  iTunes Search API + MusicBrainz), за надеждност — kworb.net само като
+  последна резерва. Momentum = Wikipedia Pageviews. Community = Reddit
+  subscribers (нов под-индекс, извън оригиналните 5). **Изрично БЕЗ
+  Spotify** — дори анонимният embed достъп е потвърдено ненадежден (403,
+  Spotify затегна достъпа за малки приложения от май 2025).
+- 🆕 **`.github/workflows/niche-scores.yml`** — понеделник 08:00 UTC +
+  ръчно пускане, commit на резултата обратно в repo-то.
+- 🆕 **`NicheToolkit.loadAutoNicheRanking()`** — нова карта "🏆 Автоматична
+  седмична класация на ниши" в Niche Toolkit view, чете
+  `data/niche-scores-history.json`, нула заявки от браузъра.
+- ⚠️ **Известен проблем:** списъкът с ниши идва от `trend_niches` в
+  `config.json` — статичен, ръчно въведен, не се самообновява. Договорен
+  (не построен още) discovery слой от 4 независими източника (YouTube
+  Trending, Wikipedia растящи статии, MusicBrainz нови тагове, Reddit
+  нови subreddit-и) — виж `AUDIT_PROGRESS.md` за пълния план.
+- 🧪 `npm test` → 73/73 непроменено. Живите мрежови заявки към новите
+  източници НЕ са тествани — очаква се първо пускане на workflow-а.
 
 ### v1.25.0 — 2026-08-10 (Niche & Signal — нов 5-под-индекс модел + безключови сигнали, ADDITIVE)
 - 🆕 **`js/niche-scoring.js`** — чист, детерминистичен scoring модул (виж
