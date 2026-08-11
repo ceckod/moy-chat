@@ -1,0 +1,33 @@
+name: Weekly Niche Score Scan
+
+on:
+  schedule:
+    # 08:00 UTC всеки понеделник
+    - cron: "0 8 * * 1"
+  workflow_dispatch: {}  # позволява и ръчно пускане от Actions таба, за тест
+
+permissions:
+  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run niche scanner (без API ключове, само вградени модули)
+        run: python scripts/track_niche_scores.py
+
+      - name: Commit updated scores
+        run: |
+          git config user.name "cdb-niche-scanner-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/niche-scores-history.json
+          git diff --quiet --cached || git commit -m "🏆 Weekly niche score scan ($(date -u +%Y-%m-%d))"
+          git push
