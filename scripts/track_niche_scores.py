@@ -223,11 +223,28 @@ def fetch_wikipedia_momentum(keyword):
     return {"momentum_score": round(momentum_score, 1), "article": title, "source": "wikipedia"}
 
 
-# ───────────────────────── Community: Reddit ─────────────────────────
+# ───────────────────────── Community: Discogs (основен) + Reddit (резерва) ──
+
+def fetch_discogs_community(keyword):
+    """Брой издания в жанра/нишата — прокси за колекционерска/фен дълбочина.
+    Публично API, работи без token (по-строг rate limit, но по-малко
+    вероятно да блокира сървърни/datacenter IP адреси от Reddit)."""
+    url = (
+        "https://api.discogs.com/database/search?"
+        f"q={urllib.parse.quote(keyword)}&type=release&per_page=1"
+    )
+    data = _http_get_json(url, headers={"User-Agent": USER_AGENT})
+    total = _deep_find(data, "items")
+    if total is None:
+        return None
+    return {"metric": total, "source": "discogs"}
+
 
 def fetch_reddit_community(keyword):
     """Пробва subreddit с точното име на нишата (slug); ако не съществува,
-    връща None — без грешка нагоре."""
+    връща None — без грешка нагоре. Резерва след Discogs — Reddit често
+    връща 403/429 за datacenter/GitHub Actions IP адреси (наблюдавано,
+    виж AUDIT_PROGRESS.md 2026-08-11)."""
     slug = re.sub(r"[^a-z0-9]", "", keyword.lower())
     if not slug:
         return None
@@ -236,7 +253,7 @@ def fetch_reddit_community(keyword):
     subs = _deep_find(data, "subscribers")
     if subs is None:
         return None
-    return {"subscribers": subs, "source": "reddit"}
+    return {"metric": subs, "source": "reddit"}
 
 
 # ───────────────────────── Скоринг ─────────────────────────
@@ -246,7 +263,25 @@ def compute_hhi(shares):
     return sum((s / total) ** 2 for s in shares)
 
 
-def score_niche(niche_cfg, prev_snapshot=None):
+def _portfolio_normalize(values):
+    """Min-max между стойностите в ТЕКУЩИЯ скен, не спрямо фиксиран праг.
+    Ако всички стойности са равни (или само 1 ниша), връща неутрално 50
+    за всички — избягва деление на нула И избягва изкуствено 0/100."""
+    finite = [v for v in values if v is not None]
+    if not finite:
+        return [50.0] * len(values)
+    lo, hi = min(finite), max(finite)
+    if hi - lo < 1e-9:
+        return [50.0 if v is not None else 50.0 for v in values]
+    return [
+        round((v - lo) / (hi - lo) * 100, 1) if v is not None else 50.0
+        for v in values
+    ]
+
+
+def collect_raw_signals(niche_cfg, prev_snapshot=None):
+    """Тегли суровите сигнали за 1 ниша — БЕЗ нормализация тук (тя става
+    накрая, спрямо цялото портфолио от ниши, виж finalize_scores)."""
     name = niche_cfg["name"]
     keyword = niche_cfg.get("keyword", name)
     print(f"  → {name} ...")
@@ -285,13 +320,12 @@ def score_niche(niche_cfg, prev_snapshot=None):
         hhi = prev_snapshot.get("hhi", 0.15)
         demand_confidence = "ARCHIVE"
     else:
-        market_estimate = 0
+        market_estimate = None  # None = липсва, НЕ 0 — иначе изкривява min-max надолу
         hhi = 0.15
 
-    demand_score = min(market_estimate / 10_000_000 * 100, 100)
     opportunity_score = max(0, (1 - hhi) * 100)
 
-    # --- Momentum: Wikipedia ---
+    # --- Momentum: Wikipedia (вече 0-100 от растежна формула, не праг) ---
     wiki = fetch_wikipedia_momentum(keyword)
     time.sleep(0.3)
     if wiki:
@@ -299,49 +333,69 @@ def score_niche(niche_cfg, prev_snapshot=None):
     elif prev_snapshot:
         momentum_score = prev_snapshot.get("momentum_score", 50)
     else:
-        momentum_score = 50  # неутрално, не измислено високо/ниско
+        momentum_score = 50
 
-    # --- Community: Reddit ---
-    reddit = fetch_reddit_community(keyword)
-    time.sleep(0.3)
-    if reddit:
-        community_score = min(reddit["subscribers"] / 200_000 * 100, 100)
-    elif prev_snapshot:
-        community_score = prev_snapshot.get("community_score", 30)
+    # --- Community: Discogs (основен) → Reddit (резерва) ---
+    disc = fetch_discogs_community(keyword)
+    time.sleep(0.5)  # Discogs без token: строг rate limit (25/мин)
+    community_metric, community_source = None, "none"
+    if disc:
+        community_metric, community_source = disc["metric"], disc["source"]
     else:
-        community_score = 30  # консервативно неутрално при липса на subreddit
+        reddit = fetch_reddit_community(keyword)
+        time.sleep(0.3)
+        if reddit:
+            community_metric, community_source = reddit["metric"], reddit["source"]
 
-    # --- Monetization / Feasibility: ръчни, от config ---
-    monetization_score = niche_cfg.get("monetization_score", 50)
-    feasibility_score = niche_cfg.get("feasibility_score", 60)
-
-    w = DEFAULT_WEIGHTS
-    pns = (
-        w["demand"] * demand_score
-        + w["momentum"] * momentum_score
-        + w["opportunity"] * opportunity_score
-        + w["community"] * community_score
-        + w["monetization"] * monetization_score
-        + w["feasibility"] * feasibility_score
-    )
+    if community_metric is None and prev_snapshot:
+        community_metric = prev_snapshot.get("community_metric_raw")
+        community_source = "archive"
 
     return {
         "niche": name,
         "keyword": keyword,
         "discovered": niche_cfg.get("discovered", False),
         "discovery_confidence": niche_cfg.get("discovery_confidence"),
-        "demand_score": round(demand_score, 1),
+        "market_estimate": market_estimate,
         "demand_confidence": demand_confidence,
         "demand_sources_used": [s["source"] for s in demand_sources] or ["archive/none"],
         "momentum_score": round(momentum_score, 1),
         "opportunity_score": round(opportunity_score, 1),
         "hhi": round(hhi, 3),
-        "community_score": round(community_score, 1),
-        "monetization_score": monetization_score,
-        "feasibility_score": feasibility_score,
-        "market_estimate": round(market_estimate),
-        "PNS": round(pns, 1),
+        "community_metric_raw": community_metric,
+        "community_source": community_source,
+        "monetization_score": niche_cfg.get("monetization_score", 50),
+        "feasibility_score": niche_cfg.get("feasibility_score", 60),
     }
+
+
+def finalize_scores(raw_rows):
+    """Втори проход — Demand и Community се нормализират ОТНОСИТЕЛНО,
+    спрямо min/max в текущото портфолио от ниши (не фиксиран праг като
+    преди). Momentum/Opportunity вече са 0-100 от собствената си формула,
+    не се пипат тук."""
+    demand_scores = _portfolio_normalize([r["market_estimate"] for r in raw_rows])
+    community_scores = _portfolio_normalize([r["community_metric_raw"] for r in raw_rows])
+
+    w = DEFAULT_WEIGHTS
+    results = []
+    for row, demand_score, community_score in zip(raw_rows, demand_scores, community_scores):
+        pns = (
+            w["demand"] * demand_score
+            + w["momentum"] * row["momentum_score"]
+            + w["opportunity"] * row["opportunity_score"]
+            + w["community"] * community_score
+            + w["monetization"] * row["monetization_score"]
+            + w["feasibility"] * row["feasibility_score"]
+        )
+        results.append({
+            **row,
+            "demand_score": demand_score,
+            "community_score": community_score,
+            "market_estimate": round(row["market_estimate"]) if row["market_estimate"] is not None else None,
+            "PNS": round(pns, 1),
+        })
+    return results
 
 
 # ───────────────────────── config / история I/O ─────────────────────────
@@ -416,12 +470,16 @@ def main():
         return
 
     history = load_history()
-    results = []
+
+    # Проход 1: сурови сигнали за всяка ниша, БЕЗ нормализация.
+    raw_rows = []
     for niche_cfg in niches:
         prev = last_snapshot_for(history, niche_cfg["name"])
-        row = score_niche(niche_cfg, prev_snapshot=prev)
-        results.append(row)
+        raw_rows.append(collect_raw_signals(niche_cfg, prev_snapshot=prev))
 
+    # Проход 2: Demand/Community се нормализират ОТНОСИТЕЛНО, спрямо
+    # min/max в текущото портфолио от ниши — не спрямо фиксиран праг.
+    results = finalize_scores(raw_rows)
     results.sort(key=lambda r: r["PNS"], reverse=True)
 
     snapshot = {
@@ -433,7 +491,7 @@ def main():
     save_history(history)
 
     print("\n═══════════════════════════════════════")
-    print("   PROFIT NICHE SCORE — класация")
+    print("   PROFIT NICHE SCORE — класация (портфолио-относителна)")
     print("═══════════════════════════════════════")
     for r in results:
         mark = "🔥" if r["PNS"] >= 70 else "⭐" if r["PNS"] >= 50 else "⚠"
@@ -441,7 +499,7 @@ def main():
             f"  {mark} {r['niche']:24s} {r['PNS']:5.1f}/100  "
             f"(demand={r['demand_score']:.0f}[{r['demand_confidence']}], "
             f"momentum={r['momentum_score']:.0f}, opp={r['opportunity_score']:.0f}, "
-            f"community={r['community_score']:.0f})"
+            f"community={r['community_score']:.0f}[{r['community_source']}])"
         )
     print("═══════════════════════════════════════\n")
     print(f"Записано в {DATA_PATH}")
