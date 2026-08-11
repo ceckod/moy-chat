@@ -408,6 +408,64 @@ const NicheToolkit = {
         </div>
       </div>`;
   },
+
+  /* ---------- АВТОМАТИЧНА СЕДМИЧНА КЛАСАЦИЯ (2026-08-11) ----------
+     Чете готовия резултат от scripts/track_niche_scores.py (пуска се сам
+     всеки понеделник през .github/workflows/niche-scores.yml). За разлика
+     от analyzeNicheExtended() по-горе (1 ниша, ръчен клик, live заявки),
+     тук само показваме последния КЕШИРАН snapshot за ВСИЧКИ ниши наведнъж
+     — нула заявки от браузъра, нула чакане. */
+  async loadAutoNicheRanking() {
+    const out = document.getElementById("ntAutoRankingOut");
+    out.innerHTML = `<p class="muted">⏳ Зареждам последната класация...</p>`;
+    try {
+      const res = await fetchTimeout("data/niche-scores-history.json", {}, 10000);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const snapshots = data.snapshots || [];
+      if (!snapshots.length) {
+        out.innerHTML = `<p class="muted">Все още няма записан snapshot — workflow-ът (${"scripts/track_niche_scores.py"}) не е пускан още. Пусни го ръчно от GitHub → Actions → "Weekly Niche Score Scan" → Run workflow.</p>`;
+        return;
+      }
+      const latest = snapshots[snapshots.length - 1];
+      const rows = [...(latest.niches || [])].sort((a, b) => b.PNS - a.PNS);
+
+      const confColor = { HIGH: "var(--green)", MEDIUM: "var(--amber,#d29922)", LOW: "var(--red,#f85149)", ARCHIVE: "var(--muted-2)" };
+      const rowHtml = rows.map(r => {
+        const mark = r.PNS >= 70 ? "🔥" : r.PNS >= 50 ? "⭐" : "⚠️";
+        const cc = confColor[r.demand_confidence] || "var(--muted-2)";
+        return `<tr>
+          <td style="padding:6px 8px;">${mark} ${r.niche}</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:700;">${r.PNS}</td>
+          <td style="padding:6px 8px;text-align:right;">${r.demand_score}</td>
+          <td style="padding:6px 8px;text-align:right;">${r.momentum_score}</td>
+          <td style="padding:6px 8px;text-align:right;">${r.opportunity_score}</td>
+          <td style="padding:6px 8px;text-align:right;">${r.community_score}</td>
+          <td style="padding:6px 8px;text-align:right;color:${cc};font-size:11px;">${r.demand_confidence}</td>
+        </tr>`;
+      }).join("");
+
+      out.innerHTML = `
+        <p class="muted" style="margin-bottom:8px;">Snapshot от ${latest.date} · ${rows.length} ниши · извор на Demand по ниша: ${[...new Set(rows.flatMap(r => r.demand_sources_used))].join(", ") || "—"}</p>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <thead><tr style="border-bottom:1px solid var(--border,#333);">
+            <th style="padding:6px 8px;text-align:left;">Ниша</th>
+            <th style="padding:6px 8px;text-align:right;">PNS</th>
+            <th style="padding:6px 8px;text-align:right;">Demand</th>
+            <th style="padding:6px 8px;text-align:right;">Momentum</th>
+            <th style="padding:6px 8px;text-align:right;">Opportunity</th>
+            <th style="padding:6px 8px;text-align:right;">Community</th>
+            <th style="padding:6px 8px;text-align:right;">Confidence</th>
+          </tr></thead>
+          <tbody>${rowHtml}</tbody>
+        </table>
+        </div>`;
+    } catch (e) {
+      out.innerHTML = `<p class="muted">⚠️ Класацията все още не е налична (${e.message}). Нормално е при първо качване, преди workflow-ът да е пуснат поне веднъж.</p>`;
+    }
+  },
+
   async generateAudioPrompt() {
     const subgenre = document.getElementById("ntSubgenre")?.value.trim();
     const mood = document.getElementById("ntMood")?.value.trim();
