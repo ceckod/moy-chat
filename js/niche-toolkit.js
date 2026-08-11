@@ -434,8 +434,9 @@ const NicheToolkit = {
       const rowHtml = rows.map(r => {
         const mark = r.PNS >= 70 ? "🔥" : r.PNS >= 50 ? "⭐" : "⚠️";
         const cc = confColor[r.demand_confidence] || "var(--muted-2)";
+        const discBadge = r.discovered ? ` <span class="muted" style="font-size:10px;" title="Автоматично открита (без ръчна база), сигурност: ${r.discovery_confidence}">🔍 нова</span>` : "";
         return `<tr>
-          <td style="padding:6px 8px;">${mark} ${r.niche}</td>
+          <td style="padding:6px 8px;">${mark} ${r.niche}${discBadge}</td>
           <td style="padding:6px 8px;text-align:right;font-weight:700;">${r.PNS}</td>
           <td style="padding:6px 8px;text-align:right;">${r.demand_score}</td>
           <td style="padding:6px 8px;text-align:right;">${r.momentum_score}</td>
