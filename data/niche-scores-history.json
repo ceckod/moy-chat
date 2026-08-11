@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "snapshots": [
+    {
+      "date": "2026-08-11",
+      "timestamp": "2026-08-11T04:47:29.439263+00:00",
+      "niches": [
+        {
+          "niche": "Sad boy hyperpop",
+          "keyword": "Sad boy hyperpop",
+          "demand_score": 100,
+          "demand_confidence": "LOW",
+          "demand_sources_used": [
+            "musicbrainz"
+          ],
+          "momentum_score": 100,
+          "opportunity_score": 85.0,
+          "hhi": 0.15,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 20000000,
+          "PNS": 77.5
+        },
+        {
+          "niche": "Sped up remix",
+          "keyword": "Sped up remix",
+          "demand_score": 100,
+          "demand_confidence": "MEDIUM",
+          "demand_sources_used": [
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 66.2,
+          "opportunity_score": 85.0,
+          "hhi": 0.15,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 10500000,
+          "PNS": 70.7
+        },
+        {
+          "niche": "Rage beat",
+          "keyword": "Rage beat",
+          "demand_score": 86.1,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 46.7,
+          "opportunity_score": 11.2,
+          "hhi": 0.888,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 8612385,
+          "PNS": 48.6
+        },
+        {
+          "niche": "Afrobeats",
+          "keyword": "Afrobeats",
+          "demand_score": 10.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 48.6,
+          "opportunity_score": 80.0,
+          "hhi": 0.2,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 1000000,
+          "PNS": 43.7
+        },
+        {
+          "niche": "Jersey club",
+          "keyword": "Jersey club",
+          "demand_score": 1.5,
+          "demand_confidence": "MEDIUM",
+          "demand_sources_used": [
+            "deezer",
+            "itunes"
+          ],
+          "momentum_score": 54.4,
+          "opportunity_score": 72.5,
+          "hhi": 0.275,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 150504,
+          "PNS": 41.3
+        },
+        {
+          "niche": "Dark folk",
+          "keyword": "Dark folk",
+          "demand_score": 10.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 56.0,
+          "opportunity_score": 59.5,
+          "hhi": 0.405,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 1000000,
+          "PNS": 41.1
+        },
+        {
+          "niche": "Hyperpop",
+          "keyword": "Hyperpop",
+          "demand_score": 4.5,
+          "demand_confidence": "MEDIUM",
+          "demand_sources_used": [
+            "deezer",
+            "itunes"
+          ],
+          "momentum_score": 52.2,
+          "opportunity_score": 56.5,
+          "hhi": 0.435,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 452454,
+          "PNS": 38.4
+        },
+        {
+          "niche": "Amapiano",
+          "keyword": "Amapiano",
+          "demand_score": 10.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 100,
+          "opportunity_score": 1.6,
+          "hhi": 0.984,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 1000000,
+          "PNS": 38.3
+        },
+        {
+          "niche": "Dark academia music",
+          "keyword": "Dark academia music",
+          "demand_score": 2.6,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 55.4,
+          "opportunity_score": 47.4,
+          "hhi": 0.526,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 260000,
+          "PNS": 36.7
+        },
+        {
+          "niche": "Cloud rap",
+          "keyword": "Cloud rap",
+          "demand_score": 10.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 48.2,
+          "opportunity_score": 35.0,
+          "hhi": 0.65,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 1000000,
+          "PNS": 34.6
+        },
+        {
+          "niche": "Lo-fi hip hop",
+          "keyword": "Lo-fi hip hop",
+          "demand_score": 10.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 49.3,
+          "opportunity_score": 31.9,
+          "hhi": 0.681,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 1000000,
+          "PNS": 34.2
+        },
+        {
+          "niche": "Drift phonk",
+          "keyword": "Drift phonk",
+          "demand_score": 3.0,
+          "demand_confidence": "HIGH",
+          "demand_sources_used": [
+            "deezer",
+            "itunes",
+            "musicbrainz"
+          ],
+          "momentum_score": 22.1,
+          "opportunity_score": 54.6,
+          "hhi": 0.454,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 300000,
+          "PNS": 31.6
+        },
+        {
+          "niche": "Balkan phonk",
+          "keyword": "Balkan phonk",
+          "demand_score": 28.5,
+          "demand_confidence": "MEDIUM",
+          "demand_sources_used": [
+            "deezer",
+            "musicbrainz"
+          ],
+          "momentum_score": 41.7,
+          "opportunity_score": 0,
+          "hhi": 1.0,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 2850020,
+          "PNS": 31.0
+        },
+        {
+          "niche": "Latin trap",
+          "keyword": "Latin trap",
+          "demand_score": 5.2,
+          "demand_confidence": "MEDIUM",
+          "demand_sources_used": [
+            "deezer",
+            "itunes"
+          ],
+          "momentum_score": 66.0,
+          "opportunity_score": 2.7,
+          "hhi": 0.973,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 516696,
+          "PNS": 30.5
+        },
+        {
+          "niche": "Dariacore",
+          "keyword": "Dariacore",
+          "demand_score": 0.1,
+          "demand_confidence": "LOW",
+          "demand_sources_used": [
+            "deezer"
+          ],
+          "momentum_score": 37.1,
+          "opportunity_score": 4.5,
+          "hhi": 0.955,
+          "community_score": 30,
+          "monetization_score": 50,
+          "feasibility_score": 60,
+          "market_estimate": 8686,
+          "PNS": 23.8
+        }
+      ]
+    }
+  ]
+}
