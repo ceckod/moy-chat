@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Discover new/trending niches (без ръчна seed база)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/discover_niches.py
+
       - name: Run niche scanner (без API ключове, само вградени модули)
         run: python scripts/track_niche_scores.py
 
@@ -28,6 +33,6 @@ jobs:
         run: |
           git config user.name "cdb-niche-scanner-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/niche-scores-history.json
+          git add data/niche-scores-history.json data/discovered-niches.json
           git diff --quiet --cached || git commit -m "🏆 Weekly niche score scan ($(date -u +%Y-%m-%d))"
           git push
