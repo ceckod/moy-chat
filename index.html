@@ -880,6 +880,13 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="ntExtendedOut" style="margin-top:14px;"></div>
       </div>
 
+      <div class="card">
+        <strong>🏆 Автоматична седмична класация на ниши</strong>
+        <p class="muted">2026-08-11: отделен, изцяло автоматичен скенер — <code>scripts/track_niche_scores.py</code>, пуска се сам всеки понеделник през GitHub Actions, анализира ВСИЧКИ ниши от <code>config.json</code> наведнъж (не 1 по 1 ръчно). БЕЗ Spotify, БЕЗ API ключове — Deezer/iTunes/MusicBrainz (Demand, медиана от 3-те за надеждност) + Wikipedia Pageviews (Momentum) + Reddit (Community). Резултатът се чете директно от <code>data/niche-scores-history.json</code>.</p>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.loadAutoNicheRanking())">🔄 Зареди последната класация</button>
+        <div id="ntAutoRankingOut" style="margin-top:14px;"></div>
+      </div>
+
       <div class="card" style="margin-top:14px;">
         <strong>💰 Приходна прогноза (Revenue Simulator)</strong>
         <p class="muted">Груба ориентировъчна оценка на месечен приход при дадени стрийм/view числа — изцяло клиентска сметка, не изисква AI ключ. Не финансов съвет.</p>
