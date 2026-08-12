@@ -34,16 +34,41 @@ function pollinationsImageUrl(prompt, opts = {}) {
 // data: URL, за да можем да хванем HTTP/мрежова грешка ПРЕДИ да опитаме
 // да покажем <img> (и за да можем да го запазим в AppState като base64,
 // същия формат, който вече очаква Step3 от Gemini/Imagen пътя).
+//
+// 429 (Too Many Requests) — Pollinations е напълно безплатен, БЕЗ ключ,
+// затова споделя rate limit между ВСИЧКИ анонимни потребители в момента
+// (не само теб) — при пиков трафик лесно се стига до 429 дори при първи
+// опит. Затова тук автоматично се пробва до 3 пъти с нарастващо изчакване
+// (2s → 5s → 10s), преди да върнем грешка на потребителя.
 async function pollinationsImageUrlAsync(prompt, opts = {}) {
-  const url = pollinationsImageUrl(prompt, opts);
-  const res = await fetchTimeout(proxied(url), {}, 60000); // генерацията отнема по-дълго
-  if (!res.ok) throw new Error(`Pollinations image HTTP ${res.status}`);
-  const blob = await res.blob();
-  if (!blob || !blob.type.startsWith("image/")) throw new Error("Pollinations не върна изображение (може да е претоварен — опитай пак)");
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result); // вече е "data:image/...;base64,..."
-    reader.onerror = () => reject(new Error("Неуспешно четене на изображението"));
-    reader.readAsDataURL(blob);
-  });
+  const delays = [0, 2000, 5000]; // 1-ви опит веднага, после 2s, после 5s изчакване
+  let lastErr = null;
+
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+
+    // нов seed на всеки опит — на много Pollinations инстанции повторен
+    // идентичен URL/seed по-лесно уцелва кеш/rate-limit блокировка на
+    // ниво CDN, различен seed заобикаля това
+    const url = pollinationsImageUrl(prompt, { ...opts, seed: Math.floor(Math.random() * 1e9) });
+    try {
+      const res = await fetchTimeout(proxied(url), {}, 60000); // генерацията отнема по-дълго
+      if (res.status === 429) {
+        lastErr = new Error("Pollinations е претоварен точно сега (HTTP 429 — твърде много заявки от всички потребители).");
+        continue; // пробвай пак след изчакването
+      }
+      if (!res.ok) throw new Error(`Pollinations image HTTP ${res.status}`);
+      const blob = await res.blob();
+      if (!blob || !blob.type.startsWith("image/")) throw new Error("Pollinations не върна изображение (може да е претоварен — опитай пак)");
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result); // вече е "data:image/...;base64,..."
+        reader.onerror = () => reject(new Error("Неуспешно четене на изображението"));
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw new Error((lastErr?.message || "Pollinations грешка") + " — пробвах 3 пъти. Изчакай ~30 сек и натисни бутона отново.");
 }
