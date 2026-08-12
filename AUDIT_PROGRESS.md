@@ -818,3 +818,75 @@ Music genres") е по-сложна задача, оставена за бъде
 4. `config.json` → `niche_scan_niches` с per-ниша feasibility/
    monetization, ако потребителят поиска персонализация отвъд
    неутралните placeholder-и.
+
+---
+
+## [2026-08-11] Пълноценна AI-агент интеграция — обложки/текст/субтитри (по изрична заявка на потребител)
+
+**Заявка на потребителя:** "искам да ги ползвам пълноценно" — навсякъде
+където е нужна снимка, да ползва безплатен AI агент; за текст на песен,
+най-добрия AI за естествен (не "издайнически AI") резултат; и
+автоматични субтитри, ако някъде е нужно. Потвърдено от потребителя, че
+и трите функции да се направят наведнъж (не поетапно).
+
+**Контекст преди промяната:** таблото вече имаше добра базова
+архитектура — `callAI()` с fallback Claude→Gemini→OpenRouter→AI Model
+Finder (Groq/Mistral/GitHub Models/Cloudflare/Pollinations, последният
+без ключ), но:
+- Обложката (`Step3.generateCoverImage`) работеше САМО през Gemini/
+  Imagen и хвърляше грешка без ключ — нямаше безплатен път.
+- Текстът на песента минаваше през общия `callAI()` без специален
+  промпт за "човешко звучене" и без гаранция кой provider го пише първи.
+- Субтитри нямаше изобщо никъде в кода.
+
+**Направено:**
+1. **Обложки** — нов `js/providers/pollinations-image.js`
+   (`pollinationsImageUrl`/`pollinationsImageUrlAsync`, image.
+   pollinations.ai, без ключ). `Step3.generateCoverImage()` вече:
+   Gemini/Imagen първи (ако има ключ) → автоматичен fallback на
+   Pollinations при грешка/липсващ ключ. Нов директен бутон
+   `generateCoverImageFree()`.
+2. **Текст на песента** — `callAI()` (`js/ai-helpers.js`) получи нов
+   по избор трети параметър `forceFirst`, без да пипа съществуващия
+   ред от `AIProviderOrder`/Prefs за останалите извиквания.
+   `Step1.generateLyrics()` подава `"claude"` + значително преработен
+   промпт (explicit anti-cliché инструкции, конкретни образи, естествен
+   неидеален ритъм, забрана за повторение на идеи между куплети).
+3. **Субтитри** — нов `js/providers/subtitles.js`
+   (`callGroqTranscribe`/`segmentsToSrt`, Groq Whisper
+   `whisper-large-v3-turbo`→`whisper-large-v3` резерва, **същия**
+   `groqKey`, вече ползван в `model-finder.js`). Нов
+   `QuickUpload.generateSubtitles()` + `Step4.uploadCaptions()`
+   (`captions.insert`, multipart) — автоматично прикачване към
+   YouTube видеото веднага след успешен upload, ако субтитрите вече
+   са готови. OAuth scope разширен с `youtube.force-ssl`.
+
+**Верификация:**
+- `node --check` чисто на всичките 7 засегнати/нови JS файла
+  (`js/ai-helpers.js`, `js/step1.js`, `js/step3.js`, `js/step4.js`,
+  `js/quick-upload.js`, `js/providers/pollinations-image.js`,
+  `js/providers/subtitles.js`).
+- `<div>` баланс в `index.html` проверен (344/344), новите `<script>`
+  тагове са включени в правилния зареждащ ред.
+- `npm test` **непроменено** — нищо от тестваните модули
+  (`niche-scoring`, `providers-fallback`, `network`, `app-state`) не е
+  пипнато от тази промяна.
+- **⚠️ НЕ е тествано на живо:** реални HTTP заявки към Pollinations
+  image endpoint, реални заявки към Groq Whisper transcription
+  endpoint, и реално `captions.insert` качване към YouTube — средата
+  за писане на кода няма мрежов достъп до тези endpoint-и/валидни
+  API ключове. Очаква се потвърждение от потребителя при първо реално
+  пускане.
+
+**Известни последствия/действия за потребителя:**
+- Потребители, вписани в Google ОТПРЕДИ тази версия, трябва да се
+  впишат отново (нов `youtube.force-ssl` scope) — иначе автоматичното
+  прикачване на субтитри ще гръмне 403 (не блокира самото видео
+  качване — гърми само на caption стъпката, с ясен ⚠️ лог).
+- Ако Whisper не разпознава добре българския текст — следваща стъпка
+  е по-агресивно подсказване на `language` параметъра или ръчна
+  проверка/корекция на `.srt`-а преди прикачване.
+
+**Оставащо/не е засегнато от тази промяна:** root-ниво дубликатите на
+`js/*.js` файловете (виж известния технически дълг в Changelog
+v1.27.0 на README.md) — отделна задача, чака решение на потребителя.

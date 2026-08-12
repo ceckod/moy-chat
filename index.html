@@ -737,6 +737,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => Step3.generateCoverPrompt())">🎨 Генерирай визуален промпт</button>
         <textarea id="coverPromptOut" style="margin-top:10px;"></textarea>
         <button class="btn grad" onclick="guardClick(this, () => Step3.generateCoverImage())">🖼️ Генерирай обложка (3000×3000)</button>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateCoverImageFree())">🆓 Безплатна обложка (Pollinations, без ключ)</button>
         <div id="coverImgOut" style="margin-top:12px;"></div>
       </div>
 
@@ -820,6 +821,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
         <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
         <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => QuickUpload.runFull())">🚀 Стартирай пълния процес</button>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => QuickUpload.generateSubtitles())">🎬 Генерирай субтитри (Whisper, автоматично)</button>
+        <div id="qSubtitlesOut" class="muted" style="margin-top:6px;font-size:12.5px;"></div>
         <div id="qRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато видеото се записва...</div>
         <div id="qVideoProgressWrap" style="display:none;margin-top:10px;">
           <div id="qVideoProgressLabel" class="muted" style="font-size:12px;margin-bottom:4px;">Видео: записва се…</div>
@@ -1051,7 +1054,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         </p>
         <label>Groq API Key <span class="optional-tag">безплатен</span></label>
         <input type="password" id="key_groq">
-        <p class="muted" style="margin-top:6px;">От <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+        <p class="muted" style="margin-top:6px;">От <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>. Ползва се и за текст (fallback), и за <strong>автоматични субтитри</strong> (Whisper) в "⚡ Бърз ъплоуд".</p>
         <label>Mistral API Key <span class="optional-tag">безплатен план</span></label>
         <input type="password" id="key_mistral">
         <p class="muted" style="margin-top:6px;">От <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>.</p>
@@ -1319,6 +1322,8 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/gemini.js"></script>
 <script src="js/providers/openrouter.js"></script>
 <script src="js/providers/model-finder.js"></script>
+<script src="js/providers/pollinations-image.js"></script>
+<script src="js/providers/subtitles.js"></script>
 <script src="js/youtube.js"></script>
 <script src="js/system-log.js"></script>
 <script src="js/app-state.js"></script>

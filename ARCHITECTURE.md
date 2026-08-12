@@ -131,27 +131,49 @@ hook evolution, симулация на фокус-група).
 ### `js/step3.js` — `Step3`
 DistroKid & Обложка.
 - Методи: `generateCoverPrompt`, `generateCoverImage`,
-  `generateSpotifyAppleText`, `buildDistrokidFields`, `copyField`,
-  `_copySA`, `generateABTitles`, `checkSimilarity`,
-  `generateShortFormScripts`, `_copyShortForm`, `_useTitle`.
+  `_generateCoverImageGemini`, `_generateCoverImagePollinations`,
+  `generateCoverImageFree`, `generateSpotifyAppleText`,
+  `buildDistrokidFields`, `copyField`, `_copySA`, `generateABTitles`,
+  `checkSimilarity`, `generateShortFormScripts`, `_copyShortForm`,
+  `_useTitle`.
+- **v1.27.0:** `generateCoverImage()` пробва Gemini/Imagen първи (ако
+  има ключ), при грешка/липсващ ключ автоматично пада на Pollinations
+  (`pollinationsImageUrlAsync()`, безплатно, без ключ). Нов
+  `generateCoverImageFree()` — директен бутон, прескача Gemini.
 - **Зависимости:** `AppState`, `Keys`, `callAI()`, `callGemini()`,
   `extractJson()`, `fetchTimeout()`, `proxied()`, `GeminiValidator`,
-  `toast()`.
+  `toast()`, `pollinationsImageUrlAsync()` (нова, виж
+  `js/providers/pollinations-image.js`).
 
 ### `js/step4.js` — `Step4`
 YouTube публикуване (unlisted).
-- Методи: `initGoogleAuth`, `uploadVideo`.
+- Методи: `initGoogleAuth`, `uploadVideo`, `uploadCaptions` (нов,
+  v1.27.0).
 - Свойства: `tokenClient`, `accessToken`.
+- **v1.27.0:** OAuth scope разширен с `youtube.force-ssl` (нужен за
+  `captions.insert`) — потребители, вписани преди тази версия, трябва
+  да се впишат отново. `uploadCaptions(videoId, srtContent,
+  languageCode, name)` — multipart качване на `.srt` към вече качено
+  видео.
 - **Зависимости:** `Keys`, `AppState`, `QuickUpload`, `toast()`.
 
 ### `js/quick-upload.js` — `QuickUpload`
 "⚡ Бърз ъплоуд за стари песни" — прескача концепция/обложка.
 - Методи: `initListener`, `onAudioSelected`, `_pastedLyrics`,
   `_sendAudioToVisualizer`, `_checkBothReady`, `_runAnalysisAndMeta`,
-  `_fillResultFields`, `autoUpload`, `manualUpload`, `runFull`,
-  `_setRunning`, `_setVideoProgress`, `log`.
-- Свойства: `audioFile`, `videoBlob`, `videoFileName`.
-- **Зависимости:** `callAI()`, `callGeminiMultimodal()`, `toast()`.
+  `_fillResultFields`, `generateSubtitles` (нов, v1.27.0), `autoUpload`,
+  `manualUpload`, `runFull`, `_setRunning`, `_setVideoProgress`, `log`.
+- Свойства: `audioFile`, `videoBlob`, `videoFileName`, `subtitlesSrt`
+  (нов, v1.27.0), `subtitlesLanguageCode` (нов, v1.27.0).
+- **v1.27.0:** `generateSubtitles()` транскрибира `audioFile` през
+  `callGroqTranscribe()` (Groq Whisper), генерира `.srt` с
+  `segmentsToSrt()`. `autoUpload()`/`manualUpload()` вече автоматично
+  извикват `Step4.uploadCaptions()` след успешен video upload, ако
+  `subtitlesSrt` вече е готов (не прекъсва качването при грешка тук,
+  само лог с ⚠️).
+- **Зависимости:** `callAI()`, `callGeminiMultimodal()`, `toast()`,
+  `callGroqTranscribe()`, `segmentsToSrt()` (нови, виж
+  `js/providers/subtitles.js`), `Step4.uploadCaptions()`.
 
 ### `js/stats.js` — `Stats`
 YouTube Тракер / Analytics dashboard (data/*.json от GitHub Actions).
@@ -178,15 +200,49 @@ YouTube Тракер / Analytics dashboard (data/*.json от GitHub Actions).
   `toast()`.
 
 ### `js/ai-helpers.js` — `callAI()`, `fileToBase64()`, `extractJson()`
-- `callAI(prompt, maxTokens)` — единна точка за AI генериране,
-  оркестрира Claude/Gemini/OpenRouter/ModelFinder с fallback по ред
-  от `AIProviderOrder`.
+- `callAI(prompt, maxTokens, forceFirst)` — единна точка за AI
+  генериране, оркестрира Claude/Gemini/OpenRouter/ModelFinder с
+  fallback по ред от `AIProviderOrder`. **v1.27.0:** нов трети,
+  по избор параметър `forceFirst` (напр. `"claude"`) — избутва
+  конкретен provider на първо място за ТОВА извикване, без да пипа
+  запазения ред от `AIProviderOrder`/ръчния избор в Prefs; пълният
+  fallback синджир остава непроменен, ако форсираният provider няма
+  ключ или гръмне грешка. Ползва се от `Step1.generateLyrics()`, за
+  да гарантира Claude като приоритетен генератор на текста на песента
+  (естественост на изказа).
 - `fileToBase64(file)` — File/Blob → base64 (без data-URI префикс).
 - `extractJson(text)` — извлича първия валиден JSON блок от AI текст.
 - **Зависимости:** `Keys`, `Prefs`, `AIProviderOrder`, `callClaude()`,
   `callGemini()`, `callOpenRouter()`, `callModelFinder()`, `toast()`.
 - **Кой го ползва:** `Step1`, `Step2`, `Step3`, `QuickUpload`,
   `ViralLab` (`callAI`+`extractJson`); `QuickUpload` (`fileToBase64`).
+
+### `js/providers/pollinations-image.js` — `pollinationsImageUrl()`, `pollinationsImageUrlAsync()` (нов, v1.27.0)
+Безплатна генерация на изображения (image.pollinations.ai), БЕЗ
+никакъв API ключ — отделен provider, но само за ИЗОБРАЖЕНИЯ (не минава
+през `callAI()`, който е само за текст).
+- `pollinationsImageUrl(prompt, opts)` — синхронно конструира готов
+  image URL (endpoint-ът генерира при GET заявка, няма нужда от POST).
+- `pollinationsImageUrlAsync(prompt, opts)` — реално сваля байтовете
+  и връща `data:` URL, за да хване HTTP/мрежова грешка ПРЕДИ да се
+  покаже `<img>` (вместо да разчита на браузърния `onerror`).
+- **Зависимости:** `fetchTimeout()`, `proxied()` (само в async
+  варианта).
+- **Кой го ползва:** `Step3` (`generateCoverImage`/
+  `generateCoverImageFree`, fallback/директен избор пред Gemini/Imagen).
+
+### `js/providers/subtitles.js` — `callGroqTranscribe()`, `segmentsToSrt()` (нов, v1.27.0)
+Автоматична транскрипция на аудио → синхронизирани `.srt` субтитри,
+през Groq Whisper (`whisper-large-v3-turbo`, безплатен tier, **същия**
+`groqKey`, който вече се ползва в `js/providers/model-finder.js`).
+- `callGroqTranscribe(audioFile, opts)` — multipart качване към
+  `api.groq.com/openai/v1/audio/transcriptions`, `response_format:
+  verbose_json` за сегментни timestamp-и; пробва
+  `whisper-large-v3-turbo` → `whisper-large-v3` като резерва.
+- `segmentsToSrt(segments)` — форматира сегментите в стандартен `.srt`
+  текст (с пренасяне на дълги редове на 2 реда за четимост).
+- **Зависимости:** `Keys`, `fetchTimeout()`, `proxied()`.
+- **Кой го ползва:** `QuickUpload.generateSubtitles()`.
 
 ### `js/ui-bootstrap.js` — `restoreUI()`, `updateVaultBanner()`
 - `restoreUI()` — хидратира екрана от `AppState` след презареждане
