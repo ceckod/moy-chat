@@ -1,8 +1,8 @@
 CDB UPDATE REPORT
-Timestamp: 20260812-224811
+Timestamp: 20260812-225621
 
 Changed:
-  none
+  update_engine.py
 
 Added:
   none
@@ -48,7 +48,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   Технически-одит-CDB-Dashboard.md
   quota-tracker.js
   ARCHITECTURE.md
-  update_engine.py
   vault-keys.test.mjs
   step1.js
   CDB-Dashboard.md
@@ -66,6 +65,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/release-roadmap.js
   js/track-record.js
   js/nav.js
+  js/system-update.js
   js/ai-cache.js
   js/step4.js
   js/app-state.js

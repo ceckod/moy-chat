@@ -74,7 +74,7 @@ NEVER_TOUCH_PATTERNS = [
     ".git",
     ".git/*",
     ".github/workflows/*",   # workflow файловете се управляват ръчно
-    "incoming/*",
+    "incoming/*.zip",
     "backups/*",
     "node_modules/*",
     ".DS_Store",
