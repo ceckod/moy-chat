@@ -25,7 +25,7 @@ const Nav = {
     if (id === "step2") Step2.syncTitleToVisualizer();
     if (id === "dashboard") Stats.renderDashboard();
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); }
-    if (id === "set-project") ProjectArchive.render();
+    if (id === "set-project") { ProjectArchive.render(); SystemUpdate.init(); }
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); AgentRoster.render(); }
     if (id === "stats-tracker") Settings.fillFields();
