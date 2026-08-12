@@ -1,0 +1,32 @@
+CDB UPDATE REPORT
+Timestamp: 20260812-203501
+
+Changed:
+  README.md
+  ai-model-finder/ai-models.json
+  data/trends-history.json
+  data/stats-history.json
+
+Added:
+  none
+
+Removed:
+  none
+
+Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
+  Технически-одит-CDB-Dashboard.md
+  drafts/ВРЕМЕННА ПАПКА.txt
+
+Critical files check:
+  PASS
+
+Security (API key scan):
+  No API keys detected
+
+Tests:
+  PASS
+
+Committed:
+  yes
+
+Result: READY TO COMMIT

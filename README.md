@@ -1,5 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
+> **🧪 Auto Update тест: УСПЕШЕН** — ако виждаш този ред в README-то на GitHub, целият flow (backup → validate → test → commit) е минал докрай. Можеш да изтриеш този ред при следващия реален update.
+
 **Версия:** 1.28.0
 **Последна промяна:** 2026-08-12 (Europe/Sofia) — Auto Update система (GitHub Actions + Python engine, БЕЗ GitHub token в браузъра): backup → валидация (secret scan, критични файлове) → тестове → commit или автоматичен rollback; visualizer.html изрично защитен/недосегаем — виж Changelog
 
