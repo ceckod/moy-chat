@@ -1,0 +1,115 @@
+name: Auto Update (ZIP → validate → backup → test → commit)
+
+# ============================================================
+# КАК СЕ ТРИГВА
+# ------------------------------------------------------------
+# 1) push, който съдържа файл на път incoming/*.zip
+#    (напр. ти качваш ZIP-а през github.com уеб интерфейса — "Add
+#    file → Upload files" → пуснеш update.zip в папка incoming/ →
+#    Commit directly to main. Това Е "натискането на бутона" —
+#    само дето бутонът е самия GitHub, не JS в браузъра.)
+# 2) workflow_dispatch — ръчно пускане от Actions таба в GitHub,
+#    ако вече имаш ZIP-а в incoming/update.zip от предишен push.
+#
+# ЗАЩО ТАКА, А НЕ "БУТОН В DASHBOARD-А":
+# GitHub token/credential НИКОГА не съществува в браузъра/dashboard-а
+# (виж update_engine.py, коментара най-отгоре, и AUDIT_PROGRESS.md).
+# Единственият начин dashboard-ът да "поиска" update е самият
+# потребител да качи ZIP-а през GitHub — dashboard-ът само ПОКАЗВА
+# резултата (виж js/system-update.js), никога не commit-ва.
+# ============================================================
+
+on:
+  push:
+    paths:
+      - "incoming/*.zip"
+  workflow_dispatch: {}
+
+# Нужни права, за да може стъпката "git push" накрая да commit-не
+# резултата обратно в repo-то.
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node (нужен за npm test вътре в engine-а)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Провери дали има ZIP за обработка
+        id: findzip
+        run: |
+          ZIP_FILE=$(ls incoming/*.zip 2>/dev/null | head -n1 || true)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "Няма ZIP в incoming/ — нищо за правене."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Намерен: $ZIP_FILE"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "zip_path=$ZIP_FILE" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure git identity (за самия update commit)
+        if: steps.findzip.outputs.found == 'true'
+        run: |
+          git config user.name "cdb-auto-update-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Пусни update_engine.py
+        id: engine
+        if: steps.findzip.outputs.found == 'true'
+        run: |
+          python update_engine.py --zip "${{ steps.findzip.outputs.zip_path }}" --repo .
+        # ВАЖНО: НЕ спираме job-а тук при провал (тестове гръмнали/секрет
+        # намерен/критичен файл липсва) — engine-ът вече е направил
+        # ВЪТРЕШЕН rollback (repo-то е чисто, нищо счупено). Но искаме
+        # СЛЕДВАЩИТЕ стъпки (чистене на ZIP-а + commit на update_report.txt)
+        # да се изпълнят и при провал, иначе: (а) неуспешният ZIP стои
+        # завинаги в incoming/ и блокира следващи опити, и (б)
+        # update_report.txt — единствения начин dashboard-ът да покаже
+        # "защо гръмна" — никога не стига до repo-то.
+        continue-on-error: true
+
+      - name: Изчисти обработения ZIP от incoming/ + commit-ни report-а (при УСПЕХ или ПРОВАЛ)
+        if: always() && steps.findzip.outputs.found == 'true'
+        run: |
+          rm -f "${{ steps.findzip.outputs.zip_path }}"
+          # ако engine-ът вече е направил commit по-горе (при успех), тази
+          # промяна отива в СЛЕДВАЩ commit тук, за да не тригне безкраен
+          # loop (push → workflow → push...) от самия engine, commit-вайки
+          # incoming/*.zip присъствието му.
+          git add incoming/ update_report.txt 2>/dev/null || git add incoming/
+          git diff --cached --quiet || git commit -m "Auto Update housekeeping: изчистен обработен ZIP + report (engine outcome: ${{ steps.engine.outcome }})"
+
+      - name: Push резултата
+        if: always() && steps.findzip.outputs.found == 'true'
+        run: git push
+
+      - name: Качи update_report.txt като artifact (за лесно четене от Actions таба)
+        if: always() && steps.findzip.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-report
+          path: update_report.txt
+          if-no-files-found: ignore
+
+      - name: Job status спрямо реалния изход на engine-а
+        if: always() && steps.findzip.outputs.found == 'true'
+        run: |
+          if [ "${{ steps.engine.outcome }}" != "success" ]; then
+            echo "::error::Update engine се провали — виж update_report.txt (artifact по-горе) за причината. Нищо не е счупено в repo-то (engine-ът прави вътрешен rollback), но промените от ZIP-а НЕ са приложени."
+            exit 1
+          fi
