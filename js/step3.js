@@ -69,12 +69,15 @@ const Step3 = {
     // ЗАБЕЛЕЖКА: Точният endpoint/модел за Imagen генериране на изображения
     // през Gemini API може да варира — провери актуалното име на модела
     // в Google AI Studio (напр. модел с "image-generation" в името).
+    // ВАЖНО: не добавяме "Square album cover art..." пред промпта на
+    // потребителя — ако той иска нещо друго (лого, банер и т.н.), а не
+    // "обложка на албум", добавеният контекст само конкурира с исканото.
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiKey}`;
     const res = await fetchTimeout(proxied(url), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Square album cover art, 3000x3000px composition: ${prompt}` }] }],
+        contents: [{ parts: [{ text: `${prompt}, square 1:1 composition, high resolution` }] }],
         generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
       })
     }, 60000); // image generation отнема по-дълго
@@ -90,8 +93,14 @@ const Step3 = {
   // хванем грешка/timeout ТУК и да покажем ясен ❌, вместо счупена <img>
   // икона; резултатът е data: URL — същия формат, който Step3 вече пази
   // в AppState.project.coverImageUrl от Gemini/Imagen пътя.
+  //
+  // ВАЖНО: тук НЕ добавяме предефиниращ текст като "Square album cover
+  // art" пред промпта на потребителя — ако той иска "3d logo cd-b
+  // records", а не "обложка на албум", добавен чужд контекст само
+  // обърква/конкурира модела с точно това, което е поискал. Добавяме
+  // САМО технически quality-суфикс накрая, който не променя СЪДЪРЖАНИЕТО.
   async _generateCoverImagePollinations(prompt) {
-    return pollinationsImageUrlAsync(`Square album cover art, professional streaming cover, 1:1 composition: ${prompt}`, { width: 1024, height: 1024 });
+    return pollinationsImageUrlAsync(`${prompt}, high quality, high resolution, sharp focus`, { width: 1024, height: 1024 });
   },
 
   // Бутон "🆓 Безплатна обложка" — прескача Gemini директно, дори да има ключ
@@ -103,6 +112,24 @@ const Step3 = {
     try {
       const imgUrl = await this._generateCoverImagePollinations(prompt);
       document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Pollinations)</div>`;
+      AppState.data.project.coverImageUrl = imgUrl;
+      AppState.save();
+    } catch (e) {
+      document.getElementById("coverImgOut").innerHTML = `❌ ${e.message}`;
+    }
+  },
+
+  // Трета опция: 100% code-генерирано 3D текстово лого (Canvas, БЕЗ AI —
+  // виж js/providers/code-logo.js). Гарантирано изписва ТОЧНО текста,
+  // който е въведен, консистентно при всяко натискане (за разлика от AI
+  // генерирането, което винаги е приблизително за конкретен текст).
+  generateCoverImageCodeLogo() {
+    const text = (document.getElementById("codeLogoText")?.value || "").trim();
+    if (!text) return toast("Въведи текст за логото (напр. CD-B Records)");
+    const subtitle = (document.getElementById("codeLogoSubtitle")?.value || "").trim();
+    try {
+      const imgUrl = renderCodeLogo(text, { subtitle });
+      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🔤 Код-генерирано лого (гарантиран точен текст, без AI)</div>`;
       AppState.data.project.coverImageUrl = imgUrl;
       AppState.save();
     } catch (e) {
