@@ -140,17 +140,29 @@ def sha256_of(path: Path) -> str:
     return h.hexdigest()
 
 
-def extract_zip(zip_path: Path, dest_dir: Path) -> Path:
+def extract_zip(zip_path: Path, dest_dir: Path, repo_root: Path) -> Path:
     """Разархивира и връща действителния корен на новото съдържание
     (справя се с ZIP-ове, които имат един обвиващ горен каталог,
-    напр. как GitHub генерира 'reponame-main/')."""
+    напр. как GitHub генерира 'reponame-main/').
+
+    ВАЖНО: "единствена top-level директория" НЕ Е достатъчен сигнал за
+    обвивка. Ако ZIP-ът съдържа само `js/` (защото само тя е обновена),
+    той също ще има точно една top-level директория — но това е реална
+    поддиректория на repo-то, не обвивка, и не трябва да се маха.
+
+    Затова разопаковаме само ако името на кандидата НЕ съвпада с вече
+    съществуваща top-level директория в repo_root. GitHub-style имена
+    като 'reponame-main' обикновено не съвпадат с нищо в repo-то, докато
+    'js', 'css' и т.н. съвпадат — и точно затова трябва да се пазят."""
     dest_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path) as zf:
         zf.extractall(dest_dir)
 
     top_level = [p for p in dest_dir.iterdir() if not p.name.startswith("__MACOSX")]
     if len(top_level) == 1 and top_level[0].is_dir():
-        return top_level[0]
+        candidate = top_level[0]
+        if not (repo_root / candidate.name).is_dir():
+            return candidate
     return dest_dir
 
 
@@ -232,7 +244,7 @@ def main() -> int:
     backup_dir = tmp_root / "backup"
 
     log(f"[1/8] Разархивиране на {zip_path.name} ...")
-    new_root = extract_zip(zip_path, work_dir)
+    new_root = extract_zip(zip_path, work_dir, repo_root)
     new_files = collect_files(new_root)
     old_files = collect_files(repo_root)
 
