@@ -18,7 +18,10 @@ const Step4 = {
     if (!k.ytClientId || !window.google) return;
     this.tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: k.ytClientId,
-      scope: "https://www.googleapis.com/auth/youtube.upload",
+      // youtube.upload — за самото видео; youtube.force-ssl — нужен допълнително
+      // за captions.insert (автоматичните субтитри). Ако вече си вписан от преди
+      // тази промяна, влез отново с бутона, за да получиш новия, по-широк scope.
+      scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.force-ssl",
       callback: (resp) => {
         this.accessToken = resp.access_token;
         document.querySelectorAll(".g-auth-status").forEach(el => { el.textContent = "✅ Вписан"; el.className = "chip green g-auth-status"; });
@@ -96,5 +99,39 @@ const Step4 = {
       progressEl.textContent = "❌ " + e.message;
       throw e;
     }
+  },
+
+  // Качва .srt субтитри за вече качено видео (captions.insert, multipart:
+  // JSON snippet + самия .srt файл). Изисква "youtube.force-ssl" scope
+  // (виж initGoogleAuth по-горе) — ако токенът е взет ПРЕДИ тази промяна,
+  // ще гръмне 403 и трябва повторен "Вход с Google".
+  async uploadCaptions(videoId, srtContent, languageCode = "bg", name = "Субтитри") {
+    if (!this.accessToken) throw new Error("Няма Google достъп — влез с бутона по-горе.");
+    const metadata = {
+      snippet: { videoId, language: languageCode, name, isDraft: false }
+    };
+    const boundary = "cdbcaption" + Date.now();
+    const body =
+      `--${boundary}\r\n` +
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+      `${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\n` +
+      `Content-Type: application/octet-stream\r\n\r\n` +
+      `${srtContent}\r\n` +
+      `--${boundary}--`;
+
+    const res = await fetch(
+      "https://www.googleapis.com/upload/youtube/v3/captions?uploadType=multipart&part=snippet",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.accessToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`
+        },
+        body
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+    return await res.json();
   }
 };

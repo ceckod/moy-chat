@@ -31,37 +31,82 @@ const Step3 = {
     }
   },
 
+  // Генерира обложка. Ако има Gemini/Imagen ключ, пробва него първи
+  // (обикновено по-високо качество); ако няма ключ ИЛИ Gemini гръмне
+  // грешка, автоматично пада на Pollinations — безплатен image-gen без
+  // никакъв ключ (js/providers/pollinations-image.js) — така функцията
+  // винаги работи, дори с нулева конфигурация.
   async generateCoverImage() {
     const prompt = document.getElementById("coverPromptOut").value.trim();
     if (!prompt) return toast("Първо генерирай визуалния промпт");
     const k = Keys.load();
-    if (!k.gemini) return toast("⚠️ Нужен е Gemini/Imagen API ключ в Настройки");
 
     document.getElementById("coverImgOut").innerHTML = "⏳ Генерирам обложка...";
+
+    if (k.gemini) {
+      try {
+        const imgUrl = await this._generateCoverImageGemini(prompt, k.gemini);
+        document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">Генерирано с Gemini/Imagen</div>`;
+        AppState.data.project.coverImageUrl = imgUrl;
+        AppState.save();
+        return;
+      } catch (e) {
+        toast(`⚠️ Gemini/Imagen гръмна (${e.message}) — превключвам на безплатния Pollinations...`, 4000);
+      }
+    }
+
     try {
-      // ЗАБЕЛЕЖКА: Точният endpoint/модел за Imagen генериране на изображения
-      // през Gemini API може да варира — провери актуалното име на модела
-      // в Google AI Studio (напр. модел с "image-generation" в името).
-      // Тук е генеричен пример с responseModalities.
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${k.gemini}`;
-      const res = await fetchTimeout(proxied(url), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Square album cover art, 3000x3000px composition: ${prompt}` }] }],
-          generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
-        })
-      }, 60000); // image generation отнема по-дълго
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-      if (!imgPart) throw new Error("Моделът не върна изображение — провери името на модела в Настройки/документацията.");
-      const imgUrl = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
-      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;">`;
+      const imgUrl = await this._generateCoverImagePollinations(prompt);
+      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Pollinations)</div>`;
       AppState.data.project.coverImageUrl = imgUrl;
       AppState.save();
     } catch (e) {
-      document.getElementById("coverImgOut").innerHTML = `❌ ${e.message}<br><span class="muted">Ако Imagen откаже директен браузър достъп (CORS), ще трябва малък proxy — виж бележките в разговора.</span>`;
+      document.getElementById("coverImgOut").innerHTML = `❌ ${e.message}`;
+    }
+  },
+
+  async _generateCoverImageGemini(prompt, geminiKey) {
+    // ЗАБЕЛЕЖКА: Точният endpoint/модел за Imagen генериране на изображения
+    // през Gemini API може да варира — провери актуалното име на модела
+    // в Google AI Studio (напр. модел с "image-generation" в името).
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiKey}`;
+    const res = await fetchTimeout(proxied(url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Square album cover art, 3000x3000px composition: ${prompt}` }] }],
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
+      })
+    }, 60000); // image generation отнема по-дълго
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    if (!imgPart) throw new Error("Моделът не върна изображение — провери името на модела в Настройки/документацията.");
+    return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+  },
+
+  // Директна извиквка към безплатния провайдър (виж providers/pollinations-image.js).
+  // Ползваме async варианта (реално сваля байтовете → data: URL), за да
+  // хванем грешка/timeout ТУК и да покажем ясен ❌, вместо счупена <img>
+  // икона; резултатът е data: URL — същия формат, който Step3 вече пази
+  // в AppState.project.coverImageUrl от Gemini/Imagen пътя.
+  async _generateCoverImagePollinations(prompt) {
+    return pollinationsImageUrlAsync(`Square album cover art, professional streaming cover, 1:1 composition: ${prompt}`, { width: 1024, height: 1024 });
+  },
+
+  // Бутон "🆓 Безплатна обложка" — прескача Gemini директно, дори да има ключ
+  // (напр. когато потребителят иска да пести Gemini квотата за нещо друго).
+  async generateCoverImageFree() {
+    const prompt = document.getElementById("coverPromptOut").value.trim();
+    if (!prompt) return toast("Първо генерирай визуалния промпт");
+    document.getElementById("coverImgOut").innerHTML = "⏳ Генерирам безплатна обложка (Pollinations)...";
+    try {
+      const imgUrl = await this._generateCoverImagePollinations(prompt);
+      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Pollinations)</div>`;
+      AppState.data.project.coverImageUrl = imgUrl;
+      AppState.save();
+    } catch (e) {
+      document.getElementById("coverImgOut").innerHTML = `❌ ${e.message}`;
     }
   },
 

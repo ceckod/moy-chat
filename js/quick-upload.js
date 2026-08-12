@@ -20,6 +20,7 @@ const QuickUpload = {
   videoFileName: "video.webm",
   analysis: null,
   meta: null,
+  subtitlesSrt: null,
   _msgBound: false,
 
   // Извиква се веднъж при стартиране на приложението — слуша за отговори
@@ -191,6 +192,35 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
     this._checkBothReady();
   },
 
+  // 🎬 Автоматични субтитри — транскрибира this.audioFile с Groq Whisper
+  // (безплатен tier, същия Groq ключ като AI Model Finder) и генерира .srt
+  // със сегментни timestamp-и, синхронизирани с видеото (то е направено
+  // директно от същия аудио файл). Извиква се ръчно от бутон в UI; ако е
+  // готово ПРЕДИ качването в YouTube, автоматично се прикача като caption
+  // track веднага след успешния upload (виж autoUpload по-долу).
+  async generateSubtitles() {
+    if (!this.audioFile) return toast("Първо избери аудио файл");
+    const out = document.getElementById("qSubtitlesOut");
+    if (out) out.innerHTML = "⏳ Транскрибирам с Whisper (Groq)...";
+    this.log("🎬 Генерирам автоматични субтитри (Groq Whisper)...");
+    try {
+      const languageCode = this.analysis?.language_code || null;
+      const { segments, language } = await callGroqTranscribe(this.audioFile, { languageCode });
+      this.subtitlesSrt = segmentsToSrt(segments);
+      this.subtitlesLanguageCode = language || languageCode || "bg";
+      this.log(`✅ Субтитри готови (${segments.length} реда, език: ${this.subtitlesLanguageCode}).`);
+      if (out) {
+        const blobUrl = URL.createObjectURL(new Blob([this.subtitlesSrt], { type: "text/plain" }));
+        out.innerHTML =
+          `<div class="muted">✅ ${segments.length} реда субтитри (${this.subtitlesLanguageCode}). Автоматично ще се прикачат към видеото при качване в YouTube.</div>` +
+          `<a href="${blobUrl}" download="subtitles.srt" class="btn ghost sm" style="margin-top:6px;display:inline-block;">⬇️ Свали .srt</a>`;
+      }
+    } catch (e) {
+      if (out) out.innerHTML = `❌ ${e.message}`;
+      this.log("❌ Грешка при субтитри: " + e.message);
+    }
+  },
+
   _pastedLyrics() {
     const el = document.getElementById("qLyricsPaste");
     return el ? el.value.trim() : "";
@@ -230,8 +260,17 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
       madeForKids: false
     };
     try {
-      await Step4.uploadVideo(file, meta, "qUploadProgress");
+      const result = await Step4.uploadVideo(file, meta, "qUploadProgress");
       this.log("✅ Качено в YouTube като unlisted!");
+      if (this.subtitlesSrt && result?.id) {
+        this.log("🎬 Прикачвам автоматичните субтитри към видеото...");
+        try {
+          await Step4.uploadCaptions(result.id, this.subtitlesSrt, this.subtitlesLanguageCode || "bg");
+          this.log("✅ Субтитрите са прикачени.");
+        } catch (e) {
+          this.log("⚠️ Видеото е качено, но субтитрите не се прикачиха автоматично (" + e.message + ") — свали .srt по-горе и качи ръчно от YouTube Studio → Субтитри.");
+        }
+      }
     } catch (e) {
       this.log("❌ Грешка при качване: " + e.message);
     }

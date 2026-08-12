@@ -41,7 +41,7 @@
    тази функция — той нарочно винаги е Gemini, като "втори, независим
    поглед" върху резултата, дори когато Gemini е и основният генератор.
    ========================================================= */
-async function callAI(prompt, maxTokens = 1200) {
+async function callAI(prompt, maxTokens = 1200, forceFirst = null) {
   const k = Keys.load();
   const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey, modelfinder: true };
   const run = { claude: () => callClaude(prompt, maxTokens), gemini: () => callGemini(prompt), openrouter: () => callOpenRouter(prompt, maxTokens), modelfinder: () => callModelFinder(prompt, maxTokens) };
@@ -54,10 +54,17 @@ async function callAI(prompt, maxTokens = 1200) {
   // Pollinations работи без никакъв ключ, така че таблото има работещ AI
   // път дори с нулева конфигурация, докато основните 3 провайдъра не бъдат
   // настроени. testKeys() може да го избута напред, ако РЕАЛНО е по-надежден.
+  //
+  // forceFirst — по избор (напр. "claude"), за конкретни извиквания, където
+  // качеството на самия текст е критично (напр. текст на песен — искаме
+  // най-естествения резултат, независимо от последния тест на ключовете).
+  // Все пак минава през целия fallback синджир, ако forceFirst провайдърът
+  // няма ключ или гръмне грешка — просто заема първо място, не изключва
+  // останалите.
   const manual = Prefs.data.contentProvider && Prefs.data.contentProvider !== "auto" ? Prefs.data.contentProvider : null;
   const order = [];
   const seen = new Set();
-  for (const p of [manual, ...AIProviderOrder.get(), "claude", "gemini", "openrouter", "modelfinder"]) {
+  for (const p of [forceFirst, manual, ...AIProviderOrder.get(), "claude", "gemini", "openrouter", "modelfinder"]) {
     if (!p || seen.has(p) || !hasKey[p]) continue;
     seen.add(p);
     order.push(p);

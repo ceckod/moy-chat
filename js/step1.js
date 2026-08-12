@@ -283,17 +283,34 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
     const niche = AppState.data.project.chosenNiche || "modern pop";
     const title = AppState.data.project.title || "(без заглавие)";
     const winningHook = AppState.data.project.winningHook;
-    const prompt = `Напиши текст на песен в жанр "${niche}", със заглавие "${title}".
-ЗАДЪЛЖИТЕЛНО:
+    const prompt = `Ти си опитен, издаван текстописец в жанр "${niche}", не AI асистент — пиши като човек,
+който наистина е преживял темата, не като модел, който обобщава клишета.
+Напиши текст на песен със заглавие "${title}".
+
+ЗАДЪЛЖИТЕЛНО за структурата:
 - [Chorus] секцията да е НАЙ-ОТПРЕД (преди първия куплет)
 - Използвай ясни мета-тагове: [Chorus], [Verse], [Drop] (ако жанрът позволява drop)
 - Текстът да е готов за качване в Suno AI
 ${winningHook ? `- Използвай ТОЧНО този ред като основен hook/първи ред на [Chorus] (дошъл е от Hook Evolution Arena, тестван и избран): "${winningHook}"` : ""}
+
+ЗАДЪЛЖИТЕЛНО за стила (за да звучи човешки, не AI-генерирано):
+- Конкретни, специфични образи и детайли (напр. "неотворено съобщение в 3 сутринта"),
+  НЕ общи AI клишета от типа "electric nights", "whispers in the dark", "chasing dreams",
+  "shine like stars", "unbreakable bond", "riding the wave" и подобни изтъркани фрази.
+- Естествен, разговорен ритъм на фразите — избягвай прекалено "гладки"/симетрични
+  редове, които звучат като генерирани по шаблон; леко несъвършена, жива фразировка е по-добра.
+- Не повтаряй една и съща идея с различни думи между куплетите — всеки куплет да носи
+  нова, конкретна информация/развитие, не просто вариация на припева.
+- Без мета-коментари, обяснения или встъпителни изречения от типа "Ето текст на песен...".
 Върни само текста с таговете, без допълнителни обяснения.`;
     LyricsHistory.push("Преди ново генериране");
     document.getElementById("lyricsOut").value = "⏳ Генерирам...";
     try {
-      const lyrics = await callAI(prompt, 1400);
+      // forceFirst "claude" — за текст/лирика естествеността е приоритет №1,
+      // затова винаги пробваме Claude първи тук (fallback синджирът към
+      // Gemini/OpenRouter/Model Finder остава непроменен, ако Claude няма
+      // ключ или гръмне грешка).
+      const lyrics = await callAI(prompt, 1400, "claude");
       document.getElementById("lyricsOut").value = lyrics;
       AppState.data.project.lyrics = lyrics;
       AppState.save();
