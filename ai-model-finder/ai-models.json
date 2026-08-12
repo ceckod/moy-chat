@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-11T04:16:40.929Z",
-  "total": 60,
+  "generated_at": "2026-08-12T04:44:26.995Z",
+  "total": 62,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 17
+      "count": 19
     },
     "static": {
       "ok": true,
@@ -26,6 +26,46 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "liquid/lfm-2.5-2.6b:free",
+      "name": "LiquidAI: LFM2.5-2.6B (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/liquid/lfm-2.5-2.6b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: liquid/lfm-2.5-2.6b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3.5-lightning:free",
+      "name": "NVIDIA: Nemotron 3.5 Lightning (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3.5-lightning:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3.5-lightning:free"
+    },
     {
       "source": "openrouter",
       "id": "inclusionai/ling-3.0-tiny:free",
