@@ -738,6 +738,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <textarea id="coverPromptOut" style="margin-top:10px;"></textarea>
         <button class="btn grad" onclick="guardClick(this, () => Step3.generateCoverImage())">🖼️ Генерирай обложка (3000×3000)</button>
         <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateCoverImageFree())">🆓 Безплатна обложка (Pollinations, без ключ)</button>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);">
+          <label class="muted" style="font-size:12.5px;">🔤 Код-лого (гарантиран точен текст, без AI)</label>
+          <input type="text" id="codeLogoText" placeholder="Основен текст (напр. CD-B Records)" value="CD-B Records" style="margin-top:6px;">
+          <input type="text" id="codeLogoSubtitle" placeholder="Подзаглавие (по избор, напр. RECORDS)" style="margin-top:6px;">
+          <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateCoverImageCodeLogo())">🔤 Генерирай код-лого</button>
+        </div>
         <div id="coverImgOut" style="margin-top:12px;"></div>
       </div>
 
@@ -1323,6 +1329,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/openrouter.js"></script>
 <script src="js/providers/model-finder.js"></script>
 <script src="js/providers/pollinations-image.js"></script>
+<script src="js/providers/code-logo.js"></script>
 <script src="js/providers/subtitles.js"></script>
 <script src="js/youtube.js"></script>
 <script src="js/system-log.js"></script>
