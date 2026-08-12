@@ -891,6 +891,141 @@ Finder (Groq/Mistral/GitHub Models/Cloudflare/Pollinations, последният
 `js/*.js` файловете (виж известния технически дълг в Changelog
 v1.27.0 на README.md) — отделна задача, чака решение на потребителя.
 
+---
+
+## [2026-08-12] Auto Update система — GitHub Actions + Python engine, БЕЗ GitHub token в браузъра
+
+**Контекст:** В предходния технически одит (виж записа "[2026-08-12]
+Пълен технически одит..." — всъщност доставен като отделен MD файл,
+`TECHNICAL-AUDIT-2026-08-12.md`, не тук) беше отбелязан client-side
+AuthGate като честно ограничение — самата защита признава в кода си,
+че спира само "случаен поглед", не технически грамотен нападател с
+DevTools достъп. Потребителят предложи собствена архитектура за Auto
+Update точно по тази причина: ЗАБРАНЕНО е GitHub credential да
+съществува където и да е в браузъра/localStorage/JS кода, точно както
+API ключовете вече не би трябвало (макар в момента да могат) да
+живеят там незащитени.
+
+**Заявка на потребителя:** Пълна Auto Update архитектура — dashboard
+меню, което МОЖЕ да поиска update, но НЯМА право само да го извърши.
+Реалните права (repo write) да живеят изключително в GitHub
+Actions/Python, никога в клиентски JS. 6 конкретни защити поискани:
+(1) token никога в сайта, (2) update само през GitHub Actions, (3) ZIP
+валидация преди deployment (забранени файлове, секрети, промени в
+protected код), (4) `visualizer.html` explicit защитен, (5) backup
+преди всеки update, (6) rollback при провал.
+
+**Потребителят качи готов `update_engine.py`** (413 реда, вече написан
+от него/в друга сесия) — не съм го писал аз, само тествал и вградил.
+
+**Направено:**
+1. **`update_engine.py`** копиран в root-а на repo-то, **без промяна на
+   логиката** (само проверено, не рефакторирано) — прочетен изцяло:
+   ZIP extract (справя се с GitHub-style "reponame-main/" wrapping
+   folder) → SHA256 diff (changed/added/missing) → `REMOVE_MISSING_FILES
+   = False` по подразбиране (нищо не се трие само защото липсва в ZIP-а
+   — `visualizer.html` е explicit пример в коментарите, не специален
+   случай в кода) → backup на променените файлове в temp dir → apply →
+   критични файлове проверка (`index.html`, `app.js`, `manifest.json`,
+   `config.json`, `package.json`, `sw.js` — **потвърдени, всичките
+   реално съществуват** в repo-то) → secret scan (Google/AWS/
+   OpenAI-style/GitHub PAT/Slack token regex шаблони) → `npm test` →
+   commit само при 100% успех, иначе пълен rollback + report.
+2. **`.github/workflows/auto-update.yml`** (нов) — тригер: push на
+   `incoming/*.zip` (потребителят качва ZIP през github.com уеб
+   интерфейса — "Add file → Upload files") + `workflow_dispatch` за
+   ръчно пускане. Важна поправка спрямо първата чернова на workflow-а:
+   първоначално cleanup/report commit стъпките имаха `if:` условие,
+   което би ги пропуснало при ПРОВАЛ на engine-а (default GitHub
+   Actions поведение спира job-а при неуспешна стъпка) — това би
+   оставило неуспешния ZIP завинаги заседнал в `incoming/`, блокирайки
+   бъдещи опити, И update_report.txt никога не би стигнал до repo-то
+   (единствения начин dashboard-ът да покаже "защо гръмна"). Поправено
+   с `continue-on-error: true` на engine стъпката + `if: always()` на
+   cleanup/push/artifact стъпките, плюс финална explicit проверка,
+   която проваля job-а с `::error::`, ако engine-ът реално се е
+   провалил (за видимост в Actions таба), без да пречи на cleanup-а.
+3. **`js/system-update.js`** (нов, `SystemUpdate`) — **read-only**
+   панел. Чете `README.md`/`update_report.txt` през relative `fetch()`
+   към собствения произход — без GitHub API, без token. Explicit
+   архитектурно решение, не опростяване: панелът МОЖЕ само да покаже
+   статус, никога да commit-не — точно каквото поиска потребителят
+   ("Frontend = може да поиска update. GitHub Actions/Python = има
+   правата да извърши update.").
+4. **`incoming/`** (нова папка) — `.gitkeep` + `README.md` с
+   инструкции стъпка по стъпка как реално се пуска update (ръчно през
+   github.com уеб интерфейса — единствения начин, на който dashboard-ът
+   НЕ държи credential).
+5. **`js/nav.js`** — 1 ред добавен (`SystemUpdate.init()` при
+   отваряне на view `set-project`), по същия pattern като вече
+   съществуващия `ProjectArchive.render()` на същия ред.
+6. **`index.html`** — нов `<script>` таг + нова карта в "Настройки —
+   Проект & Данни".
+
+**Verification (реално тествано, не само синтактично):**
+- Изграден временен git repo с точното съдържание на текущия проект
+  (`git init` + `git add -A` + `git commit` в копие на работната
+  директория) — за да може `update_engine.py` реално да прави
+  file-system diff и `npm test` run, не само dry parse.
+- **Тест 1 — обикновена промяна:** ZIP с 1 реално променен файл
+  (`js/providers/code-logo.js`) → engine коректно го засече като
+  "Changed" (не "Added" — първият ми тестов ZIP имаше грешна вложена
+  структура, доведе до "Added" на грешен път; поправено в теста, не в
+  engine-а — engine-ът се държеше коректно спрямо реалната ZIP
+  структура, моят тестов fixture беше грешен). Критични файлове PASS,
+  без секрети, `npm test` PASS (73/73) вътре в самия engine run,
+  `--no-commit` dry-run потвърди report-а.
+- **Тест 2 — secret detection:** инжектиран фалшив Google API key
+  низ (`AIzaSyD...`) в тестов файл → engine коректно го засече
+  (`possible Google API key`) → автоматичен rollback потвърден чрез
+  директна проверка, че оригиналният файл на диска остана непроменен
+  (`grep -c "LEAKED_KEY"` → 0 съвпадения след run-а).
+- **Тест 3 — пълен realistic ZIP:** цял repo (минус `visualizer.html`,
+  точно както реален update от Claude ще изглежда) с 1 умишлена
+  промяна → правилно "Changed" на верния път, `visualizer.html`
+  коректно "Preserved" (не докоснат), `npm test` PASS вътре в engine
+  run-а.
+- YAML синтаксисът на `auto-update.yml` валидиран с `pyyaml` (`yaml.safe_load`
+  успешен parse, тригерите (`push`/`workflow_dispatch`) потвърдени).
+- `node --check` чисто на `js/system-update.js` и `js/nav.js`; `<div>`
+  баланс в `index.html` проверен (347/347).
+- `npm test` (пълния suite, не само вътре в engine run-а) — 73/73,
+  непроменено.
+
+**⚠️ НЕ е тествано:** реално изпълнение в жив GitHub Actions runner
+(изисква реален push към реално repo — извън възможностите на средата
+за писане на кода в тази сесия). Логиката на самия workflow YAML
+(тригер условия, `permissions: contents: write`, `if: always()`
+поведение при провал, artifact upload) е внимателно прегледана и
+разсъждавана през сценарии, но не изпълнена в реална CI среда.
+Препоръчвам първия реален update да е с **малка, нискорискова
+промяна** (напр. точно както в Тест 1/3 по-горе), за да се потвърди
+целият flow end-to-end в реалния repo, преди да се разчита на
+системата за по-големи промени.
+
+**Известни, съзнателно приети ограничения (не бъгове):**
+- `visualizer.html` изрично извън Auto Update flow-а по решение на
+  потребителя (документирано на 3 места: `update_engine.py` коментар,
+  `incoming/README.md`, тук) — remains manual-update-only занапред.
+- `collect_files()` в `update_engine.py` чете файловата система
+  директно (`rglob`), не git index — означава, че локални
+  `.gitignore`-нати файлове (напр. `ai-model-finder/keys.json`, вече
+  правилно в `.gitignore`) биха се показали като "missing from ZIP" в
+  локален run, ако случайно съществуват на диска локално; в реалния
+  GitHub Actions runner това не е проблем (checkout не включва
+  untracked/gitignored файлове), отбелязано тук само за яснота при
+  бъдещо локално debug-ване на engine-а.
+- Single-top-level-folder collapse логиката в `extract_zip()`
+  (създадена да се справя с GitHub-style "reponame-main/" export
+  wrapping) е потенциално двусмислена, ако някой умишлено ZIP-не
+  ЧАСТИЧНА промяна, съдържаща само една директория (напр. само `js/`
+  папката, без нищо друго на топ ниво) — в такъв случай `js/` би било
+  сбъркано за wrapping folder и пътищата вътре биха излезли грешни
+  (потвърдено в първия ми неуспешен тестов опит, коригирано чрез
+  промяна на тестовия fixture, не на engine кода). **Препоръка занапред:
+  ZIP-ите винаги да съдържат ЦЕЛИЯ repo (или поне повече от 1 нещо на
+  топ ниво), никога само единична под-папка.**
+
 **Addendum (2026-08-12) — реален HTTP 429 от Pollinations при първо ползване.**
 Потвърдено от потребителя при първо реално пускане: Pollinations
 (безплатен, без ключ) връща HTTP 429 (Too Many Requests) — очаквано,

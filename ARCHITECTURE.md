@@ -199,6 +199,24 @@ YouTube Тракер / Analytics dashboard (data/*.json от GitHub Actions).
 - **Зависимости:** `Storage`, `AppState`, `GeminiValidator`, `Stats`,
   `toast()`.
 
+### `js/system-update.js` — `SystemUpdate` (нов, v1.28.0)
+**Read-only** dashboard панел за Auto Update системата (виж
+`update_engine.py` + `.github/workflows/auto-update.yml` в root-а —
+това НЕ е `js/` модул, а отделна Python/CI система; `system-update.js`
+е само UI прозорецът към нея). Чете `README.md` (текуща версия, regex
+на `**Версия:**` реда) и `update_report.txt` (последен Auto Update
+резултат) през обикновен relative `fetch()` към собствения произход —
+**без GitHub API, без token, без auth**. Изрично НЕ commit-ва нищо и
+НЕ тригва workflow директно — единственият начин да се стартира update
+е потребителят да качи ZIP в `incoming/` през самия GitHub (виж
+`incoming/README.md`).
+- Методи: `init()` (вика се от `js/nav.js` при отваряне на view
+  `set-project`), `refresh()` (бутон "🔄 Провери статус"), `render()`,
+  `_fetchVersion()`, `_fetchReport()`, `_escapeHtml()`.
+- **Зависимости:** `fetchTimeout()` (`js/network.js`).
+- **Кой го ползва:** `js/nav.js` (`showView`), `index.html` (бутон в
+  "Настройки — Проект & Данни").
+
 ### `js/ai-helpers.js` — `callAI()`, `fileToBase64()`, `extractJson()`
 - `callAI(prompt, maxTokens, forceFirst)` — единна точка за AI
   генериране, оркестрира Claude/Gemini/OpenRouter/ModelFinder с
@@ -225,11 +243,30 @@ YouTube Тракер / Analytics dashboard (data/*.json от GitHub Actions).
   image URL (endpoint-ът генерира при GET заявка, няма нужда от POST).
 - `pollinationsImageUrlAsync(prompt, opts)` — реално сваля байтовете
   и връща `data:` URL, за да хване HTTP/мрежова грешка ПРЕДИ да се
-  покаже `<img>` (вместо да разчита на браузърния `onerror`).
+  покаже `<img>` (вместо да разчита на браузърния `onerror`). Автоматичен
+  retry до 3 пъти при HTTP 429 (споделен rate limit между всички
+  анонимни потребители), с нов случаен seed на всеки опит.
 - **Зависимости:** `fetchTimeout()`, `proxied()` (само в async
   варианта).
 - **Кой го ползва:** `Step3` (`generateCoverImage`/
   `generateCoverImageFree`, fallback/директен избор пред Gemini/Imagen).
+
+### `js/providers/code-logo.js` — `renderCodeLogo()` (нов, v1.27.1)
+100% code-генерирано 3D текстово лого (Canvas 2D — extrusion слоеве +
+вертикален градиент + bevel highlight контур + сянка), **БЕЗ AI**.
+Трета опция до другите два бутона за обложка — за случаи, в които се
+иска ГАРАНТИРАНО точен текст (напр. wordmark лого "CD-B Records"),
+което дифузионните AI модели не могат да обещаят надеждно (известно
+ограничение на технологията — виж AUDIT_PROGRESS.md, addendum 2 за
+v1.27.0).
+- `renderCodeLogo(text, opts)` — синхронна, чист browser Canvas API,
+  връща `data:image/png` веднага (без мрежова заявка изобщо).
+  `opts`: `subtitle`, `baseColor`, `depthColor`, `background`,
+  `fontFamily`, `width`, `height`.
+- **Зависимости:** само браузърния `document.createElement("canvas")`
+  — няма external заявки, няма ключове.
+- **Кой го ползва:** `Step3.generateCoverImageCodeLogo()` (нов бутон
+  "🔤 Генерирай код-лого", чете `#codeLogoText`/`#codeLogoSubtitle`).
 
 ### `js/providers/subtitles.js` — `callGroqTranscribe()`, `segmentsToSrt()` (нов, v1.27.0)
 Автоматична транскрипция на аудио → синхронизирани `.srt` субтитри,
@@ -407,6 +444,7 @@ scripts/clock-and-keys.js
 | `daily-trends.yml` | `scripts/track_trends.py` — growth/competition по ниши от `config.json` → `data/trends-history.json` | 08:00 UTC + ръчно |
 | `run-tests.yml` | `npm test` при всеки push/PR | push/PR |
 | `scrape-ai-models.yml` | `ai-model-finder/scraper.mjs` → `ai-model-finder/ai-models.json` — **добавен на 2026-08-10** (липсваше изцяло, виж `AUDIT_PROGRESS.md`) | 03:00 UTC + ръчно |
+| `auto-update.yml` | `update_engine.py` (root) — ZIP от `incoming/*.zip` → SHA256 diff → backup → apply → критични файлове → secret scan → `npm test` → commit **само при 100% успех**, иначе автоматичен rollback. **Добавен на 2026-08-12, v1.28.0** — виж `README.md` Changelog и `incoming/README.md` за пълния flow. `visualizer.html` изрично защитен/недосегаем от този flow. | push на `incoming/*.zip` + ръчно (`workflow_dispatch`) |
 
 ---
 

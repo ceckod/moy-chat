@@ -1,7 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
-**Версия:** 1.27.1
-**Последна промяна:** 2026-08-12 (Europe/Sofia) — Fix: премахнат hardcoded "album cover" wrapper от AI image промптите (конкурираше с реалната заявка на потребителя, напр. лого); нов трети вариант — 100% code-генерирано 3D текстово лого (Canvas, БЕЗ AI, гарантиран точен текст) — виж Changelog
+**Версия:** 1.28.0
+**Последна промяна:** 2026-08-12 (Europe/Sofia) — Auto Update система (GitHub Actions + Python engine, БЕЗ GitHub token в браузъра): backup → валидация (secret scan, критични файлове) → тестове → commit или автоматичен rollback; visualizer.html изрично защитен/недосегаем — виж Changelog
 
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
@@ -396,6 +396,17 @@ README на живо (offline PWA кеш + различни среди биха 
   `youtube/` и `ui/` вече са извадени от `app.js`.
 
 ## Changelog
+
+### v1.28.0 — 2026-08-12 (Auto Update система — GitHub Actions + Python engine, БЕЗ GitHub token в браузъра)
+- 🆕 **`update_engine.py`** (root, качен от потребителя, тестван и вграден непроменен) — взима ZIP, сравнява със сегашния repo (SHA256 diff), backup-ва променените файлове, прилага новите, проверява критични файлове (`index.html`, `app.js`, `manifest.json`, `config.json`, `package.json`, `sw.js`), сканира за случайно качени API ключове (Google/AWS/OpenAI-style/GitHub PAT/Slack token шаблони), пуска `npm test`, и **само при 100% успех** прави `git commit`. При провал на КОЯТО и да е проверка — пълен автоматичен rollback, нищо не се commit-ва. `visualizer.html` е защитен по конвенция (не се трие дори при липса от ZIP-а — `REMOVE_MISSING_FILES=False` по подразбиране).
+- 🆕 **`.github/workflows/auto-update.yml`** — тригва се при push на `incoming/*.zip` (потребителят качва ZIP-а през github.com уеб интерфейса — "Add file → Upload files") или ръчно през `workflow_dispatch`. Пуска `update_engine.py`, чисти обработения ZIP от `incoming/`, commit-ва `update_report.txt` **и при успех, и при провал** (за да може dashboard-ът винаги да покаже последния резултат), и explicit проваля job-а с `::error::`, ако engine-ът се е провалил (макар repo-то вече да е чисто след вътрешния rollback).
+- 🆕 **`js/system-update.js`** (`SystemUpdate`) — **read-only** dashboard панел (Настройки → Проект & Данни → "🔄 Auto Update"). Чете `README.md` (текуща версия) и `update_report.txt` (последен резултат) през обикновен relative `fetch()` към собствения произход на сайта — **без GitHub API, без token, без auth**. Панелът МОЖЕ само да показва статус, НИКОГА да commit-ва — архитектурно решение, взето изрично по заявка на потребителя (GitHub credential в браузъра = практически компрометируем, виж discussion в AUDIT_PROGRESS.md).
+- 🆕 **`incoming/`** (нова папка, `.gitkeep` + `README.md` с инструкции стъпка по стъпка как реално се пуска update).
+- ✏️ `js/nav.js` — един ред: `SystemUpdate.init()` при отваряне на view `set-project`, по същия pattern като вече съществуващия `ProjectArchive.render()`.
+- 📝 `index.html` — нов `<script>` таг + нова карта в "Настройки — Проект & Данни" с бутон "🔄 Провери статус".
+- 🧪 **Тествано реално, не само синтактично** (за разлика от предишни версии, тук имаше възможност): изграден временен git repo с точно съдържанието на проекта, пуснат `update_engine.py` end-to-end (`--no-commit` dry-run) три пъти — (1) обикновена промяна в 1 файл → коректно засечена и приложена, `visualizer.html`/`.gitignore` правилно "preserved"; (2) инжектиран фалшив Google API ключ → коректно засечен от secret scanner → автоматичен rollback потвърден (оригиналният файл останал непроменен); (3) пълен realistic ZIP (цял repo минус `visualizer.html`, точно както реален update от Claude ще изглежда) → `npm test` (73/73) минал вътре в самия engine run. YAML синтаксисът на workflow-а валидиран с `pyyaml`.
+- ⚠️ **НЕ е тествано:** реално пускане в GitHub Actions runner (изисква жив repo + push) — логиката на самия workflow YAML (тригер, permissions, artifact upload) е прегледана внимателно, но не изпълнена в реална GitHub среда от тази сесия.
+- 📌 **`visualizer.html` изрично НЕ е част от Auto Update flow-а** — по изрично решение на потребителя, документирано и в кода (`update_engine.py` коментар), и в `incoming/README.md`. Ако някога потребителят поиска да го включи, е буквално толкова просто, колкото да го добави в ZIP-а — engine-ът ще го третира като всеки друг файл, но е нарочно изключено от стандартния flow с `ALWAYS_PRESERVE`.
 
 ### v1.27.1 — 2026-08-12 (Fix: prompt wrapper конфликт + code-генерирано 3D лого)
 - 🐛 **Fix `js/step3.js`** — премахнат hardcoded семантичен wrapper

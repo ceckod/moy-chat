@@ -1220,6 +1220,23 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn grad" onclick="ProjectArchive.saveCurrent()">💾 Архивирай текущия проект сега</button>
         <div id="projectArchiveOut" style="margin-top:12px;"></div>
       </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🔄 Auto Update (System)</strong>
+        <p class="muted">
+          Автоматично, тествано, с backup и rollback обновяване на кода в repo-то — виж
+          <code>update_engine.py</code> и <code>.github/workflows/auto-update.yml</code>.
+          <strong>Без GitHub token в браузъра</strong> — този панел само ЧЕТЕ статуса, никога не commit-ва нищо.
+        </p>
+        <p class="muted" style="margin-top:8px;">
+          <strong>Как да пуснеш update:</strong> качи ZIP-а в папка
+          <code>incoming/update.zip</code> през github.com ("Add file → Upload files" →
+          пуснеш файла → Commit directly to main). GitHub Action-ът се пуска автоматично,
+          прави backup, тества, и само при успех commit-ва. Резултатът се появява тук.
+        </p>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => SystemUpdate.refresh())">🔄 Провери статус</button>
+        <div id="systemUpdateOut" style="margin-top:12px;"></div>
+      </div>
     </div>
 
     <!-- ============ SETTINGS: PREFERENCES ============ -->
@@ -1345,6 +1362,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/stats.js"></script>
 <script src="js/gemini-validator.js"></script>
 <script src="js/project-archive.js"></script>
+<script src="js/system-update.js"></script>
 <script src="js/quick-upload.js"></script>
 <script src="js/track-record.js"></script>
 <script src="js/lyrics-history.js"></script>
