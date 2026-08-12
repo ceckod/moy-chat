@@ -175,6 +175,7 @@ const SystemUpdate = {
 
   async uploadFiles(files) {
     const out = document.getElementById("systemUpdateUploadOut");
+    const input = document.getElementById("systemUpdateFileInput");
     const setOut = html => { if (out) out.innerHTML = html; };
 
     if (!files || !files.length) return toast("⚠️ Не си избрал файл(ове)");
