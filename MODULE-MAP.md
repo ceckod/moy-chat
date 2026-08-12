@@ -1,0 +1,189 @@
+# Карта на модулите — AI Music Suite / CD-B Records Dashboard
+
+Цел: когато работим по конкретна функционалност, да знаем **точно** кои
+файлове са в обхвата и кои НЕ трябва да се пипат. Всеки модул по-долу е
+самостоятелна, разпознаваема отговорност — но виж "Кръстосани
+зависимости" накрая, защото няколко модула НЕ са напълно изолирани.
+
+---
+
+## 0. System Core — фундамент, никога не се пипа изолирано за "малка" задача
+
+Ако задачата пипа нещо тук, третирай я като high-risk, независимо колко
+малка изглежда промяната (виж одита, Раздел 3 "Критични файлове").
+
+```
+index.html
+app.js
+js/storage.js
+js/network.js
+js/app-state.js
+js/nav.js
+js/ui-bootstrap.js
+js/ui/toast.js
+js/ui/guard-click.js
+manifest.json
+config.json
+sw.js
+package.json
+```
+
+## 1. Settings & Preferences
+
+```
+js/settings.js
+js/auth-gate.js
+js/prefs.js
+js/model-pref.js
+js/ai-provider-order.js
+```
+
+## 2. AI Core — оркестрация + provider-и
+
+Използва се от почти всеки друг модул (виж "Кръстосани зависимости").
+
+```
+js/ai-helpers.js
+js/ai-cache.js
+js/ai-call-log.js
+js/quota-tracker.js
+js/agent-roster.js
+js/gemini-validator.js
+js/providers/claude.js
+js/providers/gemini.js
+js/providers/openrouter.js
+js/providers/fallback-loop.js
+js/providers/model-finder.js
+js/providers/pollinations-image.js
+js/providers/code-logo.js
+js/providers/subtitles.js
+```
+
+## 3. Song Creation Flow — Стъпки 1-4 + Бърз ъплоуд
+
+```
+js/step1.js
+js/step2.js
+js/step3.js
+js/step4.js
+js/lyrics-history.js
+js/quick-upload.js
+js/youtube.js
+js/release-roadmap.js
+```
+
+## 4. Viral Lab & Niche Analysis
+
+```
+js/viral-lab.js
+js/niche-toolkit.js
+js/niche-scoring.js
+js/niche-data-sources.js
+```
+
+## 5. Archive & Stats
+
+```
+js/project-archive.js
+js/track-record.js
+js/stats.js
+```
+
+## 6. Diagnostics
+
+```
+js/system-log.js
+js/system-test.js
+```
+
+## 7. Visualizer Engine — ИЗРИЧНО ИЗВЪН Auto Update flow-а
+
+```
+visualizer.html
+```
+По конвенция (виж `incoming/README.md`, `update_engine.py` коментар) —
+не се пипа/качва освен ако изрично не поискаш точно него. 18MB, само
+~65KB от които е реален код (виж одита, Раздел 21).
+
+## 8. Automation & Data — GitHub Actions + Python (НЕ browser код)
+
+```
+scripts/track_stats.py
+scripts/track_trends.py
+scripts/track_niche_scores.py
+scripts/discover_niches.py
+scripts/clock-and-keys.js
+.github/workflows/daily-stats.yml
+.github/workflows/daily-trends.yml
+.github/workflows/niche-scores.yml
+.github/workflows/scrape-ai-models.yml
+.github/workflows/run-tests.yml
+data/*.json   ← ГЕНЕРИРАНИ от скриптовете, не се редактират ръчно
+```
+
+## 9. AI Model Finder — самостоятелен под-проект
+
+```
+ai-model-finder/*
+```
+Не се дели с главния `js/` — има собствен `app.js`, собствена логика.
+
+## 10. Auto Update / Infra — обновяващата система сама по себе си
+
+```
+update_engine.py
+.github/workflows/auto-update.yml
+incoming/README.md
+js/system-update.js
+```
+
+## 11. Тестове
+
+```
+test/*.test.mjs
+vault-keys.test.mjs
+```
+Не е "модул" в смисъла по-горе — покрива части от няколко модула
+наведнъж (Storage, providers/fallback-loop, niche-scoring, network).
+
+## 12. Мъртъв код — извън всякакъв модул, не пипаме без отделно решение
+
+```
+23-та root-ниво дубликата на js/*.js (виж одита, Раздел 6)
+ai.html, aichat.html, site-ai.html, site-ai-agent.html
+```
+
+---
+
+## Кръстосани зависимости (важно — модулите НЕ са напълно изолирани)
+
+- **AI Core (2)** се вика от почти всеки друг модул (`Song Creation`,
+  `Viral Lab`, `Niche Analysis`, дори `Settings` за тестване на
+  ключове). Промяна в `callAI()` сигнатурата или provider поведението
+  засяга ВСИЧКИ тях — дори задачата да изглежда "само AI Core".
+- **System Core (0)** се чете директно от буквално всеки модул
+  (`Storage`, `AppState`, `fetchTimeout`/`proxied`). Никой модул не е
+  реално изолиран от него.
+- **`index.html`** съдържа markup за ВСИЧКИ модули наведнъж (единен SPA
+  файл) — промяна "само в AI Core" пак може да изисква редакция на
+  съответната секция в `index.html`, ако добавяш/махаш UI елемент.
+- **Settings (1) ↔ почти всичко** — `Settings.fillFields()` и
+  свързаните методи четат/пишат ключове, ползвани от AI Core, YouTube,
+  Niche анализа и т.н.
+
+**Практическо правило:** преди да пипаме "само модул X", проверявам
+дали промяната засяга публичния интерфейс (методи, извиквани отвън) на
+X — ако да, трябва grep за всички викащи го модули, не само тези в
+списъка на X.
+
+---
+
+## Как ще ползваме тази карта
+
+1. Кажи ми кой модул (или комбинация) искаш да пипнем.
+2. Аз чета **само** файловете от съответния списък (+ проверка за
+   кръстосани зависимости по-горе) — през публичния repo, директно.
+3. Правя минималната необходима промяна, обяснявам засегнатото.
+4. Връщам малък `update.zip` за `incoming/` — само с реално
+   променените файлове (Auto Update flow-ът пази всичко останало
+   недокоснато, `REMOVE_MISSING_FILES=False`).
