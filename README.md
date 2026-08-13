@@ -1,9 +1,7 @@
 # AI Music Suite — CD-B Records Dashboard
 
-> **🧪 Auto Update тест: УСПЕШЕН** — ако виждаш този ред в README-то на GitHub, целият flow (backup → validate → test → commit) е минал докрай. Можеш да изтриеш този ред при следващия реален update.
-
-**Версия:** 1.28.0
-**Последна промяна:** 2026-08-12 (Europe/Sofia) — Auto Update система (GitHub Actions + Python engine, БЕЗ GitHub token в браузъра): backup → валидация (secret scan, критични файлове) → тестове → commit или автоматичен rollback; visualizer.html изрично защитен/недосегаем — виж Changelog
+**Версия:** 1.29.0
+**Последна промяна:** 2026-08-13 (Europe/Sofia) — Почистване на мъртъв код (29 стари root-ниво дубликата + orphan HTML инструменти изтрити) + нов `scripts/cleanup_dead_files.py` за автоматизация на бъдещо почистване — виж Changelog
 
 Браузърно табло (чист HTML/CSS/JS, без backend сървър за самото приложение)
 за пазарен анализ, писане на текстове, визуализатор и публикуване на музика.
@@ -398,6 +396,16 @@ README на живо (offline PWA кеш + различни среди биха 
   `youtube/` и `ui/` вече са извадени от `app.js`.
 
 ## Changelog
+
+### v1.29.0 — 2026-08-13 (Почистване на мъртъв код + автоматизация)
+- 🧹 **Изтрити 29 мъртви/дублирани файла**, изрично флагнати още в `MODULE-MAP.md` Раздел 12, но никога наистина премахнати:
+  - 22 root-ниво дубликата на `js/*.js` (index.html зарежда само `js/` версиите; 6 от root копията се бяха и разминали съдържателно — стари, непоправени бъгове в мъртъв код)
+  - 4 orphan HTML инструмента, никъде не линкнати от `index.html`: `ai.html`, `aichat.html`, `site-ai.html`, `site-ai-agent.html`
+  - 3 дребни дубликата: `load-app.mjs` (root), `app-state.test.mjs` (root), `CDB-Dashboard.md` (дубликат на кирилски-именувания одит файл)
+  - `visualizer.html` изрично НЕ е пипан (защитен по конвенция, виж v1.28.0)
+- 🆕 **`scripts/cleanup_dead_files.py`** — автоматизира точно това почистване за бъдещи качвания на стари ZIP/backup. Dry run по подразбиране, проверява `index.html` референции преди триене, `--apply` за реално изтриване. Виж коментарите в самия файл за пълния flow.
+- 🆕 **`incoming/REMOVE_MISSING` маркер** — `auto-update.yml` вече поддържа изричен, еднократен избор да трие реално файлове, липсващи от ZIP-а (по подразбиране `update_engine.py` никога не трие по липса, само по презапис). Активира се, като качиш маркер файла заедно с `update.zip` в един и същ commit — виж `incoming/README.md`. `visualizer.html` остава защитен дори и с маркера.
+- ✅ Потвърдено с `npm test` (73/73) преди и след почистването — нищо счупено.
 
 ### v1.28.0 — 2026-08-12 (Auto Update система — GitHub Actions + Python engine, БЕЗ GitHub token в браузъра)
 - 🆕 **`update_engine.py`** (root, качен от потребителя, тестван и вграден непроменен) — взима ZIP, сравнява със сегашния repo (SHA256 diff), backup-ва променените файлове, прилага новите, проверява критични файлове (`index.html`, `app.js`, `manifest.json`, `config.json`, `package.json`, `sw.js`), сканира за случайно качени API ключове (Google/AWS/OpenAI-style/GitHub PAT/Slack token шаблони), пуска `npm test`, и **само при 100% успех** прави `git commit`. При провал на КОЯТО и да е проверка — пълен автоматичен rollback, нищо не се commit-ва. `visualizer.html` е защитен по конвенция (не се трие дори при липса от ZIP-а — `REMOVE_MISSING_FILES=False` по подразбиране).

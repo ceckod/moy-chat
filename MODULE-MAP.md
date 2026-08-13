@@ -146,12 +146,23 @@ vault-keys.test.mjs
 Не е "модул" в смисъла по-горе — покрива части от няколко модула
 наведнъж (Storage, providers/fallback-loop, niche-scoring, network).
 
-## 12. Мъртъв код — извън всякакъв модул, не пипаме без отделно решение
+## 12. Мъртъв код — вече почистен (2026-08-13)
+
+Списъкът по-долу вече НЕ съществува в repo-то — изтрит на 2026-08-13.
+Оставен тук като история + за да знае `scripts/cleanup_dead_files.py`
+какво да пази проверявано, ако някога стар ZIP/backup внесе същите
+файлове отново.
 
 ```
-23-та root-ниво дубликата на js/*.js (виж одита, Раздел 6)
+22-та root-ниво дубликата на js/*.js (бивш одит, Раздел 6)
 ai.html, aichat.html, site-ai.html, site-ai-agent.html
+load-app.mjs (дубликат на helpers/load-app.mjs)
+app-state.test.mjs (root, дубликат на test/app-state.test.mjs)
+CDB-Dashboard.md (дубликат на "Технически-одит-CDB-Dashboard.md")
 ```
+
+Автоматично почистване занапред: `python3 scripts/cleanup_dead_files.py --apply`
+(dry run по подразбиране без `--apply`) — виж коментарите в самия файл.
 
 ---
 
