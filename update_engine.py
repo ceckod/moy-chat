@@ -230,7 +230,20 @@ def main() -> int:
 
     repo_root = Path(args.repo).resolve()
     zip_path = Path(args.zip).resolve()
-    remove_missing = args.remove_missing or REMOVE_MISSING_FILES
+
+    # REMOVE_MISSING маркер: ако до ZIP-а (в същата incoming/ папка) стои
+    # файл, наречен точно "REMOVE_MISSING", engine-ът трие реално всичко,
+    # което липсва от ZIP-а (visualizer.html пак е защитен, виж ALWAYS_PRESERVE).
+    # Причината този избор да е ТУК, а не в .github/workflows/auto-update.yml:
+    # engine-ът изрично НИКОГА не пипа файлове в .github/workflows/*
+    # (виж NEVER_TOUCH_PATTERNS) — промяна там никога не би стигнала до
+    # живия repo през нормалния auto-update flow. Затова маркерът се чете
+    # тук, в самия Python код, който Е обикновен файл и се обновява нормално.
+    remove_missing_marker = zip_path.parent / "REMOVE_MISSING"
+    marker_present = remove_missing_marker.is_file()
+    remove_missing = args.remove_missing or REMOVE_MISSING_FILES or marker_present
+    if marker_present:
+        log(f"Намерен {remove_missing_marker.name} до ZIP-а — файлове, липсващи от ZIP-а, ще бъдат ИЗТРИТИ (освен ALWAYS_PRESERVE).")
 
     if not zip_path.is_file():
         log(f"ГРЕШКА: ZIP файлът не съществува: {zip_path}")
@@ -345,6 +358,20 @@ def main() -> int:
                  secrets_found, tests_ok, tests_output, critical_missing,
                  committed=not args.no_commit,
                  status="READY TO COMMIT" if not args.no_commit else "OK (dry-run, not committed)")
+
+    # Маркерът е еднократен избор за ТОЗИ ъпдейт — трие се веднага след
+    # употреба, за да не окаже влияние по погрешка на следващ, обикновен
+    # (частичен) update. Влиза в СЪЩИЯ commit като останалите промени.
+    if marker_present and not args.no_commit:
+        try:
+            if remove_missing_marker.is_file():
+                remove_missing_marker.unlink()
+                log(f"Изтрих {remove_missing_marker.name} (еднократен маркер, вече приложен).")
+            # Ако вече е бил изтрит по-горе (нормалният случай — маркерът
+            # сам по себе си липсва от ZIP-а, значи вече е бил в to_remove),
+            # няма какво повече да правим тук.
+        except OSError as exc:
+            log(f"ПРЕДУПРЕЖДЕНИЕ: не успях да изтрия {remove_missing_marker}: {exc}")
 
     committed = False
     if not args.no_commit:

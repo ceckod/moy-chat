@@ -1,8 +1,15 @@
 CDB UPDATE REPORT
-Timestamp: 20260813-064317
+Timestamp: 20260813-142426
 
 Changed:
-  none
+  update_report.txt
+  sw.js
+  index.html
+  AUDIT_PROGRESS.md
+  update_engine.py
+  js/step1.js
+  data/trends-history.json
+  data/stats-history.json
 
 Added:
   none
@@ -13,7 +20,6 @@ Removed:
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-provider-order.js
   project-archive.js
-  update_report.txt
   aichat.html
   model-pref.js
   track-record.js
@@ -23,120 +29,33 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai.html
   step4.js
   app-state.js
-  app.js
-  #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
-  MODULE-MAP.md
-  sw.js
   ai-helpers.js
   site-ai.html
-  index.html
   quick-upload.js
   step3.js
   lyrics-history.js
-  package.json
   step2.js
   storage.js
   ui-bootstrap.js
-  AUDIT_PROGRESS.md
   stats.js
   site-ai-agent.html
   app-state.test.mjs
   prefs.js
   gemini-validator.js
-  config.json
   ai-call-log.js
   Технически-одит-CDB-Dashboard.md
   quota-tracker.js
-  ARCHITECTURE.md
-  update_engine.py
-  vault-keys.test.mjs
   step1.js
   CDB-Dashboard.md
-  README.md
   settings.js
   load-app.mjs
-  manifest.json
-  .gitignore
   viral-lab.js
   visualizer.html
-  js/ai-provider-order.js
-  js/project-archive.js
-  js/agent-roster.js
-  js/model-pref.js
-  js/release-roadmap.js
-  js/track-record.js
-  js/nav.js
-  js/system-update.js
-  js/ai-cache.js
-  js/step4.js
-  js/app-state.js
-  js/suno-preview.js
-  js/system-log.js
-  js/ai-helpers.js
-  js/niche-data-sources.js
-  js/quick-upload.js
-  js/step3.js
-  js/lyrics-history.js
-  js/step2.js
-  js/storage.js
-  js/ui-bootstrap.js
   js/lyrics-humanizer.js
-  js/stats.js
-  js/system-test.js
-  js/youtube.js
-  js/prefs.js
-  js/gemini-validator.js
-  js/ai-call-log.js
-  js/quota-tracker.js
-  js/step1.js
-  js/network.js
-  js/niche-toolkit.js
-  js/auth-gate.js
-  js/settings.js
-  js/niche-scoring.js
-  js/viral-lab.js
-  ai-model-finder/worker.js
-  ai-model-finder/ai-models.json
-  ai-model-finder/check-keys.mjs
-  ai-model-finder/app.js
-  ai-model-finder/index.html
-  ai-model-finder/keys.json
-  ai-model-finder/scraper.mjs
-  ai-model-finder/README.md
-  helpers/load-app.mjs
   drafts/ВРЕМЕННА ПАПКА.txt
-  drafts/#U0412#U0420#U0415#U041c#U0415#U041d#U041d#U0410 #U041f#U0410#U041f#U041a#U0410.txt
-  scripts/cleanup_dead_files.py
-  scripts/track_niche_scores.py
-  scripts/track_stats.py
-  scripts/clock-and-keys.js
-  scripts/track_trends.py
-  scripts/discover_niches.py
-  incoming/.gitkeep
-  incoming/README.md
-  test/load-niche-scoring.mjs
+  incoming/REMOVE_MISSING
   test/lyrics-humanizer.test.mjs
-  test/load-provider.mjs
-  test/network.test.mjs
   test/load-lyrics-humanizer.mjs
-  test/niche-scoring.test.mjs
-  test/load-network.mjs
-  test/app-state.test.mjs
-  test/providers-fallback.test.mjs
-  data/discovered-niches.json
-  data/trends-history.json
-  data/niche-scores-history.json
-  data/stats-history.json
-  js/providers/gemini.js
-  js/providers/claude.js
-  js/providers/pollinations-image.js
-  js/providers/code-logo.js
-  js/providers/model-finder.js
-  js/providers/fallback-loop.js
-  js/providers/openrouter.js
-  js/providers/subtitles.js
-  js/ui/toast.js
-  js/ui/guard-click.js
 
 Critical files check:
   PASS

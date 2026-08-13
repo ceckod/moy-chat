@@ -15,7 +15,7 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v48";
+const CACHE_VERSION = "cdb-shell-v47";
 
 const SHELL_FILES = [
   "./",
@@ -51,7 +51,6 @@ const SHELL_FILES = [
   "./js/quick-upload.js",
   "./js/track-record.js",
   "./js/lyrics-history.js",
-  "./js/lyrics-humanizer.js",
   "./js/step2.js",
   "./js/step4.js",
   "./js/step3.js",
