@@ -295,6 +295,7 @@ textarea{min-height:100px;resize:vertical;}
 
 /* KPI stat block */
 .kpi{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.badge{display:inline-block;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;color:var(--muted);}
 .kpi .label{font-size:11px;color:var(--muted);margin-bottom:6px;}
 .kpi .value{font-family:var(--font-mono);font-size:20px;font-weight:600;}
 .kpi .delta{font-size:11px;color:var(--green);margin-top:4px;}
@@ -437,6 +438,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="nav-label">Статистика</div>
       <button class="nav-btn" data-view="stats-tracker" onclick="Nav.showView('stats-tracker')"><span class="ic">📡</span> YouTube Тракер</button>
       <button class="nav-btn" data-view="stats-analytics" onclick="Nav.showView('stats-analytics')"><span class="ic">📊</span> Анализи &amp; Графики</button>
+      <button class="nav-btn" data-view="yt-discovery" onclick="Nav.showView('yt-discovery')"><span class="ic">🎧</span> YouTube Discovery Engine</button>
     </div>
 
     <div class="nav-group">
@@ -660,6 +662,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <button class="btn ghost" onclick="LyricsHistory.toggle()">🕐 История на версиите</button>
         </div>
         <textarea id="lyricsOut" style="min-height:220px;margin-top:10px;"></textarea>
+        <div id="humanizerOut" style="margin-top:8px;"></div>
         <div id="lyricsHistoryOut" style="display:none;margin-top:10px;"></div>
       </div>
 
@@ -1330,6 +1333,15 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ YOUTUBE DISCOVERY ENGINE ============ -->
+    <div class="view" id="view-yt-discovery">
+      <div class="section-title">🎧 YouTube Discovery Engine</div>
+      <div class="card">
+        <p class="muted">Автоматично открива стиловете в каталога ти, поддържа discovery playlist за всеки значим клъстер (external музика + естествено разпределени мои авторски песни) и се обновява ежедневно през GitHub Actions. Настрой <strong>YouTube Тракер</strong> (GitHub owner/repo/branch + Token) първо — Discovery Engine чете същия repo. Виж README.md → "YouTube Discovery Engine" за еднократния OAuth setup (нужен, за да може движкът реално да пише в YouTube playlists).</p>
+      </div>
+      <div id="ytDiscoveryOut" style="margin-top:14px;"></div>
+    </div>
+
     <!-- ============ INFRA: LOGS ============ -->
     <div class="view" id="view-infra-logs">
       <div class="section-title">Системни логове</div>
@@ -1397,12 +1409,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/nav.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/stats.js"></script>
+<script src="js/youtube-discovery.js"></script>
 <script src="js/gemini-validator.js"></script>
 <script src="js/project-archive.js"></script>
 <script src="js/system-update.js"></script>
 <script src="js/quick-upload.js"></script>
 <script src="js/track-record.js"></script>
 <script src="js/lyrics-history.js"></script>
+<script src="js/lyrics-humanizer.js"></script>
 <script src="js/suno-preview.js"></script>
 <script src="js/step2.js"></script>
 <script src="js/step4.js"></script>

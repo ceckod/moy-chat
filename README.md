@@ -249,6 +249,89 @@ JSON (`schema_version`), който се трупа във времето (1 з�
 
 ---
 
+## 🎧 YouTube Auto Playlist Discovery Engine
+
+Автоматично открива музикалните стилове в каталога ти (жанр/поджанр/mood
+от AI класификация) и поддържа ежедневно обновяван "discovery" playlist за
+всеки значим стил — нова музика от други артисти + ограничен, естествено
+разпределен брой мои авторски песни (НЕ промоционален списък само с мои
+песни). Пълен архитектурен план и решения — виж git историята на този
+разговор с Claude; тук са само практическите setup стъпки.
+
+### Еднократен setup (2 части)
+
+**Част 1 — YouTube Тракер трябва вече да работи** (виж секцията по-горе) —
+Discovery Engine чете `data/stats-history.json`, произведен от него.
+
+**Част 2 — OAuth за playlist write права** (нужно, за да може движкът
+РЕАЛНО да създава/пълни playlist-и, не само да анализира):
+
+1. [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+   → **Create Credentials → OAuth client ID → Application type: Desktop app**.
+   Копирай Client ID + Client Secret.
+2. На твоя компютър (не в браузъра на приложението, не в GitHub Actions):
+   ```
+   python scripts/youtube_oauth_bootstrap.py --client-id "..." --client-secret "..."
+   ```
+   Ще се отвори браузър за Google съгласие → терминалът отпечатва
+   `refresh_token`.
+3. GitHub repo → **Settings → Secrets and variables → Actions** → добави:
+   - `YOUTUBE_OAUTH_CLIENT_ID`
+   - `YOUTUBE_OAUTH_CLIENT_SECRET`
+   - `YOUTUBE_OAUTH_REFRESH_TOKEN`
+   - `ANTHROPIC_API_KEY` (по избор — за AI класификация на жанр/mood/BPM;
+     без него engine-ът пада на по-груба heuristic класификация по ключови
+     думи, честно маркирана като такава)
+4. **`.github/workflows/youtube-discovery.yml` не се добавя през Auto
+   Update ZIP-а** (workflow файловете винаги се пазят ръчно, виж
+   `update_engine.py` → `NEVER_TOUCH_PATTERNS`) — качи го веднъж ръчно:
+   repo → **Add file → Create new file** → път
+   `.github/workflows/youtube-discovery.yml` → съдържанието, което Claude
+   ти е дал → Commit.
+5. Готово. Cron-ът се пуска сам всеки ден в 11:00 UTC (след Тракера). За
+   ръчно тестване: Dashboard → **🎧 YouTube Discovery Engine** →
+   **Run Now**/**Dry Run**, или Actions таб → Run workflow.
+
+Без OAuth secret-ите (стъпка 2-3), engine-ът пада автоматично в
+**read-only режим** — анализира каталога, показва какво БИ направил, но
+не пише нищо в YouTube. Нищо не гърми, просто чакаш да добавиш secrets.
+
+### Как работи (накратко)
+
+- `scripts/catalog_bootstrap.py` — синхронизира `data/catalog.json` с
+  видеата от канала (`data/stats-history.json`) + AI класификация
+  (жанр/поджанр/mood/energy/BPM/език). Инкрементален — пуска се и
+  автоматично при всеки daily run, не само еднократно.
+- `scripts/youtube_discovery_engine.py` — клъстерира каталога, намира/
+  създава playlist за всеки значим клъстер (по `cluster_key` в
+  `data/playlists-state.json` — никога дубликати), търси нова external
+  музика (само когато кандидат-пулът на playlist-а е "остарял" — пести
+  YouTube quota), вмъква нови песни с динамично self-track позициониране
+  (configurable ratio + мин. дистанция между мои песни), пази/премахва по
+  `MAX_PLAYLIST_SIZE`/freshness, обновява learning loop данните
+  (`data/track-performance.json` — playlist lift, винаги маркиран като
+  "correlation/estimate", никога причинност).
+- Всички прагове (`self_track_ratio_min/max`, `min_external_between_self`,
+  `max_playlist_size`, `max_track_age_days` и т.н.) са в
+  `data/discovery-config.json` — редактируеми директно от Dashboard-а
+  (📎 секция "Настройки" в новия view) или ръчно във файла.
+- **Dry Run** прави всичко същото, но не пише в YouTube нито в
+  `data/playlists-state.json` — резултатът излиза в
+  `data/discovery-dry-run-preview.json` за преглед.
+- **Manual overrides** — от всяка playlist карта в Dashboard-а: 🔒 Lock
+  (замразява playlist-а, само tracking), ⏸️ Disable, 🚫 Exclude track,
+  📌 Force track. Engine-ът ги уважава при всеки run и никога не ги
+  презаписва сам.
+- **Concurrency защита** — вграден GitHub Actions `concurrency:` group
+  гарантира, че никога два daily run-а не пишат едновременно (втори
+  тригер изчаква, не се пуска паралелно).
+- **Persistent candidate cache** (`data/discovery-candidates-cache.json`)
+  — `search.list` (най-скъпата операция, 100 units) се прави само когато
+  пулът от неизползвани кандидати е малък или остарял, конфигурируемо
+  през `candidate_cache_ttl_days`/`min_candidate_pool`.
+
+---
+
 ## Модулна структура (за лесно разширяване без пренаписване)
 
 - `index.html` / `app.js` — таблото. Четат данни, не ги генерират.

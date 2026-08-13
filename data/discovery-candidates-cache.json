@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "notes": "Persistent cache на кандидат-видеа за external discovery, per cluster. Engine-ът прави search.list САМО ако броят неизползвани кандидати падне под min_candidate_pool ИЛИ записът е по-стар от candidate_cache_ttl_days (data/discovery-config.json). Пести YouTube API quota — виж т.11/30 от спецификацията.",
+  "clusters": {}
+}

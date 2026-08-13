@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "notes": "Learning loop данни за МОИТЕ песни в playlist-ите: views преди/след добавяне, за да се смята 'playlist lift'. ВАЖНО: винаги correlation/lift estimate, никога твърдение за причинност — виж lift_estimate.note във всеки запис.",
+  "entries": []
+}

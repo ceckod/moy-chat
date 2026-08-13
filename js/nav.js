@@ -29,6 +29,7 @@ const Nav = {
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
     if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); AgentRoster.render(); }
     if (id === "stats-tracker") Settings.fillFields();
+    if (id === "yt-discovery") YouTubeDiscovery.render();
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     if (id === "system-test") { SystemTest.renderHistory(); }
     if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }

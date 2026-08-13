@@ -176,6 +176,59 @@ CDB-Dashboard.md (дубликат на "Технически-одит-CDB-Dashb
 
 ---
 
+## 13. YouTube Discovery Engine — auto playlist discovery (добавен 2026-08-13)
+
+```
+js/youtube-discovery.js
+scripts/_youtube_common.py
+scripts/_secret_scan.py
+scripts/catalog_bootstrap.py
+scripts/youtube_discovery_engine.py
+scripts/youtube_oauth_bootstrap.py      ← пуска се РЪЧНО ЛОКАЛНО, никога в Actions
+.github/workflows/youtube-discovery.yml
+data/catalog.json
+data/discovery-config.json
+data/playlists-state.json
+data/discovery-log.json
+data/track-performance.json
+data/discovery-candidates-cache.json
+```
+
+Следва същия dual-layer модел като модул 8 (Automation & Data): реалната
+работа (клъстериране, YouTube playlist writes, discovery на нова музика)
+е в Python + GitHub Actions; `js/youtube-discovery.js` само чете
+резултатните `data/*.json` файлове (raw.githubusercontent, като
+`Stats.dataUrl()`) и тригва workflow-а ръчно през GitHub Actions API
+(workflow_dispatch), ползвайки съществуващия `ghToken` (Keys).
+
+**Важно за playlist WRITE операции**: API key (YOUTUBE_API_KEY) НЕ е
+достатъчен — `playlists.insert`/`playlistItems.insert/delete` изискват
+OAuth access token. Без GitHub Secrets `YOUTUBE_OAUTH_CLIENT_ID/SECRET/
+REFRESH_TOKEN` (еднократен setup, виж `scripts/youtube_oauth_bootstrap.py`
++ README.md), engine-ът автоматично пада в read-only режим (анализира и
+логва, но не пише) — не гърми.
+
+**Concurrency**: защитата срещу два едновременни daily run-а е през
+GitHub Actions `concurrency:` group в workflow-а (атомарен, нативен
+механизъм), НЕ git-committed lock файл (обмислено и отхвърлено съзнателно
+— виж докстринга в `youtube_discovery_engine.py` защо файлов lock би имал
+race condition точно в сценария, който трябва да предотврати).
+
+**Persistent candidate cache** (`data/discovery-candidates-cache.json`,
+TTL-базиран) пести YouTube `search.list` (100 units/call) — прави се
+search само когато pool-ът от неизползвани кандидати е малък/остарял, не
+всеки daily run за всеки playlist.
+
+**Manual overrides** (т.34): всеки playlist entry в `playlists-state.json`
+поддържа `locked`/`disabled`/`excluded_video_ids`/`forced_video_ids`/
+`self_track_ratio_override`/`max_playlist_size_override` — engine-ът ги
+чете и уважава, никога не ги презаписва сам. Управляват се от Dashboard-а.
+
+Кръстосани зависимости: чете `data/stats-history.json` (модул 8, писан от
+`scripts/track_stats.py`) за каталог bootstrap и performance данни. Не
+пипа/не се пипа от `js/youtube.js` (модул 3, trending/outlier — различна
+отговорност, само служи като референтен модел за trending логиката).
+
 ## Кръстосани зависимости (важно — модулите НЕ са напълно изолирани)
 
 - **AI Core (2)** се вика от почти всеки друг модул (`Song Creation`,
