@@ -1,13 +1,15 @@
 CDB UPDATE REPORT
-Timestamp: 20260813-043344
+Timestamp: 20260813-044702
 
 Changed:
+  update_report.txt
   MODULE-MAP.md
+  index.html
   README.md
-  incoming/README.md
+  js/nav.js
 
 Added:
-  scripts/cleanup_dead_files.py
+  js/suno-preview.js
 
 Removed:
   none
@@ -49,7 +51,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   visualizer.html
   drafts/ВРЕМЕННА ПАПКА.txt
   incoming/.gitkeep
-  incoming/REMOVE_MISSING
 
 Critical files check:
   PASS

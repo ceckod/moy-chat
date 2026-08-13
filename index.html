@@ -414,6 +414,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="nav-label">Инструменти</div>
       <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
       <button class="nav-btn" data-view="release-roadmap" onclick="Nav.showView('release-roadmap')"><span class="ic">🗓️</span> Release Roadmap</button>
+      <button class="nav-btn" data-view="suno-preview" onclick="Nav.showView('suno-preview')"><span class="ic">🎧</span> Suno Preview Player</button>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
       <button class="nav-btn" data-view="model-finder" onclick="Nav.showView('model-finder')"><span class="ic">🧠</span> AI Model Finder</button>
     </div>
@@ -973,6 +974,42 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ SUNO AUDIO PREVIEW PLAYER VIEW ============ -->
+    <div class="view" id="view-suno-preview">
+      <div class="section-title">🎧 Suno Audio Preview Player</div>
+      <div class="card">
+        <strong>🎧 Преглед на Suno AI output — без сваляне</strong>
+        <p class="muted">Пусни директно звука от Suno AI през вградения плейър на браузъра — или чрез директен линк (нула download), или чрез локален файл, ако вече си го свалил. Стандартен браузърен плейър, работи нативно с mp3/wav/ogg, не изисква VLC.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn grad" id="spTabUrlBtn" onclick="SunoPreview.switchTab('url')">🔗 Линк от Suno</button>
+          <button class="btn ghost" id="spTabFileBtn" onclick="SunoPreview.switchTab('file')">📁 Локален файл</button>
+        </div>
+
+        <div id="spPanelUrl" style="margin-top:12px;">
+          <label>Директен audio линк от Suno</label>
+          <input type="text" id="spUrlInput" placeholder="https://cdn1.suno.ai/....mp3">
+          <button class="btn grad" style="margin-top:10px;" onclick="SunoPreview.loadFromUrl()">▶️ Пусни за преглед</button>
+        </div>
+
+        <div id="spPanelFile" style="margin-top:12px; display:none;">
+          <label>Избери аудио файл (mp3/wav/ogg)</label>
+          <input type="file" id="spFileInput" accept="audio/*" onchange="SunoPreview.onFileSelected(this)">
+        </div>
+
+        <div id="spPlayerWrap" style="margin-top:16px; display:none;">
+          <div id="spNowPlaying" class="muted" style="margin-bottom:6px;"></div>
+          <audio id="spAudio" controls style="width:100%;"></audio>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 История на прегледите</strong>
+        <p class="muted">Последните преслушани песни на това устройство. Suno линковете могат да се пуснат отново директно от списъка; локалните файлове пазят само име/дата — браузърът не пази достъп до самия файл между сесии, затова се избират отново при нужда.</p>
+        <div id="spHistoryOut" style="margin-top:10px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="SunoPreview.clearHistory()">🗑️ Изчисти историята</button>
+      </div>
+    </div>
+
     <!-- ============ SYSTEM TEST VIEW ============ -->
     <div class="view" id="view-system-test">
       <div class="section-title">🧪 Системен тест</div>
@@ -1366,6 +1403,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/quick-upload.js"></script>
 <script src="js/track-record.js"></script>
 <script src="js/lyrics-history.js"></script>
+<script src="js/suno-preview.js"></script>
 <script src="js/step2.js"></script>
 <script src="js/step4.js"></script>
 <script src="js/step3.js"></script>

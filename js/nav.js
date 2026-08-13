@@ -33,6 +33,7 @@ const Nav = {
     if (id === "system-test") { SystemTest.renderHistory(); }
     if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }
     if (id === "model-finder") { Settings.fillFields(); ModelFinder.render(); }
+    if (id === "suno-preview") { SunoPreview.render(); }
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след

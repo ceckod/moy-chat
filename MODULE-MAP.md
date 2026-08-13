@@ -128,6 +128,16 @@ ai-model-finder/*
 ```
 Не се дели с главния `js/` — има собствен `app.js`, собствена логика.
 
+## 9b. Suno Audio Preview Player — самостоятелен инструмент (добавен 2026-08-13)
+
+```
+js/suno-preview.js
+```
+Изолиран — само собствен localStorage ключ (`cdb_suno_preview_history_v1`)
++ Storage/toast от System Core. Не чете/пише `AppState.data.project`,
+не е обвързан с текущата песен. UI markup: `index.html`, view
+`#view-suno-preview` (секция "Инструменти" в nav-а).
+
 ## 10. Auto Update / Infra — обновяващата система сама по себе си
 
 ```
