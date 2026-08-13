@@ -1,56 +1,53 @@
 CDB UPDATE REPORT
-Timestamp: 20260813-044702
+Timestamp: 20260813-050328
 
 Changed:
   update_report.txt
-  MODULE-MAP.md
-  index.html
-  README.md
-  js/nav.js
+  ai-model-finder/ai-models.json
 
 Added:
-  js/suno-preview.js
+  none
 
 Removed:
   none
 
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
-  ai-provider-order.js
-  project-archive.js
-  aichat.html
-  model-pref.js
-  track-record.js
   nav.js
-  system-update.js
-  ai-cache.js
-  ai.html
-  step4.js
-  app-state.js
-  ai-helpers.js
-  site-ai.html
-  quick-upload.js
-  step3.js
-  lyrics-history.js
-  step2.js
-  storage.js
+  step1.js
   ui-bootstrap.js
-  stats.js
-  site-ai-agent.html
-  app-state.test.mjs
-  prefs.js
-  gemini-validator.js
+  load-app.mjs
+  step4.js
+  site-ai.html
+  CDB-Dashboard.md
+  step3.js
+  ai.html
+  ai-helpers.js
+  storage.js
+  .gitignore
+  project-archive.js
+  app-state.js
+  quick-upload.js
   ai-call-log.js
+  app-state.test.mjs
+  viral-lab.js
+  ai-cache.js
+  aichat.html
   Технически-одит-CDB-Dashboard.md
   quota-tracker.js
-  step1.js
-  CDB-Dashboard.md
-  settings.js
-  load-app.mjs
-  .gitignore
-  viral-lab.js
+  site-ai-agent.html
+  step2.js
+  model-pref.js
   visualizer.html
-  drafts/ВРЕМЕННА ПАПКА.txt
+  gemini-validator.js
+  track-record.js
+  ai-provider-order.js
+  system-update.js
+  lyrics-history.js
+  settings.js
+  stats.js
+  prefs.js
   incoming/.gitkeep
+  drafts/ВРЕМЕННА ПАПКА.txt
 
 Critical files check:
   PASS
