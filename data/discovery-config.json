@@ -1,40 +1,29 @@
 {
   "schema_version": 2,
   "notes": "Настройки за YouTube Auto Playlist Discovery Engine. Редактира се от Dashboard → 🎧 YouTube Discovery Engine → Настройки (пише директно тук през GitHub Contents API, същия механизъм като YouTube Тракера), или ръчно. Engine-ът (scripts/youtube_discovery_engine.py) чете точно този файл при всеки run — няма отделно копие някъде другаде.",
-
   "paused": false,
-
-  "self_track_ratio_min": 0.10,
-  "self_track_ratio_max": 0.20,
+  "self_track_ratio_min": 0.1,
+  "self_track_ratio_max": 0.2,
   "min_external_between_self": 3,
-
   "min_cluster_size": 6,
   "max_playlists": 12,
-
   "min_playlist_size_for_self_tracks": 8,
   "max_playlist_size": 60,
   "min_playlist_size": 15,
-
   "max_track_age_days": 540,
   "fresh_track_target_days": 90,
-
   "min_candidate_views": 500,
   "candidate_search_queries_per_playlist_per_run": 1,
   "candidate_search_window_days": 730,
-
   "candidate_cache_ttl_days": 5,
   "min_candidate_pool": 8,
   "cross_playlist_similarity_threshold": 0.5,
-
   "youtube_search_daily_budget_units": 3000,
-
   "enable_external_discovery": true,
   "enable_auto_playlist_creation": true,
   "enable_auto_reorder": true,
   "enable_auto_removal_of_external_tracks": true,
   "max_reorder_ops_per_playlist_per_run": 2,
-
   "job_lock_ttl_minutes": 30,
-
   "dry_run_default": false
 }
