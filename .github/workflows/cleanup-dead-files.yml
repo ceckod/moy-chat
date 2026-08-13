@@ -1,0 +1,61 @@
+name: Cleanup Dead Files (ръчно, dry-run по подразбиране)
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "dry-run (само показва) или apply (реално трие + commit при чисти тестове)"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - apply
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node (нужен за npm test при apply)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Dry run (винаги се показва в лога, дори при apply, за прозрачност)
+        run: python3 scripts/cleanup_dead_files.py
+
+      - name: Реално триене (само ако избрано "apply")
+        if: ${{ github.event.inputs.apply == 'apply' }}
+        run: python3 scripts/cleanup_dead_files.py --apply
+
+      - name: Тестове след триене (само при apply — предпазна мрежа)
+        id: posttest
+        if: ${{ github.event.inputs.apply == 'apply' }}
+        run: npm test
+
+      - name: Ако тестовете гръмнат — връщане назад, БЕЗ commit
+        if: ${{ github.event.inputs.apply == 'apply' && failure() }}
+        run: |
+          echo "::error::npm test се провали след триенето — връщам изтритите файлове назад, нищо не се commit-ва."
+          git checkout -- .
+          git clean -fd
+
+      - name: Commit + push (само при apply И успешни тестове)
+        if: ${{ github.event.inputs.apply == 'apply' && success() }}
+        run: |
+          git config user.name "cdb-cleanup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && echo "Нищо за commit-ване (вече чисто)." || git commit -m "🧹 Cleanup: изтрити мъртви/дублирани файлове (виж scripts/cleanup_dead_files.py)"
+          git diff --cached --quiet || git push
