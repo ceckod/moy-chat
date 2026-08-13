@@ -1,16 +1,16 @@
 CDB UPDATE REPORT
-Timestamp: 20260813-061515
+Timestamp: 20260813-063416
 
 Changed:
-  sw.js
-  index.html
   AUDIT_PROGRESS.md
+  update_report.txt
   js/step1.js
+  js/lyrics-humanizer.js
+  test/load-lyrics-humanizer.mjs
+  test/lyrics-humanizer.test.mjs
 
 Added:
-  js/lyrics-humanizer.js
-  test/lyrics-humanizer.test.mjs
-  test/load-lyrics-humanizer.mjs
+  none
 
 Removed:
   none

@@ -87,3 +87,54 @@ Whispers in the dark, we shine like stars`;
     assert.ok(result.score >= LyricsHumanizer.THRESHOLD);
   });
 });
+
+describe("LyricsHumanizer.judge — AI-съдия (mock callGemini)", () => {
+  test("Gemini връща sounds_like_song=false → pass=false, флаговете идват от issues", async () => {
+    const mockGemini = async () => JSON.stringify({
+      score: 85,
+      sounds_like_song: false,
+      issues: ["Затворена наративна дъга като поема", "Абстрактни образи (огън/душа)"]
+    });
+    const LH = loadLyricsHumanizer({ callGemini: mockGemini, extractJson: JSON.parse });
+    const result = await LH.judge("[Chorus]\nогън в душата и фалшива корона");
+    assert.equal(result.pass, false);
+    assert.equal(result.score, 85);
+    assert.equal(result.source, "ai");
+    assert.equal(result.flags.length, 2);
+    assert.equal(result.flags[0].type, "ai-judge");
+  });
+
+  test("Gemini връща sounds_like_song=true и нисък score → pass=true", async () => {
+    const mockGemini = async () => JSON.stringify({ score: 10, sounds_like_song: true, issues: [] });
+    const LH = loadLyricsHumanizer({ callGemini: mockGemini, extractJson: JSON.parse });
+    const result = await LH.judge("[Chorus]\nнеотворено съобщение в 3 сутринта");
+    assert.equal(result.pass, true);
+    assert.equal(result.source, "ai");
+  });
+
+  test("callGemini хвърля грешка (напр. няма ключ) → fallback към rule-based, source='rule-fallback'", async () => {
+    const failingGemini = async () => { throw new Error("no key"); };
+    const LH = loadLyricsHumanizer({ callGemini: failingGemini });
+    const result = await LH.judge("[Chorus]\nchasing dreams under electric night, unbreakable bond, riding the wave");
+    assert.equal(result.source, "rule-fallback");
+    // rule-based detect() все още хваща клишетата дори при AI fallback:
+    assert.ok(result.flags.some(f => f.type === "cliche"));
+    assert.equal(result.pass, false);
+  });
+
+  test("реалният пример от потребителя ('огън в душата'/'фалшива корона' поема) — Gemini коректно флагва", async () => {
+    const realisticLyrics = `[Chorus]
+Счупих телефона в бара с огън в душата, свърши се с тая фалшива корона!
+[Verse]
+В неотворено съобщение в 3 сутринта оставих последния знак,
+че не мога да спя, не мога да я забравя, все още чувствам вкусът на последната ни целувка.`;
+    const mockGemini = async () => JSON.stringify({
+      score: 78,
+      sounds_like_song: false,
+      issues: ["Дълги сложни изречения с подчинени части вместо singable редове", "Абстрактни образи 'огън в душата'/'фалшива корона'"]
+    });
+    const LH = loadLyricsHumanizer({ callGemini: mockGemini, extractJson: JSON.parse });
+    const result = await LH.judge(realisticLyrics);
+    assert.equal(result.pass, false, "очаквах AI съдията да хване проблема, който rule-based detect() пропусна (score 0)");
+  });
+});
