@@ -1,0 +1,82 @@
+
+name: YouTube Auto Playlist Discovery Engine
+
+on:
+  schedule:
+    # 11:00 UTC всеки ден — след daily-stats.yml (09:00 UTC), за да ползва
+    # най-пресния snapshot от data/stats-history.json (performance данни).
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (нищо не се пише в YouTube, само лог на плана)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+
+concurrency:
+  # Истинската защита срещу два едновременни discovery job-а (виж докстринга
+  # в youtube_discovery_engine.py — GH concurrency е атомарен, git-lock файл
+  # не е). cancel-in-progress: false → втори тригер ИЗЧАКВА, не убива първия
+  # наполовина (важно, за да не оставим playlist в несигурно състояние).
+  group: youtube-discovery-engine
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Discovery Engine
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_OAUTH_CLIENT_ID: ${{ secrets.YOUTUBE_OAUTH_CLIENT_ID }}
+          YOUTUBE_OAUTH_CLIENT_SECRET: ${{ secrets.YOUTUBE_OAUTH_CLIENT_SECRET }}
+          YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_REFRESH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python scripts/youtube_discovery_engine.py --dry-run
+          else
+            python scripts/youtube_discovery_engine.py
+          fi
+
+      - name: Stage only expected data files
+        run: |
+          git add -f \
+            data/catalog.json data/playlists-state.json data/discovery-log.json \
+            data/track-performance.json data/discovery-candidates-cache.json \
+            data/discovery-dry-run-preview.json 2>/dev/null || true
+          echo "── git status (трябва да съдържа само data/*.json) ──"
+          git status --short
+          echo "── staged diff stat ──"
+          git diff --cached --stat
+
+      - name: Assert only data/*.json staged (т.36 — никога изходен код/секрети)
+        run: |
+          UNEXPECTED=$(git diff --cached --name-only | grep -v '^data/.*\.json$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "🚫 Неочаквани staged файлове извън data/*.json — абортирам commit:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+
+      - name: Secret scan (т.39 — никога API ключове/токени в commit)
+        run: python scripts/_secret_scan.py
+
+      - name: Commit updated discovery data
+        run: |
+          git config user.name "cdb-discovery-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git diff --quiet --cached && echo "No changes — skip commit." || \
+            git commit -m "🎧 Discovery Engine run ($(date -u +%Y-%m-%d))"
+          git diff --quiet --cached || git push
