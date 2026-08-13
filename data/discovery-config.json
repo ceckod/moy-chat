@@ -5,7 +5,7 @@
   "self_track_ratio_min": 0.1,
   "self_track_ratio_max": 0.2,
   "min_external_between_self": 3,
-  "min_cluster_size": 6,
+  "min_cluster_size": 1,
   "max_playlists": 12,
   "min_playlist_size_for_self_tracks": 8,
   "max_playlist_size": 60,
