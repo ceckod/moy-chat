@@ -310,10 +310,35 @@ ${winningHook ? `- Използвай ТОЧНО този ред като осн
       // затова винаги пробваме Claude първи тук (fallback синджирът към
       // Gemini/OpenRouter/Model Finder остава непроменен, ако Claude няма
       // ключ или гръмне грешка).
-      const lyrics = await callAI(prompt, 1400, "claude");
+      let lyrics = await callAI(prompt, 1400, "claude");
+      let evalResult = LyricsHumanizer.evaluate(lyrics);
+
+      // AI-fingerprint gate: ако текстът звучи прекалено AI-генериран
+      // (клишета / прекалена симетрия / повторение между куплети),
+      // автоматично пробваме до MAX_RETRIES пъти с усилен промпт,
+      // който изрично сочи засечените проблеми.
+      let retries = 0;
+      while (!evalResult.pass && retries < LyricsHumanizer.MAX_RETRIES) {
+        retries++;
+        const flagList = evalResult.flags.map(f => `- ${f.match}`).join("\n");
+        const retryPrompt = `${prompt}
+
+ВАЖНО — предишен опит звучеше прекалено AI-генериран поради:
+${flagList}
+Пренапиши изцяло, избягвайки точно тези проблеми. Без клишета, с несиметрична, жива фразировка, всеки куплет с различна конкретна идея.`;
+        toast(`Текстът звучи AI-генериран, пренаписвам (опит ${retries}/${LyricsHumanizer.MAX_RETRIES})...`);
+        lyrics = await callAI(retryPrompt, 1400, "claude");
+        evalResult = LyricsHumanizer.evaluate(lyrics);
+      }
+
       document.getElementById("lyricsOut").value = lyrics;
       AppState.data.project.lyrics = lyrics;
       AppState.save();
+
+      LyricsHumanizer.render("humanizerOut", evalResult, {
+        onRetry: !evalResult.pass,
+        onRetryHandlerName: "Step1.generateLyrics"
+      });
 
       GeminiValidator.autoReview("Стъпка 1 — Текст на песента", lyrics);
     } catch (e) {
