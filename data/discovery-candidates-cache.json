@@ -303,9 +303,45 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "v5BkdUQSCK8",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-14T11:50:54Z",
+          "views": 4136,
+          "discovered_at": "2026-08-14T19:57:22.824208+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "kiPeZtJgbC8",
+          "title": "Best 90's R&B Hits Mix | R. Kelly, Next, Eve, 112, Aaliyah",
+          "channel": "RnB Classics Mixes",
+          "published_at": "2026-03-16T16:15:04Z",
+          "views": 99649,
+          "discovered_at": "2026-08-14T19:57:22.824233+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "ZIlxv-eOYo8",
+          "title": "90S R&B PARTY MIX⚡Alicia Keys, Usher, Chris Brown,Ne Yo,Mariah Carey - OLD SCHOOL R&B MIX 90s 2000s",
+          "channel": "Classic R&B Memories",
+          "published_at": "2026-07-18T05:13:34Z",
+          "views": 118057,
+          "discovered_at": "2026-08-14T19:57:22.824239+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-14T19:38:16.171582+00:00"
+      "last_search_at": "2026-08-14T19:57:22.824276+00:00"
     },
     "rap": {
       "candidates": [
@@ -456,8 +492,10 @@
           "published_at": "2025-06-10T22:15:16Z",
           "views": 5960510,
           "discovered_at": "2026-08-14T18:28:32.910523+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         },
         {
           "video_id": "PXxbEfhtDiM",
@@ -608,9 +646,21 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "O7Nfr0NNIg0",
+          "title": "The Rapper Who Dissed an ENTIRE CITY 💀",
+          "channel": "HipHopTV",
+          "published_at": "2026-08-11T12:46:57Z",
+          "views": 142317,
+          "discovered_at": "2026-08-14T19:57:25.361076+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-14T19:38:16.733092+00:00"
+      "last_search_at": "2026-08-14T19:57:25.361123+00:00"
     },
     "pop": {
       "candidates": [
@@ -861,9 +911,21 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "82-jTNka3uc",
+          "title": "Ariana Grande - hate that i made you love me (official music video)",
+          "channel": "ArianaGrandeVevo",
+          "published_at": "2026-06-01T15:00:06Z",
+          "views": 69930519,
+          "discovered_at": "2026-08-14T19:57:26.948180+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-14T19:45:55.746521+00:00"
+      "last_search_at": "2026-08-14T19:57:26.948216+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -886,8 +948,10 @@
           "published_at": "2025-03-21T22:33:35Z",
           "views": 1473937,
           "discovered_at": "2026-08-14T18:28:42.039364+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         },
         {
           "video_id": "5nDiTly_g0w",
@@ -1168,7 +1232,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-14T19:38:17.945118+00:00"
+      "last_search_at": "2026-08-14T19:57:28.828102+00:00"
     },
     "dance": {
       "candidates": [
@@ -1433,7 +1497,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-14T19:46:00.973258+00:00"
+      "last_search_at": "2026-08-14T19:57:30.024793+00:00"
     }
   }
 }
