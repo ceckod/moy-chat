@@ -38,6 +38,11 @@ const SystemLog = {
     this.entries.unshift({ level, msg, time: new Date().toLocaleTimeString("bg-BG") });
     this.entries = this.entries.slice(0, 50);
     this.render();
+    // огледаляне в AppLog (js/app-log.js) — само грешки, не "системата стартира
+    // нормално" info-реда, за да не пълним персистентния лог с шум при всяко зареждане
+    if (level === "error" && typeof AppLog !== "undefined") {
+      AppLog.write("⚠️ Системни грешки", msg);
+    }
   },
   clear() {
     this.entries = [];

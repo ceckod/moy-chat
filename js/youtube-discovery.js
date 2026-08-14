@@ -23,6 +23,7 @@ const YT_DISCOVERY_WORKFLOW_FILE = "youtube-discovery.yml";
 
 const YouTubeDiscovery = {
   _cache: {},
+  _lastLoggedRunId: null,
 
   _rawUrl(filename) {
     const k = Keys.load();
@@ -63,6 +64,8 @@ const YouTubeDiscovery = {
     if (!k.ghToken) return toast("❌ Липсва GitHub Token — виж Настройки → API Ключове");
     if (!k.ghOwner || !k.ghRepo) return toast("❌ Липсват GitHub owner/repo — виж Настройки → YouTube Тракер");
     const branch = k.ghBranch || "main";
+    const label = dryRun ? "Dry Run" : "Run Now";
+    AppLog.write("🎧 YouTube Discovery Engine", `▶️ ${label} стартиран от Dashboard-а`);
     try {
       const res = await fetchTimeout(
         `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/actions/workflows/${YT_DISCOVERY_WORKFLOW_FILE}/dispatches`,
@@ -74,9 +77,11 @@ const YouTubeDiscovery = {
       );
       if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 300)}`);
       toast(dryRun ? "🧪 Dry Run стартиран — виж резултата след ~1-2 мин" : "▶️ Run стартиран — виж резултата след ~1-2 мин");
+      AppLog.write("🎧 YouTube Discovery Engine", `✅ ${label} успешно тригнат в GitHub Actions`);
       setTimeout(() => this.render(true), 90000);
     } catch (e) {
       toast("❌ " + e.message);
+      AppLog.write("🎧 YouTube Discovery Engine", `❌ ${label} неуспешен: ${e.message}`);
     }
   },
   runNow() { this._dispatchWorkflow(false); },
@@ -252,6 +257,16 @@ const YouTubeDiscovery = {
 
     const runs = log.runs || [];
     const lastRun = runs.length ? runs[runs.length - 1] : null;
+    if (lastRun && lastRun.run_id && lastRun.run_id !== this._lastLoggedRunId) {
+      this._lastLoggedRunId = lastRun.run_id;
+      const summary = lastRun.no_changes
+        ? "✅ NO CHANGES"
+        : `Добавени: ${lastRun.tracks_added ?? 0} · Премахнати: ${lastRun.tracks_removed ?? 0} · Пренаредени: ${lastRun.tracks_reordered ?? 0} · Нови playlist-и: ${lastRun.playlists_created ?? 0}`;
+      AppLog.write("🎧 YouTube Discovery Engine",
+        `Run #${lastRun.run_id} (${lastRun.dry_run ? "dry run" : "реален"}) — ${summary}` +
+        `${(lastRun.errors || []).length ? ` — ⚠️ ${lastRun.errors.length} грешки` : ""}` +
+        `${(lastRun.warnings || []).length ? ` — ⚠️ ${lastRun.warnings.length} предупреждения` : ""}`);
+    }
     const playlists = state.playlists || [];
     const activePlaylists = playlists.filter(p => !p.archived);
     const totalMine = activePlaylists.reduce((s, p) => s + p.tracks.filter(t => t.is_mine).length, 0);

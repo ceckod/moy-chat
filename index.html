@@ -444,6 +444,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     <div class="nav-group">
       <div class="nav-label">Инфраструктура</div>
       <button class="nav-btn" data-view="infra-logs" onclick="Nav.showView('infra-logs')"><span class="ic">🖥️</span> Системни логове</button>
+      <button class="nav-btn" data-view="app-logs" onclick="Nav.showView('app-logs')"><span class="ic">📋</span> Логове (по модул)</button>
       <button class="nav-btn" data-view="infra-config" onclick="Nav.showView('infra-config')"><span class="ic">🧩</span> Конфигурация</button>
     </div>
 
@@ -1353,6 +1354,14 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     </div>
 
     <!-- ============ INFRA: CONFIG ============ -->
+    <div class="view" id="view-app-logs">
+      <div class="section-title">📋 Логове (по модул)</div>
+      <div class="card">
+        <p class="muted">Централен лог от всички модули (напр. 🎧 YouTube Discovery Engine), групиран по дата и модул. Цъкни на запис, за да го разгънеш и копираш с един клик. Автоматично се самопочиства след избрания брой дни.</p>
+      </div>
+      <div id="appLogOut" style="margin-top:14px;"></div>
+    </div>
+
     <div class="view" id="view-infra-config">
       <div class="section-title">Конфигурация</div>
       <div class="card">
@@ -1399,6 +1408,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/subtitles.js"></script>
 <script src="js/youtube.js"></script>
 <script src="js/system-log.js"></script>
+<script src="js/app-log.js"></script>
 <script src="js/app-state.js"></script>
 <script src="js/ai-cache.js"></script>
 <script src="js/quota-tracker.js"></script>
