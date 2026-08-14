@@ -4,9 +4,11 @@
 
    Стратегия:
    - Собствени статични файлове (index.html, app.js, manifest.json,
-     scripts/clock-and-keys.js) → "stale-while-revalidate": веднага
-     връща кеширана версия (бързо зареждане/работи offline), но в
-     фонов режим тегли нова и я презаписва за следващия път.
+     scripts/clock-and-keys.js) → "network-first": винаги пробва мрежата
+     ПЪРВО, за да видиш веднага последната качена версия при следващо
+     зареждане (без да чакаш второ отваряне на сайта). Само ако мрежата
+     гръмне (offline/timeout), пада на кеша — offline достъпът се пази,
+     просто вече не е за сметка на актуалността, когато има интернет.
    - ВСИЧКО останало (api.anthropic.com, generativelanguage.googleapis.com,
      www.googleapis.com, api.github.com, raw.githubusercontent.com, и т.н.)
      НИКОГА не се кешира — минава направо през мрежата, за да не видиш
@@ -15,7 +17,7 @@
    Версия на кеша: качи CACHE_VERSION при промяна на списъка файлове,
    за да се изчисти старият кеш на потребителите автоматично.
    ========================================================= */
-const CACHE_VERSION = "cdb-shell-v49";
+const CACHE_VERSION = "cdb-shell-v50";
 
 const SHELL_FILES = [
   "./",
@@ -97,17 +99,20 @@ self.addEventListener("fetch", (event) => {
   if (isApiRequest(url)) return; // мрежа директно, без Service Worker намеса
 
   // Само собствения ни произход (GitHub Pages/локален сървър) минава през
-  // "stale-while-revalidate" — external CDN шрифтове/Chart.js оставяме на
+  // "network-first" — external CDN шрифтове/Chart.js оставяме на
   // browser HTTP кеша по подразбиране, за да не сложняваме излишно.
   if (new URL(url).origin !== self.location.origin) return;
 
   event.respondWith(
     caches.open(CACHE_VERSION).then(async (cache) => {
-      const cached = await cache.match(req);
-      const networkFetch = fetch(req)
-        .then((res) => { if (res && res.ok) cache.put(req, res.clone()); return res; })
-        .catch(() => cached); // offline → каквото имаме кеширано (или нищо)
-      return cached || networkFetch;
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        return fresh;
+      } catch (e) {
+        const cached = await cache.match(req);
+        return cached || Promise.reject(e); // offline и няма кеш → истинска мрежова грешка
+      }
     })
   );
 });
