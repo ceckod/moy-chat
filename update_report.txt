@@ -1,14 +1,11 @@
 CDB UPDATE REPORT
-Timestamp: 20260814-055814
+Timestamp: 20260814-060849
 
 Changed:
-  index.html
-  js/nav.js
-  js/system-log.js
-  js/youtube-discovery.js
+  sw.js
 
 Added:
-  js/app-log.js
+  none
 
 Removed:
   none
@@ -19,11 +16,11 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   nav.js
   step1.js
   ui-bootstrap.js
-  sw.js
   load-app.mjs
   step4.js
   site-ai.html
   CDB-Dashboard.md
+  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -73,6 +70,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
+  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js
@@ -83,6 +81,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/storage.js
   js/auth-gate.js
   js/project-archive.js
+  js/system-log.js
   js/app-state.js
   js/network.js
   js/quick-upload.js
@@ -96,6 +95,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/step2.js
   js/lyrics-humanizer.js
   js/model-pref.js
+  js/app-log.js
   js/gemini-validator.js
   js/track-record.js
   js/ai-provider-order.js
@@ -106,6 +106,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/youtube.js
   js/stats.js
   js/prefs.js
+  js/youtube-discovery.js
   data/trends-history.json
   data/playlists-state.json
   data/stats-history.json
