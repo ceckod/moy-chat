@@ -1,5 +1,17 @@
 {
   "schema_version": 1,
   "notes": "Learning loop данни за МОИТЕ песни в playlist-ите: views преди/след добавяне, за да се смята 'playlist lift'. ВАЖНО: винаги correlation/lift estimate, никога твърдение за причинност — виж lift_estimate.note във всеки запис.",
-  "entries": []
+  "entries": [
+    {
+      "video_id": "LkKxC5FVF4w",
+      "playlist": "pop",
+      "position_added": null,
+      "added_at": "2026-08-14T18:41:44.006169+00:00",
+      "views_before": 1425,
+      "views_24h": null,
+      "views_7d": null,
+      "views_30d": null,
+      "lift_estimate": null
+    }
+  ]
 }
