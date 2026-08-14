@@ -115,6 +115,14 @@ def fetch_video_stats(api_key, video_ids):
             videos.append({
                 "video_id": item["id"],
                 "title": snippet.get("title", ""),
+                # description/tags идват БЕЗПЛАТНО в същия snippet,statistics
+                # отговор (нула допълнителна quota) — преди се изхвърляха.
+                # Пазим ги, защото са единственият надежден сигнал за
+                # DistroKid дистрибуция ("Provided to YouTube by DistroKid")
+                # и дават на класификатора много по-богат контекст от
+                # самото заглавие (виж catalog_bootstrap.py).
+                "description": snippet.get("description", ""),
+                "tags": snippet.get("tags", []),
                 "published_at": snippet.get("publishedAt", ""),
                 "views": int(stats.get("viewCount", 0)),
                 "likes": int(stats.get("likeCount", 0)),

@@ -35,8 +35,26 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(__file__))
 from _youtube_common import (  # noqa: E402
     DATA_DIR, REPO_ROOT, QuotaBudget, YouTubeClient,
-    call_anthropic_json, load_json, log, save_json,
+    call_ai_json, load_json, log, save_json,
 )
+
+# DistroKid (и повечето дистрибутори) слагат стандартен ред в описанието
+# на всяко видео, което разпространяват към YouTube — това е единственият
+# надежден сигнал да различим РЕАЛЕН пуснат сингъл (през дистрибутор) от
+# обикновен видео ъплоуд направо в канала (Shorts, visualizer, тийзър).
+_DISTRIBUTOR_MARKERS = (
+    "provided to youtube by distrokid",
+    "provided to youtube by",  # други дистрибутори (CD Baby, TuneCore и т.н.) ползват същия формат
+    "distrokid",
+)
+
+
+def _detect_distribution(description: str) -> str:
+    d = (description or "").lower()
+    for marker in _DISTRIBUTOR_MARKERS:
+        if marker in d:
+            return "distrokid" if "distrokid" in d else "distributor"
+    return "channel-upload"
 
 STATS_PATH = DATA_DIR / "stats-history.json"
 CATALOG_PATH = DATA_DIR / "catalog.json"
@@ -68,15 +86,36 @@ def load_channel_videos():
     return latest.get("videos", [])
 
 
+# Общи жанрове/поджанрове за heuristic fallback, отделно от trend_niches
+# (който е списък с НИШОВИ trend стилове за discovery search заявки, не
+# общо покритие). Без това, всяка нормална песен ("R&B", "Pop Ballad",
+# "Hip-Hop" и т.н.) излизаше "unknown", защото trend_niches никога не
+# съвпадаше с обикновени жанрове в заглавието.
+_COMMON_GENRE_KEYWORDS = [
+    "r&b", "rnb", "pop ballad", "pop", "hip-hop", "hip hop", "rap", "trap",
+    "afrobeats", "amapiano", "reggaeton", "latin", "phonk", "hyperpop",
+    "lo-fi", "lofi", "drill", "house", "techno", "edm", "dance", "ballad",
+    "folk", "acoustic", "rock", "indie", "soul", "funk", "jazz", "country",
+]
+
+
 def _heuristic_classify(video, known_niches):
-    """Fallback без AI — прост keyword match срещу config.json trend_niches
-    + груба евристика по заглавие. Честно, ниска увереност, никакво BPM."""
+    """Fallback без AI — keyword match срещу config.json trend_niches +
+    общ списък обичайни жанрове (_COMMON_GENRE_KEYWORDS), сканирани и в
+    заглавието, И в описанието (много по-богат текст — DistroKid/дистри-
+    буторски описания обикновено съдържат жанр/стил изрично). Честно,
+    ниска увереност, никакво BPM."""
     title = (video.get("title") or "").lower()
-    matched = next((n for n in known_niches if n.lower() in title), None)
+    description = (video.get("description") or "").lower()
+    haystack = f"{title}\n{description}"
+
+    niche_match = next((n for n in known_niches if n.lower() in haystack), None)
+    genre_match = next((g for g in _COMMON_GENRE_KEYWORDS if g in haystack), None)
+
     return {
         "video_id": video["video_id"],
-        "genre": "unknown",
-        "subgenre": matched or "unknown",
+        "genre": genre_match.title() if genre_match else "unknown",
+        "subgenre": niche_match or (genre_match.title() if genre_match else "unknown"),
         "mood": "unknown",
         "energy": "unknown",
         "language": "unknown",
@@ -88,8 +127,10 @@ def _heuristic_classify(video, known_niches):
 
 
 def classify_videos(videos):
-    """Опитва Claude класификация на батч (до 15 наведнъж, за разумен
-    context/output размер); heuristic fallback per-video при неуспех."""
+    """Опитва класификация през ЦЕЛИЯ AI арсенал (call_ai_json — Groq/
+    Mistral/GitHub Models/Cloudflare/Pollinations/Anthropic, виж
+    _youtube_common.py), на батч (до 15 наведнъж); heuristic fallback
+    per-video само ако АБСОЛЮТНО никой provider не отговори."""
     config = load_json(CONFIG_PATH, {})
     known_niches = config.get("trend_niches", [])
 
@@ -98,9 +139,11 @@ def classify_videos(videos):
     for i in range(0, len(videos), batch_size):
         batch = videos[i:i + batch_size]
         user_prompt = "Класифицирай следните песни:\n\n" + "\n".join(
-            f"- video_id: {v['video_id']} | заглавие: {v.get('title', '')}" for v in batch
+            f"- video_id: {v['video_id']} | заглавие: {v.get('title', '')} | "
+            f"описание: {(v.get('description') or '')[:300]}"
+            for v in batch
         )
-        ai_result = call_anthropic_json(CLASSIFY_SYSTEM_PROMPT, user_prompt, max_tokens=2000)
+        ai_result, provider = call_ai_json(CLASSIFY_SYSTEM_PROMPT, user_prompt, max_tokens=2000)
         ai_by_id = {}
         if isinstance(ai_result, list):
             ai_by_id = {r.get("video_id"): r for r in ai_result if isinstance(r, dict) and r.get("video_id")}
@@ -108,7 +151,7 @@ def classify_videos(videos):
         for v in batch:
             if v["video_id"] in ai_by_id:
                 r = ai_by_id[v["video_id"]]
-                r["source"] = "ai-classified"
+                r["source"] = f"ai-classified ({provider})"
                 r["confidence"] = "medium"
                 results[v["video_id"]] = r
             else:
@@ -142,6 +185,13 @@ def sync_new_tracks():
             "title": v.get("title", ""),
             "youtube_video_id": v["video_id"],
             "release_date": (v.get("published_at") or "")[:10] or None,
+            # "distrokid" = реален пуснат сингъл през дистрибутора (detect-нато
+            # от "Provided to YouTube by..." в описанието), "distributor" =
+            # друг дистрибутор със същия формат, "channel-upload" = обикновено
+            # видео директно в канала (Shorts/visualizer/тийзър — не е
+            # непременно официален релийз). Discovery engine-ът може да
+            # ползва това поле, за да пъха в playlist-ите само реални релийзи.
+            "distribution": _detect_distribution(v.get("description", "")),
             "genre": c.get("genre", "unknown"),
             "subgenre": c.get("subgenre", "unknown"),
             "mood": c.get("mood", "unknown"),
@@ -161,7 +211,68 @@ def sync_new_tracks():
     return len(new_videos), catalog
 
 
+def reclassify_unknown():
+    """Преизкласифицира вече съществуващи catalog записи, заседнали на
+    genre=unknown/subgenre=unknown (напр. песни, обработени преди AI
+    ключ/description capture да са били налични). НЕ пипа вече успешно
+    класифицирани записи — само истинските "unknown" случаи. Взима
+    свежото title+description от последния snapshot в stats-history.json
+    (същия източник като sync_new_tracks), не от стария catalog запис."""
+    catalog = load_json(CATALOG_PATH, {"schema_version": 1, "tracks": []})
+    catalog.setdefault("tracks", [])
+    stuck = [t for t in catalog["tracks"] if t.get("genre") == "unknown" and t.get("subgenre") == "unknown"]
+    if not stuck:
+        log("→ Няма заседнали 'unknown' записи за преизкласифициране.")
+        return 0, catalog
+
+    by_video_id = {v["video_id"]: v for v in load_channel_videos()}
+    to_reclassify = []
+    for t in stuck:
+        vid = t.get("youtube_video_id")
+        fresh = by_video_id.get(vid)
+        if fresh:
+            to_reclassify.append(fresh)
+        else:
+            log(f"  ⚠ '{t.get('title')}' ({vid}) вече не е в stats-history snapshot-а — пропускам.")
+
+    if not to_reclassify:
+        log("→ Няма прясно видео-описание за преизкласифициране (пусни track_stats.py първо?).")
+        return 0, catalog
+
+    log(f"→ Преизкласифицирам {len(to_reclassify)} заседнали 'unknown' записа...")
+    classified = classify_videos(to_reclassify)
+
+    by_track_id = {t["youtube_video_id"]: t for t in catalog["tracks"]}
+    updated = 0
+    for v in to_reclassify:
+        c = classified.get(v["video_id"])
+        if not c:
+            continue
+        track = by_track_id[v["video_id"]]
+        track["genre"] = c.get("genre", "unknown")
+        track["subgenre"] = c.get("subgenre", "unknown")
+        track["mood"] = c.get("mood", "unknown")
+        track["energy"] = c.get("energy", "unknown")
+        track["bpm"] = c.get("bpm")
+        track["language"] = c.get("language", "unknown")
+        track["style_tags"] = c.get("style_tags", [])
+        track["source"] = c.get("source", "heuristic-fallback")
+        track["confidence"] = c.get("confidence", "low")
+        track["distribution"] = _detect_distribution(v.get("description", ""))
+        track["classified_at"] = datetime.now(timezone.utc).isoformat()
+        updated += 1
+
+    if updated:
+        catalog["last_updated"] = datetime.now(timezone.utc).isoformat()
+        save_json(CATALOG_PATH, catalog)
+        log(f"✅ Преизкласифицирани {updated} записа в data/catalog.json.")
+    return updated, catalog
+
+
 def main():
+    if "--reclassify-unknown" in sys.argv:
+        reclassify_unknown()
+        return
     added, _ = sync_new_tracks()
     if added == 0:
         log("Няма промяна в data/catalog.json.")

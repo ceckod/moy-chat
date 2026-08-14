@@ -666,7 +666,16 @@ def _run(cfg, dry_run, run_log):
         new_external = pick_candidates_for_playlist(cluster_key, label, unused_candidates, cache, cfg,
                                                       used_globally, excluded_ids, needed=5)
 
-        insert_ops = build_insert_plan(entry, cluster["tracks"], new_external, cfg)
+        # Само реални дистрибутирани релийзи (DistroKid и др. — виж
+        # _detect_distribution() в catalog_bootstrap.py) влизат в пула за
+        # self-track вмъкване. Обикновени видео ъплоуди в канала (Shorts,
+        # visualizer, тийзър) НЕ се броят за "моя песен" тук — те присъстват
+        # в каталога/клъстера за класификация, но discovery playlist-ите
+        # вмъкват само реални пуснати сингли. Ако полето липсва (стар
+        # catalog запис отпреди тази промяна), третираме го permissively
+        # като разрешен, за да не изчезнат съществуващи self-tracks внезапно.
+        my_release_pool = [t for t in cluster["tracks"] if t.get("distribution", "distrokid") != "channel-upload"]
+        insert_ops = build_insert_plan(entry, my_release_pool, new_external, cfg)
         reorder_ops = build_reorder_plan(entry, cfg)
         prune_ops = build_prune_plan(entry, cfg)
         ops = insert_ops + reorder_ops + prune_ops

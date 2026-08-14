@@ -21,10 +21,15 @@ _youtube_common.py — споделени helper-и за YouTube Discovery Engin
     краткотраен access_token. Ако липсват OAuth env credentials, връща
     None — извикващият код тогава автоматично минава в read-only режим
     (вижда playlist-ите, но не пише), вместо да гръмне.
-  - AnthropicClassifier — опционален AI класификатор (жанр/mood/BPM и т.н.)
-    през ANTHROPIC_API_KEY. Ако ключът липсва, класификацията пада на
-    heuristic fallback (виж catalog_bootstrap.py) — НИКОГА не гърми,
-    просто честно маркира source="heuristic-fallback"/confidence="low".
+  - call_ai_json() — AI класификация през ЦЕЛИЯ "арсенал" от провайдъри,
+    огледало на js/providers/model-finder.js + fallback-loop.js:
+    Groq → Mistral → GitHub Models → Cloudflare Workers AI → Anthropic →
+    Pollinations (последен, без ключ — винаги достъпен, споделена опашка).
+    Пробва всеки провайдър, за когото има ключ в env, по ред; при грешка
+    минава на следващия автоматично. Ако АБСОЛЮТНО никой не отговори,
+    връща None — извикващият пада на heuristic fallback (виж
+    catalog_bootstrap.py) — НИКОГА не гърми, просто честно маркира
+    source="heuristic-fallback"/confidence="low".
 """
 
 from __future__ import annotations
@@ -178,10 +183,13 @@ class YouTubeClient:
         return _http_request(self._url(path, params), method="DELETE", headers=self._headers())
 
 
-def call_anthropic_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500):
-    """Извиква Claude API за структурирана класификация. Връща parsed JSON
-    (list/dict) или None ако ANTHROPIC_API_KEY липсва/грешка — НИКОГА не
-    гърми целия run заради това, извикващият пада на heuristic fallback."""
+def _extract_json(raw: str):
+    raw = (raw or "").strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    return json.loads(raw)
+
+
+def _call_anthropic(system_prompt, user_prompt, max_tokens):
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return None
@@ -192,32 +200,119 @@ def call_anthropic_json(system_prompt: str, user_prompt: str, max_tokens: int = 
         "messages": [{"role": "user", "content": user_prompt}],
     }
     req = urllib.request.Request(
-        ANTHROPIC_URL, method="POST",
-        data=json.dumps(body).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-        },
+        ANTHROPIC_URL, method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json", "x-api-key": api_key, "anthropic-version": "2023-06-01"},
     )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        log(f"::warning::Anthropic класификация неуспешна: {e.code} {e.read().decode('utf-8', errors='replace')[:300]}")
-        return None
-    except Exception as e:  # мрежова грешка и т.н. — не гърми run-а
-        log(f"::warning::Anthropic класификация грешка: {e}")
-        return None
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    return _extract_json(text)
 
-    text_parts = [b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"]
-    raw = "".join(text_parts).strip()
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        log("::warning::Anthropic върна non-JSON отговор за класификация — пропускам.")
+
+def _call_openai_compatible(url, api_key, model, system_prompt, user_prompt, max_tokens, extra_headers=None):
+    """Общ извикващ за Groq/Mistral/GitHub Models/Pollinations — всичките
+    са OpenAI-съвместими chat/completions endpoint-и (същия принцип като
+    js/providers/model-finder.js в браузъра)."""
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    if extra_headers:
+        headers.update(extra_headers)
+    body = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    }
+    req = urllib.request.Request(url, method="POST", data=json.dumps(body).encode("utf-8"), headers=headers)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = data["choices"][0]["message"]["content"]
+    return _extract_json(text)
+
+
+def _call_cloudflare(system_prompt, user_prompt, max_tokens):
+    token = os.environ.get("CF_API_TOKEN")
+    account_id = os.environ.get("CF_ACCOUNT_ID")
+    if not (token and account_id):
         return None
+    model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+    url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{model}"
+    body = {"messages": [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]}
+    req = urllib.request.Request(
+        url, method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = data.get("result", {}).get("response", "")
+    return _extract_json(text)
+
+
+# Ред: ЦЕЛИЯТ безплатен арсенал напред (Groq → Mistral → GitHub Models →
+# Cloudflare → Pollinations — огледало на MODEL_FINDER_SOURCE_ORDER в
+# js/providers/model-finder.js), Anthropic последен и само по избор — не
+# бута платения provider пред безплатните, точно обратно на текущото
+# поведение (само Anthropic или нищо). Всеки провайдър без ключ в env се
+# прескача автоматично; Pollinations не иска ключ изобщо.
+_AI_PROVIDER_CHAIN = [
+    ("groq", lambda sp, up, mt: (
+        _call_openai_compatible("https://api.groq.com/openai/v1/chat/completions",
+                                 os.environ.get("GROQ_API_KEY"), "llama-3.3-70b-versatile", sp, up, mt)
+        if os.environ.get("GROQ_API_KEY") else None
+    )),
+    ("mistral", lambda sp, up, mt: (
+        _call_openai_compatible("https://api.mistral.ai/v1/chat/completions",
+                                 os.environ.get("MISTRAL_API_KEY"), "open-mixtral-8x22b", sp, up, mt)
+        if os.environ.get("MISTRAL_API_KEY") else None
+    )),
+    ("github", lambda sp, up, mt: (
+        _call_openai_compatible("https://models.github.ai/inference/chat/completions",
+                                 os.environ.get("GITHUB_MODELS_TOKEN"), "meta-llama-3.3-70b-instruct", sp, up, mt)
+        if os.environ.get("GITHUB_MODELS_TOKEN") else None
+    )),
+    ("cloudflare", lambda sp, up, mt: _call_cloudflare(sp, up, mt)),
+    ("pollinations", lambda sp, up, mt: _call_openai_compatible(
+        "https://text.pollinations.ai/openai", None, "openai-large", sp, up, mt
+    )),
+    ("anthropic", lambda sp, up, mt: _call_anthropic(sp, up, mt)),
+]
+
+
+def call_ai_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500):
+    """Извиква ЦЕЛИЯ AI 'арсенал' по ред (виж _AI_PROVIDER_CHAIN) — първият,
+    който отговори с валиден JSON, печели. Пропуска провайдъри без
+    конфигуриран ключ (освен Pollinations, който не иска ключ). Връща
+    parsed JSON (list/dict) или None само ако АБСОЛЮТНО никой провайдър
+    не е достъпен/отговорил — НИКОГА не гърми run-а заради това,
+    извикващият пада на heuristic fallback."""
+    for name, fn in _AI_PROVIDER_CHAIN:
+        try:
+            result = fn(system_prompt, user_prompt, max_tokens)
+        except urllib.error.HTTPError as e:
+            log(f"::warning::{name} класификация неуспешна: {e.code} "
+                f"{e.read().decode('utf-8', errors='replace')[:200]} — пробвам следващия provider.")
+            continue
+        except Exception as e:  # мрежова грешка, non-JSON отговор и т.н.
+            log(f"::warning::{name} класификация грешка: {e} — пробвам следващия provider.")
+            continue
+        if result is not None:
+            log(f"  ✅ AI класификация през: {name}")
+            return result, name
+    log("  ⚪ Никой AI provider не е конфигуриран/отговорил — heuristic fallback.")
+    return None, None
+
+
+def call_anthropic_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500):
+    """Запазено за обратна съвместимост — САМО Anthropic. Предпочитай
+    call_ai_json() за пълния fallback чрез арсенала."""
+    result, _ = call_ai_json(system_prompt, user_prompt, max_tokens)
+    return result
 
 
 def retry(fn, attempts=3, delay=2.0, label="операция"):
