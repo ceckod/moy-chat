@@ -11,6 +11,10 @@ on:
         description: "Dry run (нищо не се пише в YouTube, само лог на плана)"
         type: boolean
         default: false
+      reclassify_unknown:
+        description: "Преизкласифицирай заседнали genre=unknown записи в каталога (вместо обичайния discovery run)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
@@ -53,7 +57,10 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event.inputs.reclassify_unknown }}" = "true" ]; then
+            python scripts/track_stats.py
+            python scripts/catalog_bootstrap.py --reclassify-unknown
+          elif [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             python scripts/youtube_discovery_engine.py --dry-run
           else
             python scripts/youtube_discovery_engine.py
