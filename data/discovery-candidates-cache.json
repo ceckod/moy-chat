@@ -1,5 +1,831 @@
 {
   "schema_version": 1,
   "notes": "Persistent cache на кандидат-видеа за external discovery, per cluster. Engine-ът прави search.list САМО ако броят неизползвани кандидати падне под min_candidate_pool ИЛИ записът е по-стар от candidate_cache_ttl_days (data/discovery-config.json). Пести YouTube API quota — виж т.11/30 от спецификацията.",
-  "clusters": {}
+  "clusters": {
+    "r-b": {
+      "candidates": [
+        {
+          "video_id": "IPyWElKZJ0g",
+          "title": "Old School R&B 90s Mix | Usher, Keith Sweat, Soul For Real, Jon B., Maxwell",
+          "channel": "RnB Classics Mixes",
+          "published_at": "2026-02-23T16:00:32Z",
+          "views": 3566691,
+          "discovered_at": "2026-08-14T18:28:28.742580+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "46p-IxAVJ74",
+          "title": "Chris Brown - Residuals (Official Video)",
+          "channel": "ChrisBrownVEVO",
+          "published_at": "2025-01-23T15:00:07Z",
+          "views": 215097027,
+          "discovered_at": "2026-08-14T18:28:28.742596+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "hwkq1qlVbqc",
+          "title": "2:00am Soul R&B Bedroom Playlist | SZA, Miguel, PARTYNEXTDOOR, Brent Faiyaz, Kehlani Mix by HelloVee",
+          "channel": "Hello Vee",
+          "published_at": "2025-05-22T13:01:22Z",
+          "views": 6995890,
+          "discovered_at": "2026-08-14T18:28:28.742600+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "A__GXZsG3hk",
+          "title": "Tems - What You Need (Official Video)",
+          "channel": "TemsVEVO",
+          "published_at": "2026-06-03T16:00:19Z",
+          "views": 9657168,
+          "discovered_at": "2026-08-14T18:28:28.742603+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "7YM0EvJ_ML0",
+          "title": "DJ LEX R&B + Chill Playlist | Kehlani, Chris Brown, Justin Bieber, Jhene Aiko",
+          "channel": "DJ LEX",
+          "published_at": "2026-07-31T01:00:03Z",
+          "views": 462495,
+          "discovered_at": "2026-08-14T18:28:28.742606+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "dHU8B76kR_s",
+          "title": "'A Late Night R&B Experience' in Brooklyn 🤍 | Bryson Tiller, Daniel Caesar, Snoh, SZA + | Playlist",
+          "channel": "Noise Complaints",
+          "published_at": "2025-03-24T16:25:08Z",
+          "views": 14867010,
+          "discovered_at": "2026-08-14T18:28:28.742608+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "UfufzpXLo-g",
+          "title": "The 90s R&B Slow Jams Sanctuary: Keith Sweat, Jodeci, Joe & More Classics 🍷",
+          "channel": "90s Soul Revival AI",
+          "published_at": "2025-11-28T13:01:10Z",
+          "views": 2063033,
+          "discovered_at": "2026-08-14T18:28:28.742611+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "kQ1A85aIzFU",
+          "title": "Late Night R&B Playlist Vol. 12 🩷 | SZA Tone Stith Chris Brown kwn + | @markmark",
+          "channel": "Noise Complaints",
+          "published_at": "2025-02-10T16:30:20Z",
+          "views": 5275172,
+          "discovered_at": "2026-08-14T18:28:28.742613+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "OIV6ccRRR88",
+          "title": "Throwback 2000s R&B Mix | T-Pain, Chris Brown, Mario, The-Dream & More!",
+          "channel": "DJ RMANI",
+          "published_at": "2025-08-21T01:36:49Z",
+          "views": 5407628,
+          "discovered_at": "2026-08-14T18:28:28.742616+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "MueOsq3_OVg",
+          "title": "Chris Brown - It Depends (Audio) ft. Bryson Tiller",
+          "channel": "ChrisBrownVEVO",
+          "published_at": "2025-07-25T04:00:34Z",
+          "views": 56037429,
+          "discovered_at": "2026-08-14T18:28:28.742619+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "OrqZaU9BRO8",
+          "title": "🎙️ Top 100 Motown Classics – Soul & R&B Oldies from the 70s, 80s, 90s | Timeless Hits Playlist",
+          "channel": "COUNTRY LEGENDS 1990s",
+          "published_at": "2025-10-25T00:57:51Z",
+          "views": 549350,
+          "discovered_at": "2026-08-14T18:28:28.742648+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "a4UsBlhj30M",
+          "title": "Tems - What You Need | A COLORS SHOW",
+          "channel": "COLORS",
+          "published_at": "2026-01-29T17:00:07Z",
+          "views": 18921920,
+          "discovered_at": "2026-08-14T18:28:28.742651+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "qmpZevvEJd0",
+          "title": "Nostalgia: 90's Old School Mix | Soul For Real, 112, Lauryn Hill, Mary J. Blige, Faith Evans",
+          "channel": "RnB Classics Mixes",
+          "published_at": "2026-03-13T16:15:04Z",
+          "views": 550113,
+          "discovered_at": "2026-08-14T18:28:28.742653+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "-Z2lTeSIQIw",
+          "title": "Jazz & Soul R&B – Warm Sax, Rhodes & Chill Grooves | Feel-Good Smooth Jazz for Relaxation 🎷✨",
+          "channel": "Mellow Mood Station",
+          "published_at": "2025-07-02T17:00:00Z",
+          "views": 2614990,
+          "discovered_at": "2026-08-14T18:28:28.742803+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "drrxRZb6wUc",
+          "title": "TrapSoul Mix (2026) R&B/Soul Playlist: Chris Brown, Ella Mai, BLXD, SZA & Summer Walker",
+          "channel": "BLXD",
+          "published_at": "2026-01-30T15:30:12Z",
+          "views": 484077,
+          "discovered_at": "2026-08-14T18:28:28.742807+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-14T18:28:28.742846+00:00"
+    },
+    "rap": {
+      "candidates": [
+        {
+          "video_id": "IOO30CU6VmA",
+          "title": "Rap Music 2026 - Hip Hop Playlist - Top Rap Songs 2026 Hip Hop Mix 🔥💸 Drake Kendrick Lamar Future",
+          "channel": "Revive Music",
+          "published_at": "2025-06-20T21:50:43Z",
+          "views": 9287887,
+          "discovered_at": "2026-08-14T18:28:32.910479+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "YNwmYliuUfE",
+          "title": "Moneybagg Yo - I See Why (Official Video)",
+          "channel": "MoneybaggYoVEVO",
+          "published_at": "2026-07-24T17:00:06Z",
+          "views": 5364967,
+          "discovered_at": "2026-08-14T18:28:32.910492+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "mcg4z1gGbEw",
+          "title": "T.I. - LET 'EM KNOW (Official Video)",
+          "channel": "TIVEVO",
+          "published_at": "2026-02-27T17:01:31Z",
+          "views": 30149772,
+          "discovered_at": "2026-08-14T18:28:32.910496+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "wGGbkhWpzvU",
+          "title": "Kevin Gates - F*k Em (Official Music Video)",
+          "channel": "kevingatesTV",
+          "published_at": "2025-09-30T22:00:07Z",
+          "views": 16789859,
+          "discovered_at": "2026-08-14T18:28:32.910499+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "MPuK06zUIhc",
+          "title": "Pooh Shiesty - FDO [Official Music Video]",
+          "channel": "Pooh Shiesty",
+          "published_at": "2025-12-12T05:40:18Z",
+          "views": 85471721,
+          "discovered_at": "2026-08-14T18:28:32.910501+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "495zc7_vGgA",
+          "title": "G Herbo - Went Legit (Official Video)",
+          "channel": "G Herbo",
+          "published_at": "2025-02-04T01:00:32Z",
+          "views": 119295500,
+          "discovered_at": "2026-08-14T18:28:32.910504+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "bkNaPl4kg7g",
+          "title": "Kevin Gates - Dangerous (Official Music Video)",
+          "channel": "kevingatesTV",
+          "published_at": "2026-01-14T05:00:07Z",
+          "views": 12620845,
+          "discovered_at": "2026-08-14T18:28:32.910506+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "7tLGfZWScwg",
+          "title": "Rap Music 2025 - Hip Hop Playlist - Top Rap Songs 2025 Hip Hop Mix 🔥💸 Drake Kendrick Lamar Future",
+          "channel": "West Coast Finest",
+          "published_at": "2026-01-11T00:01:56Z",
+          "views": 440844,
+          "discovered_at": "2026-08-14T18:28:32.910509+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "qb2JsIHu6Fk",
+          "title": "JhonnieDamnD - Murda Bend | From The Block Performance 🎙",
+          "channel": "4 Shooters Only™",
+          "published_at": "2025-08-02T19:00:41Z",
+          "views": 5819705,
+          "discovered_at": "2026-08-14T18:28:32.910511+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "JVDUsaqgSq0",
+          "title": "BigXthaPlug - 2AM (Official Music Video)",
+          "channel": "BigXthaPlug",
+          "published_at": "2025-02-28T18:00:06Z",
+          "views": 57735128,
+          "discovered_at": "2026-08-14T18:28:32.910514+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "3QwZjhHcLZk",
+          "title": "BigXthaPlug - The Largest (Official Music Video)",
+          "channel": "BigXthaPlug",
+          "published_at": "2024-09-25T19:00:03Z",
+          "views": 54145114,
+          "discovered_at": "2026-08-14T18:28:32.910516+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "Z50N6gL136M",
+          "title": "LEGENDARY OLD SCHOOL HIP HOP MIX 🔥🔥🔥 Snoop Dogg, Dr. Dre, 50 Cent, 2Pac, Ice Cube, Eminem & More",
+          "channel": "rocken",
+          "published_at": "2024-11-12T16:15:06Z",
+          "views": 9026436,
+          "discovered_at": "2026-08-14T18:28:32.910521+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "kv034XE_TM0",
+          "title": "Freak Hoe",
+          "channel": "Speaker Knockerz - Topic",
+          "published_at": "2025-06-10T22:15:16Z",
+          "views": 5960510,
+          "discovered_at": "2026-08-14T18:28:32.910523+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "PXxbEfhtDiM",
+          "title": "Lil Baby - Dead Fresh (Official Video)",
+          "channel": "LilBabyVEVO",
+          "published_at": "2026-07-20T22:00:06Z",
+          "views": 7864494,
+          "discovered_at": "2026-08-14T18:28:32.910526+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "XyDabx34rug",
+          "title": "GloRilla & Pooh Shiesty - MANE (Official Visual)",
+          "channel": "theofficialGloRilla",
+          "published_at": "2026-06-25T17:00:02Z",
+          "views": 10378344,
+          "discovered_at": "2026-08-14T18:28:32.910528+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-14T18:28:32.910668+00:00"
+    },
+    "pop": {
+      "candidates": [
+        {
+          "video_id": "E0Y8OEo_zOc",
+          "title": "Pop Music 2025 - Top Pop Songs 2025 - Billboard Top 100 🎧🔥 Justin Bieber Billie Eilish Miley Cyrus",
+          "channel": "Revive Music",
+          "published_at": "2025-07-12T17:51:04Z",
+          "views": 2945626,
+          "discovered_at": "2026-08-14T18:28:37.764318+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "oSBx5IfabCo",
+          "title": "Maroon 5, Bruno Mars, Adele, Ed Sheeran, Dua Lipa, Rihanna, The Weeknd 💥 Billboard Top 50 This Week",
+          "channel": "Top Hits 2026",
+          "published_at": "2026-04-08T10:00:06Z",
+          "views": 1009515,
+          "discovered_at": "2026-08-14T18:28:37.764332+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "16m8cBrB4-M",
+          "title": "70s & 80s Party Classics! 🕺 2 Hours of Pure Nostalgia | Michael Jackson, Whitney Houston, Madonna",
+          "channel": "Flashback Dreams",
+          "published_at": "2026-04-03T14:00:02Z",
+          "views": 815324,
+          "discovered_at": "2026-08-14T18:28:37.764337+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "9vHkUSsljXE",
+          "title": "2026 Top Hits Clean ♫ Trending Clean Music 2026 🔥 Best Pop Clean Hits for Workout & Classroom 2026",
+          "channel": "Amazing Vibes",
+          "published_at": "2026-03-27T10:00:10Z",
+          "views": 848798,
+          "discovered_at": "2026-08-14T18:28:37.764342+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "JGpQwM9fYnQ",
+          "title": "Best Pop Hits Mix 2026 Vol. 3 🔥 Bruno Mars, The Weeknd, Ariana Grande, Justin Bieber, Ed Sheeran",
+          "channel": "ZJ Liquid Music",
+          "published_at": "2026-03-03T05:00:31Z",
+          "views": 264542,
+          "discovered_at": "2026-08-14T18:28:37.764346+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "WBy8ETk_Fqs",
+          "title": "Spotify Pop Hits 2026 ♫ Lady Gaga, Bruno Mars, Ed Sheeran, Billie Eilish, Miley Cyrus, Tate McRae#13",
+          "channel": "Slow Acoustic",
+          "published_at": "2025-10-08T10:00:17Z",
+          "views": 6846991,
+          "discovered_at": "2026-08-14T18:28:37.764350+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "CLLpSmaof4E",
+          "title": "Clean Pop Music 2026 - Clean Pop Music for Classrooms - Clean Music Playlist",
+          "channel": "Revive Music",
+          "published_at": "2025-08-27T18:10:41Z",
+          "views": 3671055,
+          "discovered_at": "2026-08-14T18:28:37.764352+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "eeAiQhRWzfU",
+          "title": "Top Hits 2026 🌍Trending Pop Songs 2026 ♫ Ed Sheeran, Shakira, Bruno Mars, Maroon5, Taylor Swift",
+          "channel": "Chill Pop Sunset",
+          "published_at": "2026-08-08T22:33:55Z",
+          "views": 91093,
+          "discovered_at": "2026-08-14T18:28:37.764355+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "q5D2ZlBuG7g",
+          "title": "80s Greatest Hits Collection | Legendary Pop, Rock and Dance Classics",
+          "channel": "Flavor Nostalgia",
+          "published_at": "2026-03-09T12:01:22Z",
+          "views": 3324847,
+          "discovered_at": "2026-08-14T18:28:37.764357+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "OBP78xtpM20",
+          "title": "2000's Music Hits Clean ♫ Clean Throwback Playlist ♫ Feel Good & Clean Classroom Playlist 2026",
+          "channel": "Amazing Vibes",
+          "published_at": "2026-04-21T09:01:07Z",
+          "views": 186775,
+          "discovered_at": "2026-08-14T18:28:37.764360+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "q_QyaPhykuI",
+          "title": "80s Songs Everyone Knows 🎧 Ultimate Nostalgia Hits Mix (No Skip Playlist)",
+          "channel": "Vintage Club",
+          "published_at": "2026-04-13T15:38:19Z",
+          "views": 2261276,
+          "discovered_at": "2026-08-14T18:28:37.764362+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "HL_9LIiGgj0",
+          "title": "Best Pop Songs Playlist | 2000s & 2010s Pop Hits",
+          "channel": "EvoLee Music",
+          "published_at": "2026-01-11T13:00:37Z",
+          "views": 671085,
+          "discovered_at": "2026-08-14T18:28:37.764365+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "fTKqtvXjkvo",
+          "title": "Top Hits 2026 ~ Trending Songs 2026 ~ Top Songs 2026 Top Music 🎶🎧",
+          "channel": "Revive Music",
+          "published_at": "2025-06-27T18:54:01Z",
+          "views": 50018306,
+          "discovered_at": "2026-08-14T18:28:37.764367+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "o3FYn6Hsdyw",
+          "title": "Soda Pop - KPop Demon Hunters | The Moonies Cover",
+          "channel": "The Moonies Official",
+          "published_at": "2026-04-01T11:30:35Z",
+          "views": 28727477,
+          "discovered_at": "2026-08-14T18:28:37.764370+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "E1DBJtU5MRU",
+          "title": "80s Greatest Hits Mix | Legendary Pop, Dance and Rock Classics",
+          "channel": "Flavor Nostalgia",
+          "published_at": "2026-03-01T12:00:33Z",
+          "views": 3734214,
+          "discovered_at": "2026-08-14T18:28:37.764375+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        }
+      ],
+      "last_search_at": "2026-08-14T18:28:37.764419+00:00"
+    },
+    "reggaeton": {
+      "candidates": [
+        {
+          "video_id": "2djj_KnGwjk",
+          "title": "Gasolina",
+          "channel": "Daddy Yankee - Topic",
+          "published_at": "2025-01-07T10:00:02Z",
+          "views": 101509601,
+          "discovered_at": "2026-08-14T18:28:42.039353+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "wzqqxhGcXR4",
+          "title": "Reggaeton Chill & Tropical Vibes 🌴 Relax with Ozuna, Bad Bunny, Kapo, Maluma, Beéle, J Balvin & More",
+          "channel": "HEDESIA",
+          "published_at": "2025-03-21T22:33:35Z",
+          "views": 1473937,
+          "discovered_at": "2026-08-14T18:28:42.039364+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "5nDiTly_g0w",
+          "title": "REGGAETON & PERREO PARTY MIX | DON OMAR, DADDY YANKEE, BAD BUNNY",
+          "channel": "Robin Roxette",
+          "published_at": "2026-05-08T20:26:33Z",
+          "views": 1848666,
+          "discovered_at": "2026-08-14T18:28:42.039368+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "vVqpBh_Rspw",
+          "title": "Reggaeton Mix 2025 Vol.2 | Ryan Castro, Wisin & Yandel, Bad Bunny, Plan B, Feid | by XOCO",
+          "channel": "XOCO ",
+          "published_at": "2025-11-06T17:00:06Z",
+          "views": 377231,
+          "discovered_at": "2026-08-14T18:28:42.039371+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "-O8wSrc456o",
+          "title": "MIX REGGAETON 2026 - NUEVOS ÉXITOS PARA FIESTAS - NEW REGGAETON MUSICA 2026",
+          "channel": "Letras Rojas",
+          "published_at": "2026-08-11T10:00:13Z",
+          "views": 47444,
+          "discovered_at": "2026-08-14T18:28:42.039375+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "JG-L7ynHof8",
+          "title": "Reggaeton Mix 2025 | Don Omar, Bad Bunny, Wisin & Yandel, Daddy Yankee, Feid, Young Miko | by XOCO",
+          "channel": "XOCO ",
+          "published_at": "2025-10-12T22:45:01Z",
+          "views": 5947583,
+          "discovered_at": "2026-08-14T18:28:42.039378+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "4x7NnxIApRE",
+          "title": "Reggaeton Old School Mix 🔥 Don Omar, Daddy Yankee, Tego Calderon, ..",
+          "channel": "Urban Latino Groove",
+          "published_at": "2026-06-11T10:15:37Z",
+          "views": 2369524,
+          "discovered_at": "2026-08-14T18:28:42.039380+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "eBqthnZnu3Y",
+          "title": "MIX REGGAETON 2025 | Enganchado | Fer Palacio Set En Vivo @ Cruzarecoleta",
+          "channel": "No Ferpa No Party",
+          "published_at": "2025-04-30T21:00:40Z",
+          "views": 24096287,
+          "discovered_at": "2026-08-14T18:28:42.039383+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "_9lLdEhmmtM",
+          "title": "MIX REGGAETON SEXY LATE NIGHT VIBES 2026 DJ MELO | BAD BUNNY | FEID | SECH | ARCANGEL | OMAR COURTZ",
+          "channel": "DJ Melo",
+          "published_at": "2026-04-21T21:27:37Z",
+          "views": 167964,
+          "discovered_at": "2026-08-14T18:28:42.039385+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "oDs1boOYiZo",
+          "title": "CNCO - Reggaetón Lento (Bailemos)",
+          "channel": "LatinHype",
+          "published_at": "2024-12-10T17:16:29Z",
+          "views": 2775078,
+          "discovered_at": "2026-08-14T18:28:42.039388+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Y0_lEkKa2YI",
+          "title": "PERREO & REGGAETON OLD SCHOOL LIVE DJ PARTY SET | DJ PISTO | DADDY YANKEE WISIN Y YANDEL BAD BUNNY",
+          "channel": "DJ Pisto",
+          "published_at": "2025-11-19T19:18:40Z",
+          "views": 4765617,
+          "discovered_at": "2026-08-14T18:28:42.039390+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "F_8f2qQGrQE",
+          "title": "Old School Reggaeton Viejo Mix | Daddy Yankee, Don Omar, Wisin & Yandel | 2000s Reggaeton by XOCO",
+          "channel": "XOCO ",
+          "published_at": "2026-01-29T17:00:20Z",
+          "views": 3232968,
+          "discovered_at": "2026-08-14T18:28:42.039394+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "fHwbnAeJ6EA",
+          "title": "Lo Que Pasó, Pasó",
+          "channel": "Daddy Yankee - Topic",
+          "published_at": "2025-01-07T10:00:41Z",
+          "views": 49519091,
+          "discovered_at": "2026-08-14T18:28:42.039397+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "0azur7j0-Ho",
+          "title": "Don Omar - Dale Don Dale (Visualizer)",
+          "channel": "DonOmarVEVO",
+          "published_at": "2026-01-16T05:00:01Z",
+          "views": 24964023,
+          "discovered_at": "2026-08-14T18:28:42.039399+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "fNxhIhHZJIA",
+          "title": "DADDY YANKEE MIX. REGGAETON MIX 2024",
+          "channel": " DJ J.Z",
+          "published_at": "2024-10-12T23:15:31Z",
+          "views": 7623816,
+          "discovered_at": "2026-08-14T18:28:42.039402+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        }
+      ],
+      "last_search_at": "2026-08-14T18:28:42.039435+00:00"
+    },
+    "dance": {
+      "candidates": [
+        {
+          "video_id": "HXiSd2nwrz4",
+          "title": "Dance Music Mix 2026 | Summer Party Club Mix 2026 | Best Remixes Of Popular Songs 2026 (DJ Silviu M)",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-08-13T12:25:54Z",
+          "views": 37383,
+          "discovered_at": "2026-08-14T18:28:46.516284+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "croLVuX_wqk",
+          "title": "You Don't Watch a Moment Like This 💃#kolo #viral #trending #foryou #fyp #dance #music #reels #shorts",
+          "channel": "Dobra Prilika",
+          "published_at": "2026-08-14T12:09:55Z",
+          "views": 4459,
+          "discovered_at": "2026-08-14T18:28:46.516304+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "xE1t544wkfs",
+          "title": "REMIXES Dance Music 90s/2000s: From 1990 to 2010 | #11 | DJ Edy Mix.",
+          "channel": "Edy Mix",
+          "published_at": "2025-09-08T22:30:06Z",
+          "views": 2425164,
+          "discovered_at": "2026-08-14T18:28:46.516309+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "16m8cBrB4-M",
+          "title": "70s & 80s Party Classics! 🕺 2 Hours of Pure Nostalgia | Michael Jackson, Whitney Houston, Madonna",
+          "channel": "Flashback Dreams",
+          "published_at": "2026-04-03T14:00:02Z",
+          "views": 815324,
+          "discovered_at": "2026-08-14T18:28:46.516313+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "xy3aFgkGXRY",
+          "title": "Party Summer Music Mix 2026 | DJ Club Dance Music 2026 | Best Remixes of Popular Songs 2026 MEGAMIX",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-08-11T15:38:50Z",
+          "views": 14952,
+          "discovered_at": "2026-08-14T18:28:46.516318+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Rmk28nnHASQ",
+          "title": "70s Disco Hits 🪩 Non-Stop Classics That Never Get Old | Stayin' Alive, Funkytown, Dancing Queen",
+          "channel": "Flashback Dreams",
+          "published_at": "2026-03-20T14:00:54Z",
+          "views": 1047776,
+          "discovered_at": "2026-08-14T18:28:46.516322+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "8mHk1mI2UJc",
+          "title": "songs that make you dance ~club party playlist ~best of dance music, club music",
+          "channel": "Amazing Melody",
+          "published_at": "2025-06-14T07:00:15Z",
+          "views": 515017,
+          "discovered_at": "2026-08-14T18:28:46.516326+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "HtjHgxAmegY",
+          "title": "Ultimate Kids Dance Party 2026 🎉 | 3 Hours | Family Friendly Hits",
+          "channel": "KIDZ BOP",
+          "published_at": "2026-02-20T11:00:00Z",
+          "views": 752075,
+          "discovered_at": "2026-08-14T18:28:46.516329+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "bLCH896reQM",
+          "title": "Party Summer Music Mix 2026 | DJ Club Dance Music 2026 | Best Remixes of Popular Songs 2026 MEGAMIX",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-08-06T17:03:19Z",
+          "views": 100798,
+          "discovered_at": "2026-08-14T18:28:46.516333+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "N6DW31S_oyI",
+          "title": "Mega Hits 2025 🌱 The Best Of Vocal Deep House Music Mix 2025 🌱 Summer Music Mix 2025 #4",
+          "channel": "Helios Deep",
+          "published_at": "2025-01-17T08:14:40Z",
+          "views": 18909361,
+          "discovered_at": "2026-08-14T18:28:46.516338+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "Ws02TwSO8Yo",
+          "title": "Party Summer Music Mix 2026 | DJ Club Dance Music 2026 | Best Remixes of Popular Songs 2026 MEGAMIX",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-08-04T16:42:04Z",
+          "views": 136747,
+          "discovered_at": "2026-08-14T18:28:46.516342+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "qPaINaq_yYI",
+          "title": "Who’s dad is this?🤣♥️🙏 #dancemusic #technodance #music #ravinglifestyle #gettogether #rave #dj",
+          "channel": "Get Together Records",
+          "published_at": "2025-07-02T16:01:35Z",
+          "views": 9031777,
+          "discovered_at": "2026-08-14T18:28:46.516346+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "RQxQZV66Bl8",
+          "title": "803Fresh - Boots On The Ground (Official Music Video) \"Where Them Fans At?\"",
+          "channel": "803Fresh",
+          "published_at": "2025-05-15T10:00:31Z",
+          "views": 31261912,
+          "discovered_at": "2026-08-14T18:28:46.516350+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "xh5WfE8gbW8",
+          "title": "🔥 Best Dance Mix 2025 🔥 | Non-Stop Party Hits | DJ XOXO ",
+          "channel": "DJ XOXO",
+          "published_at": "2025-10-10T14:49:16Z",
+          "views": 3854680,
+          "discovered_at": "2026-08-14T18:28:46.516354+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "ICI6HlGZMts",
+          "title": "Music Mix 2026 #44 Party Club Dance 2026 | Best Remixes Of Popular Songs 2025 MEGAMIX (DJ Silviu M)",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-04-14T15:41:13Z",
+          "views": 357123,
+          "discovered_at": "2026-08-14T18:28:46.516357+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-14T18:28:46.516426+00:00"
+    }
+  }
 }
