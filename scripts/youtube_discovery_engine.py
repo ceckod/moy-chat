@@ -53,12 +53,13 @@ from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _youtube_common import (  # noqa: E402
-    DATA_DIR, QuotaBudget, YouTubeClient,
+    DATA_DIR, REPO_ROOT, QuotaBudget, YouTubeClient,
     get_oauth_access_token, load_json, log, retry, save_json,
 )
 from catalog_bootstrap import sync_new_tracks  # noqa: E402
 
 CONFIG_PATH = DATA_DIR / "discovery-config.json"
+ROOT_CONFIG_PATH = REPO_ROOT / "config.json"
 CATALOG_PATH = DATA_DIR / "catalog.json"
 STATE_PATH = DATA_DIR / "playlists-state.json"
 LOG_PATH = DATA_DIR / "discovery-log.json"
@@ -228,7 +229,7 @@ def freshness_score(published_at_iso, fresh_target_days, max_age_days):
     return max(0.0, 1 - (age_days - fresh_target_days) / (max_age_days - fresh_target_days))
 
 
-def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15):
+def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_channel_id=None):
     published_after = _iso(_now() - timedelta(days=window_days))
     data = retry(lambda: yt.get(
         "search",
@@ -242,17 +243,31 @@ def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15):
     vdata = retry(lambda: yt.get("videos", {"part": "snippet,statistics", "id": ",".join(ids)}, "videos.list"),
                    label="videos.list за кандидати")
     out = []
+    skipped_own = 0
     for v in vdata.get("items", []):
         stats = v.get("statistics", {})
+        snippet = v["snippet"]
+        # КРИТИЧНО: search.list е ГЛОБАЛНО YouTube търсене — нищо не пречи
+        # собствен видео/Shorts на канала да съвпадне по ключови думи с
+        # заявката и да се върне като резултат. Без тази проверка такова
+        # видео влиза в candidate pool-а маркирано is_mine=False и после
+        # се вкарва в playlist-а като "external" песен, докато всъщност е
+        # авторско. Затова изрично изключваме собствения channelId тук,
+        # преди резултатът изобщо да влезе в кеша.
+        if own_channel_id and snippet.get("channelId") == own_channel_id:
+            skipped_own += 1
+            continue
         out.append({
-            "video_id": v["id"], "title": v["snippet"]["title"], "channel": v["snippet"]["channelTitle"],
-            "published_at": v["snippet"]["publishedAt"], "views": int(stats.get("viewCount", 0)),
+            "video_id": v["id"], "title": snippet["title"], "channel": snippet["channelTitle"],
+            "published_at": snippet["publishedAt"], "views": int(stats.get("viewCount", 0)),
             "discovered_at": _iso(_now()), "status": "unused", "used_in": [],
         })
+    if skipped_own:
+        log(f"  ⚪ Пропуснати {skipped_own} резултат(а) от собствения канал (не са external кандидати).")
     return out
 
 
-def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log):
+def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, own_channel_id=None):
     """Връща (unused_candidates, did_search: bool). Прави search.list САМО
     ако pool-ът е под min_candidate_pool ИЛИ cache записът е по-стар от
     candidate_cache_ttl_days — иначе директно връща вече кешираните
@@ -269,7 +284,8 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log):
         return unused, False
 
     try:
-        found = _search_youtube(f"{cluster_label} music", yt, cfg["candidate_search_window_days"])
+        found = _search_youtube(f"{cluster_label} music", yt, cfg["candidate_search_window_days"],
+                                 own_channel_id=own_channel_id)
         run_log["candidate_searches"] += 1
     except RuntimeError as e:
         log(f"  ⚠ Discovery search неуспешен за '{cluster_label}': {e}")
@@ -284,12 +300,25 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log):
     return [c for c in entry["candidates"] if c.get("status") == "unused"], True
 
 
+def _candidate_score(c, cfg):
+    """Комбинирано класиране: 60% свежест + 40% нормализирани views. Преди
+    класирането беше чисто по views — печелеше винаги старата вирусна песен
+    пред нещо ново с по-малко гледания. freshness_score() ползва
+    fresh_track_target_days/max_track_age_days от config-а (бяха дефинирани,
+    но никога не се извикваха никъде — мъртви настройки до тази промяна)."""
+    fresh = freshness_score(c.get("published_at"), cfg["fresh_track_target_days"], cfg["max_track_age_days"])
+    norm_views = min(1.0, c.get("views", 0) / cfg["min_candidate_views"] / 10)  # ~10x над прага = максимален views score
+    return 0.6 * fresh + 0.4 * norm_views
+
+
 def pick_candidates_for_playlist(cluster_key, cluster_label, unused_candidates, cache, cfg,
                                   used_globally, excluded_ids, needed=5):
     """Global dedup + cross-playlist similarity threshold изключение (т.13) +
-    min_candidate_views филтър. Маркира избраните като 'used' в cache-а."""
+    min_candidate_views филтър. Класира по _candidate_score() (свежест+views),
+    не чисто по views. Маркира избраните като 'used' в cache-а."""
     picked = []
-    for c in sorted(unused_candidates, key=lambda x: x.get("views", 0), reverse=True):
+    ranked = sorted(unused_candidates, key=lambda c: _candidate_score(c, cfg), reverse=True)
+    for c in ranked:
         if len(picked) >= needed:
             break
         if c["video_id"] in excluded_ids:
@@ -614,6 +643,12 @@ def _run(cfg, dry_run, run_log):
     quota = QuotaBudget(cfg.get("youtube_search_daily_budget_units", 3000))
     yt = YouTubeClient(api_key, access_token, quota)
 
+    root_cfg = load_json(ROOT_CONFIG_PATH, {})
+    own_channel_id = root_cfg.get("youtube_channel_id") or root_cfg.get("CHANNEL_ID")
+    if not own_channel_id:
+        log("  ⚠ Липсва youtube_channel_id в config.json — self-exclusion филтърът за "
+            "external кандидати НЯМА да работи този run (риск от собствени видеа в discovery резултатите).")
+
     log("→ Синхронизирам каталога с нови видеа от канала...")
     added_count, catalog = sync_new_tracks()
     run_log["new_own_tracks"] = added_count
@@ -662,9 +697,10 @@ def _run(cfg, dry_run, run_log):
 
         used_globally = {t["youtube_video_id"] for p in state["playlists"] for t in p["tracks"]}
         excluded_ids = set(entry.get("excluded_video_ids", []))
-        unused_candidates, _ = refresh_candidate_pool(cluster_key, label, cache, yt, cfg, run_log)
+        unused_candidates, _ = refresh_candidate_pool(cluster_key, label, cache, yt, cfg, run_log, own_channel_id)
         new_external = pick_candidates_for_playlist(cluster_key, label, unused_candidates, cache, cfg,
-                                                      used_globally, excluded_ids, needed=5)
+                                                      used_globally, excluded_ids,
+                                                      needed=cfg.get("external_tracks_per_run", 5))
 
         # Само реални дистрибутирани релийзи (DistroKid и др. — виж
         # _detect_distribution() в catalog_bootstrap.py) влизат в пула за
