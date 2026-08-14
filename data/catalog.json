@@ -2,15 +2,15 @@
   "schema_version": 1,
   "notes": "Canonical каталог на авторските песни. Генерира се/обновява се от scripts/catalog_bootstrap.py (bootstrap от data/stats-history.json + AI класификация) и от scripts/youtube_discovery_engine.py (нови видеа при daily run). НЕ се редактира ръчно, освен ако не поправяш конкретна грешна класификация на едно поле.",
   "last_bootstrap": "2026-08-14T07:20:41.453294+00:00",
-  "last_updated": "2026-08-14T07:20:41.453294+00:00",
+  "last_updated": "2026-08-14T18:20:03.504672+00:00",
   "tracks": [
     {
       "id": "track_cpxqhiJh9gQ",
       "title": "HE CHOSE ME - R&B / Pop Ballad (Official Visualizer)",
       "youtube_video_id": "cpxqhiJh9gQ",
       "release_date": "2026-07-20",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "R&B",
+      "subgenre": "R&B",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -18,7 +18,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504449+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_H3fUE8_G0jc",
@@ -34,7 +35,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504471+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_RAWmatNwBco",
@@ -50,7 +52,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504477+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_Dy2NNvELThA",
@@ -66,7 +69,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504483+00:00",
+      "distribution": "distrokid"
     },
     {
       "id": "track_pEy6QJVUtYU",
@@ -82,7 +86,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504487+00:00",
+      "distribution": "distrokid"
     },
     {
       "id": "track_OUtAaq_HTuY",
@@ -98,15 +103,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504496+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_dLBGPwf-xIw",
       "title": "He played both of us? 💔 (Original R&B Story)",
       "youtube_video_id": "dLBGPwf-xIw",
       "release_date": "2026-06-23",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "R&B",
+      "subgenre": "R&B",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -114,7 +120,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504507+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_OHFNupbzGxM",
@@ -130,7 +137,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504512+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_1YqhqHeJd7w",
@@ -146,7 +154,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504517+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_0z7FtLkts8Y",
@@ -162,15 +171,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504522+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_XJSw2oitHA8",
       "title": "Tsetsko Boyanov - ПРИЯТЕЛИ ПРЕДАТЕЛИ (Official Shorts) #shorts #bgrap #трап",
       "youtube_video_id": "XJSw2oitHA8",
       "release_date": "2026-06-08",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Rap",
+      "subgenre": "Rap",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -178,7 +188,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504527+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_Y2jJOkPCTS4",
@@ -194,7 +205,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504536+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_WGe8_wrIogs",
@@ -210,7 +222,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504545+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_YfOFH0xM6FU",
@@ -226,15 +239,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504553+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_LkKxC5FVF4w",
       "title": "НЕ МЕ ОСТАВЯЙ OFFICIAL VIDEO #hitmusci #chalga #popfolk #новамузика   #love  #song #party",
       "youtube_video_id": "LkKxC5FVF4w",
       "release_date": "2026-05-08",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Pop",
+      "subgenre": "Pop",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -242,15 +256,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504574+00:00",
+      "distribution": "distrokid"
     },
     {
       "id": "track_o3nddBfJErU",
       "title": "НЕ МЕ ОСТАВЯЙ",
       "youtube_video_id": "o3nddBfJErU",
       "release_date": "2026-05-04",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Pop",
+      "subgenre": "Pop",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -258,15 +273,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504579+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_W0vH30K5bLE",
       "title": "НЕ МЕ ОСТАВЯЙ / NE ME OSTAVIAY   (Official Video)",
       "youtube_video_id": "W0vH30K5bLE",
       "release_date": "2026-05-03",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Pop",
+      "subgenre": "Pop",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -274,7 +290,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504599+00:00",
+      "distribution": "distrokid"
     },
     {
       "id": "track_ErB4vON9gPs",
@@ -290,7 +307,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504604+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_1LKg_gv-oZE",
@@ -306,7 +324,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504608+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_WqcPRTIvwg4",
@@ -322,7 +341,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504613+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_Q7Px9rXvp0I",
@@ -338,7 +358,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504628+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_MxBC2xLS638",
@@ -354,15 +375,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504637+00:00",
+      "distribution": "distrokid"
     },
     {
       "id": "track_B6t3NsXt8kA",
       "title": "Shaggy Gone Wild! 😂 Duet Challenge #ReggaeVibes",
       "youtube_video_id": "B6t3NsXt8kA",
       "release_date": "2026-02-22",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Reggaeton",
+      "subgenre": "Reggaeton",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -370,15 +392,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504644+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_9WX0BHoyf_k",
       "title": "Mr. Magnetic ft CD-B Modern Dancehall Vibe 🇯🇲⚡️ #Shorts",
       "youtube_video_id": "9WX0BHoyf_k",
       "release_date": "2026-02-21",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Dance",
+      "subgenre": "Dance",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -386,15 +409,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504651+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_pEiClSojmeE",
       "title": "The ultimate lover-lover vibe 🦁 #shorts",
       "youtube_video_id": "pEiClSojmeE",
       "release_date": "2026-02-19",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Dance",
+      "subgenre": "Dance",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -402,7 +426,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504654+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_vBQQ5c1btHs",
@@ -418,15 +443,16 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504658+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_rfs6Jwz1sME",
       "title": "ДА ТИ ДАМ #newmusic #remix #dance #ДаТиДам #viral  #dj #love",
       "youtube_video_id": "rfs6Jwz1sME",
       "release_date": "2026-01-24",
-      "genre": "unknown",
-      "subgenre": "unknown",
+      "genre": "Dance",
+      "subgenre": "Dance",
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
@@ -434,7 +460,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504663+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_Y6cqze1xbFk",
@@ -450,7 +477,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504666+00:00",
+      "distribution": "channel-upload"
     },
     {
       "id": "track_ZDxy9kCLAhk",
@@ -466,7 +494,8 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T07:20:41.453294+00:00"
+      "classified_at": "2026-08-14T18:20:03.504670+00:00",
+      "distribution": "channel-upload"
     }
   ]
 }
