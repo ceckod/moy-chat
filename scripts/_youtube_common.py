@@ -153,9 +153,16 @@ class YouTubeClient:
             h["Authorization"] = f"Bearer {self.access_token}"
         return h
 
-    def _url(self, path, params):
+    def _url(self, path, params, use_api_key=True):
         params = dict(params)
-        if self.api_key and "key" not in params:
+        # КРИТИЧНО: НЕ добавяй ?key=... когато вече има OAuth access_token.
+        # Google връща "HTTP 400 — API Key and authentication credential
+        # are from different projects", ако API ключът и OAuth Client ID
+        # не са от ЕДИН И СЪЩ Google Cloud проект — а на практика почти
+        # никога не са (създадени в различни моменти/проекти). Bearer
+        # token-ът сам по себе си е напълно достатъчен за автентикация,
+        # затова просто пропускаме "key" параметъра винаги, когато го има.
+        if use_api_key and self.api_key and not self.access_token and "key" not in params:
             params["key"] = self.api_key
         query = "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items() if v is not None)
         return f"{API_BASE}/{path}?{query}"
