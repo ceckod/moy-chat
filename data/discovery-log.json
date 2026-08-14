@@ -1,5 +1,24 @@
 {
   "schema_version": 1,
   "notes": "Append-only лог на всеки run на youtube_discovery_engine.py (и dry runs). Пази се само последните 60 записа. Всеки run запис съдържа: run_id, started_at, dry_run, status (ok/partial_failure/error/paused), new_own_tracks, clusters_changed, playlists_created, tracks_added, tracks_removed, tracks_reordered, candidate_searches, no_changes (bool), quota_spent_units, quota_calls, errors[] (с playlist/op/video_id/error/at), warnings[] (напр. от verification несъответствия). Dashboard-ът чете това за 'API calls днес', 'нови песни намерени', 'добавени/премахнати/пренаредени' и т.н.",
-  "runs": []
+  "runs": [
+    {
+      "run_id": "f450355b",
+      "started_at": "2026-08-14T07:20:41.451981+00:00",
+      "dry_run": true,
+      "status": "ok",
+      "new_own_tracks": 29,
+      "clusters_changed": [],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": true,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 0,
+      "quota_calls": []
+    }
+  ]
 }

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
+  "last_run": "2026-08-14T07:20:41.451981+00:00",
+  "last_run_status": "dry_run",
+  "playlists": []
+}
