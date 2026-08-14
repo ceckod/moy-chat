@@ -55,6 +55,24 @@
       "warnings": [],
       "quota_spent_units": 0,
       "quota_calls": []
+    },
+    {
+      "run_id": "f749991a",
+      "started_at": "2026-08-14T11:38:08.771907+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": true,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 0,
+      "quota_calls": []
     }
   ]
 }
