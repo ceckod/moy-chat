@@ -228,11 +228,43 @@ def find_or_create_playlist(cluster_key, cluster_label, state, yt: YouTubeClient
 # yt-dlp (--flat-playlist, само метаданни, без сваляне на видео).
 # ---------------------------------------------------------------------------
 
+def _resolve_release_playlist_to_video_ids(playlist_id):
+    """Всеки запис в /releases таба е playlist ID (формат 'OLAK5uy_...'),
+    НЕ video ID — YouTube представя всеки официален релийз като мини-
+    плейлист (обикновено 1 песен вътре за single). Тази функция "отваря"
+    конкретния playlist и връща истинските video ID-та вътре в него."""
+    try:
+        result = subprocess.run(
+            ["yt-dlp", "--flat-playlist", "--dump-single-json", "--skip-download", "--no-warnings",
+             f"https://www.youtube.com/playlist?list={playlist_id}"],
+            capture_output=True, text=True, timeout=60,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return set()
+    if result.returncode != 0:
+        return set()
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return set()
+    entries = data.get("entries", []) or []
+    return {e["id"] for e in entries if e.get("id")}
+
+
 def fetch_releases_video_ids(url):
-    """Връща set() от video ID-та от releases таба, или None при грешка
-    (мрежа/yt-dlp липсва/невалиден отговор) — НИКОГА празен set() при
-    грешка, за да не изтрием случайно целия my_release_pool заради
-    временен проблем с четенето."""
+    """Връща set() от РЕАЛНИ video ID-та от releases таба, или None при
+    грешка (мрежа/yt-dlp липсва/невалиден отговор) — НИКОГА празен set()
+    при грешка, за да не изтрием случайно целия my_release_pool заради
+    временен проблем с четенето.
+
+    ВАЖНО (т.41 — двустепенно резолвиране): /releases табът връща списък
+    от PLAYLIST ID-та (всеки релийз е мини-плейлист, формат 'OLAK5uy_...'),
+    не video ID-та директно. Затова след първоначалния flat-playlist на
+    /releases, "отваряме" всеки от тези плейлисти поотделно, за да вземем
+    истинското video ID вътре — иначе self-track сравнението никога не
+    съвпада с нищо в каталога (playlist ID никога няма да е равен на
+    video ID), независимо колко е свеж/пълен каталогът.
+    """
     try:
         result = subprocess.run(
             ["yt-dlp", "--flat-playlist", "--dump-single-json", "--skip-download", "--no-warnings", url],
@@ -254,8 +286,20 @@ def fetch_releases_video_ids(url):
         log("  ⚠ yt-dlp върна невалиден JSON за releases.")
         return None
     entries = data.get("entries", []) or []
-    ids = {e["id"] for e in entries if e.get("id")}
-    return ids
+    release_playlist_ids = {e["id"] for e in entries if e.get("id")}
+
+    video_ids = set()
+    unresolved = []
+    for pid in release_playlist_ids:
+        resolved = _resolve_release_playlist_to_video_ids(pid)
+        if resolved:
+            video_ids |= resolved
+        else:
+            unresolved.append(pid)
+    if unresolved:
+        log(f"  ⚠ Не успях да резолвирам {len(unresolved)}/{len(release_playlist_ids)} "
+            f"release плейлиста към video ID (мрежа/timeout за конкретния плейлист) — прескачам ги.")
+    return video_ids
 
 
 def load_releases_video_ids(cfg):

@@ -1,8 +1,7 @@
 CDB UPDATE REPORT
-Timestamp: 20260815-124504
+Timestamp: 20260815-125328
 
 Changed:
-  scripts/catalog_bootstrap.py
   scripts/youtube_discovery_engine.py
 
 Added:
