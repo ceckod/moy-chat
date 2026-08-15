@@ -2,7 +2,7 @@
   "schema_version": 1,
   "notes": "Canonical каталог на авторските песни. Генерира се/обновява се от scripts/catalog_bootstrap.py (bootstrap от data/stats-history.json + AI класификация) и от scripts/youtube_discovery_engine.py (нови видеа при daily run). НЕ се редактира ръчно, освен ако не поправяш конкретна грешна класификация на едно поле.",
   "last_bootstrap": "2026-08-14T07:20:41.453294+00:00",
-  "last_updated": "2026-08-15T12:55:25.131380+00:00",
+  "last_updated": "2026-08-15T13:14:36.693159+00:00",
   "tracks": [
     {
       "id": "track_cpxqhiJh9gQ",
@@ -563,6 +563,640 @@
       "confidence": "medium",
       "classified_at": "2026-08-15T12:55:25.131376+00:00",
       "distribution": "channel-upload"
+    },
+    {
+      "id": "track_a7AEgpFEXF4",
+      "title": "Проклятие",
+      "youtube_video_id": "a7AEgpFEXF4",
+      "release_date": "2025-12-14",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 120,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_i_oC2fqfF68",
+      "title": "ЧЕСТИТ ВАЛЕНТИН",
+      "youtube_video_id": "i_oC2fqfF68",
+      "release_date": "2026-02-13",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Euphoric",
+      "energy": "Medium",
+      "bpm": 110,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Празнична Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_uKpTLRuBwoE",
+      "title": "ТЕЖКА КАТЕГОРИЯ (feat. CD-B)",
+      "youtube_video_id": "uKpTLRuBwoE",
+      "release_date": "2025-12-29",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 125,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_RVOX216czWc",
+      "title": "НА ВЪЛК ПРИЛИЧАМ",
+      "youtube_video_id": "RVOX216czWc",
+      "release_date": "2026-01-08",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Melancholic",
+      "energy": "Low",
+      "bpm": 90,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Емоционална Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_52HGlvB4mnE",
+      "title": "Gira Gira (feat. CD-B)",
+      "youtube_video_id": "52HGlvB4mnE",
+      "release_date": "2026-07-23",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Латин Поп",
+      "mood": "Euphoric",
+      "energy": "High",
+      "bpm": 130,
+      "language": "unknown",
+      "style_tags": [
+        "Латин Ритми",
+        "Поп Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_3gf-FJRSpDA",
+      "title": "Horas robadas",
+      "youtube_video_id": "3gf-FJRSpDA",
+      "release_date": "2026-07-10",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Латин Поп",
+      "mood": "Melancholic",
+      "energy": "Medium",
+      "bpm": 100,
+      "language": "es",
+      "style_tags": [
+        "Латин Ритми",
+        "Емоционална Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_lgbh7KXtgLs",
+      "title": "Изгубена любов (feat. текст Мими Цветанов)",
+      "youtube_video_id": "lgbh7KXtgLs",
+      "release_date": "2025-12-17",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Melancholic",
+      "energy": "Low",
+      "bpm": 80,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Емоционална Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_ckvIjxM2P6k",
+      "title": "САМО МОЙ #2",
+      "youtube_video_id": "ckvIjxM2P6k",
+      "release_date": "2026-04-18",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Euphoric",
+      "energy": "Medium",
+      "bpm": 115,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_GapH6JbGUeM",
+      "title": "King of the Block (feat. CD-B)",
+      "youtube_video_id": "GapH6JbGUeM",
+      "release_date": "2025-12-19",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 128,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_zLgWNdcvuTE",
+      "title": "Бай Бай",
+      "youtube_video_id": "zLgWNdcvuTE",
+      "release_date": "2026-01-14",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Euphoric",
+      "energy": "Medium",
+      "bpm": 105,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Поп Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_qNb4EWDauQY",
+      "title": "САМО МОЙ",
+      "youtube_video_id": "qNb4EWDauQY",
+      "release_date": "2026-01-17",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Euphoric",
+      "energy": "Medium",
+      "bpm": 110,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_wqBAK_IFdJg",
+      "title": "Duša Bez Granica",
+      "youtube_video_id": "wqBAK_IFdJg",
+      "release_date": "2025-12-16",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Славянска Поп",
+      "mood": "Melancholic",
+      "energy": "Low",
+      "bpm": 85,
+      "language": "unknown",
+      "style_tags": [
+        "Славянска Музика",
+        "Емоционална Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_deHAoxVhEo4",
+      "title": "THE CODE (feat. CD-B)",
+      "youtube_video_id": "deHAoxVhEo4",
+      "release_date": "2026-01-01",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 130,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_DJWtHU1v-xg",
+      "title": "МЪРТВА ЗОНА (feat. CD-B)",
+      "youtube_video_id": "DJWtHU1v-xg",
+      "release_date": "2026-01-01",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 125,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Хип-Хоп"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_bhSLW4ygA-0",
+      "title": "Тъмна любов",
+      "youtube_video_id": "bhSLW4ygA-0",
+      "release_date": "2025-12-11",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български Хип-Хоп",
+      "mood": "Melancholic",
+      "energy": "Low",
+      "bpm": 90,
+      "language": "bg",
+      "style_tags": [
+        "Български Реп",
+        "Емоционална Музика"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_uPWbwInbQ5Q",
+      "title": "МИЛА МОЯ",
+      "youtube_video_id": "uPWbwInbQ5Q",
+      "release_date": "2026-04-18",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Носталгичен",
+      "energy": "Medium",
+      "bpm": 100,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "емотивна"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_IkNJDWz5eGw",
+      "title": "Плаче моето сърце",
+      "youtube_video_id": "IkNJDWz5eGw",
+      "release_date": "2025-12-16",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Меланхоличен",
+      "energy": "Low",
+      "bpm": 90,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "емотивна"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_Omtlqh78FV0",
+      "title": "БРАТЯ",
+      "youtube_video_id": "Omtlqh78FV0",
+      "release_date": "2026-01-07",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български хип-хоп",
+      "mood": "Агресивен",
+      "energy": "High",
+      "bpm": 120,
+      "language": "bg",
+      "style_tags": [
+        "български хип-хоп",
+        "агресивен"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_mhB8swROVbk",
+      "title": "Студен огън",
+      "youtube_video_id": "mhB8swROVbk",
+      "release_date": "2025-12-11",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Романтичен",
+      "energy": "Medium",
+      "bpm": 110,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "романтична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_INqtgXaSFCU",
+      "title": "САМО ТИ",
+      "youtube_video_id": "INqtgXaSFCU",
+      "release_date": "2026-07-05",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Еуфоричен",
+      "energy": "High",
+      "bpm": 130,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "евфорична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_4T5dv67yxlI",
+      "title": "БОМБА",
+      "youtube_video_id": "4T5dv67yxlI",
+      "release_date": "2026-01-24",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български хип-хоп",
+      "mood": "Агресивен",
+      "energy": "High",
+      "bpm": 125,
+      "language": "bg",
+      "style_tags": [
+        "български хип-хоп",
+        "агресивен"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_ubK01jcb5iM",
+      "title": "The Godfather (feat. CD-B)",
+      "youtube_video_id": "ubK01jcb5iM",
+      "release_date": "2025-12-31",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български хип-хоп",
+      "mood": "Агресивен",
+      "energy": "High",
+      "bpm": 120,
+      "language": "bg",
+      "style_tags": [
+        "български хип-хоп",
+        "агресивен"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_eMGTH_48Fk0",
+      "title": "DO IT RIGHT (feat. FINA & REX)",
+      "youtube_video_id": "eMGTH_48Fk0",
+      "release_date": "2026-07-23",
+      "distribution": "distrokid",
+      "genre": "Electronic",
+      "subgenre": "Денс музика",
+      "mood": "Еуфоричен",
+      "energy": "High",
+      "bpm": 130,
+      "language": "en",
+      "style_tags": [
+        "денс музика",
+        "евфорична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_eZmPFu2LZqE",
+      "title": "Dale Todo",
+      "youtube_video_id": "eZmPFu2LZqE",
+      "release_date": "2025-12-11",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Латинска поп музика",
+      "mood": "Романтичен",
+      "energy": "Medium",
+      "bpm": 100,
+      "language": "es",
+      "style_tags": [
+        "латинска поп музика",
+        "романтична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_lx48LXnMoWU",
+      "title": "Being A Blood (feat. CD-B)",
+      "youtube_video_id": "lx48LXnMoWU",
+      "release_date": "2025-12-19",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български хип-хоп",
+      "mood": "Агресивен",
+      "energy": "High",
+      "bpm": 125,
+      "language": "bg",
+      "style_tags": [
+        "български хип-хоп",
+        "агресивен"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_ZnG9MBMyz7c",
+      "title": "Официално забранена",
+      "youtube_video_id": "ZnG9MBMyz7c",
+      "release_date": "2025-12-15",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Меланхоличен",
+      "energy": "Low",
+      "bpm": 90,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "емотивна"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_edbEi2yYFaY",
+      "title": "ДА ТИ ДАМ",
+      "youtube_video_id": "edbEi2yYFaY",
+      "release_date": "2026-01-24",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Еуфоричен",
+      "energy": "Medium",
+      "bpm": 110,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "евфорична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_dtcOrAdmSBc",
+      "title": "Очи зелени",
+      "youtube_video_id": "dtcOrAdmSBc",
+      "release_date": "2026-01-20",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Романтичен",
+      "energy": "Medium",
+      "bpm": 100,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "романтична"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_j6uMaLhOYds",
+      "title": "Сърцето ми крещи",
+      "youtube_video_id": "j6uMaLhOYds",
+      "release_date": "2025-12-11",
+      "distribution": "distrokid",
+      "genre": "Pop",
+      "subgenre": "Българска поп музика",
+      "mood": "Меланхоличен",
+      "energy": "Low",
+      "bpm": 90,
+      "language": "bg",
+      "style_tags": [
+        "българска поп музика",
+        "емотивна"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_mEIFq5qLfPQ",
+      "title": "Mr. Magnetic (feat. CD-B)",
+      "youtube_video_id": "mEIFq5qLfPQ",
+      "release_date": "2026-02-21",
+      "distribution": "distrokid",
+      "genre": "Hip-Hop",
+      "subgenre": "Български хип-хоп",
+      "mood": "Агресивен",
+      "energy": "High",
+      "bpm": 120,
+      "language": "bg",
+      "style_tags": [
+        "български хип-хоп",
+        "агресивен"
+      ],
+      "source": "ai-classified (groq)",
+      "confidence": "medium",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_513miOtv2zY",
+      "title": "dRoP iT LoW",
+      "youtube_video_id": "513miOtv2zY",
+      "release_date": "2026-06-18",
+      "distribution": "distrokid",
+      "genre": "unknown",
+      "subgenre": "unknown",
+      "mood": "unknown",
+      "energy": "unknown",
+      "bpm": null,
+      "language": "unknown",
+      "style_tags": [],
+      "source": "heuristic-fallback",
+      "confidence": "low",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
+    },
+    {
+      "id": "track_YF06-rZPoUg",
+      "title": "ПРИЯТЕЛИ ПРЕДАТЕЛИ (feat. CD-B)",
+      "youtube_video_id": "YF06-rZPoUg",
+      "release_date": "2026-05-09",
+      "distribution": "distrokid",
+      "genre": "unknown",
+      "subgenre": "unknown",
+      "mood": "unknown",
+      "energy": "unknown",
+      "bpm": null,
+      "language": "unknown",
+      "style_tags": [],
+      "source": "heuristic-fallback",
+      "confidence": "low",
+      "classified_at": "2026-08-15T13:14:36.693159+00:00"
     }
   ]
 }

@@ -917,6 +917,59 @@
         "playlistItems.insert",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "df0064a8",
+      "started_at": "2026-08-15T13:14:04.194454+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 32,
+      "clusters_changed": [
+        "r-b",
+        "unknown"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 7,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 6,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 968,
+      "quota_calls": [
+        "playlistItems.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }

@@ -906,7 +906,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:58:15.626803+00:00"
+      "last_search_at": "2026-08-15T13:14:44.668914+00:00"
     },
     "pop": {
       "candidates": [
@@ -1239,7 +1239,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:58:16.294322+00:00"
+      "last_search_at": "2026-08-15T13:14:45.658196+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1606,7 +1606,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:58:17.687883+00:00"
+      "last_search_at": "2026-08-15T13:14:46.684252+00:00"
     },
     "dance": {
       "candidates": [
@@ -2069,7 +2069,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:58:18.365550+00:00"
+      "last_search_at": "2026-08-15T13:14:47.517647+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2346,9 +2346,169 @@
           "used_in": [
             "Кавър"
           ]
+        },
+        {
+          "video_id": "zGd4oGgCApQ",
+          "title": "SHUNAKA x GARJOKA - KUDET TEB TE NYAMA [OFFICIAL 4K VIDEO] 2026",
+          "channel": "DSD Shunaka",
+          "published_at": "2026-03-16T17:01:23Z",
+          "views": 539337,
+          "discovered_at": "2026-08-15T13:14:38.680997+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Xwuzt3sihaw",
+          "title": "Billy Hlapeto x Dim4ou x Garjoka - 666 (prod. F8) (OFFICIAL VIDEO)",
+          "channel": "Billy Hlapeto",
+          "published_at": "2026-02-16T15:00:06Z",
+          "views": 1944593,
+          "discovered_at": "2026-08-15T13:14:38.681008+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Uh4Q_Y9SfD8",
+          "title": "Щото е маймуна (feat. TuFo)",
+          "channel": "Krisko - Topic",
+          "published_at": "2026-03-02T15:14:56Z",
+          "views": 578751,
+          "discovered_at": "2026-08-15T13:14:38.681012+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "9Lsp1iVgkIQ",
+          "title": "TORINO & PASHATA X TONI STORARO - BEDNI  &  BOGATI / БЕДНИ И БОГАТИ [OFFICIAL 4K VIDEO]",
+          "channel": "TORINO & PASHATA ",
+          "published_at": "2026-03-21T16:00:06Z",
+          "views": 10420967,
+          "discovered_at": "2026-08-15T13:14:38.681015+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "wYCSYxQ3iHM",
+          "title": "MITREVV - RODINA / РОДИНА [OFFICIAL VIDEO] Prod. By Burimkosa",
+          "channel": "MITREVV",
+          "published_at": "2026-03-18T17:00:12Z",
+          "views": 198889,
+          "discovered_at": "2026-08-15T13:14:38.681017+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "FEIoKawbAWU",
+          "title": "Adnan Beats x Garjoka - Legenda",
+          "channel": "Adnan Beats",
+          "published_at": "2026-04-11T14:58:20Z",
+          "views": 797544,
+          "discovered_at": "2026-08-15T13:14:38.681020+00:00",
+          "status": "used",
+          "used_in": [
+            "Български хип-хоп"
+          ]
+        },
+        {
+          "video_id": "d1ZSXAv4UpE",
+          "title": "NASYO CHERNIA x FURY x MONKEY x BOBO ARMANI - GAZ GAZ [OFFICIAL 2026 VIDEO]",
+          "channel": "Nasyo Chernia",
+          "published_at": "2026-04-23T15:05:01Z",
+          "views": 2162748,
+          "discovered_at": "2026-08-15T13:14:38.681023+00:00",
+          "status": "used",
+          "used_in": [
+            "Български хип-хоп"
+          ]
+        },
+        {
+          "video_id": "J8SyqES_W-Y",
+          "title": "Всекиму своето",
+          "channel": "FYRE - Topic",
+          "published_at": "2026-06-03T10:00:12Z",
+          "views": 33543,
+          "discovered_at": "2026-08-15T13:14:38.681025+00:00",
+          "status": "used",
+          "used_in": [
+            "Български хип-хоп"
+          ]
+        },
+        {
+          "video_id": "gB0KOe5g5Hk",
+          "title": "Bandata Na Ruba x TITA - JOHN CENA (Official Video)",
+          "channel": "Bandata Na Ruba",
+          "published_at": "2026-06-04T15:28:07Z",
+          "views": 1244490,
+          "discovered_at": "2026-08-15T13:14:38.681027+00:00",
+          "status": "used",
+          "used_in": [
+            "Български хип-хоп"
+          ]
+        },
+        {
+          "video_id": "s31GjWA0dac",
+          "title": "Българи Юнаци",
+          "channel": "Gosho Ot Pochivka - Topic",
+          "published_at": "2026-05-25T08:50:46Z",
+          "views": 43,
+          "discovered_at": "2026-08-15T13:14:38.681030+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "pokhGonnY6I",
+          "title": "Sunrise - СЪРЦА НА ШАМПИОНИ (Official Music Video)",
+          "channel": "The Sunrise Official",
+          "published_at": "2026-03-03T17:30:06Z",
+          "views": 147,
+          "discovered_at": "2026-08-15T13:14:38.681033+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "hUzG8yi-pq4",
+          "title": "Kangal G - Българи Юнаци (Official Video)",
+          "channel": "Rqhovo team",
+          "published_at": "2026-02-19T18:00:06Z",
+          "views": 550,
+          "discovered_at": "2026-08-15T13:14:38.681035+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "5CAZrwCuaFI",
+          "title": "BORO PURVI, DIM4OU, I.N.I. - 4x4 (Official Video)",
+          "channel": "BORO PURVI",
+          "published_at": "2026-03-17T16:00:00Z",
+          "views": 1148231,
+          "discovered_at": "2026-08-15T13:14:38.681038+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "XmKukMwHBVQ",
+          "title": "V:RGO, I.N.I., FYRE - MUZIKALNATA KAZARMA [Official Video]",
+          "channel": "V:RGO",
+          "published_at": "2026-05-08T15:01:05Z",
+          "views": 816633,
+          "discovered_at": "2026-08-15T13:14:38.681040+00:00",
+          "status": "used",
+          "used_in": [
+            "Български хип-хоп"
+          ]
+        },
+        {
+          "video_id": "QII5i2Hn8Qw",
+          "title": "Ed by Ex - Цяло Лято | Summer Trap / Rap 2026 🔥",
+          "channel": "APD Sound",
+          "published_at": "2026-06-15T17:19:46Z",
+          "views": 61,
+          "discovered_at": "2026-08-15T13:14:38.681042+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T12:58:12.179502+00:00"
+      "last_search_at": "2026-08-15T13:14:38.681086+00:00"
     },
     "ai-music": {
       "candidates": [
@@ -2627,7 +2787,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:58:13.796665+00:00"
+      "last_search_at": "2026-08-15T13:14:43.946185+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
