@@ -544,6 +544,53 @@
         "playlistItems.insert",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "4a23f3c8",
+      "started_at": "2026-08-15T06:19:08.923224+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "r-b",
+        "pop",
+        "reggaeton"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 3,
+      "tracks_removed": 0,
+      "tracks_reordered": 1,
+      "candidate_searches": 5,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'R&B' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Reggaeton' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 712,
+      "quota_calls": [
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.update",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list"
+      ]
     }
   ]
 }
