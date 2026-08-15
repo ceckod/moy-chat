@@ -399,21 +399,9 @@
           "used_in": [
             "R&B"
           ]
-        },
-        {
-          "video_id": "-CepAYN0WyM",
-          "title": "Chris Brown - Fallin' (Official Video) ft. Leon Thomas",
-          "channel": "ChrisBrownVEVO",
-          "published_at": "2026-05-01T16:00:00Z",
-          "views": 12344952,
-          "discovered_at": "2026-08-15T06:19:11.421024+00:00",
-          "status": "used",
-          "used_in": [
-            "R&B"
-          ]
         }
       ],
-      "last_search_at": "2026-08-15T06:19:11.421082+00:00"
+      "last_search_at": "2026-08-15T04:36:33.035954+00:00"
     },
     "rap": {
       "candidates": [
@@ -768,7 +756,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T06:19:12.906349+00:00"
+      "last_search_at": "2026-08-15T04:36:33.824674+00:00"
     },
     "pop": {
       "candidates": [
@@ -1079,7 +1067,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T06:19:13.713013+00:00"
+      "last_search_at": "2026-08-15T04:36:35.342861+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1396,33 +1384,9 @@
           "used_in": [
             "Reggaeton"
           ]
-        },
-        {
-          "video_id": "fawkleRYiuM",
-          "title": "Ozuna – Te Ame Sin Medidas (Estreno Oficial 2026 | Reggaetón Emocional)",
-          "channel": "Flow Beats",
-          "published_at": "2026-03-14T15:00:06Z",
-          "views": 2630853,
-          "discovered_at": "2026-08-15T06:19:14.828703+00:00",
-          "status": "used",
-          "used_in": [
-            "Reggaeton"
-          ]
-        },
-        {
-          "video_id": "lP9PYi24TFM",
-          "title": "LATIN PARTY MIX 2026 🔥 | FIESTA LATINA, REGGAETON, DEMBOW | ROBIN ROXETTE x PALMUNDO",
-          "channel": "Robin Roxette",
-          "published_at": "2026-06-05T18:55:59Z",
-          "views": 506133,
-          "discovered_at": "2026-08-15T06:19:14.828705+00:00",
-          "status": "used",
-          "used_in": [
-            "Reggaeton"
-          ]
         }
       ],
-      "last_search_at": "2026-08-15T06:19:14.828751+00:00"
+      "last_search_at": "2026-08-15T04:36:37.828297+00:00"
     },
     "dance": {
       "candidates": [
@@ -1783,7 +1747,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T06:19:16.879182+00:00"
+      "last_search_at": "2026-08-15T04:36:38.440534+00:00"
     }
   }
 }
