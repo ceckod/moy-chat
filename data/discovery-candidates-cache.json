@@ -906,7 +906,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:47.459798+00:00"
+      "last_search_at": "2026-08-15T12:58:15.626803+00:00"
     },
     "pop": {
       "candidates": [
@@ -1239,7 +1239,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:48.075509+00:00"
+      "last_search_at": "2026-08-15T12:58:16.294322+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1606,7 +1606,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:48.829877+00:00"
+      "last_search_at": "2026-08-15T12:58:17.687883+00:00"
     },
     "dance": {
       "candidates": [
@@ -2055,9 +2055,21 @@
           "discovered_at": "2026-08-15T12:34:01.728584+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "nWpiPjfAUFI",
+          "title": "Arei, DJ LEV - Nobody 🎶 #remix #ремикс #клубнаямузыка #музыкавмашину #dance #music #музыка #mix",
+          "channel": "DANCE MUSIC FOR YOU",
+          "published_at": "2026-08-15T09:25:21Z",
+          "views": 10906,
+          "discovered_at": "2026-08-15T12:58:18.365465+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:49.475659+00:00"
+      "last_search_at": "2026-08-15T12:58:18.365550+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2298,9 +2310,45 @@
           "used_in": [
             "Кавър"
           ]
+        },
+        {
+          "video_id": "2NwcMpnm7AU",
+          "title": "THESE DREAMS_(Heart) COVER By; Father & Kids Band @FRANZRhythm ",
+          "channel": "FRANZ Rhythm",
+          "published_at": "2026-08-09T22:31:21Z",
+          "views": 40175,
+          "discovered_at": "2026-08-15T12:58:12.179430+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "mkFcW0ymUP8",
+          "title": "Rivermaya Nonstop Rock Version🔥| Ultimate OPM Songs Rock Cover",
+          "channel": "GRIT ANTHEM",
+          "published_at": "2026-04-03T22:00:49Z",
+          "views": 340861,
+          "discovered_at": "2026-08-15T12:58:12.179433+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "9FORsELXs9Y",
+          "title": "Estranged By Guns N\" Roses • Solo Guitar Cover #shorts #gnr #slash #guitarcover #musiccover #rock",
+          "channel": "Weekend_Musician",
+          "published_at": "2026-08-15T11:52:14Z",
+          "views": 600,
+          "discovered_at": "2026-08-15T12:58:12.179439+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:46.266009+00:00"
+      "last_search_at": "2026-08-15T12:58:12.179502+00:00"
     },
     "ai-music": {
       "candidates": [
@@ -2431,8 +2479,10 @@
           "published_at": "2026-07-26T15:30:06Z",
           "views": 3045,
           "discovered_at": "2026-08-15T12:07:52.625380+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "oU57YvcgF1c",
@@ -2453,8 +2503,10 @@
           "published_at": "2026-02-26T22:26:35Z",
           "views": 564844,
           "discovered_at": "2026-08-15T12:07:52.625390+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "OxrQK5aCwhs",
@@ -2575,7 +2627,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:48:46.841720+00:00"
+      "last_search_at": "2026-08-15T12:58:13.796665+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -2781,6 +2833,336 @@
         }
       ],
       "last_search_at": "2026-08-15T12:34:00.548184+00:00"
+    },
+    "bulgarian-hip-hop": {
+      "candidates": [
+        {
+          "video_id": "xPgVkHFUS_Q",
+          "title": "Cosmic Balkan Heritage  |  Bulgarian Cosmic Choir Meets Modern Rap",
+          "channel": "Azure Horizon Studio: Nocturno Lab",
+          "published_at": "2026-04-17T19:56:56Z",
+          "views": 150,
+          "discovered_at": "2026-08-15T12:58:20.392839+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "2-EdaCgpVpI",
+          "title": "СЛЪНЦЕ В ДУШАТА ☀️ Bulgarian Folk x Hip Hop HIT 2026",
+          "channel": "Kleoniki Art",
+          "published_at": "2026-05-17T18:16:06Z",
+          "views": 192,
+          "discovered_at": "2026-08-15T12:58:20.392858+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "hCfe6KSieMo",
+          "title": "Beast Mode - Bulgarian Split Squat",
+          "channel": "SpartaP|G|X - Topic",
+          "published_at": "2026-05-27T10:01:54Z",
+          "views": 100,
+          "discovered_at": "2026-08-15T12:58:20.392862+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "a-i1c-Bv3sU",
+          "title": "#3 BALKAN MAFIA RAP MIX 2026 | Hard Gangster Rap Workout Playlist",
+          "channel": "BALKAN MAFIA RAP MUSIC",
+          "published_at": "2026-05-18T15:21:47Z",
+          "views": 13510,
+          "discovered_at": "2026-08-15T12:58:20.392865+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "VInwR3nq_Uw",
+          "title": "VALHALLA CALLING (EXTEND VERSION) ⚔️ | Ragal Ironbull | Dark Viking Rap",
+          "channel": "Ragal Ironbull",
+          "published_at": "2026-05-18T16:00:33Z",
+          "views": 9215116,
+          "discovered_at": "2026-08-15T12:58:20.392868+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "iVL_m_uEzSQ",
+          "title": "Bulgaria (Balkan Folk-Rap)",
+          "channel": "Balkan Folk-Rap Raido - Topic",
+          "published_at": "2026-04-23T01:08:18Z",
+          "views": 178,
+          "discovered_at": "2026-08-15T12:58:20.392871+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "JeHfH6dAxfQ",
+          "title": "Sarafa - US",
+          "channel": "SarafaVEVO",
+          "published_at": "2026-07-20T07:00:12Z",
+          "views": 504,
+          "discovered_at": "2026-08-15T12:58:20.392874+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "b3tLOikocQQ",
+          "title": "Bangaranga",
+          "channel": "DARA - Topic",
+          "published_at": "2026-03-02T20:04:05Z",
+          "views": 10146545,
+          "discovered_at": "2026-08-15T12:58:20.392877+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Lk0LD_Z4H4I",
+          "title": "DIMOFF x BEZIM MAN - UFC [OFFICIAL 4K VIDEO] 2026",
+          "channel": "DIMOFF OFFICIAL",
+          "published_at": "2026-05-22T15:00:23Z",
+          "views": 356389,
+          "discovered_at": "2026-08-15T12:58:20.392879+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "Xf9XEUQvqPQ",
+          "title": "Sarafa - REVENUE",
+          "channel": "SarafaVEVO",
+          "published_at": "2026-03-23T07:00:23Z",
+          "views": 941,
+          "discovered_at": "2026-08-15T12:58:20.392882+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "wYCSYxQ3iHM",
+          "title": "MITREVV - RODINA / РОДИНА [OFFICIAL VIDEO] Prod. By Burimkosa",
+          "channel": "MITREVV",
+          "published_at": "2026-03-18T17:00:12Z",
+          "views": 198889,
+          "discovered_at": "2026-08-15T12:58:20.392884+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "k11GXLtqda0",
+          "title": "Sarafa - DA GO DUHA HAZARTA",
+          "channel": "SarafaVEVO",
+          "published_at": "2026-04-09T07:00:39Z",
+          "views": 1751,
+          "discovered_at": "2026-08-15T12:58:20.392887+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "bjo5bEMdpTY",
+          "title": "B h H  - Bulgarian Hip Hop (Maxi - Single)",
+          "channel": "Recuerdos de Vinilos - Jesús A.G.",
+          "published_at": "2026-06-07T04:02:48Z",
+          "views": 25,
+          "discovered_at": "2026-08-15T12:58:20.392889+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Xwuzt3sihaw",
+          "title": "Billy Hlapeto x Dim4ou x Garjoka - 666 (prod. F8) (OFFICIAL VIDEO)",
+          "channel": "Billy Hlapeto",
+          "published_at": "2026-02-16T15:00:06Z",
+          "views": 1944526,
+          "discovered_at": "2026-08-15T12:58:20.392892+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "dq8mCYUDdfU",
+          "title": "Simitli The Boy Freestyle 1 (Album 2023 Sad) (Official Audio)",
+          "channel": "Simitli The Boy",
+          "published_at": "2026-04-07T22:03:03Z",
+          "views": 1,
+          "discovered_at": "2026-08-15T12:58:20.392894+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-15T12:58:20.392946+00:00"
+    },
+    "bulgarian-folk": {
+      "candidates": [
+        {
+          "video_id": "p-ZDaviOF5w",
+          "title": "Болна лежим | Bolna Lezhim | Българска Народна Песен | Folklor UZi 2026 | Народна песен за любовта.",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-08-10T04:57:03Z",
+          "views": 189,
+          "discovered_at": "2026-08-15T12:58:23.173862+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "0T_HkCym2oI",
+          "title": "The Last Voivode | Bulgarian Folk Metal Instrumental",
+          "channel": "VAndC Music",
+          "published_at": "2026-02-26T02:00:00Z",
+          "views": 31,
+          "discovered_at": "2026-08-15T12:58:23.173882+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "r-DJKOhYoYs",
+          "title": "Bulgarian Choral, Folk, and Traditional Music Mix【THE NTS GUIDE TO… 】",
+          "channel": "NTS",
+          "published_at": "2026-06-10T10:30:03Z",
+          "views": 8752,
+          "discovered_at": "2026-08-15T12:58:23.173886+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "Xuy2NW1wbqI",
+          "title": "Мори, кукувичке - Народна песен",
+          "channel": "Mustafa Byalk",
+          "published_at": "2026-07-17T16:00:01Z",
+          "views": 5418,
+          "discovered_at": "2026-08-15T12:58:23.173889+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "1KHS5mzb55g",
+          "title": "Devojko - Bulgarian Song",
+          "channel": "Farya Faraji & World Musicians",
+          "published_at": "2026-07-11T00:39:51Z",
+          "views": 19505,
+          "discovered_at": "2026-08-15T12:58:23.173892+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "DFev-hD12dY",
+          "title": "ГАЛИН Х ДЕСИТА Х МИРЕЛА - ВЪРКОЛАКЪТ /GALIN X DESSITA X MIRELA - WEREWOLF | OFFICIAL 4K VIDEO 2026",
+          "channel": "GALIN",
+          "published_at": "2026-07-08T14:00:33Z",
+          "views": 2708291,
+          "discovered_at": "2026-08-15T12:58:23.173895+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "UC1K_R6Opbs",
+          "title": "Бре, Петрунко | Bre Petrunko | Traditional Bulgarian Folk Song AI Version Remaster",
+          "channel": "Traditional Archive Music",
+          "published_at": "2026-07-06T16:08:36Z",
+          "views": 1097,
+          "discovered_at": "2026-08-15T12:58:23.173897+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "unLxzYYXzoc",
+          "title": "🥂 НАЛИВАЙ , ПРИЯТЕЛКО ! – песен за разбито сърце и истинска приятелка / Nalivai Priqtelko /Folk 2026",
+          "channel": "Фолк Резачка",
+          "published_at": "2026-04-28T16:56:51Z",
+          "views": 1012737,
+          "discovered_at": "2026-08-15T12:58:23.173900+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "b3tLOikocQQ",
+          "title": "Bangaranga",
+          "channel": "DARA - Topic",
+          "published_at": "2026-03-02T20:04:05Z",
+          "views": 10146545,
+          "discovered_at": "2026-08-15T12:58:23.173903+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "ul3PpS5PEII",
+          "title": "🇧🇬 Bulgarian Women's Choir | Mystical Voices of the Rhodope Mountains",
+          "channel": "World Ethno Tradition",
+          "published_at": "2026-08-04T18:57:26Z",
+          "views": 152,
+          "discovered_at": "2026-08-15T12:58:23.173905+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Rd7KKygHCtM",
+          "title": "SIMONA - PRAHOSMUKACHKA / СИМОНА - ПРАХОСМУКАЧКА | OFFICIAL 4k VIDEO 2026",
+          "channel": "Alpha Music Bulgaria",
+          "published_at": "2026-05-23T15:00:31Z",
+          "views": 6327253,
+          "discovered_at": "2026-08-15T12:58:23.173908+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "BrBzz18YoTE",
+          "title": "ADAM - BULEVARDA  / АДАМ - БУЛЕВАРДА | OFFICIAL 4K VIDEO 2026",
+          "channel": "Alpha Music Bulgaria",
+          "published_at": "2026-03-06T16:00:28Z",
+          "views": 1918385,
+          "discovered_at": "2026-08-15T12:58:23.173910+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "6wSQAhgNnys",
+          "title": "Bre Petrunko – The Great Voices of Bulgaria | #shorts #brepetrunko #BulgarianFolk #trending #music",
+          "channel": "Music7Lyric",
+          "published_at": "2026-03-24T13:10:00Z",
+          "views": 98247,
+          "discovered_at": "2026-08-15T12:58:23.173913+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "zcHDFhTwbHI",
+          "title": "Bulgarian & Turkish Party Mix",
+          "channel": "Asoa Music Cannel",
+          "published_at": "2026-07-22T14:00:33Z",
+          "views": 232,
+          "discovered_at": "2026-08-15T12:58:23.173915+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "9Lsp1iVgkIQ",
+          "title": "TORINO & PASHATA X TONI STORARO - BEDNI  &  BOGATI / БЕДНИ И БОГАТИ [OFFICIAL 4K VIDEO]",
+          "channel": "TORINO & PASHATA ",
+          "published_at": "2026-03-21T16:00:06Z",
+          "views": 10420676,
+          "discovered_at": "2026-08-15T12:58:23.173930+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-15T12:58:23.173990+00:00"
     }
   }
 }
