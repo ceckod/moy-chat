@@ -2,7 +2,7 @@
   "schema_version": 1,
   "notes": "Canonical каталог на авторските песни. Генерира се/обновява се от scripts/catalog_bootstrap.py (bootstrap от data/stats-history.json + AI класификация) и от scripts/youtube_discovery_engine.py (нови видеа при daily run). НЕ се редактира ръчно, освен ако не поправяш конкретна грешна класификация на едно поле.",
   "last_bootstrap": "2026-08-14T07:20:41.453294+00:00",
-  "last_updated": "2026-08-14T18:20:03.504672+00:00",
+  "last_updated": "2026-08-15T04:18:07.963322+00:00",
   "tracks": [
     {
       "id": "track_cpxqhiJh9gQ",
@@ -35,7 +35,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504471+00:00",
+      "classified_at": "2026-08-15T04:18:07.963121+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -52,7 +52,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504477+00:00",
+      "classified_at": "2026-08-15T04:18:07.963148+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -69,7 +69,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504483+00:00",
+      "classified_at": "2026-08-15T04:18:07.963157+00:00",
       "distribution": "distrokid"
     },
     {
@@ -86,7 +86,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504487+00:00",
+      "classified_at": "2026-08-15T04:18:07.963163+00:00",
       "distribution": "distrokid"
     },
     {
@@ -103,7 +103,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504496+00:00",
+      "classified_at": "2026-08-15T04:18:07.963176+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -137,7 +137,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504512+00:00",
+      "classified_at": "2026-08-15T04:18:07.963202+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -154,7 +154,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504517+00:00",
+      "classified_at": "2026-08-15T04:18:07.963211+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -171,7 +171,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504522+00:00",
+      "classified_at": "2026-08-15T04:18:07.963218+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -205,7 +205,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504536+00:00",
+      "classified_at": "2026-08-15T04:18:07.963230+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -222,7 +222,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504545+00:00",
+      "classified_at": "2026-08-15T04:18:07.963242+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -239,7 +239,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504553+00:00",
+      "classified_at": "2026-08-15T04:18:07.963252+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -307,7 +307,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504604+00:00",
+      "classified_at": "2026-08-15T04:18:07.963259+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -324,7 +324,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504608+00:00",
+      "classified_at": "2026-08-15T04:18:07.963264+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -341,7 +341,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504613+00:00",
+      "classified_at": "2026-08-15T04:18:07.963272+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -358,7 +358,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504628+00:00",
+      "classified_at": "2026-08-15T04:18:07.963291+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -375,7 +375,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504637+00:00",
+      "classified_at": "2026-08-15T04:18:07.963303+00:00",
       "distribution": "distrokid"
     },
     {
@@ -443,7 +443,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504658+00:00",
+      "classified_at": "2026-08-15T04:18:07.963309+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -477,7 +477,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504666+00:00",
+      "classified_at": "2026-08-15T04:18:07.963314+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -494,7 +494,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-14T18:20:03.504670+00:00",
+      "classified_at": "2026-08-15T04:18:07.963319+00:00",
       "distribution": "channel-upload"
     }
   ]
