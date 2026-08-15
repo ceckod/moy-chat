@@ -954,7 +954,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T13:34:26.408944+00:00"
+      "last_search_at": "2026-08-15T15:58:06.538260+00:00"
     },
     "pop": {
       "candidates": [
@@ -1297,9 +1297,21 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "B8E6iutAdxc",
+          "title": "ABBA Reunion Tribute Show Reunion #ABBA #70sDisco #PopMusic #shortsofrock",
+          "channel": "Shorts Of Rock",
+          "published_at": "2026-08-12T16:59:08Z",
+          "views": 87486,
+          "discovered_at": "2026-08-15T15:58:07.356149+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T13:34:28.231234+00:00"
+      "last_search_at": "2026-08-15T15:58:07.356230+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1664,9 +1676,39 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "uUCJ-kD9Gks",
+          "title": "🔥REGGAETON MIX🔥| Music Remix 2026 | Nonstop Dance Party Latin Hits .V174",
+          "channel": "LIK MUSIC ",
+          "published_at": "2026-08-15T12:59:53Z",
+          "views": 448,
+          "discovered_at": "2026-08-15T15:58:08.997224+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "fawkleRYiuM",
+          "title": "Ozuna – Te Ame Sin Medidas (Estreno Oficial 2026 | Reggaetón Emocional)",
+          "channel": "Flow Beats",
+          "published_at": "2026-03-14T15:00:06Z",
+          "views": 2633228,
+          "discovered_at": "2026-08-15T15:58:08.997236+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "VPNmjBKLQgw",
+          "title": "Reggaeton mix 2026🔥 Ozuna, Bad Bunny, Maluma, CNCO, Cardi B, Nicky Jam,J Balvin🔥 MIX LO NUEVO 2026",
+          "channel": "Reggaeton Latino Mix",
+          "published_at": "2026-08-07T19:23:06Z",
+          "views": 64587,
+          "discovered_at": "2026-08-15T15:58:08.997240+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T13:34:29.855494+00:00"
+      "last_search_at": "2026-08-15T15:58:08.997289+00:00"
     },
     "dance": {
       "candidates": [
@@ -2127,9 +2169,21 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "n5VcjgY4bb8",
+          "title": "BRAINROT Baby Dance - Feel the Vibe (Music Video 4k HD)",
+          "channel": "Vik4S",
+          "published_at": "2026-04-02T15:06:14Z",
+          "views": 4364851,
+          "discovered_at": "2026-08-15T15:58:09.752534+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T13:34:30.624093+00:00"
+      "last_search_at": "2026-08-15T15:58:09.752607+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2586,9 +2640,19 @@
           "used_in": [
             "Български хип-хоп"
           ]
+        },
+        {
+          "video_id": "dE5jabZKD14",
+          "title": "Дисс бг рапъри",
+          "channel": "U_o_U - Topic",
+          "published_at": "2026-05-13T11:24:56Z",
+          "views": 8,
+          "discovered_at": "2026-08-15T15:58:04.000403+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T13:34:23.211908+00:00"
+      "last_search_at": "2026-08-15T15:58:04.000460+00:00"
     },
     "ai-music": {
       "candidates": [
@@ -2879,7 +2943,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T13:34:24.916993+00:00"
+      "last_search_at": "2026-08-15T15:58:05.826462+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
