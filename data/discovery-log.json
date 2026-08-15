@@ -493,6 +493,57 @@
         "playlistItems.insert",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "88d04590",
+      "started_at": "2026-08-15T04:36:32.076585+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "rap",
+        "pop",
+        "dance"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 6,
+      "tracks_removed": 0,
+      "tracks_reordered": 1,
+      "candidate_searches": 5,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Dance' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 863,
+      "quota_calls": [
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.update",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list"
+      ]
     }
   ]
 }

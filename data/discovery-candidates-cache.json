@@ -401,7 +401,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T04:24:49.707266+00:00"
+      "last_search_at": "2026-08-15T04:36:33.035954+00:00"
     },
     "rap": {
       "candidates": [
@@ -742,9 +742,21 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "mD8r-GH4bi8",
+          "title": "The Best of KAWAGO - Kailanman, Kay Tagal, Paminsan-minsan - Original PINOY RAP - Nonstop 2026",
+          "channel": "Alpha Records",
+          "published_at": "2026-02-18T06:00:56Z",
+          "views": 310870,
+          "discovered_at": "2026-08-15T04:36:33.824608+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:24:53.913586+00:00"
+      "last_search_at": "2026-08-15T04:36:33.824674+00:00"
     },
     "pop": {
       "candidates": [
@@ -1029,9 +1041,33 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "lA4hVdMLWqc",
+          "title": "Paul McCartney’s raw 1987 revenge \"Critics told us pop music WOULD BE FORGOTTEN!\" #shorts #music",
+          "channel": "Zen no Chikara",
+          "published_at": "2026-08-14T20:07:36Z",
+          "views": 2661,
+          "discovered_at": "2026-08-15T04:36:35.342793+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "7ZnWtlvmTTY",
+          "title": "Music Mix 2026 🔥 Trending Music 🎧 The Weeknd Bruno Mars Ed Sheeran Billie Eilish Sombr Drake Musique",
+          "channel": "Revive Music",
+          "published_at": "2026-06-13T09:22:47Z",
+          "views": 89028,
+          "discovered_at": "2026-08-15T04:36:35.342806+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:24:56.126252+00:00"
+      "last_search_at": "2026-08-15T04:36:35.342861+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1350,7 +1386,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T04:24:59.211018+00:00"
+      "last_search_at": "2026-08-15T04:36:37.828297+00:00"
     },
     "dance": {
       "candidates": [
@@ -1633,8 +1669,10 @@
           "published_at": "2026-02-19T08:32:52Z",
           "views": 2133161,
           "discovered_at": "2026-08-15T04:25:00.852632+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "-6-ri-H_tec",
@@ -1683,9 +1721,33 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "7qSBaPEk40c",
+          "title": "Digidi Digidi tiktok viral #tiktokviral #dance #dancechallege #shorts",
+          "channel": "Dance Pulse",
+          "published_at": "2026-08-11T01:00:23Z",
+          "views": 298215,
+          "discovered_at": "2026-08-15T04:36:38.440445+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "d6ePXmFKrnE",
+          "title": "🔥NEW VIRAL DISCO REMIX 2026 - TIKTOK MASHUP TRENDING BUDOTS NONSTOP🇵🇭 & MORE.....",
+          "channel": "DjChoijay Remix",
+          "published_at": "2026-06-19T21:30:39Z",
+          "views": 621372,
+          "discovered_at": "2026-08-15T04:36:38.440473+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:25:00.852715+00:00"
+      "last_search_at": "2026-08-15T04:36:38.440534+00:00"
     }
   }
 }
