@@ -427,6 +427,72 @@
         "search.list",
         "videos.list"
       ]
+    },
+    {
+      "run_id": "88c2a9ec",
+      "started_at": "2026-08-15T04:24:48.654153+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "r-b",
+        "rap",
+        "pop",
+        "reggaeton",
+        "dance"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 15,
+      "tracks_removed": 0,
+      "tracks_reordered": 1,
+      "candidate_searches": 5,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'R&B' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Reggaeton' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Dance' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 1315,
+      "quota_calls": [
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.update",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list"
+      ]
     }
   ]
 }
