@@ -832,9 +832,69 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "W3EDlWKUnw4",
+          "title": "Fatt Smaxk - Butta B (Official Music Video) [Dir By Kharkee]",
+          "channel": "Fatt Smaxk",
+          "published_at": "2026-04-17T21:00:06Z",
+          "views": 13614663,
+          "discovered_at": "2026-08-15T12:20:32.549445+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "0VufauIk2yo",
+          "title": "BabyChiefDoit - Game Six (Official Music Video)",
+          "channel": "BabyChiefDoit",
+          "published_at": "2026-06-03T20:13:51Z",
+          "views": 2078065,
+          "discovered_at": "2026-08-15T12:20:32.549448+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "lphL0yu5_fA",
+          "title": "FullyChop - FRIENDLY FIRE (Official Music Video)",
+          "channel": "FullyChop",
+          "published_at": "2026-06-13T21:47:36Z",
+          "views": 3115429,
+          "discovered_at": "2026-08-15T12:20:32.549453+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "7MvZslKjUf8",
+          "title": "Shyne, Barrington Levy - Bad Boyz (Official Video) [4K]",
+          "channel": "Bad Boy Entertainment",
+          "published_at": "2026-05-01T16:00:24Z",
+          "views": 1385203,
+          "discovered_at": "2026-08-15T12:20:32.549455+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "C_OiWCF4zE0",
+          "title": "NoCap - Leverage [Official Music Video]",
+          "channel": "NoCap",
+          "published_at": "2026-06-05T21:00:02Z",
+          "views": 3232953,
+          "discovered_at": "2026-08-15T12:20:32.549457+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:07:55.849921+00:00"
+      "last_search_at": "2026-08-15T12:20:32.549511+00:00"
     },
     "pop": {
       "candidates": [
@@ -1153,9 +1213,21 @@
           "discovered_at": "2026-08-15T12:07:56.410748+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "7BsUHp6jZOo",
+          "title": "2000s–2010s Pop Mix | Best Throwback Hits (Nonstop Party Mix)",
+          "channel": "Bryan Neville",
+          "published_at": "2026-04-24T06:43:34Z",
+          "views": 882039,
+          "discovered_at": "2026-08-15T12:20:36.140412+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:07:56.410805+00:00"
+      "last_search_at": "2026-08-15T12:20:36.140469+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1522,7 +1594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:08:01.994164+00:00"
+      "last_search_at": "2026-08-15T12:20:39.987154+00:00"
     },
     "dance": {
       "candidates": [
@@ -1903,9 +1975,31 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "y2njcNWs9nk",
+          "title": "NEW VIRAL BUDOTS REMIX 2026 - NONSTOP TIKTOK DANCE TREND PARTY MIX",
+          "channel": "DJ EJ REMIX",
+          "published_at": "2026-07-22T00:00:32Z",
+          "views": 1761451,
+          "discovered_at": "2026-08-15T12:20:40.685513+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Q1JPr0tDcdA",
+          "title": "시노부 BAD‼️#춤추는은빈#kpop#dance#music#춤추는곰돌#춤추는곰돌의랜덤댄스 #춤추는곰돌의타이머댄스#tiktok#구독#최산#bad#청주#ateez#afstarz",
+          "channel": "춤추는은빈",
+          "published_at": "2026-08-15T00:26:54Z",
+          "views": 8606,
+          "discovered_at": "2026-08-15T12:20:40.685534+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:08:03.508117+00:00"
+      "last_search_at": "2026-08-15T12:20:40.685595+00:00"
     },
     "unknown": {
       "candidates": [
@@ -1940,8 +2034,10 @@
           "published_at": "2026-05-13T00:00:01Z",
           "views": 1420188,
           "discovered_at": "2026-08-15T12:07:48.024091+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "TT5xXItb7X8",
@@ -2026,8 +2122,10 @@
           "published_at": "2026-08-15T04:00:14Z",
           "views": 15599,
           "discovered_at": "2026-08-15T12:07:48.024114+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "tDT8SePVvI8",
@@ -2046,8 +2144,10 @@
           "published_at": "2026-05-30T10:06:34Z",
           "views": 841776,
           "discovered_at": "2026-08-15T12:07:48.024125+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "HrjjLin0a1k",
@@ -2056,8 +2156,10 @@
           "published_at": "2026-08-14T03:40:12Z",
           "views": 34545,
           "discovered_at": "2026-08-15T12:07:48.024128+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "p2132NKSBeM",
@@ -2066,8 +2168,10 @@
           "published_at": "2026-08-09T00:30:09Z",
           "views": 598623,
           "discovered_at": "2026-08-15T12:07:48.024131+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         }
       ],
       "last_search_at": "2026-08-15T12:07:48.024177+00:00"
@@ -2093,8 +2197,10 @@
           "published_at": "2026-04-26T14:35:06Z",
           "views": 626089,
           "discovered_at": "2026-08-15T12:07:52.625346+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "asFpIc4c0GU",
@@ -2103,8 +2209,10 @@
           "published_at": "2026-03-17T01:00:06Z",
           "views": 2032501,
           "discovered_at": "2026-08-15T12:07:52.625350+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "XQkfUKvX5mA",
@@ -2167,8 +2275,10 @@
           "published_at": "2026-03-30T05:45:05Z",
           "views": 1070561,
           "discovered_at": "2026-08-15T12:07:52.625373+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "tagUEdefXS8",
@@ -2221,8 +2331,10 @@
           "published_at": "2026-08-12T15:00:37Z",
           "views": 41142,
           "discovered_at": "2026-08-15T12:07:52.625393+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         },
         {
           "video_id": "QwjsrKsuJfM",
@@ -2231,8 +2343,10 @@
           "published_at": "2026-04-11T06:31:18Z",
           "views": 3108426,
           "discovered_at": "2026-08-15T12:07:52.625397+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
       "last_search_at": "2026-08-15T12:07:52.625449+00:00"
@@ -2268,8 +2382,10 @@
           "published_at": "2026-04-05T16:17:50Z",
           "views": 1538,
           "discovered_at": "2026-08-15T12:07:58.679007+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         },
         {
           "video_id": "B-MRBSarGYY",
@@ -2290,8 +2406,10 @@
           "published_at": "2026-03-07T14:01:30Z",
           "views": 296481,
           "discovered_at": "2026-08-15T12:07:58.679012+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         },
         {
           "video_id": "6ahPbpvobms",
@@ -2366,8 +2484,10 @@
           "published_at": "2026-03-20T16:30:31Z",
           "views": 1660469,
           "discovered_at": "2026-08-15T12:07:58.679027+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         },
         {
           "video_id": "RcH3XFADq-8",
@@ -2396,8 +2516,10 @@
           "published_at": "2026-03-02T20:04:05Z",
           "views": 10144683,
           "discovered_at": "2026-08-15T12:07:58.679035+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         }
       ],
       "last_search_at": "2026-08-15T12:07:58.679071+00:00"
