@@ -729,6 +729,9 @@ def _run(cfg, dry_run, run_log):
     if not releases_video_ids:
         log("  ⚠ Releases списъкът е празен/недостъпен — self-track insertion ще бъде пропуснат този run "
             "(няма да се вкарват мои песни, докато не се оправи).")
+    else:
+        log(f"  ℹ️ Releases пул (self-track source of truth): {len(releases_video_ids)} video ID-та "
+            f"заредени от {cfg.get('releases_url', '(няма url)')}.")
 
     log("→ Синхронизирам каталога с нови видеа от канала...")
     added_count, catalog = sync_new_tracks()
@@ -745,6 +748,15 @@ def _run(cfg, dry_run, run_log):
     for cluster_key, cluster in clusters.items():
         label = cluster["label"]
         log(f"\n── Клъстер: {label} ({len(cluster['tracks'])} мои песни) ──")
+        if releases_video_ids:
+            eligible = [t for t in cluster["tracks"] if t["youtube_video_id"] in releases_video_ids]
+            not_eligible = [t for t in cluster["tracks"] if t["youtube_video_id"] not in releases_video_ids]
+            log(f"    ℹ️ Self-track pool за '{label}': {len(eligible)}/{len(cluster['tracks'])} "
+                f"песни са в Releases таба.")
+            if not_eligible:
+                sample = ", ".join(t.get("title", t["youtube_video_id"])[:40] for t in not_eligible[:5])
+                log(f"    ℹ️ НЕ са в Releases (значи няма да се self-insert-ват): {sample}"
+                    + (" ..." if len(not_eligible) > 5 else ""))
 
         entry, is_new = find_or_create_playlist(cluster_key, label, state, yt, dry_run, cfg)
         if entry is None:

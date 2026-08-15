@@ -1,14 +1,8 @@
 CDB UPDATE REPORT
-Timestamp: 20260815-114419
+Timestamp: 20260815-121842
 
 Changed:
-  MODULE-MAP.md
-  README.md
-  update_report.txt
-  data/playlists-state.json
-  data/stats-history.json
-  data/discovery-candidates-cache.json
-  data/discovery-log.json
+  scripts/youtube_discovery_engine.py
 
 Added:
   none
@@ -17,35 +11,148 @@ Removed:
   none
 
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
+  app.js
+  config.json
   nav.js
   step1.js
   ui-bootstrap.js
+  sw.js
+  load-app.mjs
   step4.js
+  site-ai.html
+  CDB-Dashboard.md
+  index.html
   step3.js
+  #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
+  ai.html
   ai-helpers.js
   storage.js
+  .gitignore
+  vault-keys.test.mjs
   project-archive.js
   app-state.js
+  package.json
   quick-upload.js
   ai-call-log.js
+  update_engine.py
+  app-state.test.mjs
   viral-lab.js
   PROJECT_STATE.md
   ai-cache.js
+  aichat.html
+  MODULE-MAP.md
+  ARCHITECTURE.md
   Технически-одит-CDB-Dashboard.md
+  README.md
   quota-tracker.js
+  site-ai-agent.html
+  AUDIT_PROGRESS.md
   step2.js
+  update_report.txt
   model-pref.js
+  visualizer.html
   gemini-validator.js
   track-record.js
   ai-provider-order.js
   REMOVE_MISSING
   system-update.js
   lyrics-history.js
+  manifest.json
   settings.js
   stats.js
   prefs.js
+  incoming/.gitkeep
+  incoming/README.md
+  helpers/load-app.mjs
+  ai-model-finder/app.js
+  ai-model-finder/worker.js
+  ai-model-finder/index.html
+  ai-model-finder/keys.json
+  ai-model-finder/scraper.mjs
+  ai-model-finder/check-keys.mjs
+  ai-model-finder/README.md
+  ai-model-finder/ai-models.json
+  js/suno-preview.js
+  js/nav.js
+  js/step1.js
+  js/ui-bootstrap.js
+  js/step4.js
+  js/release-roadmap.js
+  js/step3.js
+  js/niche-data-sources.js
+  js/ai-helpers.js
+  js/storage.js
+  js/auth-gate.js
+  js/project-archive.js
+  js/system-log.js
+  js/app-state.js
+  js/network.js
+  js/quick-upload.js
+  js/agent-roster.js
+  js/ai-call-log.js
+  js/viral-lab.js
+  js/ai-cache.js
+  js/quota-tracker.js
+  js/niche-scoring.js
+  js/niche-toolkit.js
+  js/step2.js
+  js/lyrics-humanizer.js
+  js/model-pref.js
+  js/app-log.js
+  js/gemini-validator.js
+  js/track-record.js
+  js/ai-provider-order.js
+  js/system-test.js
+  js/system-update.js
+  js/lyrics-history.js
+  js/settings.js
+  js/youtube.js
+  js/stats.js
+  js/prefs.js
+  js/youtube-discovery.js
+  data/trends-history.json
   data/releases-catalog-cache.json
+  data/playlists-state.json
+  data/stats-history.json
+  data/discovered-niches.json
+  data/niche-scores-history.json
+  data/discovery-candidates-cache.json
+  data/track-performance.json
+  data/discovery-config.json
+  data/discovery-dry-run-preview.json
+  data/catalog.json
+  data/discovery-log.json
+  test/load-network.mjs
+  test/app-state.test.mjs
+  test/providers-fallback.test.mjs
+  test/load-lyrics-humanizer.mjs
+  test/lyrics-humanizer.test.mjs
+  test/network.test.mjs
+  test/load-niche-scoring.mjs
+  test/load-provider.mjs
+  test/niche-scoring.test.mjs
   drafts/ВРЕМЕННА ПАПКА.txt
+  drafts/#U0412#U0420#U0415#U041c#U0415#U041d#U041d#U0410 #U041f#U0410#U041f#U041a#U0410.txt
+  scripts/discover_niches.py
+  scripts/_youtube_common.py
+  scripts/catalog_bootstrap.py
+  scripts/youtube_oauth_bootstrap.py
+  scripts/clock-and-keys.js
+  scripts/track_niche_scores.py
+  scripts/cleanup_dead_files.py
+  scripts/_secret_scan.py
+  scripts/track_stats.py
+  scripts/track_trends.py
+  js/providers/gemini.js
+  js/providers/openrouter.js
+  js/providers/fallback-loop.js
+  js/providers/claude.js
+  js/providers/code-logo.js
+  js/providers/subtitles.js
+  js/providers/model-finder.js
+  js/providers/pollinations-image.js
+  js/ui/toast.js
+  js/ui/guard-click.js
 
 Critical files check:
   PASS
