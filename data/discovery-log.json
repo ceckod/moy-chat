@@ -742,6 +742,54 @@
         "playlistItems.insert",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "01818d12",
+      "started_at": "2026-08-15T12:33:57.228457+00:00",
+      "dry_run": true,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "unknown",
+        "ai-music",
+        "rap",
+        "pop",
+        "bulgarian-pop",
+        "dance"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 7,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 715,
+      "quota_calls": [
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list"
+      ]
     }
   ]
 }
