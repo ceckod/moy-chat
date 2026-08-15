@@ -196,8 +196,20 @@ def _extract_json(raw: str):
     return json.loads(raw)
 
 
+def _env(name):
+    """os.environ.get(), но с .strip() — GitHub Secrets полета понякога
+    носят невидим whitespace/нов ред при paste (напр. от notes app), което
+    Python отказва да сложи в HTTP header ('Invalid header value'). Връща
+    None вместо празен string, за да не се бърка с 'ключът е конфигуриран'."""
+    v = os.environ.get(name)
+    if v is None:
+        return None
+    v = v.strip()
+    return v or None
+
+
 def _call_anthropic(system_prompt, user_prompt, max_tokens):
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = _env("ANTHROPIC_API_KEY")
     if not api_key:
         return None
     body = {
@@ -241,8 +253,8 @@ def _call_openai_compatible(url, api_key, model, system_prompt, user_prompt, max
 
 
 def _call_cloudflare(system_prompt, user_prompt, max_tokens):
-    token = os.environ.get("CF_API_TOKEN")
-    account_id = os.environ.get("CF_ACCOUNT_ID")
+    token = _env("CF_API_TOKEN")
+    account_id = _env("CF_ACCOUNT_ID")
     if not (token and account_id):
         return None
     model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
@@ -261,27 +273,51 @@ def _call_cloudflare(system_prompt, user_prompt, max_tokens):
     return _extract_json(text)
 
 
-# Ред: ЦЕЛИЯТ безплатен арсенал напред (Groq → Mistral → GitHub Models →
-# Cloudflare → Pollinations — огледало на MODEL_FINDER_SOURCE_ORDER в
-# js/providers/model-finder.js), Anthropic последен и само по избор — не
-# бута платения provider пред безплатните, точно обратно на текущото
-# поведение (само Anthropic или нищо). Всеки провайдър без ключ в env се
+def _call_gemini(system_prompt, user_prompt, max_tokens):
+    api_key = _env("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    model = "gemini-2.0-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    body = {
+        "system_instruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+        "generationConfig": {"maxOutputTokens": max_tokens},
+    }
+    req = urllib.request.Request(
+        url, method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    return _extract_json(text)
+
+
+# Ред: ЦЕЛИЯТ безплатен арсенал напред (Groq → Gemini → Mistral → GitHub
+# Models → Cloudflare → Pollinations — огледало на
+# MODEL_FINDER_SOURCE_ORDER в js/providers/model-finder.js), Anthropic
+# последен и само по избор — не бута платения provider пред безплатните.
+# Gemini е сложен веднага след Groq (т.16.08.2026 — "ако Groq гръмне, да
+# мине през Gemini"): изисква GEMINI_API_KEY secret (безплатен ключ от
+# https://aistudio.google.com/apikey). Всеки провайдър без ключ в env се
 # прескача автоматично; Pollinations не иска ключ изобщо.
 _AI_PROVIDER_CHAIN = [
     ("groq", lambda sp, up, mt: (
         _call_openai_compatible("https://api.groq.com/openai/v1/chat/completions",
-                                 os.environ.get("GROQ_API_KEY"), "llama-3.3-70b-versatile", sp, up, mt)
-        if os.environ.get("GROQ_API_KEY") else None
+                                 _env("GROQ_API_KEY"), "llama-3.3-70b-versatile", sp, up, mt)
+        if _env("GROQ_API_KEY") else None
     )),
+    ("gemini", lambda sp, up, mt: _call_gemini(sp, up, mt)),
     ("mistral", lambda sp, up, mt: (
         _call_openai_compatible("https://api.mistral.ai/v1/chat/completions",
-                                 os.environ.get("MISTRAL_API_KEY"), "open-mixtral-8x22b", sp, up, mt)
-        if os.environ.get("MISTRAL_API_KEY") else None
+                                 _env("MISTRAL_API_KEY"), "open-mixtral-8x22b", sp, up, mt)
+        if _env("MISTRAL_API_KEY") else None
     )),
     ("github", lambda sp, up, mt: (
         _call_openai_compatible("https://models.github.ai/inference/chat/completions",
-                                 os.environ.get("GITHUB_MODELS_TOKEN"), "meta-llama-3.3-70b-instruct", sp, up, mt)
-        if os.environ.get("GITHUB_MODELS_TOKEN") else None
+                                 _env("GITHUB_MODELS_TOKEN"), "meta-llama-3.3-70b-instruct", sp, up, mt)
+        if _env("GITHUB_MODELS_TOKEN") else None
     )),
     ("cloudflare", lambda sp, up, mt: _call_cloudflare(sp, up, mt)),
     ("pollinations", lambda sp, up, mt: _call_openai_compatible(
