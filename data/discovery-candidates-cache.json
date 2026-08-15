@@ -906,7 +906,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:33:59.334243+00:00"
+      "last_search_at": "2026-08-15T12:48:47.459798+00:00"
     },
     "pop": {
       "candidates": [
@@ -1239,7 +1239,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:33:59.961737+00:00"
+      "last_search_at": "2026-08-15T12:48:48.075509+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1606,7 +1606,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T12:34:01.094848+00:00"
+      "last_search_at": "2026-08-15T12:48:48.829877+00:00"
     },
     "dance": {
       "candidates": [
@@ -2057,7 +2057,7 @@
           "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T12:34:01.728647+00:00"
+      "last_search_at": "2026-08-15T12:48:49.475659+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2104,8 +2104,10 @@
           "published_at": "2026-08-15T02:37:16Z",
           "views": 828,
           "discovered_at": "2026-08-15T12:07:48.024094+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "SlnyJlBP2kM",
@@ -2162,8 +2164,10 @@
           "published_at": "2026-08-15T09:53:40Z",
           "views": 1632,
           "discovered_at": "2026-08-15T12:07:48.024109+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "WY75i8wpO4I",
@@ -2266,8 +2270,10 @@
           "published_at": "2026-04-16T08:19:32Z",
           "views": 3932035,
           "discovered_at": "2026-08-15T12:33:58.018515+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         },
         {
           "video_id": "TImTKh43wc0",
@@ -2280,9 +2286,21 @@
           "used_in": [
             "Кавър"
           ]
+        },
+        {
+          "video_id": "stjWqCEx5Kw",
+          "title": "Who sang it better - Challenge haaland cover music #haaland #viral #music #duet #challenge #singing",
+          "channel": "covercombat",
+          "published_at": "2026-08-13T16:00:16Z",
+          "views": 157024,
+          "discovered_at": "2026-08-15T12:48:46.265957+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:33:58.018592+00:00"
+      "last_search_at": "2026-08-15T12:48:46.266009+00:00"
     },
     "ai-music": {
       "candidates": [
@@ -2495,9 +2513,69 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "aXy8mQeuObk",
+          "title": "I Was Right About AI",
+          "channel": "Rick Beato",
+          "published_at": "2026-06-18T21:13:17Z",
+          "views": 1487655,
+          "discovered_at": "2026-08-15T12:48:46.841633+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "Jlr8cdXwRMY",
+          "title": "ደሞ ባይኔ መጣህ - Betelhem Dagnachew - Demo Bayne Metah / New Ai cover music 2026 by Zemene - Ante Lij",
+          "channel": "ZEMENE - ZEMA ዘመነ ዜማ",
+          "published_at": "2026-04-19T17:45:06Z",
+          "views": 765569,
+          "discovered_at": "2026-08-15T12:48:46.841638+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "pfdGfcfsZHw",
+          "title": "Damian Marley ft. Billie Eilish - Lost Without You (Official AI Music Video)",
+          "channel": "Muzek",
+          "published_at": "2026-07-27T12:01:29Z",
+          "views": 49102,
+          "discovered_at": "2026-08-15T12:48:46.841645+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "CZe87_w76vQ",
+          "title": "Chris Brown ft. Tyla- Too close AI Song Inspired by Chris Brown & Tyla",
+          "channel": "MUSIC_HUB",
+          "published_at": "2026-05-11T18:00:18Z",
+          "views": 1233013,
+          "discovered_at": "2026-08-15T12:48:46.841660+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "ymr3xX188pI",
+          "title": "RIVER MUD",
+          "channel": "BURNIN' BRIDGES Ai Music - Topic",
+          "published_at": "2026-05-14T23:55:27Z",
+          "views": 159372,
+          "discovered_at": "2026-08-15T12:48:46.841665+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T12:33:58.671731+00:00"
+      "last_search_at": "2026-08-15T12:48:46.841720+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
