@@ -954,7 +954,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T18:59:05.778277+00:00"
+      "last_search_at": "2026-08-15T19:06:40.248749+00:00"
     },
     "pop": {
       "candidates": [
@@ -1309,9 +1309,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "zCMAdGFR8as",
+          "title": "Over You - Daughtry | Pop / R&B Version by Pop Hit Factory",
+          "channel": "Pop Hit Factory",
+          "published_at": "2026-02-17T07:00:44Z",
+          "views": 4039855,
+          "duration_seconds": 265,
+          "discovered_at": "2026-08-15T19:06:41.203203+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T18:59:07.198375+00:00"
+      "last_search_at": "2026-08-15T19:06:41.203301+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2183,7 +2196,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T18:59:10.542439+00:00"
+      "last_search_at": "2026-08-15T19:06:43.570731+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2941,9 +2954,48 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "Lci2vOVVuj0",
+          "title": "Michael Bennett & His Son – A Powerful Father & Son Duet That Will Move You",
+          "channel": "ViNoTunes.Studio",
+          "published_at": "2026-03-30T08:29:42Z",
+          "views": 3512964,
+          "duration_seconds": 316,
+          "discovered_at": "2026-08-15T19:06:37.941972+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "lDPQm6YoiwI",
+          "title": "Avril Lavigne ft. Paramore & Evanescence – Daughters of the Storm (AI music)",
+          "channel": "ECHOX",
+          "published_at": "2026-03-15T18:00:00Z",
+          "views": 186629,
+          "duration_seconds": 343,
+          "discovered_at": "2026-08-15T19:06:37.941979+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "WslbmGCT0nc",
+          "title": "Pashto New Song 2026 | Pashto Ai Latest Songs | پشتو نوی سندری #pashto #pashtosong ",
+          "channel": "Pashto New Songs 2026",
+          "published_at": "2026-07-25T18:13:03Z",
+          "views": 355554,
+          "duration_seconds": 220,
+          "discovered_at": "2026-08-15T19:06:37.941997+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T18:59:04.294205+00:00"
+      "last_search_at": "2026-08-15T19:06:37.942089+00:00"
     },
     "bulgarian-pop": {
       "candidates": [

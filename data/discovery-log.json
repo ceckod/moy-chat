@@ -1199,6 +1199,55 @@
         "playlists.update",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "d96acac8",
+      "started_at": "2026-08-15T19:06:36.215077+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "ai-music",
+        "pop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 4,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 4,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'AI Music' — 2 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Pop' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 616,
+      "quota_calls": [
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }
