@@ -1027,6 +1027,68 @@
         "playlistItems.list",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "b50a11e6",
+      "started_at": "2026-08-15T13:34:22.105009+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "unknown",
+        "ai-music",
+        "rap",
+        "pop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 6,
+      "tracks_removed": 0,
+      "tracks_reordered": 1,
+      "candidate_searches": 6,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'Български хип-хоп' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'AI Music' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Pop' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 970,
+      "quota_calls": [
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.update",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }
