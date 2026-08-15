@@ -43,9 +43,11 @@ enable_auto_removal_of_external_tracks — всички проверени пр�
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import random
 import re
+import subprocess
 import sys
 import uuid
 from collections import defaultdict
@@ -60,6 +62,7 @@ from catalog_bootstrap import sync_new_tracks  # noqa: E402
 
 CONFIG_PATH = DATA_DIR / "discovery-config.json"
 ROOT_CONFIG_PATH = REPO_ROOT / "config.json"
+RELEASES_CACHE_PATH = DATA_DIR / "releases-catalog-cache.json"
 CATALOG_PATH = DATA_DIR / "catalog.json"
 STATE_PATH = DATA_DIR / "playlists-state.json"
 LOG_PATH = DATA_DIR / "discovery-log.json"
@@ -212,6 +215,79 @@ def find_or_create_playlist(cluster_key, cluster_label, state, yt: YouTubeClient
     entry["youtube_playlist_id"] = result["id"]
     log(f"  ✅ Създаден нов playlist: '{name}' ({result['id']})")
     return entry, True
+
+
+# ---------------------------------------------------------------------------
+# RELEASES SOURCE-OF-TRUTH (т. по изрично желание): единственият източник
+# за "кои песни са мои" вече е releases табът на канала
+# (https://www.youtube.com/@handle/releases), НЕ description-marker
+# евристика върху всички ъплоуди. YouTube Data API няма публичен endpoint
+# за този таб (проверено — channelSections.list поддържа само
+# allPlaylists/popularUploads/recentUploads/singlePlaylist/multiplePlaylists
+# и т.н., нищо releases-специфично), затова четем реалната страница през
+# yt-dlp (--flat-playlist, само метаданни, без сваляне на видео).
+# ---------------------------------------------------------------------------
+
+def fetch_releases_video_ids(url):
+    """Връща set() от video ID-та от releases таба, или None при грешка
+    (мрежа/yt-dlp липсва/невалиден отговор) — НИКОГА празен set() при
+    грешка, за да не изтрием случайно целия my_release_pool заради
+    временен проблем с четенето."""
+    try:
+        result = subprocess.run(
+            ["yt-dlp", "--flat-playlist", "--dump-single-json", "--skip-download", "--no-warnings", url],
+            capture_output=True, text=True, timeout=120,
+        )
+    except FileNotFoundError:
+        log("  ⚠ yt-dlp не е инсталиран в средата — releases списъкът не може да се обнови този run.")
+        return None
+    except subprocess.TimeoutExpired:
+        log("  ⚠ yt-dlp timeout при четене на releases таба.")
+        return None
+    if result.returncode != 0:
+        log(f"  ⚠ yt-dlp гръмна (код {result.returncode}) при четене на releases: "
+            f"{(result.stderr or '')[:300]}")
+        return None
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        log("  ⚠ yt-dlp върна невалиден JSON за releases.")
+        return None
+    entries = data.get("entries", []) or []
+    ids = {e["id"] for e in entries if e.get("id")}
+    return ids
+
+
+def load_releases_video_ids(cfg):
+    """TTL-кеширан достъп до releases списъка (data/releases-catalog-cache.json)
+    — не викаме yt-dlp при всеки run, само когато кешът остарее
+    (cfg['releases_cache_ttl_days'])."""
+    cache = load_json(RELEASES_CACHE_PATH, {"fetched_at": None, "video_ids": []})
+    ttl_days = cfg.get("releases_cache_ttl_days", 3)
+    stale = True
+    if cache.get("fetched_at"):
+        try:
+            age = (_now() - datetime.fromisoformat(cache["fetched_at"])).days
+            stale = age >= ttl_days
+        except ValueError:
+            stale = True
+
+    url = cfg.get("releases_url")
+    if not stale:
+        return set(cache["video_ids"])
+    if not url:
+        log("  ⚠ Липсва 'releases_url' в discovery-config.json — ползвам стар кеш "
+            f"({len(cache['video_ids'])} песни), ако има.")
+        return set(cache["video_ids"])
+
+    fresh = fetch_releases_video_ids(url)
+    if fresh is None:
+        log(f"  ⚠ Неуспешен refresh на releases списъка — ползвам стар кеш ({len(cache['video_ids'])} песни).")
+        return set(cache["video_ids"])
+
+    save_json(RELEASES_CACHE_PATH, {"fetched_at": _iso(_now()), "video_ids": sorted(fresh)})
+    log(f"  🔄 Releases списък опреснен от {url} — {len(fresh)} песни.")
+    return fresh
 
 
 # ---------------------------------------------------------------------------
@@ -649,6 +725,11 @@ def _run(cfg, dry_run, run_log):
         log("  ⚠ Липсва youtube_channel_id в config.json — self-exclusion филтърът за "
             "external кандидати НЯМА да работи този run (риск от собствени видеа в discovery резултатите).")
 
+    releases_video_ids = load_releases_video_ids(cfg)
+    if not releases_video_ids:
+        log("  ⚠ Releases списъкът е празен/недостъпен — self-track insertion ще бъде пропуснат този run "
+            "(няма да се вкарват мои песни, докато не се оправи).")
+
     log("→ Синхронизирам каталога с нови видеа от канала...")
     added_count, catalog = sync_new_tracks()
     run_log["new_own_tracks"] = added_count
@@ -702,15 +783,12 @@ def _run(cfg, dry_run, run_log):
                                                       used_globally, excluded_ids,
                                                       needed=cfg.get("external_tracks_per_run", 5))
 
-        # Само реални дистрибутирани релийзи (DistroKid и др. — виж
-        # _detect_distribution() в catalog_bootstrap.py) влизат в пула за
-        # self-track вмъкване. Обикновени видео ъплоуди в канала (Shorts,
-        # visualizer, тийзър) НЕ се броят за "моя песен" тук — те присъстват
-        # в каталога/клъстера за класификация, но discovery playlist-ите
-        # вмъкват само реални пуснати сингли. Ако полето липсва (стар
-        # catalog запис отпреди тази промяна), третираме го permissively
-        # като разрешен, за да не изчезнат съществуващи self-tracks внезапно.
-        my_release_pool = [t for t in cluster["tracks"] if t.get("distribution", "distrokid") != "channel-upload"]
+        # Единствен източник на истина за "моя песен" вече е releases табът
+        # на канала (yt-dlp, кеширан в releases_video_ids по-горе) — НЕ
+        # description-marker евристика. Обикновени видео ъплоуди (Shorts,
+        # visualizer, тийзъри), които не са в releases списъка, никога не
+        # влизат в пула, дори да имат разпозната дистрибуция.
+        my_release_pool = [t for t in cluster["tracks"] if t["youtube_video_id"] in releases_video_ids]
         insert_ops = build_insert_plan(entry, my_release_pool, new_external, cfg)
         reorder_ops = build_reorder_plan(entry, cfg)
         prune_ops = build_prune_plan(entry, cfg)
