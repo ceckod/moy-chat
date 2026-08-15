@@ -834,7 +834,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T11:59:29.117283+00:00"
+      "last_search_at": "2026-08-15T12:07:55.849921+00:00"
     },
     "pop": {
       "candidates": [
@@ -1143,9 +1143,19 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "smIVnaDuGus",
+          "title": "Bruno Mars, Adele, Ed Sheeran, Maroon 5, Dua Lipa, Rihanna, The Weeknd ❣ Billboard Top 50 This Week",
+          "channel": "Top Hits Music",
+          "published_at": "2026-03-11T08:00:06Z",
+          "views": 2096922,
+          "discovered_at": "2026-08-15T12:07:56.410748+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T11:59:29.773000+00:00"
+      "last_search_at": "2026-08-15T12:07:56.410805+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1498,9 +1508,21 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "7hJ00483eN4",
+          "title": "J Balvin, Ryan Castro, DJ Snake - Tonto (Official Video)",
+          "channel": "jbalvinVEVO",
+          "published_at": "2026-02-27T00:00:07Z",
+          "views": 15565360,
+          "discovered_at": "2026-08-15T12:08:01.994093+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T11:59:30.439509+00:00"
+      "last_search_at": "2026-08-15T12:08:01.994164+00:00"
     },
     "dance": {
       "candidates": [
@@ -1869,9 +1891,516 @@
           "discovered_at": "2026-08-15T11:59:31.111348+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "iqawonLefOA",
+          "title": "Party Summer Music Mix 2026 | DJ Club Dance Music 2026 | Best Remixes of Popular Songs 2026 MEGAMIX",
+          "channel": "Dj Silviu M Official",
+          "published_at": "2026-08-01T15:19:18Z",
+          "views": 149160,
+          "discovered_at": "2026-08-15T12:08:03.508053+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T11:59:31.111387+00:00"
+      "last_search_at": "2026-08-15T12:08:03.508117+00:00"
+    },
+    "unknown": {
+      "candidates": [
+        {
+          "video_id": "uGSxkRifGPc",
+          "title": "Faouzia - Unethical (MAPHRA Vocal Cover)",
+          "channel": "MAPHRA",
+          "published_at": "2026-06-05T02:44:55Z",
+          "views": 6643931,
+          "discovered_at": "2026-08-15T12:07:48.024067+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "T9NXQs80TZE",
+          "title": "ORIGINAL SONG vs MEME VERSION",
+          "channel": "AURA - Music",
+          "published_at": "2026-08-05T14:00:00Z",
+          "views": 1114637,
+          "discovered_at": "2026-08-15T12:07:48.024087+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "ah259b_iPps",
+          "title": "Man In The Mirror | Music Travel Love ft. Gatsby (Michael Jackson Cover)",
+          "channel": "Music Travel Love",
+          "published_at": "2026-05-13T00:00:01Z",
+          "views": 1420188,
+          "discovered_at": "2026-08-15T12:07:48.024091+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "TT5xXItb7X8",
+          "title": "Country Roads Take Me Home  #music #johndenver #cover",
+          "channel": "L!PS",
+          "published_at": "2026-08-15T02:37:16Z",
+          "views": 828,
+          "discovered_at": "2026-08-15T12:07:48.024094+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "SlnyJlBP2kM",
+          "title": "Through the Years (Kenny Rogers) - FadeIn Music Cover",
+          "channel": "FadeIn Music",
+          "published_at": "2026-04-23T04:49:16Z",
+          "views": 832552,
+          "discovered_at": "2026-08-15T12:07:48.024097+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "9RhS2F4ubXc",
+          "title": "POV: It's 2021 and you just opened tiktok #nostalgia #2020 #singer #marina #cover",
+          "channel": "MegaGoneFree",
+          "published_at": "2026-08-10T19:55:10Z",
+          "views": 343691,
+          "discovered_at": "2026-08-15T12:07:48.024100+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "9wFaJKncqWw",
+          "title": "кавер SWEET DREAMS",
+          "channel": "Нильзо́ри 𝄢 ",
+          "published_at": "2026-08-14T11:12:51Z",
+          "views": 9289,
+          "discovered_at": "2026-08-15T12:07:48.024103+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "X4a6TWD9oj4",
+          "title": "Aurora - Runaway cover music 🎶 #duet",
+          "channel": "Jay-Music-cover🎵",
+          "published_at": "2026-08-10T15:01:27Z",
+          "views": 52897,
+          "discovered_at": "2026-08-15T12:07:48.024105+00:00",
+          "status": "used",
+          "used_in": [
+            "Кавър"
+          ]
+        },
+        {
+          "video_id": "mw10cw-v8Ig",
+          "title": "10cm - 폰서트 ( #cover )",
+          "channel": "김시원",
+          "published_at": "2026-08-15T09:53:40Z",
+          "views": 1632,
+          "discovered_at": "2026-08-15T12:07:48.024109+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "WY75i8wpO4I",
+          "title": "nungguin km nnton vidio fullnya🥺 #cover #music #jamika #bajidor",
+          "channel": "sakunada studio",
+          "published_at": "2026-08-15T11:29:01Z",
+          "views": 385,
+          "discovered_at": "2026-08-15T12:07:48.024112+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "5acnb2NNbiQ",
+          "title": "Who sang it better - LIFE GOES ON cover #short #haaland #viral #duet #singingchallenge #music",
+          "channel": "covercombat",
+          "published_at": "2026-08-15T04:00:14Z",
+          "views": 15599,
+          "discovered_at": "2026-08-15T12:07:48.024114+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "tDT8SePVvI8",
+          "title": "Akon - Don't Matter (Cover by Katzi Reign)",
+          "channel": "Zero Drop Music Records",
+          "published_at": "2026-05-08T07:00:55Z",
+          "views": 2259894,
+          "discovered_at": "2026-08-15T12:07:48.024117+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "GI6fG5JLjoM",
+          "title": "Top Songs Cover 2026 🎙✨ Hot Hit Pop Playlist | Best Viral Covers & Popular Pop Songs",
+          "channel": "TopWave Music",
+          "published_at": "2026-05-30T10:06:34Z",
+          "views": 841776,
+          "discovered_at": "2026-08-15T12:07:48.024125+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "HrjjLin0a1k",
+          "title": "#kumalala #batidao #viral #music #shorts #fyp #trend #vibes #cover #edit",
+          "channel": "Batidaoemotioncover",
+          "published_at": "2026-08-14T03:40:12Z",
+          "views": 34545,
+          "discovered_at": "2026-08-15T12:07:48.024128+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "p2132NKSBeM",
+          "title": "Empire State Of Mind - Jayz feat. Alicia keys (cover) #shorts ",
+          "channel": "The Songs Factory ",
+          "published_at": "2026-08-09T00:30:09Z",
+          "views": 598623,
+          "discovered_at": "2026-08-15T12:07:48.024131+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-15T12:07:48.024177+00:00"
+    },
+    "ai-music": {
+      "candidates": [
+        {
+          "video_id": "9Txb15fKgjY",
+          "title": "Suno Just Admitted AI Music Has a Problem",
+          "channel": "Bolo’s Hot Takes",
+          "published_at": "2026-08-08T14:01:51Z",
+          "views": 9463,
+          "discovered_at": "2026-08-15T12:07:52.625327+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "V-p9Wxo_uMc",
+          "title": "ጋሻው አዳል \"ማለዳ\" | Gashaw Adal Maleda / New Amharic Cover 2026 Ai cover",
+          "channel": "ZEMENE - ZEMA ዘመነ ዜማ",
+          "published_at": "2026-04-26T14:35:06Z",
+          "views": 626089,
+          "discovered_at": "2026-08-15T12:07:52.625346+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "asFpIc4c0GU",
+          "title": "Top OPM Love Songs 2026 Nonstop Playlist 🎧 | Timeless Covers While You Relax, Study, or Sleep",
+          "channel": "Timeless Vibes",
+          "published_at": "2026-03-17T01:00:06Z",
+          "views": 2032501,
+          "discovered_at": "2026-08-15T12:07:52.625350+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "XQkfUKvX5mA",
+          "title": "You’ve been listening to AI Music and keep falling for it.",
+          "channel": "GetMadz Lite",
+          "published_at": "2026-06-29T14:11:23Z",
+          "views": 305830,
+          "discovered_at": "2026-08-15T12:07:52.625354+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "JtiOwrb7yPo",
+          "title": "Zwo's Prayer for the nation",
+          "channel": "ZWOTHE KEYS - Topic",
+          "published_at": "2026-02-26T13:42:49Z",
+          "views": 5824831,
+          "discovered_at": "2026-08-15T12:07:52.625358+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "KWPOAt0GhmM",
+          "title": "The Supreme Court Just Demonetized AI Generated Music",
+          "channel": "Andrew Chapman Creative",
+          "published_at": "2026-03-17T12:00:00Z",
+          "views": 83559,
+          "discovered_at": "2026-08-15T12:07:52.625362+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "YxOuNQH18Tw",
+          "title": "AI Music Videos Are CRAZY!",
+          "channel": "Steve Terreberry",
+          "published_at": "2026-07-27T21:59:44Z",
+          "views": 199010,
+          "discovered_at": "2026-08-15T12:07:52.625365+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "r3ATahAHPT8",
+          "title": "FAI AU FIKA - Tamaiti Vaitele (AI Music 2026)",
+          "channel": "Samoan Music (Samoan AI music)",
+          "published_at": "2026-03-11T22:56:47Z",
+          "views": 334745,
+          "discovered_at": "2026-08-15T12:07:52.625369+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "S2PSTbA5KeU",
+          "title": "Masterpiece የሆነ ወፌ ላላ Remix  | Wefe Lala Remix Music That is Made using AI",
+          "channel": "DJ Bunny",
+          "published_at": "2026-03-30T05:45:05Z",
+          "views": 1070561,
+          "discovered_at": "2026-08-15T12:07:52.625373+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "tagUEdefXS8",
+          "title": "Raasatthi  Manasula  || Ai Remix Songs | 7by7 Music Style | Version 2",
+          "channel": "Tamil Echo Songs",
+          "published_at": "2026-05-17T16:18:55Z",
+          "views": 1827082,
+          "discovered_at": "2026-08-15T12:07:52.625377+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "qt5g6Tk6hCg",
+          "title": "Suno AI Music Monetization & Revenue Review | Faceless Youtube Monetization With DistroKid",
+          "channel": "AI Guerrilla",
+          "published_at": "2026-07-26T15:30:06Z",
+          "views": 3045,
+          "discovered_at": "2026-08-15T12:07:52.625380+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "oU57YvcgF1c",
+          "title": "Yeshimebet Dubale – የዋልክበት  Emotional Ethiopian AI Cover Music 2026  Classic Love Song",
+          "channel": "EthioSynthAI",
+          "published_at": "2026-06-16T12:00:38Z",
+          "views": 125580,
+          "discovered_at": "2026-08-15T12:07:52.625386+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "2Sp444rBTdw",
+          "title": "THE BEST OF ILOCANO SLOW ROCK VOL.4 | AI MUSIC GENERATED",
+          "channel": "RCMusicAI",
+          "published_at": "2026-02-26T22:26:35Z",
+          "views": 564844,
+          "discovered_at": "2026-08-15T12:07:52.625390+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "OxrQK5aCwhs",
+          "title": "  Urgesa Eshetu – SHAGGAR – New Ethiopian Oromo Music 2026 | AI Generated Oromo Music 2026",
+          "channel": "Michuu AI Music ",
+          "published_at": "2026-08-12T15:00:37Z",
+          "views": 41142,
+          "discovered_at": "2026-08-15T12:07:52.625393+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "QwjsrKsuJfM",
+          "title": "Beautiful Woman – Island Reggae Version | JUKA MUSIC",
+          "channel": "JUKA MUSIC",
+          "published_at": "2026-04-11T06:31:18Z",
+          "views": 3108426,
+          "discovered_at": "2026-08-15T12:07:52.625397+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-15T12:07:52.625449+00:00"
+    },
+    "bulgarian-pop": {
+      "candidates": [
+        {
+          "video_id": "PybjeAvIfck",
+          "title": "CHALGA SUMMER MIX 2026 🔥 Azis, Emanuela, Galena, Fiki | ЧАЛГА СЪМЪР МИКС 2026",
+          "channel": "Chalga Music",
+          "published_at": "2026-05-29T12:00:30Z",
+          "views": 172893,
+          "discovered_at": "2026-08-15T12:07:58.678988+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
+        },
+        {
+          "video_id": "lFRvmtzhewA",
+          "title": "Bulgarian & Turkish Party Hits",
+          "channel": "Asoa Music Cannel",
+          "published_at": "2026-07-25T14:00:35Z",
+          "views": 252,
+          "discovered_at": "2026-08-15T12:07:58.679004+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "jtc8faDvBWM",
+          "title": "VORTEX AI – Огън и Вода (Official Music Video) | Bulgarian Pop 2026",
+          "channel": "Vortex AI",
+          "published_at": "2026-04-05T16:17:50Z",
+          "views": 1538,
+          "discovered_at": "2026-08-15T12:07:58.679007+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "B-MRBSarGYY",
+          "title": "DARA - Bangaranga (Lyrics)",
+          "channel": "MusiCat",
+          "published_at": "2026-05-16T13:00:17Z",
+          "views": 2732592,
+          "discovered_at": "2026-08-15T12:07:58.679009+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
+        },
+        {
+          "video_id": "uoFdod3JfR4",
+          "title": "CHALGA MIX 2026 - ЧАЛГА МИКС 2026 - Fiki, Galena, Azis, Lorena",
+          "channel": "Chalga Music",
+          "published_at": "2026-03-07T14:01:30Z",
+          "views": 296481,
+          "discovered_at": "2026-08-15T12:07:58.679012+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "6ahPbpvobms",
+          "title": "Bulgarian Calga Mix",
+          "channel": "Asoa Music Cannel",
+          "published_at": "2026-08-08T14:00:26Z",
+          "views": 159,
+          "discovered_at": "2026-08-15T12:07:58.679014+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "u7OGtg-BUo8",
+          "title": "Захир и Клариана - Ще Съм Тук | Official Music Video / Bulgarian Turkish & Balkan Vibes 🔥",
+          "channel": "VIRTUAL POPFOLK ",
+          "published_at": "2026-05-16T17:00:06Z",
+          "views": 147782,
+          "discovered_at": "2026-08-15T12:07:58.679016+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
+        },
+        {
+          "video_id": "BeEsAMvhuNc",
+          "title": "Да те жадувам | Bulgarian Love Song 2026 | Emotional Bulgarian Pop | Melancholic Love Music",
+          "channel": "Zvuk Syndicate",
+          "published_at": "2026-08-15T05:00:15Z",
+          "views": 80,
+          "discovered_at": "2026-08-15T12:07:58.679019+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "DCf_fGMTSkY",
+          "title": "Bangaranga (Eurovision)",
+          "channel": "DARA - Topic",
+          "published_at": "2026-05-14T19:02:02Z",
+          "views": 2875900,
+          "discovered_at": "2026-08-15T12:07:58.679021+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
+        },
+        {
+          "video_id": "ABvWeBIUYwM",
+          "title": "🔥 BANGARANGA — Solara Vire | Official Music Video | Bulgarian Pop-Folk Balkan Anthem",
+          "channel": "Solara Vire",
+          "published_at": "2026-05-18T00:34:08Z",
+          "views": 45929,
+          "discovered_at": "2026-08-15T12:07:58.679023+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
+        },
+        {
+          "video_id": "NtmE_AJxujE",
+          "title": "Bulgarian & Turkish Energy Mix",
+          "channel": "Asoa Music Cannel",
+          "published_at": "2026-07-29T14:00:33Z",
+          "views": 304,
+          "discovered_at": "2026-08-15T12:07:58.679025+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "hHkFPh1GchY",
+          "title": "РОКСАНА - Сърце от камък / ROKSANA - Surtse ot kamuk (Official 4K Video)",
+          "channel": "Roksana Music Channel",
+          "published_at": "2026-03-20T16:30:31Z",
+          "views": 1660469,
+          "discovered_at": "2026-08-15T12:07:58.679027+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "RcH3XFADq-8",
+          "title": "Нашата съдба ❤️ | Bulgarian Pop Love Song 2026 | Emotional & Melancholic Romantic Music",
+          "channel": "Velika Sound",
+          "published_at": "2026-08-15T07:00:03Z",
+          "views": 60,
+          "discovered_at": "2026-08-15T12:07:58.679030+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "PGOmYKhU-AU",
+          "title": "Нощта гори (2026) | Bulgarian Pop Folk | Balkan Music [Copyright Free]",
+          "channel": "Universal Sound Lab",
+          "published_at": "2026-05-24T23:00:37Z",
+          "views": 191,
+          "discovered_at": "2026-08-15T12:07:58.679032+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "b3tLOikocQQ",
+          "title": "Bangaranga",
+          "channel": "DARA - Topic",
+          "published_at": "2026-03-02T20:04:05Z",
+          "views": 10144683,
+          "discovered_at": "2026-08-15T12:07:58.679035+00:00",
+          "status": "unused",
+          "used_in": []
+        }
+      ],
+      "last_search_at": "2026-08-15T12:07:58.679071+00:00"
     }
   }
 }
