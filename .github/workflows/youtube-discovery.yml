@@ -20,10 +20,6 @@ permissions:
   contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
 
 concurrency:
-  # Истинската защита срещу два едновременни discovery job-а (виж докстринга
-  # в youtube_discovery_engine.py — GH concurrency е атомарен, git-lock файл
-  # не е). cancel-in-progress: false → втори тригер ИЗЧАКВА, не убива първия
-  # наполовина (важно, за да не оставим playlist в несигурно състояние).
   group: youtube-discovery-engine
   cancel-in-progress: false
 
@@ -40,10 +36,6 @@ jobs:
           python-version: "3.12"
 
       - name: Install yt-dlp
-        # Нужен само за четене на releases таба на канала (единственият
-        # източник на истина за "кои песни са мои" — виж
-        # fetch_releases_video_ids() в youtube_discovery_engine.py).
-        # Не сваля видео, само метаданни (--flat-playlist).
         run: pip install --quiet yt-dlp
 
       - name: Run Discovery Engine
@@ -52,11 +44,6 @@ jobs:
           YOUTUBE_OAUTH_CLIENT_ID: ${{ secrets.YOUTUBE_OAUTH_CLIENT_ID }}
           YOUTUBE_OAUTH_CLIENT_SECRET: ${{ secrets.YOUTUBE_OAUTH_CLIENT_SECRET }}
           YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_REFRESH_TOKEN }}
-          # AI "арсенал" за класификация (жанр/поджанр/mood/BPM) — виж
-          # call_ai_json() в scripts/_youtube_common.py. Всеки от тези е
-          # ПО ИЗБОР поотделно — колкото повече добавиш, толкова по-рядко
-          # engine-ът пада на грубия heuristic keyword fallback. Pollinations
-          # не иска ключ изобщо, затова винаги има поне един работещ път.
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_MODELS_TOKEN }}
@@ -75,10 +62,15 @@ jobs:
 
       - name: Stage only expected data files
         run: |
-          git add -f \
-            data/catalog.json data/playlists-state.json data/discovery-log.json \
-            data/track-performance.json data/discovery-candidates-cache.json \
-            data/discovery-dry-run-preview.json data/releases-catalog-cache.json 2>/dev/null || true
+          for f in data/catalog.json data/playlists-state.json data/discovery-log.json \
+                   data/track-performance.json data/discovery-candidates-cache.json \
+                   data/discovery-dry-run-preview.json data/releases-catalog-cache.json; do
+            if [ -f "$f" ]; then
+              git add -f "$f"
+            else
+              echo "ℹ️  Прескачам (не съществува все още): $f"
+            fi
+          done
           echo "── git status (трябва да съдържа само data/*.json) ──"
           git status --short
           echo "── staged diff stat ──"
@@ -106,5 +98,3 @@ jobs:
             git commit -m "🎧 Discovery Engine run ($(date -u +%Y-%m-%d))"
             git push
           fi
-
-          
