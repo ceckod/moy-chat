@@ -399,9 +399,75 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "YWm5zviqs60",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-15T11:02:45Z",
+          "views": 2145,
+          "discovered_at": "2026-08-15T11:59:28.568869+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "g8QIXx0CKG0",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-15T11:19:12Z",
+          "views": 10851,
+          "discovered_at": "2026-08-15T11:59:28.568885+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "yI_-viGASDU",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-15T08:09:18Z",
+          "views": 372,
+          "discovered_at": "2026-08-15T11:59:28.568888+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "CQ_riKVRXQ8",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-15T09:24:39Z",
+          "views": 172,
+          "discovered_at": "2026-08-15T11:59:28.568892+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "bC89a3fTTZY",
+          "title": "Best of R&B Classics 90s & 2000s ~ Old School R&B Music Ever 💿 Ne-Yo, Usher, Akon, Rihanna, Nelly",
+          "channel": "R&B For Life",
+          "published_at": "2026-08-15T08:40:39Z",
+          "views": 2834,
+          "discovered_at": "2026-08-15T11:59:28.568894+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "e6xYffnZOqA",
+          "title": "B(ILY) - R&B HIP HOP | Drake, Usher, Tyga, 50 Cent,  Tinashe",
+          "channel": "NBA MUSIC",
+          "published_at": "2026-05-07T07:35:46Z",
+          "views": 409042,
+          "discovered_at": "2026-08-15T11:59:28.568905+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:36:33.035954+00:00"
+      "last_search_at": "2026-08-15T11:59:28.568950+00:00"
     },
     "rap": {
       "candidates": [
@@ -754,9 +820,21 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "xBjqznJ5ZB8",
+          "title": "Claressa Shields is back with a rap music video ahead of her fight🥊",
+          "channel": "FIFI MILD TV",
+          "published_at": "2026-08-14T02:16:16Z",
+          "views": 46299,
+          "discovered_at": "2026-08-15T11:59:29.117246+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:36:33.824674+00:00"
+      "last_search_at": "2026-08-15T11:59:29.117283+00:00"
     },
     "pop": {
       "candidates": [
@@ -1067,7 +1145,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T04:36:35.342861+00:00"
+      "last_search_at": "2026-08-15T11:59:29.773000+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1384,9 +1462,45 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "XLGKH6L93F0",
+          "title": "Maisak, Feid, Maluma - Te Entiendo (Remix)",
+          "channel": "Maisak",
+          "published_at": "2026-04-30T00:00:06Z",
+          "views": 40306758,
+          "discovered_at": "2026-08-15T11:59:30.439464+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "SJBoRe0qNos",
+          "title": "Maria Becerra, Jere Klein, Lucky Brown, XROSS - QUÉ GANAS DE COMERTE (Official Video)",
+          "channel": "Maria Becerra",
+          "published_at": "2026-03-27T00:00:06Z",
+          "views": 26973904,
+          "discovered_at": "2026-08-15T11:59:30.439472+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "9Sak8UbzHMU",
+          "title": "SAOCO PAPI 8 - Reggaeton Old (Dj Linda)",
+          "channel": "DJ LINDA",
+          "published_at": "2026-03-12T23:00:06Z",
+          "views": 905146,
+          "discovered_at": "2026-08-15T11:59:30.439474+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T04:36:37.828297+00:00"
+      "last_search_at": "2026-08-15T11:59:30.439509+00:00"
     },
     "dance": {
       "candidates": [
@@ -1745,9 +1859,19 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "lPLI73pF9QM",
+          "title": "HAWAK MO ANG BEAT NONSTOP DANCE REMIX THE BEST COLLECTION",
+          "channel": "Mister Looper TV",
+          "published_at": "2026-05-01T22:00:55Z",
+          "views": 1341198,
+          "discovered_at": "2026-08-15T11:59:31.111348+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-15T04:36:38.440534+00:00"
+      "last_search_at": "2026-08-15T11:59:31.111387+00:00"
     }
   }
 }
