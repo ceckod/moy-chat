@@ -47,6 +47,13 @@ API_BASE = "https://www.googleapis.com/youtube/v3"
 OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 
+# Python default User-Agent ("Python-urllib/3.x") е позната бот сигнатура,
+# която Cloudflare-защитени endpoint-и (Groq, Pollinations и др.) блокират
+# автоматично с 403 code 1010 — виж discovery-log диагностиката от
+# 15.08.2026. Слагаме нормален browser-like UA на всяка изходяща AI заявка.
+_UA_HEADER = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 
@@ -220,7 +227,7 @@ def _call_anthropic(system_prompt, user_prompt, max_tokens):
     }
     req = urllib.request.Request(
         ANTHROPIC_URL, method="POST", data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", "x-api-key": api_key, "anthropic-version": "2023-06-01"},
+        headers={"Content-Type": "application/json", "x-api-key": api_key, "anthropic-version": "2023-06-01", **_UA_HEADER},
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read().decode("utf-8"))
@@ -232,7 +239,7 @@ def _call_openai_compatible(url, api_key, model, system_prompt, user_prompt, max
     """Общ извикващ за Groq/Mistral/GitHub Models/Pollinations — всичките
     са OpenAI-съвместими chat/completions endpoint-и (същия принцип като
     js/providers/model-finder.js в браузъра)."""
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", **_UA_HEADER}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     if extra_headers:
@@ -265,7 +272,7 @@ def _call_cloudflare(system_prompt, user_prompt, max_tokens):
     ]}
     req = urllib.request.Request(
         url, method="POST", data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}", **_UA_HEADER},
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read().decode("utf-8"))
@@ -286,7 +293,7 @@ def _call_gemini(system_prompt, user_prompt, max_tokens):
     }
     req = urllib.request.Request(
         url, method="POST", data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", **_UA_HEADER},
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read().decode("utf-8"))
