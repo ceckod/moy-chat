@@ -39,6 +39,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install yt-dlp
+        # Нужен само за четене на releases таба на канала (единственият
+        # източник на истина за "кои песни са мои" — виж
+        # fetch_releases_video_ids() в youtube_discovery_engine.py).
+        # Не сваля видео, само метаданни (--flat-playlist).
+        run: pip install --quiet yt-dlp
+
       - name: Run Discovery Engine
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -71,7 +78,7 @@ jobs:
           git add -f \
             data/catalog.json data/playlists-state.json data/discovery-log.json \
             data/track-performance.json data/discovery-candidates-cache.json \
-            data/discovery-dry-run-preview.json 2>/dev/null || true
+            data/discovery-dry-run-preview.json data/releases-catalog-cache.json 2>/dev/null || true
           echo "── git status (трябва да съдържа само data/*.json) ──"
           git status --short
           echo "── staged diff stat ──"
