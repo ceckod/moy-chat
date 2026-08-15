@@ -734,7 +734,7 @@ def _run(cfg, dry_run, run_log):
             f"заредени от {cfg.get('releases_url', '(няма url)')}.")
 
     log("→ Синхронизирам каталога с нови видеа от канала...")
-    added_count, catalog = sync_new_tracks()
+    added_count, catalog = sync_new_tracks(releases_video_ids)
     run_log["new_own_tracks"] = added_count
 
     clusters = cluster_catalog(catalog["tracks"], cfg["min_cluster_size"])

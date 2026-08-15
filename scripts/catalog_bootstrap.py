@@ -27,9 +27,13 @@ confidence="low", вместо да измисля стойности или д�
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -37,6 +41,48 @@ from _youtube_common import (  # noqa: E402
     DATA_DIR, REPO_ROOT, QuotaBudget, YouTubeClient,
     call_ai_json, load_json, log, save_json,
 )
+
+_YT_API_BASE = "https://www.googleapis.com/youtube/v3"
+
+
+def _fetch_video_metadata(video_ids):
+    """Директен videos.list за конкретни video ID-та (batch до 50 наведнъж),
+    независимо от data/stats-history.json snapshot-а. Ползва се за видеа,
+    които са в Releases таба (т.40 — source of truth за собственост), но
+    YouTube още не ги показва в обикновения uploads списък на канала
+    (типично забавяне при DistroKid/дистрибуторски upload-и).
+    Връща dict video_id -> метаданни в същия формат като load_channel_videos(),
+    или {} при липсващ API ключ/грешка (никога не гърми целия sync).
+    """
+    api_key = os.environ.get("YOUTUBE_API_KEY")
+    if not api_key:
+        log("  ⚠ Липсва YOUTUBE_API_KEY — не мога да изтегля метаданни директно за Releases видеа.")
+        return {}
+
+    video_ids = list(video_ids)
+    result = {}
+    for i in range(0, len(video_ids), 50):
+        chunk = video_ids[i:i + 50]
+        params = {"part": "snippet", "id": ",".join(chunk), "key": api_key}
+        query = "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items())
+        url = f"{_YT_API_BASE}/videos?{query}"
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as e:
+            log(f"  ⚠ videos.list грешка при директно теглене на Releases видеа: {e}")
+            continue
+        for item in data.get("items", []):
+            snippet = item.get("snippet", {})
+            result[item["id"]] = {
+                "video_id": item["id"],
+                "title": snippet.get("title", ""),
+                "description": snippet.get("description", ""),
+                "tags": snippet.get("tags", []),
+                "published_at": snippet.get("publishedAt", ""),
+            }
+    return result
 
 # DistroKid (и повечето дистрибутори) слагат стандартен ред в описанието
 # на всяко видео, което разпространяват към YouTube — това е единственият
@@ -160,15 +206,43 @@ def classify_videos(videos):
     return results
 
 
-def sync_new_tracks():
+def sync_new_tracks(releases_video_ids=None):
     """Инкрементален sync: добавя в catalog.json само видеата, които ги
-    няма още (по video_id). Връща брой новодобавени записи."""
+    няма още (по video_id). Връща брой новодобавени записи.
+
+    releases_video_ids (т.40): ако е подадено (set от video ID-та от
+    Releases таба на канала), ВСЯКО от тях, което липсва в каталога, се
+    добавя ДИРЕКТНО чрез videos.list — дори ако все още не се появява в
+    обикновения списък с видеа на канала (data/stats-history.json
+    snapshot). Причината: Releases табът е по-надежден и по-бърз източник
+    на истина за собственост от чакането YouTube да покаже DistroKid
+    upload-а и в редовния uploads списък (понякога отнема дни). Тези
+    записи се маркират distribution=\"distrokid\" директно, без да
+    минават през description-marker heuristика.
+    """
     catalog = load_json(CATALOG_PATH, {"schema_version": 1, "tracks": []})
     catalog.setdefault("tracks", [])
     known_ids = {t["youtube_video_id"] for t in catalog["tracks"] if t.get("youtube_video_id")}
 
     channel_videos = load_channel_videos()
     new_videos = [v for v in channel_videos if v.get("video_id") and v["video_id"] not in known_ids]
+
+    forced_distrokid_ids = set()
+    if releases_video_ids:
+        already_covered = known_ids | {v["video_id"] for v in new_videos}
+        missing_release_ids = set(releases_video_ids) - already_covered
+        if missing_release_ids:
+            log(f"→ {len(missing_release_ids)} video ID от Releases липсват в каталога и не са в "
+                f"последния channel snapshot — тегля метаданните им директно (videos.list)...")
+            fetched = _fetch_video_metadata(missing_release_ids)
+            for vid in missing_release_ids:
+                meta = fetched.get(vid)
+                if meta:
+                    new_videos.append(meta)
+                    forced_distrokid_ids.add(vid)
+                else:
+                    log(f"  ⚠ Не успях да изтегля метаданни за {vid} от Releases "
+                        f"(частен/изтрит/регионално ограничен видео?) — прескачам.")
 
     if not new_videos:
         log("→ Каталогът вече е синхронизиран с всички видеа от канала — 0 нови.")
@@ -186,12 +260,14 @@ def sync_new_tracks():
             "youtube_video_id": v["video_id"],
             "release_date": (v.get("published_at") or "")[:10] or None,
             # "distrokid" = реален пуснат сингъл през дистрибутора (detect-нато
-            # от "Provided to YouTube by..." в описанието), "distributor" =
-            # друг дистрибутор със същия формат, "channel-upload" = обикновено
-            # видео директно в канала (Shorts/visualizer/тийзър — не е
+            # от "Provided to YouTube by..." в описанието, ИЛИ директно
+            # потвърдено от Releases таба — виж forced_distrokid_ids по-горе),
+            # "distributor" = друг дистрибутор със същия формат, "channel-upload" =
+            # обикновено видео директно в канала (Shorts/visualizer/тийзър — не е
             # непременно официален релийз). Discovery engine-ът може да
             # ползва това поле, за да пъха в playlist-ите само реални релийзи.
-            "distribution": _detect_distribution(v.get("description", "")),
+            "distribution": "distrokid" if v["video_id"] in forced_distrokid_ids
+                             else _detect_distribution(v.get("description", "")),
             "genre": c.get("genre", "unknown"),
             "subgenre": c.get("subgenre", "unknown"),
             "mood": c.get("mood", "unknown"),
