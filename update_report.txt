@@ -1,17 +1,11 @@
 CDB UPDATE REPORT
-Timestamp: 20260815-085236
+Timestamp: 20260815-090655
 
 Changed:
-  MODULE-MAP.md
-  README.md
-  data/trends-history.json
-  data/playlists-state.json
-  data/discovery-candidates-cache.json
-  data/discovery-log.json
+  update_report.txt
 
 Added:
-  PROJECT_STATE.md
-  REMOVE_MISSING
+  none
 
 Removed:
   none
@@ -45,11 +39,13 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   gemini-validator.js
   track-record.js
   ai-provider-order.js
+  REMOVE_MISSING
   system-update.js
   lyrics-history.js
   settings.js
   stats.js
   prefs.js
+  incoming/REMOVE_MISSING.bin
   data/releases-catalog-cache.json
   drafts/ВРЕМЕННА ПАПКА.txt
 
