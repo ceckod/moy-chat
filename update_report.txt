@@ -1,7 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260815-173032
+Timestamp: 20260815-183031
 
 Changed:
+  js/youtube-discovery.js
+  data/discovery-config.json
   scripts/youtube_discovery_engine.py
 
 Added:
@@ -109,7 +111,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/youtube.js
   js/stats.js
   js/prefs.js
-  js/youtube-discovery.js
   data/trends-history.json
   data/releases-catalog-cache.json
   data/playlists-state.json
@@ -118,7 +119,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   data/niche-scores-history.json
   data/discovery-candidates-cache.json
   data/track-performance.json
-  data/discovery-config.json
   data/discovery-dry-run-preview.json
   data/catalog.json
   data/discovery-log.json
@@ -135,7 +135,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   drafts/#U0412#U0420#U0415#U041c#U0415#U041d#U041d#U0410 #U041f#U0410#U041f#U041a#U0410.txt
   scripts/discover_niches.py
   scripts/_youtube_common.py
-  scripts/catalog_bootstrap.py
   scripts/youtube_oauth_bootstrap.py
   scripts/clock-and-keys.js
   scripts/track_niche_scores.py

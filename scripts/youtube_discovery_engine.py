@@ -403,7 +403,20 @@ def freshness_score(published_at_iso, fresh_target_days, max_age_days):
     return max(0.0, 1 - (age_days - fresh_target_days) / (max_age_days - fresh_target_days))
 
 
-def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_channel_id=None):
+def _parse_iso8601_duration_seconds(duration):
+    """'PT1H2M10S' -> 3730 секунди. Връща None ако не може да се парсне
+    (напр. празен низ или неочакван формат от YouTube API)."""
+    if not duration:
+        return None
+    m = re.match(r"^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$", duration)
+    if not m or not any(m.groups()):
+        return None
+    h, mnt, s = (int(x) if x else 0 for x in m.groups())
+    return h * 3600 + mnt * 60 + s
+
+
+def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_channel_id=None,
+                     max_duration_seconds=None, min_duration_seconds=None):
     published_after = _iso(_now() - timedelta(days=window_days))
     data = retry(lambda: yt.get(
         "search",
@@ -414,10 +427,17 @@ def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_c
     ids = [i["id"]["videoId"] for i in data.get("items", []) if i.get("id", {}).get("videoId")]
     if not ids:
         return []
-    vdata = retry(lambda: yt.get("videos", {"part": "snippet,statistics", "id": ",".join(ids)}, "videos.list"),
+    # part=contentDetails идва без допълнителна quota цена (videos.list е
+    # фиксирана цена, независимо от броя part-ове) — ползваме го за duration,
+    # за да филтрираме компилации/mix-ове (т.43) И Shorts (т.44) в двете
+    # посоки от един и същ API отговор.
+    vdata = retry(lambda: yt.get("videos", {"part": "snippet,statistics,contentDetails", "id": ",".join(ids)},
+                                  "videos.list"),
                    label="videos.list за кандидати")
     out = []
     skipped_own = 0
+    skipped_long = 0
+    skipped_short = 0
     for v in vdata.get("items", []):
         stats = v.get("statistics", {})
         snippet = v["snippet"]
@@ -431,13 +451,33 @@ def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_c
         if own_channel_id and snippet.get("channelId") == own_channel_id:
             skipped_own += 1
             continue
+        duration_s = _parse_iso8601_duration_seconds(v.get("contentDetails", {}).get("duration"))
+        # т.43/44: изключваме едновременно компилации/mix-ове/DJ сетове
+        # (обикновено 30мин-3ч) И Shorts/teaser клипове (обикновено <60с),
+        # за да влизат в плейлистите само единични истински песни. Ако
+        # duration изобщо не може да се парсне (рядко, странен формат от
+        # API), НЕ филтрираме — по-добре едно нежелано видео да мине,
+        # отколкото да изгубим валидни кандидати заради parsing edge case.
+        if max_duration_seconds and duration_s is not None and duration_s > max_duration_seconds:
+            skipped_long += 1
+            continue
+        if min_duration_seconds and duration_s is not None and duration_s < min_duration_seconds:
+            skipped_short += 1
+            continue
         out.append({
             "video_id": v["id"], "title": snippet["title"], "channel": snippet["channelTitle"],
             "published_at": snippet["publishedAt"], "views": int(stats.get("viewCount", 0)),
+            "duration_seconds": duration_s,
             "discovered_at": _iso(_now()), "status": "unused", "used_in": [],
         })
     if skipped_own:
         log(f"  ⚪ Пропуснати {skipped_own} резултат(а) от собствения канал (не са external кандидати).")
+    if skipped_long:
+        log(f"  ⚪ Пропуснати {skipped_long} резултат(а) над {max_duration_seconds}s "
+            f"(вероятно компилации/mix-ове, не единични песни).")
+    if skipped_short:
+        log(f"  ⚪ Пропуснати {skipped_short} резултат(а) под {min_duration_seconds}s "
+            f"(вероятно Shorts/teaser клипове, не пълни песни).")
     return out
 
 
@@ -459,7 +499,9 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, 
 
     try:
         found = _search_youtube(f"{cluster_label} music", yt, cfg["candidate_search_window_days"],
-                                 own_channel_id=own_channel_id)
+                                 own_channel_id=own_channel_id,
+                                 max_duration_seconds=cfg.get("max_track_duration_seconds", 720),
+                                 min_duration_seconds=cfg.get("min_track_duration_seconds", 60))
         run_log["candidate_searches"] += 1
     except RuntimeError as e:
         log(f"  ⚠ Discovery search неуспешен за '{cluster_label}': {e}")

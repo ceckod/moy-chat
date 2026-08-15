@@ -132,29 +132,144 @@ const YouTubeDiscovery = {
   },
 
   async excludeTrack(clusterKey) {
-    const videoId = prompt("YouTube Video ID за изключване от този playlist:");
-    if (!videoId) return;
-    toast("⏳ Записвам...");
-    const ok = await this._writeState(state => ({
-      ...state,
-      playlists: state.playlists.map(p => p.cluster_key === clusterKey
-        ? { ...p, excluded_video_ids: [...new Set([...(p.excluded_video_ids || []), videoId.trim()])] }
-        : p),
-    }));
-    if (ok) { toast("✅ Добавено в excluded"); this.render(true); }
+    this._openTrackPicker(clusterKey, "exclude");
   },
 
   async forceTrack(clusterKey) {
-    const videoId = prompt("YouTube Video ID за принудително добавяне в този playlist:");
-    if (!videoId) return;
+    this._openTrackPicker(clusterKey, "force");
+  },
+
+  // ---------- Song picker модал (замества стария prompt() за Video ID) ----------
+  async _openTrackPicker(clusterKey, mode) {
+    const { catalog } = await this.loadAll();
+    const tracks = [...(catalog.tracks || [])].sort((a, b) => (b.release_date || "").localeCompare(a.release_date || ""));
+    if (!tracks.length) { toast("❌ Каталогът е празен — няма песни за избор."); return; }
+
+    const title = mode === "force"
+      ? "📌 Избери песен за принудително добавяне (никога не се маха, само се пренарежда)"
+      : "🚫 Избери песен за изключване от този playlist";
+
+    const overlay = document.createElement("div");
+    overlay.id = "ytdTrackPickerOverlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = `
+      <div class="card" style="max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+        <strong>${title}</strong>
+        <p class="muted" style="margin:6px 0 0;font-size:12px;">Менюто показва само песните от твоя каталог. За чужда/външна песен постави линк или Video ID:</p>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input type="text" id="ytdTrackPickerManualUrl" placeholder="https://youtube.com/watch?v=... или само ID" style="flex:1;">
+          <button class="btn ghost sm" id="ytdTrackPickerManualBtn">Добави</button>
+        </div>
+        <input type="text" id="ytdTrackPickerSearch" placeholder="...или търси по заглавие в каталога" style="margin-top:10px;width:100%;">
+        <div id="ytdTrackPickerList" style="overflow-y:auto;margin-top:10px;flex:1;min-height:0;"></div>
+        <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+          <button class="btn ghost sm" id="ytdTrackPickerClose">Отказ</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const extractVideoId = (input) => {
+      const s = input.trim();
+      const m = s.match(/(?:v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+      if (m) return m[1];
+      if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+      return null;
+    };
+    overlay.querySelector("#ytdTrackPickerManualBtn").onclick = async () => {
+      const raw = overlay.querySelector("#ytdTrackPickerManualUrl").value;
+      const vid = extractVideoId(raw);
+      if (!vid) { toast("❌ Не разпознавам валиден YouTube Video ID/линк"); return; }
+      close();
+      await this._applyTrackOverride(clusterKey, mode, vid);
+    };
+
+
+    const listEl = overlay.querySelector("#ytdTrackPickerList");
+    const searchEl = overlay.querySelector("#ytdTrackPickerSearch");
+    const close = () => overlay.remove();
+    overlay.querySelector("#ytdTrackPickerClose").onclick = close;
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+
+    const renderList = (filterText) => {
+      const q = (filterText || "").trim().toLowerCase();
+      const filtered = q ? tracks.filter(t => (t.title || "").toLowerCase().includes(q) || t.youtube_video_id.toLowerCase().includes(q)) : tracks;
+      listEl.innerHTML = filtered.slice(0, 200).map(t => `
+        <div class="copy-field" style="padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;" data-vid="${t.youtube_video_id}">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title || t.youtube_video_id}</span>
+          <span class="muted" style="font-size:11px;white-space:nowrap;">${t.subgenre || t.genre || ""}${t.distribution === "distrokid" ? " · 💿" : ""}</span>
+        </div>`).join("") || `<p class="muted">Няма съвпадения.</p>`;
+      listEl.querySelectorAll("[data-vid]").forEach(row => {
+        row.onclick = async () => {
+          close();
+          await this._applyTrackOverride(clusterKey, mode, row.getAttribute("data-vid"));
+        };
+      });
+    };
+    renderList("");
+    searchEl.addEventListener("input", () => renderList(searchEl.value));
+  },
+
+  async _applyTrackOverride(clusterKey, mode, videoId) {
     toast("⏳ Записвам...");
+    const field = mode === "force" ? "forced_video_ids" : "excluded_video_ids";
     const ok = await this._writeState(state => ({
       ...state,
       playlists: state.playlists.map(p => p.cluster_key === clusterKey
-        ? { ...p, forced_video_ids: [...new Set([...(p.forced_video_ids || []), videoId.trim()])] }
+        ? { ...p, [field]: [...new Set([...(p[field] || []), videoId.trim()])] }
         : p),
     }));
-    if (ok) { toast("✅ Ще бъде добавена при следващия run"); this.render(true); }
+    if (ok) {
+      toast(mode === "force" ? "✅ Ще бъде добавена (и защитена от махане) при следващия run" : "✅ Добавено в excluded");
+      this.render(true);
+    }
+  },
+
+  async _removeTrackOverride(clusterKey, mode, videoId) {
+    toast("⏳ Записвам...");
+    const field = mode === "force" ? "forced_video_ids" : "excluded_video_ids";
+    const ok = await this._writeState(state => ({
+      ...state,
+      playlists: state.playlists.map(p => p.cluster_key === clusterKey
+        ? { ...p, [field]: (p[field] || []).filter(id => id !== videoId) }
+        : p),
+    }));
+    if (ok) { toast("✅ Премахнато"); this.render(true); this._openManageList(clusterKey, mode); }
+  },
+
+  // ---------- Управление на вече force-нати/excluded песни (badge клик) ----------
+  async _openManageList(clusterKey, mode) {
+    const { catalog, state } = await this.loadAll();
+    const byId = Object.fromEntries((catalog.tracks || []).map(t => [t.youtube_video_id, t]));
+    const p = (state.playlists || []).find(pl => pl.cluster_key === clusterKey);
+    if (!p) return;
+    const field = mode === "force" ? "forced_video_ids" : "excluded_video_ids";
+    const ids = p[field] || [];
+    const title = mode === "force" ? `📌 Force-нати песни за "${p.label}"` : `🚫 Excluded песни за "${p.label}"`;
+
+    document.getElementById("ytdTrackPickerOverlay")?.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "ytdTrackPickerOverlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = `
+      <div class="card" style="max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+        <strong>${title}</strong>
+        <div style="overflow-y:auto;margin-top:10px;flex:1;min-height:0;">
+          ${ids.length ? ids.map(vid => `
+            <div class="copy-field" style="padding:8px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${byId[vid]?.title || vid}</span>
+              <button class="btn ghost sm" data-remove="${vid}">✕ Премахни</button>
+            </div>`).join("") : `<p class="muted">Няма записи.</p>`}
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+          <button class="btn ghost sm" id="ytdTrackPickerClose">Затвори</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#ytdTrackPickerClose").onclick = () => overlay.remove();
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.onclick = () => this._removeTrackOverride(clusterKey, mode, btn.getAttribute("data-remove"));
+    });
   },
 
   // ---------- Contents API write за discovery-config.json (Pause, настройки) ----------
@@ -208,6 +323,8 @@ const YouTubeDiscovery = {
       candidate_cache_ttl_days: num("dsc_cache_ttl"),
       min_candidate_pool: num("dsc_min_pool"),
       cross_playlist_similarity_threshold: num("dsc_cross_threshold"),
+      max_track_duration_seconds: num("dsc_max_duration"),
+      min_track_duration_seconds: num("dsc_min_duration"),
       enable_external_discovery: bool("dsc_enable_discovery"),
       enable_auto_playlist_creation: bool("dsc_enable_creation"),
       enable_auto_reorder: bool("dsc_enable_reorder"),
@@ -313,6 +430,8 @@ const YouTubeDiscovery = {
           <div><label>Candidate cache TTL (дни)</label><input type="number" id="dsc_cache_ttl" value="${config.candidate_cache_ttl_days ?? 5}"></div>
           <div><label>Мин. candidate pool</label><input type="number" id="dsc_min_pool" value="${config.min_candidate_pool ?? 8}"></div>
           <div><label>Cross-playlist similarity threshold</label><input type="number" step="0.05" id="dsc_cross_threshold" value="${config.cross_playlist_similarity_threshold ?? 0.5}"></div>
+          <div><label>Макс. дължина на песен (сек.) — филтрира компилации/mix-ове</label><input type="number" id="dsc_max_duration" value="${config.max_track_duration_seconds ?? 720}"></div>
+          <div><label>Мин. дължина на песен (сек.) — филтрира Shorts/teaser клипове</label><input type="number" id="dsc_min_duration" value="${config.min_track_duration_seconds ?? 60}"></div>
         </div>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
           <label><input type="checkbox" id="dsc_enable_discovery" ${config.enable_external_discovery !== false ? "checked" : ""}> Enable External Discovery (search.list)</label>
@@ -331,8 +450,8 @@ const YouTubeDiscovery = {
     const badges = [
       p.locked ? `<span class="badge">🔒 Locked</span>` : "",
       p.disabled ? `<span class="badge">⏸️ Disabled</span>` : "",
-      (p.excluded_video_ids || []).length ? `<span class="badge">🚫 ${p.excluded_video_ids.length} excluded</span>` : "",
-      (p.forced_video_ids || []).length ? `<span class="badge">📌 ${p.forced_video_ids.length} forced</span>` : "",
+      (p.excluded_video_ids || []).length ? `<span class="badge" style="cursor:pointer;" onclick="YouTubeDiscovery._openManageList('${p.cluster_key}','exclude')">🚫 ${p.excluded_video_ids.length} excluded</span>` : "",
+      (p.forced_video_ids || []).length ? `<span class="badge" style="cursor:pointer;" onclick="YouTubeDiscovery._openManageList('${p.cluster_key}','force')">📌 ${p.forced_video_ids.length} forced</span>` : "",
     ].filter(Boolean).join(" ");
     return `<div class="card" style="margin-bottom:12px;">
       <strong>${p.label}</strong> <span class="muted">· ${p.tracks.length} песни (${mine} мои / ${ext} външни) · обновен ${p.last_updated ? new Date(p.last_updated).toLocaleDateString("bg-BG") : "—"}</span>
