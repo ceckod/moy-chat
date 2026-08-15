@@ -2,7 +2,7 @@
   "schema_version": 1,
   "notes": "Canonical каталог на авторските песни. Генерира се/обновява се от scripts/catalog_bootstrap.py (bootstrap от data/stats-history.json + AI класификация) и от scripts/youtube_discovery_engine.py (нови видеа при daily run). НЕ се редактира ръчно, освен ако не поправяш конкретна грешна класификация на едно поле.",
   "last_bootstrap": "2026-08-14T07:20:41.453294+00:00",
-  "last_updated": "2026-08-15T12:05:23.285861+00:00",
+  "last_updated": "2026-08-15T12:55:25.131380+00:00",
   "tracks": [
     {
       "id": "track_cpxqhiJh9gQ",
@@ -342,13 +342,14 @@
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
-      "language": "unknown",
+      "language": "bg",
       "style_tags": [
-        "unknown"
+        "#music",
+        "#tsetskoboyanov"
       ],
       "source": "ai-classified (groq)",
       "confidence": "medium",
-      "classified_at": "2026-08-15T12:05:23.285807+00:00",
+      "classified_at": "2026-08-15T12:55:25.131329+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -491,19 +492,19 @@
       "title": "Честит Валентин #love #music #newmusic",
       "youtube_video_id": "vBQQ5c1btHs",
       "release_date": "2026-02-10",
-      "genre": "unknown",
-      "subgenre": "unknown",
-      "mood": "unknown",
-      "energy": "unknown",
-      "bpm": null,
+      "genre": "Pop",
+      "subgenre": "Bulgarian Pop",
+      "mood": "Romantic",
+      "energy": "Medium",
+      "bpm": 100,
       "language": "bg",
       "style_tags": [
-        "love",
-        "music"
+        "#love",
+        "#newmusic"
       ],
       "source": "ai-classified (groq)",
       "confidence": "medium",
-      "classified_at": "2026-08-15T12:05:23.285849+00:00",
+      "classified_at": "2026-08-15T12:55:25.131361+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -528,18 +529,19 @@
       "title": "Земи тоя headshot",
       "youtube_video_id": "Y6cqze1xbFk",
       "release_date": "2015-12-30",
-      "genre": "unknown",
-      "subgenre": "unknown",
-      "mood": "unknown",
-      "energy": "unknown",
-      "bpm": null,
+      "genre": "Hip-Hop",
+      "subgenre": "Bulgarian Hip-Hop",
+      "mood": "Aggressive",
+      "energy": "High",
+      "bpm": 120,
       "language": "bg",
       "style_tags": [
-        "gaming"
+        "#rap",
+        "#gaming"
       ],
       "source": "ai-classified (groq)",
       "confidence": "medium",
-      "classified_at": "2026-08-15T12:05:23.285854+00:00",
+      "classified_at": "2026-08-15T12:55:25.131370+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -547,19 +549,19 @@
       "title": "Momiche igrae kuchek",
       "youtube_video_id": "ZDxy9kCLAhk",
       "release_date": "2015-10-24",
-      "genre": "unknown",
-      "subgenre": "unknown",
-      "mood": "unknown",
-      "energy": "unknown",
-      "bpm": null,
+      "genre": "Folk",
+      "subgenre": "Bulgarian Folk",
+      "mood": "Playful",
+      "energy": "Medium",
+      "bpm": 110,
       "language": "bg",
       "style_tags": [
-        "funny",
-        "playful"
+        "#momiche",
+        "#kuchek"
       ],
       "source": "ai-classified (groq)",
       "confidence": "medium",
-      "classified_at": "2026-08-15T12:05:23.285858+00:00",
+      "classified_at": "2026-08-15T12:55:25.131376+00:00",
       "distribution": "channel-upload"
     }
   ]
