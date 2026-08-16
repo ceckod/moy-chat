@@ -17,7 +17,7 @@
   "candidate_search_window_days": 180,
   "external_tracks_per_run": 5,
   "max_track_duration_seconds": 720,
-  "min_track_duration_seconds": 120,
+  "min_track_duration_seconds": 60,
   "releases_url": "https://www.youtube.com/@MrCeckod/releases",
   "releases_cache_ttl_days": 3,
   "candidate_cache_ttl_days": 5,

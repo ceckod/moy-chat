@@ -1341,6 +1341,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">Автоматично открива стиловете в каталога ти, поддържа discovery playlist за всеки значим клъстер (external музика + естествено разпределени мои авторски песни) и се обновява ежедневно през GitHub Actions. Настрой <strong>YouTube Тракер</strong> (GitHub owner/repo/branch + Token) първо — Discovery Engine чете същия repo. Виж README.md → "YouTube Discovery Engine" за еднократния OAuth setup (нужен, за да може движкът реално да пише в YouTube playlists).</p>
       </div>
       <div id="ytDiscoveryOut" style="margin-top:14px;"></div>
+
+      <div class="section-title" style="margin-top:28px;">🏷️ Metadata Optimizer</div>
+      <div class="card">
+        <p class="muted">AI-генерирани title/description/tags предложения за конкретна песен, базирани на текущите trending ниши (data/trends-history.json), за да подобрят discoverability в YouTube search/suggested. Нищо не се пуска на живо автоматично — само генерира, ти одобряваш, после explicit "Приложи".</p>
+      </div>
+      <div id="metadataOptimizerOut" style="margin-top:14px;"></div>
     </div>
 
     <!-- ============ INFRA: LOGS ============ -->
@@ -1420,6 +1426,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/settings.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/youtube-discovery.js"></script>
+<script src="js/metadata-optimizer.js"></script>
 <script src="js/gemini-validator.js"></script>
 <script src="js/project-archive.js"></script>
 <script src="js/system-update.js"></script>

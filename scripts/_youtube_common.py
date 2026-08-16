@@ -123,7 +123,7 @@ class QuotaBudget:
     за да не изгърми дневния лимит (10 000 units по подразбиране за нов проект).
     Локален брояч, не официална квота — колкото QuotaTracker в браузъра е за AI."""
     COSTS = {
-        "search.list": 100, "videos.list": 1, "channels.list": 1,
+        "search.list": 100, "videos.list": 1, "videos.update": 50, "channels.list": 1,
         "playlists.list": 1, "playlists.insert": 50, "playlists.update": 50,
         "playlistItems.list": 1, "playlistItems.insert": 50,
         "playlistItems.update": 50, "playlistItems.delete": 50,

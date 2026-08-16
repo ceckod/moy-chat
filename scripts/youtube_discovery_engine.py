@@ -214,7 +214,7 @@ def _maybe_sync_description(playlist_entry, cluster_label, yt: YouTubeClient, dr
         retry(lambda: yt.write(
             "playlists", {"part": "snippet"},
             {"id": playlist_id, "snippet": {"title": playlist_entry["name"], "description": fresh}},
-            "playlists.update",
+            "playlists.update", method="PUT",
         ), label=f"обновяване на описание за '{playlist_entry['name']}'")
         playlist_entry["description"] = fresh
         playlist_entry["last_updated"] = _iso(_now())
