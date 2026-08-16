@@ -1454,7 +1454,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
      // винаги минават през мрежата, виж sw.js).
      if ("serviceWorker" in navigator) {
        window.addEventListener("load", () => {
-         navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW регистрация неуспешна:", e));
+         navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch((e) => console.warn("SW регистрация неуспешна:", e));
        });
      }
    </script>

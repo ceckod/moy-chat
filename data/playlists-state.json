@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-16T08:01:57.092993+00:00",
+  "last_run": "2026-08-16T06:51:24.734272+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -423,7 +423,7 @@
       "name": "Rap — Discover",
       "description": "🎧 Rap Discovery — a curated mix blending fresh Rap picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:31.096950+00:00",
-      "last_updated": "2026-08-16T08:01:59.281575+00:00",
+      "last_updated": "2026-08-15T18:59:04.890402+00:00",
       "tracks": [
         {
           "youtube_video_id": "495zc7_vGgA",
@@ -662,13 +662,6 @@
           "title": "Noodah05 - Hero (Official Music Video)",
           "added_at": "2026-08-15T13:34:26.409048+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5CMEQ2Mjk5NTc3NDZFRUNB"
-        },
-        {
-          "youtube_video_id": "QKY9jEIXfVQ",
-          "is_mine": false,
-          "title": "Lil Rome Praba x Smokio - කචල් කාසි (Kachal Kasi) OFFICIAL MUSIC VIDEO",
-          "added_at": "2026-08-16T08:01:58.799365+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy42MTI4Njc2QjM1RjU1MjlG"
         }
       ],
       "history": [
@@ -874,13 +867,6 @@
           "video_id": "Ub8WZQFoD74",
           "is_mine": false,
           "dry_run": false
-        },
-        {
-          "date": "2026-08-16T08:01:58.799365+00:00",
-          "action": "added",
-          "video_id": "QKY9jEIXfVQ",
-          "is_mine": false,
-          "dry_run": false
         }
       ],
       "archived": false,
@@ -898,7 +884,7 @@
       "name": "Pop — Discover",
       "description": "🎧 Pop Discovery — a curated mix blending fresh Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:35.674863+00:00",
-      "last_updated": "2026-08-16T08:01:24.310349+00:00",
+      "last_updated": "2026-08-16T06:51:28.442056+00:00",
       "tracks": [
         {
           "youtube_video_id": "fTKqtvXjkvo",
@@ -1062,6 +1048,13 @@
           "playlist_item_id": "UExWdUdyRW51QlR5Zy43MTI1NDIwOTMwQjIxMzNG"
         },
         {
+          "youtube_video_id": "W0vH30K5bLE",
+          "is_mine": true,
+          "title": "НЕ МЕ ОСТАВЯЙ / NE ME OSTAVIAY   (Official Video)",
+          "added_at": "2026-08-14T19:45:55.746641+00:00",
+          "playlist_item_id": "UExWdUdyRW51QlR5Zy5EQUE1NTFDRjcwMDg0NEMz"
+        },
+        {
           "youtube_video_id": "zCMAdGFR8as",
           "is_mine": false,
           "title": "Over You - Daughtry | Pop / R&B Version by Pop Hit Factory",
@@ -1095,20 +1088,6 @@
           "title": "Harry Styles - American Girls (Official Video)",
           "added_at": "2026-08-16T05:46:44.422482+00:00",
           "playlist_item_id": "UExWdUdyRW51QlR5Zy44Mjc5REFBRUE2MTdFRDU0"
-        },
-        {
-          "youtube_video_id": "W0vH30K5bLE",
-          "is_mine": true,
-          "title": "НЕ МЕ ОСТАВЯЙ / NE ME OSTAVIAY   (Official Video)",
-          "added_at": "2026-08-14T19:45:55.746641+00:00",
-          "playlist_item_id": "UExWdUdyRW51QlR5Zy5EQUE1NTFDRjcwMDg0NEMz"
-        },
-        {
-          "youtube_video_id": "kSBQZH3dkZ8",
-          "is_mine": false,
-          "title": "Tyla - THAT GIRL (Official Music Video)",
-          "added_at": "2026-08-16T08:01:23.688303+00:00",
-          "playlist_item_id": "UExWdUdyRW51QlR5Zy43NDhFRTgwOTRERTU4Rjg3"
         }
       ],
       "history": [
@@ -1360,13 +1339,6 @@
           "date": "2026-08-16T06:51:27.935481+00:00",
           "action": "reordered",
           "video_id": "W0vH30K5bLE",
-          "dry_run": false
-        },
-        {
-          "date": "2026-08-16T08:01:23.688303+00:00",
-          "action": "added",
-          "video_id": "kSBQZH3dkZ8",
-          "is_mine": false,
           "dry_run": false
         }
       ],
@@ -2633,7 +2605,7 @@
       "name": "AI Music — Discover",
       "description": "🎧 AI Music Discovery — a curated mix blending fresh AI Music picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:50.961665+00:00",
-      "last_updated": "2026-08-16T08:01:22.091396+00:00",
+      "last_updated": "2026-08-16T05:46:22.863094+00:00",
       "tracks": [
         {
           "youtube_video_id": "9Txb15fKgjY",
@@ -2760,13 +2732,6 @@
           "title": "How to Make Suno AI Music Videos with Lip Sync for FREE",
           "added_at": "2026-08-16T05:46:22.578428+00:00",
           "playlist_item_id": "UExVRzVTRl9hUElscy4yMUQyQTQzMjRDNzMyQTMy"
-        },
-        {
-          "youtube_video_id": "1Weurw_e9k0",
-          "is_mine": false,
-          "title": "Kimo Sounds ✦ Rise Slow (Deep House)",
-          "added_at": "2026-08-16T08:01:21.680390+00:00",
-          "playlist_item_id": "UExVRzVTRl9hUElscy45RTgxNDRBMzUwRjQ0MDhC"
         }
       ],
       "history": [
@@ -2886,13 +2851,6 @@
           "date": "2026-08-16T05:46:22.578428+00:00",
           "action": "added",
           "video_id": "S7s1cdEcqLc",
-          "is_mine": false,
-          "dry_run": false
-        },
-        {
-          "date": "2026-08-16T08:01:21.680390+00:00",
-          "action": "added",
-          "video_id": "1Weurw_e9k0",
           "is_mine": false,
           "dry_run": false
         }
