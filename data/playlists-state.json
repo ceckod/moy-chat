@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-16T05:46:41.212428+00:00",
+  "last_run": "2026-08-16T06:51:24.734272+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -884,7 +884,7 @@
       "name": "Pop — Discover",
       "description": "🎧 Pop Discovery — a curated mix blending fresh Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:35.674863+00:00",
-      "last_updated": "2026-08-16T05:46:45.837412+00:00",
+      "last_updated": "2026-08-16T06:51:28.442056+00:00",
       "tracks": [
         {
           "youtube_video_id": "fTKqtvXjkvo",
@@ -1333,6 +1333,12 @@
           "action": "added",
           "video_id": "o6jQo3-iCao",
           "is_mine": false,
+          "dry_run": false
+        },
+        {
+          "date": "2026-08-16T06:51:27.935481+00:00",
+          "action": "reordered",
+          "video_id": "W0vH30K5bLE",
           "dry_run": false
         }
       ],
