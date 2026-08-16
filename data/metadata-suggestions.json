@@ -64,6 +64,37 @@
       "status": "rejected",
       "generated_at": "2026-08-16T05:44:58.357763+00:00",
       "applied_at": null
+    },
+    "OHFNupbzGxM": {
+      "video_id": "OHFNupbzGxM",
+      "current_title": "He chose me #fyp #CD-B",
+      "suggested_titles": [
+        "He chose me - Euphoric Dance Pop",
+        "He chose me #fyp - High Energy Dance Track",
+        "He chose me - Упорот денс поп песен"
+      ],
+      "suggested_description": "Изплеск от енергия и еуфория с тази денс поп песен! \"He chose me\" е идеалната смес от весел денс и поп елементи, които ще ви карат да се движите безспирно. Покажете ми вашата енергия и танцувайте с мен! Show more...",
+      "suggested_tags": [
+        "денс поп",
+        "high energy music",
+        "euphoric songs",
+        "поп музика",
+        "весела песен",
+        "денс трек",
+        "hyperpop",
+        "dance music",
+        "upbeat",
+        "energizing music",
+        "фанки денс",
+        "поп фолк елементи",
+        "весело настроение",
+        "музика за танци",
+        "данс поп хит"
+      ],
+      "ai_provider": "groq",
+      "status": "pending",
+      "generated_at": "2026-08-16T08:02:26.251204+00:00",
+      "applied_at": null
     }
   }
 }
