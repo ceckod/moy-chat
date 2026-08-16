@@ -93,6 +93,14 @@ ${niches.map((n, i) => `${i + 1}. ${n}`).join("\n")}
     AppState.data.project.nicheScore = best.score;
     AppState.save();
 
+    // Auto-capture: топ 3 ниши над 60/100 отиват в Idea Vault (само
+    // добавка — не променя нищо от съществуващия рендър/логика по-долу).
+    if (typeof IdeaVault !== "undefined") {
+      results.filter(r => r.score >= 60).slice(0, 3).forEach(r => {
+        IdeaVault.add({ text: r.niche, source: "Пазарен анализ", niche: r.niche, score: r.score });
+      });
+    }
+
     let html = fromTrendScan ? `<p class="muted">📈 Дневен trend snapshot (GitHub Actions, без Gemini)</p>` : "";
     const toolkitScores = Storage.get(NICHE_TOOLKIT_SCORES_KEY) || {};
     results.forEach(r => {

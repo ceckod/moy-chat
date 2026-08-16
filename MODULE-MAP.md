@@ -71,6 +71,21 @@ key, не мести данни. Вика се от `Nav.showView("dashboard")` 
 съществуващия `Stats.renderDashboard()` (различна отговорност — YouTube
 channel stats, не се пипа).
 
+## 2c. Idea Vault — музикални идеи (добавен 2026-08-16, P1 от Phase-0 audit)
+
+```
+js/idea-vault.js
+```
+Storage key `cdb_idea_vault_v1` — **различен** от `cdb_ai_ideas_v1`
+(system-test.js, "Архив на идеи от AI екипа" — това е за идеи за нови
+функции на самия dashboard, не музикални идеи; двата модула не се
+припокриват). Auto-capture (само добавка, не пипа съществуваща логика):
+топ 3 ниши ≥60/100 от `js/step1.js` (`_renderNicheResults`) и Hook
+Evolution Arena победителя от `js/viral-lab.js` (`HookArena`, финална
+генерация). UI: `index.html`, view `#view-idea-vault`, nav бутон в
+групата "Инструменти". Свързва used идея с реално представяне през
+`TrackRecord.load()` (`r.actual`) по съвпадение на `title`.
+
 ## 3. Song Creation Flow — Стъпки 1-4 + Бърз ъплоуд
 
 ```

@@ -35,6 +35,21 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (3)** — Изпълнено P1 от Phase-0 одита: **нов модул
+  `js/idea-vault.js`** (Idea Vault — музикални идеи с used/rejected
+  статус и линк към реално представяне през TrackRecord). Storage key
+  `cdb_idea_vault_v1`, нарочно различен от `cdb_ai_ideas_v1`
+  (system-test.js "Архив на идеи от AI екипа" — за dev feature-идеи,
+  не музикални; проверено, няма припокриване). Auto-capture добавен
+  като чиста добавка в `js/step1.js` (`_renderNicheResults` — топ 3
+  ниши ≥60/100) и `js/viral-lab.js` (`HookArena` финален победител) —
+  съществуващата логика в двата файла не е пипната, само добавени
+  редове. Нов view `#view-idea-vault` в `index.html` + nav бутон.
+  `sw.js` CACHE_VERSION → v52. `npm test` 85/85 преди/след. Обновена
+  `MODULE-MAP.md` (нов раздел 2c). **Статус: завършено, чака
+  потребителят да качи ZIP.** Следваща P1 стъпка по одита: Similarity
+  check или Cover artwork pipeline (нерешено кое е следващо).
+
 - **2026-08-16 (2)** — Направен PHASE 0 FULL AUDIT срещу качен
   "AI Music OS" Master Build Prompt (13-точков одит, файл предаден на
   потребителя, не commit-нат в repo-то). Извод: приложението вече

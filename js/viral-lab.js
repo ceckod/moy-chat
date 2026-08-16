@@ -331,6 +331,9 @@ const HookArena = {
           const winner = merged[0];
           AppState.data.project.winningHook = winner.text;
           AppState.save();
+          if (typeof IdeaVault !== "undefined") {
+            IdeaVault.add({ text: winner.text, source: "Hook Evolution Arena", score: winner.hook_score });
+          }
           out.innerHTML = allGenerationsHtml + `
             <div class="card tight" style="margin-top:12px;border-color:var(--green);">
               <strong>🏆 Победител: Gen 3, score ${winner.hook_score}</strong>

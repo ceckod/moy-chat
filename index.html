@@ -416,6 +416,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
       <button class="nav-btn" data-view="release-roadmap" onclick="Nav.showView('release-roadmap')"><span class="ic">🗓️</span> Release Roadmap</button>
       <button class="nav-btn" data-view="suno-preview" onclick="Nav.showView('suno-preview')"><span class="ic">🎧</span> Suno Preview Player</button>
+      <button class="nav-btn" data-view="idea-vault" onclick="Nav.showView('idea-vault')"><span class="ic">💡</span> Idea Vault</button>
       <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
       <button class="nav-btn" data-view="model-finder" onclick="Nav.showView('model-finder')"><span class="ic">🧠</span> AI Model Finder</button>
     </div>
@@ -1017,6 +1018,30 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ IDEA VAULT VIEW ============ -->
+    <div class="view" id="view-idea-vault">
+      <div class="section-title">💡 Idea Vault</div>
+      <div class="card">
+        <strong>💡 Всички музикални идеи на едно място</strong>
+        <p class="muted" id="ideaVaultSummary" style="margin:6px 0 0;"></p>
+        <p class="muted">Топ нишите от Пазарен анализ (≥60/100) и победителят от Hook Evolution Arena се добавят тук автоматично. Можеш и да добавиш идея ръчно.</p>
+        <div class="row" style="margin-top:10px;">
+          <input type="text" id="ideaVaultInput" placeholder="Нова идея (ниша, hook, концепция...)" style="flex:1;">
+          <button class="btn grad" onclick="IdeaVault.addManual()">➕ Добави</button>
+        </div>
+        <div class="row" style="margin-top:10px;align-items:center;">
+          <label style="margin:0;">Филтър:</label>
+          <select id="ideaVaultFilter" onchange="IdeaVault.render()" style="width:auto;">
+            <option value="all">Всички</option>
+            <option value="new">Нови</option>
+            <option value="used">Използвани</option>
+            <option value="rejected">Отхвърлени</option>
+          </select>
+        </div>
+        <div id="ideaVaultList" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
     <!-- ============ SYSTEM TEST VIEW ============ -->
     <div class="view" id="view-system-test">
       <div class="section-title">🧪 Системен тест</div>
@@ -1439,6 +1464,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/lyrics-history.js"></script>
 <script src="js/lyrics-humanizer.js"></script>
 <script src="js/suno-preview.js"></script>
+<script src="js/idea-vault.js"></script>
 <script src="js/step2.js"></script>
 <script src="js/step4.js"></script>
 <script src="js/step3.js"></script>
