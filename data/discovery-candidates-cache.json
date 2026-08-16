@@ -954,7 +954,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T19:06:40.248749+00:00"
+      "last_search_at": "2026-08-16T05:46:23.951088+00:00"
     },
     "pop": {
       "candidates": [
@@ -1324,7 +1324,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T19:06:41.203301+00:00"
+      "last_search_at": "2026-08-16T05:46:24.944031+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2196,7 +2196,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T19:06:43.570731+00:00"
+      "last_search_at": "2026-08-16T05:46:26.654297+00:00"
     },
     "unknown": {
       "candidates": [
@@ -2993,9 +2993,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "S7s1cdEcqLc",
+          "title": "How to Make Suno AI Music Videos with Lip Sync for FREE",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-08-11T00:15:01Z",
+          "views": 4292,
+          "duration_seconds": 587,
+          "discovered_at": "2026-08-16T05:46:22.578267+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-15T19:06:37.942089+00:00"
+      "last_search_at": "2026-08-16T05:46:22.578355+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
