@@ -413,7 +413,8 @@
       "excluded_video_ids": [],
       "forced_video_ids": [],
       "self_track_ratio_override": null,
-      "max_playlist_size_override": null
+      "max_playlist_size_override": null,
+      "last_candidate_search_at": null
     },
     {
       "cluster_key": "rap",
