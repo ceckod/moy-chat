@@ -83,8 +83,10 @@
           "published_at": "2025-11-28T13:01:10Z",
           "views": 2063033,
           "discovered_at": "2026-08-14T18:28:28.742611+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         },
         {
           "video_id": "kQ1A85aIzFU",
@@ -129,8 +131,10 @@
           "published_at": "2025-10-25T00:57:51Z",
           "views": 549350,
           "discovered_at": "2026-08-14T18:28:28.742648+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         },
         {
           "video_id": "a4UsBlhj30M",
@@ -175,8 +179,10 @@
           "published_at": "2026-01-30T15:30:12Z",
           "views": 484077,
           "discovered_at": "2026-08-14T18:28:28.742807+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         },
         {
           "video_id": "HF3FgUQpxHc",
@@ -980,7 +986,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T17:33:43.542107+00:00"
+      "last_search_at": "2026-08-16T18:55:12.442926+00:00"
     },
     "pop": {
       "candidates": [
@@ -1297,8 +1303,10 @@
           "published_at": "2026-03-11T08:00:06Z",
           "views": 2096922,
           "discovered_at": "2026-08-15T12:07:56.410748+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         },
         {
           "video_id": "7BsUHp6jZOo",
@@ -1389,7 +1397,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T17:33:45.769790+00:00"
+      "last_search_at": "2026-08-16T18:55:13.125681+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1809,8 +1817,10 @@
           "published_at": "2026-08-14T12:09:55Z",
           "views": 4459,
           "discovered_at": "2026-08-14T18:28:46.516304+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "xE1t544wkfs",
@@ -2035,8 +2045,10 @@
           "published_at": "2026-03-09T12:01:22Z",
           "views": 3325646,
           "discovered_at": "2026-08-14T19:38:18.496614+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "kuZfIt0NvHM",
@@ -2153,8 +2165,10 @@
           "published_at": "2026-05-01T22:00:55Z",
           "views": 1341198,
           "discovered_at": "2026-08-15T11:59:31.111348+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "iqawonLefOA",
@@ -2175,8 +2189,10 @@
           "published_at": "2026-07-22T00:00:32Z",
           "views": 1761451,
           "discovered_at": "2026-08-15T12:20:40.685513+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "Q1JPr0tDcdA",
@@ -2233,8 +2249,10 @@
           "published_at": "2026-04-13T15:38:19Z",
           "views": 2293852,
           "discovered_at": "2026-08-15T12:34:01.728584+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         },
         {
           "video_id": "nWpiPjfAUFI",
@@ -2274,7 +2292,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T17:33:47.124088+00:00"
+      "last_search_at": "2026-08-16T18:55:14.813778+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3084,9 +3102,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "AdjrZzFZwcI",
+          "title": "Treblo Ai: The Free AI Music Generator Suno Should Worry About",
+          "channel": "ChillPanic",
+          "published_at": "2026-08-08T08:20:04Z",
+          "views": 6491,
+          "duration_seconds": 324,
+          "discovered_at": "2026-08-16T18:55:10.412320+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "Q-i5z5gQDmY",
+          "title": "Cardinal X25, Droppa - Ungabafisi (Official AI Music Video)",
+          "channel": "CardinalX25VEVO",
+          "published_at": "2026-07-28T12:40:05Z",
+          "views": 710546,
+          "duration_seconds": 255,
+          "discovered_at": "2026-08-16T18:55:10.412326+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-16T17:33:42.606074+00:00"
+      "last_search_at": "2026-08-16T18:55:10.412400+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -3535,8 +3579,10 @@
           "published_at": "2026-07-06T16:08:36Z",
           "views": 1097,
           "discovered_at": "2026-08-15T12:58:23.173897+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         },
         {
           "video_id": "unLxzYYXzoc",
@@ -3597,8 +3643,10 @@
           "published_at": "2026-03-24T13:10:00Z",
           "views": 98247,
           "discovered_at": "2026-08-15T12:58:23.173913+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         },
         {
           "video_id": "zcHDFhTwbHI",
