@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "notes": "Настройки за YouTube Auto Playlist Discovery Engine. Редактира се от Dashboard → 🎧 YouTube Discovery Engine → Настройки (пише директно тук през GitHub Contents API, същия механизъм като YouTube Тракера), или ръчно. Engine-ът (scripts/youtube_discovery_engine.py) чете точно този файл при всеки run — няма отделно копие някъде другаде.",
-  "paused": false,
+  "paused": true,
   "self_track_ratio_min": 0.1,
   "self_track_ratio_max": 0.2,
   "min_external_between_self": 3,
