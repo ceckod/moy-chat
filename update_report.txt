@@ -1,5 +1,5 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-105135
+Timestamp: 20260816-105547
 
 Changed:
   sw.js
@@ -7,11 +7,9 @@ Changed:
   PROJECT_STATE.md
   MODULE-MAP.md
   js/nav.js
-  js/step1.js
-  js/viral-lab.js
 
 Added:
-  js/idea-vault.js
+  js/learning-loop.js
 
 Removed:
   none
@@ -75,6 +73,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
+  js/step1.js
   js/ui-bootstrap.js
   js/step4.js
   js/release-roadmap.js
@@ -91,7 +90,9 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/quick-upload.js
   js/agent-roster.js
   js/ai-call-log.js
+  js/viral-lab.js
   js/ai-cache.js
+  js/idea-vault.js
   js/quota-tracker.js
   js/niche-scoring.js
   js/niche-toolkit.js

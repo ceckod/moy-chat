@@ -86,6 +86,24 @@ Evolution Arena победителя от `js/viral-lab.js` (`HookArena`, фин
 групата "Инструменти". Свързва used идея с реално представяне през
 `TrackRecord.load()` (`r.actual`) по съвпадение на `title`.
 
+## 2d. Learning Loop — агрегация "какво реално работи" (добавен 2026-08-16, P1)
+
+```
+js/learning-loop.js
+```
+Read-only агрегация над `TrackRecord.load()` (само записи с `.actual`)
+и `IdeaVault.load()` (used идеи, свързани по `resultingTitle`). Не пише
+в нито едно от двете. UI: `index.html`, view `stats-analytics`, под
+Track Record секцията, `#learningLoopOut`. Вика се от
+`Nav.showView("stats-analytics")`.
+
+**Корекция в одита от по-рано днес:** Similarity check (`Step3.
+checkSimilarity()`, YouTube search-базирано) и Cover artwork
+generation (`Step3.generateCoverImage*()`, Gemini/Imagen + Pollinations
+fallback + code-logo) се оказаха **вече напълно реализирани**, не
+mock — предишният grep search пропусна българските имена на функциите.
+Виж PROJECT_STATE.md за пълната корекция.
+
 ## 3. Song Creation Flow — Стъпки 1-4 + Бърз ъплоуд
 
 ```
