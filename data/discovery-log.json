@@ -1394,6 +1394,22 @@
       "no_changes": false,
       "errors": [],
       "warnings": []
+    },
+    {
+      "run_id": "54e78af4",
+      "started_at": "2026-08-16T11:09:04.289499+00:00",
+      "dry_run": false,
+      "status": "paused",
+      "new_own_tracks": 0,
+      "clusters_changed": [],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": false,
+      "errors": [],
+      "warnings": []
     }
   ]
 }
