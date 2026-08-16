@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-16T06:51:24.734272+00:00",
+  "last_run": "2026-08-16T17:33:40.474490+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -35,13 +35,6 @@
           "playlist_item_id": "UExHT0JrckNMUEhLUS4wMTcyMDhGQUE4NTIzM0Y5"
         },
         {
-          "youtube_video_id": "dHU8B76kR_s",
-          "is_mine": false,
-          "title": "'A Late Night R&B Experience' in Brooklyn 🤍 | Bryson Tiller, Daniel Caesar, Snoh, SZA + | Playlist",
-          "added_at": "2026-08-14T18:28:28.742906+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS41MjE1MkI0OTQ2QzJGNzNG"
-        },
-        {
           "youtube_video_id": "A__GXZsG3hk",
           "is_mine": false,
           "title": "Tems - What You Need (Official Video)",
@@ -49,60 +42,11 @@
           "playlist_item_id": "UExHT0JrckNMUEhLUS4wOTA3OTZBNzVEMTUzOTMy"
         },
         {
-          "youtube_video_id": "hwkq1qlVbqc",
-          "is_mine": false,
-          "title": "2:00am Soul R&B Bedroom Playlist | SZA, Miguel, PARTYNEXTDOOR, Brent Faiyaz, Kehlani Mix by HelloVee",
-          "added_at": "2026-08-14T18:41:39.802201+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS4xMkVGQjNCMUM1N0RFNEUx"
-        },
-        {
           "youtube_video_id": "OIV6ccRRR88",
           "is_mine": false,
           "title": "Throwback 2000s R&B Mix | T-Pain, Chris Brown, Mario, The-Dream & More!",
           "added_at": "2026-08-14T18:41:39.802201+00:00",
           "playlist_item_id": "UExHT0JrckNMUEhLUS41MzJCQjBCNDIyRkJDN0VD"
-        },
-        {
-          "youtube_video_id": "kQ1A85aIzFU",
-          "is_mine": false,
-          "title": "Late Night R&B Playlist Vol. 12 🩷 | SZA Tone Stith Chris Brown kwn + | @markmark",
-          "added_at": "2026-08-14T18:41:39.802201+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS5DQUNERDQ2NkIzRUQxNTY1"
-        },
-        {
-          "youtube_video_id": "IPyWElKZJ0g",
-          "is_mine": false,
-          "title": "Old School R&B 90s Mix | Usher, Keith Sweat, Soul For Real, Jon B., Maxwell",
-          "added_at": "2026-08-14T18:41:39.802201+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS45NDk1REZENzhEMzU5MDQz"
-        },
-        {
-          "youtube_video_id": "-Z2lTeSIQIw",
-          "is_mine": false,
-          "title": "Jazz & Soul R&B – Warm Sax, Rhodes & Chill Grooves | Feel-Good Smooth Jazz for Relaxation 🎷✨",
-          "added_at": "2026-08-14T18:41:39.802201+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS5GNjNDRDREMDQxOThCMDQ2"
-        },
-        {
-          "youtube_video_id": "cpxqhiJh9gQ",
-          "is_mine": true,
-          "title": "HE CHOSE ME - R&B / Pop Ballad (Official Visualizer)",
-          "added_at": "2026-08-15T13:14:37.090050+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS43NDhFRTgwOTRERTU4Rjg3"
-        },
-        {
-          "youtube_video_id": "20_DAtpecF8",
-          "is_mine": false,
-          "title": "Smooth R&B Soul Mix 80s 90s | Timeless Love Ballads & Romantic Slow Jams",
-          "added_at": "2026-08-14T19:45:50.281985+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS40NzZCMERDMjVEN0RFRThB"
-        },
-        {
-          "youtube_video_id": "R0et-NCkwks",
-          "is_mine": false,
-          "title": "【洋楽Playlist】ずっと流していたい最高に心地いいR&B🌙",
-          "added_at": "2026-08-14T19:45:50.281985+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS5EMEEwRUY5M0RDRTU3NDJC"
         },
         {
           "youtube_video_id": "LzNhIQoP5Zw",
@@ -119,37 +63,9 @@
           "playlist_item_id": "UExHT0JrckNMUEhLUS44Mjc5REFBRUE2MTdFRDU0"
         },
         {
-          "youtube_video_id": "qmpZevvEJd0",
-          "is_mine": false,
-          "title": "Nostalgia: 90's Old School Mix | Soul For Real, 112, Lauryn Hill, Mary J. Blige, Faith Evans",
-          "added_at": "2026-08-14T19:45:50.281985+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS4zMDg5MkQ5MEVDMEM1NTg2"
-        },
-        {
-          "youtube_video_id": "SEVn6s_tEbg",
-          "is_mine": false,
-          "title": "2000's R&B and Hip Hop Mix | Best of Old School R&B 90s - 2000s Music Playlist ~ Throwback R&B Mix",
-          "added_at": "2026-08-14T19:45:50.281985+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS41Mzk2QTAxMTkzNDk4MDhF"
-        },
-        {
-          "youtube_video_id": "drrxRZb6wUc",
-          "title": "TrapSoul Mix (2026) R&B/Soul Playlist: Chris Brown, Ella Mai, BLXD, SZA & Summer Walker",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS5EQUE1NTFDRjcwMDg0NEMz",
-          "is_mine": false,
-          "added_at": "unknown"
-        },
-        {
           "youtube_video_id": "UfufzpXLo-g",
           "title": "The 90s R&B Slow Jams Sanctuary: Keith Sweat, Jodeci, Joe & More Classics 🍷",
           "playlist_item_id": "UExHT0JrckNMUEhLUS41QTY1Q0UxMTVCODczNThE",
-          "is_mine": false,
-          "added_at": "unknown"
-        },
-        {
-          "youtube_video_id": "OrqZaU9BRO8",
-          "title": "🎙️ Top 100 Motown Classics – Soul & R&B Oldies from the 70s, 80s, 90s | Timeless Hits Playlist",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS4yMUQyQTQzMjRDNzMyQTMy",
           "is_mine": false,
           "added_at": "unknown"
         },
@@ -166,6 +82,13 @@
           "title": "90S R&B PARTY MIX⚡Alicia Keys, Usher, Chris Brown,Ne Yo,Mariah Carey - OLD SCHOOL R&B MIX 90s 2000s",
           "added_at": "2026-08-14T19:57:22.824411+00:00",
           "playlist_item_id": "UExHT0JrckNMUEhLUS5ENDU4Q0M4RDExNzM1Mjcy"
+        },
+        {
+          "youtube_video_id": "cpxqhiJh9gQ",
+          "is_mine": true,
+          "title": "HE CHOSE ME - R&B / Pop Ballad (Official Visualizer)",
+          "added_at": "2026-08-15T13:14:37.090050+00:00",
+          "playlist_item_id": "UExHT0JrckNMUEhLUS43NDhFRTgwOTRERTU4Rjg3"
         },
         {
           "youtube_video_id": "v5BkdUQSCK8",
@@ -210,13 +133,6 @@
           "playlist_item_id": "UExHT0JrckNMUEhLUS43MTI1NDIwOTMwQjIxMzNG"
         },
         {
-          "youtube_video_id": "E6SVZYweau8",
-          "is_mine": false,
-          "title": "Chante Moore Can WHISTLE Like Minnie Riperton!? 🎤 #shorts #rnb #music #chantemoore",
-          "added_at": "2026-08-15T04:24:49.707392+00:00",
-          "playlist_item_id": "UExHT0JrckNMUEhLUS5DQ0MyQ0Y4Mzg0M0VGOEYw"
-        },
-        {
           "youtube_video_id": "-CepAYN0WyM",
           "title": "Chris Brown - Fallin' (Official Video) ft. Leon Thomas",
           "playlist_item_id": "UExHT0JrckNMUEhLUS4yQUE2Q0JEMTk4NTM3RTZC",
@@ -227,6 +143,20 @@
           "youtube_video_id": "bC89a3fTTZY",
           "title": "Private video",
           "playlist_item_id": "UExHT0JrckNMUEhLUS5DMkU4NTY1QUFGQTYwMDE3",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "drrxRZb6wUc",
+          "title": "TrapSoul Mix (2026) R&B/Soul Playlist: Chris Brown, Ella Mai, BLXD, SZA & Summer Walker",
+          "playlist_item_id": "UExHT0JrckNMUEhLUS41QUZGQTY5OTE4QTREQUU4",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "OrqZaU9BRO8",
+          "title": "🎙️ Top 100 Motown Classics – Soul & R&B Oldies from the 70s, 80s, 90s | Timeless Hits Playlist",
+          "playlist_item_id": "UExHT0JrckNMUEhLUS4zRDBDOEZDOUM0MDY5NEEz",
           "is_mine": false,
           "added_at": "unknown"
         }
@@ -423,7 +353,7 @@
       "name": "Rap — Discover",
       "description": "🎧 Rap Discovery — a curated mix blending fresh Rap picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:31.096950+00:00",
-      "last_updated": "2026-08-15T18:59:04.890402+00:00",
+      "last_updated": "2026-08-16T17:33:44.634930+00:00",
       "tracks": [
         {
           "youtube_video_id": "495zc7_vGgA",
@@ -482,20 +412,6 @@
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5DQUNERDQ2NkIzRUQxNTY1"
         },
         {
-          "youtube_video_id": "IOO30CU6VmA",
-          "is_mine": false,
-          "title": "Rap Music 2026 - Hip Hop Playlist - Top Rap Songs 2026 Hip Hop Mix 🔥💸 Drake Kendrick Lamar Future",
-          "added_at": "2026-08-14T18:41:41.466885+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy45NDk1REZENzhEMzU5MDQz"
-        },
-        {
-          "youtube_video_id": "Z50N6gL136M",
-          "is_mine": false,
-          "title": "LEGENDARY OLD SCHOOL HIP HOP MIX 🔥🔥🔥 Snoop Dogg, Dr. Dre, 50 Cent, 2Pac, Ice Cube, Eminem & More",
-          "added_at": "2026-08-14T18:41:41.466885+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy5GNjNDRDREMDQxOThCMDQ2"
-        },
-        {
           "youtube_video_id": "FdzPyCJpl_A",
           "is_mine": false,
           "title": "FullyChop - Vultures (Official Music Video)",
@@ -508,13 +424,6 @@
           "title": "Kodak Black - Lemon Squeeze (Official Music Video)",
           "added_at": "2026-08-14T19:45:52.566749+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5EMEEwRUY5M0RDRTU3NDJC"
-        },
-        {
-          "youtube_video_id": "2zRoR5A9_fI",
-          "is_mine": false,
-          "title": "New Rap Songs 2026 Mix August | Trap Tape #137 | New Hip Hop 2026 Mixtape | DJ Noize",
-          "added_at": "2026-08-14T19:45:52.566749+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy45ODRDNTg0QjA4NkFBNkQy"
         },
         {
           "youtube_video_id": "8MplKeEytjc",
@@ -552,13 +461,6 @@
           "added_at": "unknown"
         },
         {
-          "youtube_video_id": "7tLGfZWScwg",
-          "title": "Rap Music 2025 - Hip Hop Playlist - Top Rap Songs 2025 Hip Hop Mix 🔥💸 Drake Kendrick Lamar Future",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy45RTgxNDRBMzUwRjQ0MDhC",
-          "is_mine": false,
-          "added_at": "unknown"
-        },
-        {
           "youtube_video_id": "qb2JsIHu6Fk",
           "title": "JhonnieDamnD - Murda Bend | From The Block Performance 🎙",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5ENDU4Q0M4RDExNzM1Mjcy",
@@ -580,25 +482,11 @@
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5GM0Q3M0MzMzY5NTJFNTdE"
         },
         {
-          "youtube_video_id": "jzrQHCF_1KM",
-          "is_mine": false,
-          "title": "New Rap Songs 2026 Mix July | Trap Tape #136 | New Hip Hop 2026 Mixtape | DJ Noize",
-          "added_at": "2026-08-15T04:24:53.913734+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy4zRjM0MkVCRTg0MkYyQTM0"
-        },
-        {
           "youtube_video_id": "u-ctvT8kkwc",
           "is_mine": false,
           "title": "Bubba Sparxxx - Bun B - Dusty Leigh - Pop It (Official Music Video)",
           "added_at": "2026-08-15T04:24:53.913734+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy45NzUwQkI1M0UxNThBMkU0"
-        },
-        {
-          "youtube_video_id": "mD8r-GH4bi8",
-          "is_mine": false,
-          "title": "The Best of KAWAGO - Kailanman, Kay Tagal, Paminsan-minsan - Original PINOY RAP - Nonstop 2026",
-          "added_at": "2026-08-15T04:36:33.824778+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy5DNzE1RjZEMUZCMjA0RDBB"
         },
         {
           "youtube_video_id": "0VufauIk2yo",
@@ -636,13 +524,6 @@
           "playlist_item_id": "UExMVkk0ekphVGZ1dy44Mjc5REFBRUE2MTdFRDU0"
         },
         {
-          "youtube_video_id": "qOohqelkL1A",
-          "is_mine": false,
-          "title": "New Hip-Hop & Trap Music Mix 2026 🤘🤘| Travis Scott, Drake, Kanye West, GloRilla, Lil Baby, & More...",
-          "added_at": "2026-08-15T13:20:41.296162+00:00",
-          "playlist_item_id": "UExMVkk0ekphVGZ1dy43NDhFRTgwOTRERTU4Rjg3"
-        },
-        {
           "youtube_video_id": "8Bf4qOn0MRs",
           "is_mine": false,
           "title": "T.I. - Mr. Him (Official Video)",
@@ -662,6 +543,34 @@
           "title": "Noodah05 - Hero (Official Music Video)",
           "added_at": "2026-08-15T13:34:26.409048+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy5CMEQ2Mjk5NTc3NDZFRUNB"
+        },
+        {
+          "youtube_video_id": "QKY9jEIXfVQ",
+          "title": "Lil Rome Praba x Smokio - කචල් කාසි (Kachal Kasi) OFFICIAL MUSIC VIDEO",
+          "playlist_item_id": "UExMVkk0ekphVGZ1dy42MTI4Njc2QjM1RjU1MjlG",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "7tLGfZWScwg",
+          "title": "Rap Music 2025 - Hip Hop Playlist - Top Rap Songs 2025 Hip Hop Mix 🔥💸 Drake Kendrick Lamar Future",
+          "playlist_item_id": "UExMVkk0ekphVGZ1dy45RjNFMDhGQ0Q2RkFCQTc1",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "3Ix-CNBVDJM",
+          "is_mine": false,
+          "title": "Young M.A \"Still Free\" (Official Music Video)",
+          "added_at": "2026-08-16T17:33:43.542226+00:00",
+          "playlist_item_id": "UExMVkk0ekphVGZ1dy40QTA3NTU2RkM1QzlCMzYx"
+        },
+        {
+          "youtube_video_id": "AHuKFYTSrZU",
+          "is_mine": false,
+          "title": "Future - Radio (Official Music Video)",
+          "added_at": "2026-08-16T17:33:43.542226+00:00",
+          "playlist_item_id": "UExMVkk0ekphVGZ1dy5BRjJDODk5REM0NjkzMUIy"
         }
       ],
       "history": [
@@ -867,6 +776,20 @@
           "video_id": "Ub8WZQFoD74",
           "is_mine": false,
           "dry_run": false
+        },
+        {
+          "date": "2026-08-16T17:33:43.542226+00:00",
+          "action": "added",
+          "video_id": "3Ix-CNBVDJM",
+          "is_mine": false,
+          "dry_run": false
+        },
+        {
+          "date": "2026-08-16T17:33:43.542226+00:00",
+          "action": "added",
+          "video_id": "AHuKFYTSrZU",
+          "is_mine": false,
+          "dry_run": false
         }
       ],
       "archived": false,
@@ -1048,13 +971,6 @@
           "playlist_item_id": "UExWdUdyRW51QlR5Zy43MTI1NDIwOTMwQjIxMzNG"
         },
         {
-          "youtube_video_id": "W0vH30K5bLE",
-          "is_mine": true,
-          "title": "НЕ МЕ ОСТАВЯЙ / NE ME OSTAVIAY   (Official Video)",
-          "added_at": "2026-08-14T19:45:55.746641+00:00",
-          "playlist_item_id": "UExWdUdyRW51QlR5Zy5EQUE1NTFDRjcwMDg0NEMz"
-        },
-        {
           "youtube_video_id": "zCMAdGFR8as",
           "is_mine": false,
           "title": "Over You - Daughtry | Pop / R&B Version by Pop Hit Factory",
@@ -1088,6 +1004,27 @@
           "title": "Harry Styles - American Girls (Official Video)",
           "added_at": "2026-08-16T05:46:44.422482+00:00",
           "playlist_item_id": "UExWdUdyRW51QlR5Zy44Mjc5REFBRUE2MTdFRDU0"
+        },
+        {
+          "youtube_video_id": "W0vH30K5bLE",
+          "is_mine": true,
+          "title": "НЕ МЕ ОСТАВЯЙ / NE ME OSTAVIAY   (Official Video)",
+          "added_at": "2026-08-14T19:45:55.746641+00:00",
+          "playlist_item_id": "UExWdUdyRW51QlR5Zy5EQUE1NTFDRjcwMDg0NEMz"
+        },
+        {
+          "youtube_video_id": "kSBQZH3dkZ8",
+          "title": "Tyla - THAT GIRL (Official Music Video)",
+          "playlist_item_id": "UExWdUdyRW51QlR5Zy43NDhFRTgwOTRERTU4Rjg3",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "syc4SzrubKY",
+          "title": "DaBaby - POP DAT THANG",
+          "playlist_item_id": "UExWdUdyRW51QlR5Zy41QUZGQTY5OTE4QTREQUU4",
+          "is_mine": false,
+          "added_at": "unknown"
         }
       ],
       "history": [
@@ -1707,7 +1644,7 @@
       "name": "Dance — Discover",
       "description": "🎧 Dance Discovery — a curated mix blending fresh Dance picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:44.793950+00:00",
-      "last_updated": "2026-08-15T18:59:09.601023+00:00",
+      "last_updated": "2026-08-16T17:33:47.524292+00:00",
       "tracks": [
         {
           "youtube_video_id": "RQxQZV66Bl8",
@@ -1925,6 +1862,13 @@
           "title": "BRAINROT Baby Dance - Feel the Vibe (Music Video 4k HD)",
           "added_at": "2026-08-15T15:58:09.752755+00:00",
           "playlist_item_id": "UExPT3lFUnRBbDFHUS43NDhFRTgwOTRERTU4Rjg3"
+        },
+        {
+          "youtube_video_id": "5QFSW9C9uYk",
+          "is_mine": false,
+          "title": "New Tiktok Mashup 2026 Philippines Party Music Viral Dance Trends August 16th",
+          "added_at": "2026-08-16T17:33:47.124159+00:00",
+          "playlist_item_id": "UExPT3lFUnRBbDFHUS41QUZGQTY5OTE4QTREQUU4"
         }
       ],
       "history": [
@@ -2114,6 +2058,13 @@
           "date": "2026-08-15T15:58:09.752755+00:00",
           "action": "added",
           "video_id": "n5VcjgY4bb8",
+          "is_mine": false,
+          "dry_run": false
+        },
+        {
+          "date": "2026-08-16T17:33:47.124159+00:00",
+          "action": "added",
+          "video_id": "5QFSW9C9uYk",
           "is_mine": false,
           "dry_run": false
         }
@@ -2732,6 +2683,13 @@
           "title": "How to Make Suno AI Music Videos with Lip Sync for FREE",
           "added_at": "2026-08-16T05:46:22.578428+00:00",
           "playlist_item_id": "UExVRzVTRl9hUElscy4yMUQyQTQzMjRDNzMyQTMy"
+        },
+        {
+          "youtube_video_id": "1Weurw_e9k0",
+          "title": "Kimo Sounds ✦ Rise Slow (Deep House)",
+          "playlist_item_id": "UExVRzVTRl9hUElscy45RTgxNDRBMzUwRjQ0MDhC",
+          "is_mine": false,
+          "added_at": "unknown"
         }
       ],
       "history": [
@@ -3071,6 +3029,13 @@
           "youtube_video_id": "Xf9XEUQvqPQ",
           "title": "Sarafa - REVENUE",
           "playlist_item_id": "UExLSy12cTZXZDZ5NC5DQUNERDQ2NkIzRUQxNTY1",
+          "is_mine": false,
+          "added_at": "unknown"
+        },
+        {
+          "youtube_video_id": "DJWtHU1v-xg",
+          "title": "МЪРТВА ЗОНА (feat. CD-B)",
+          "playlist_item_id": "UExLSy12cTZXZDZ5NC45NDk1REZENzhEMzU5MDQz",
           "is_mine": false,
           "added_at": "unknown"
         }

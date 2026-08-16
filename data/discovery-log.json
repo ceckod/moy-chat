@@ -1458,6 +1458,54 @@
       "no_changes": false,
       "errors": [],
       "warnings": []
+    },
+    {
+      "run_id": "aedb5388",
+      "started_at": "2026-08-16T17:33:40.474490+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 1,
+      "clusters_changed": [
+        "rap",
+        "dance"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 3,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 4,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Dance' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 566,
+      "quota_calls": [
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }
