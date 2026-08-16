@@ -11,9 +11,6 @@ const Nav = {
   current: "dashboard",
   init() {
     AppState.load();
-    const fromHash = location.hash.replace("#", "");
-    const validView = fromHash && document.getElementById("view-" + fromHash);
-    this.current = validView ? fromHash : this.current;
     history.replaceState({ cdbView: this.current }, "", "#" + this.current);
     window.addEventListener("popstate", (e) => {
       const id = (e.state && e.state.cdbView) || this.current;

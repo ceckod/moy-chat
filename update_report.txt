@@ -1,15 +1,10 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-081955
+Timestamp: 20260816-082434
 
 Changed:
   nav.js
-  index.html
-  data/playlists-state.json
-  data/metadata-suggestions.json
-  data/discovery-candidates-cache.json
-  data/discovery-config.json
-  data/catalog.json
-  data/discovery-log.json
+  update_report.txt
+  js/nav.js
 
 Added:
   none
