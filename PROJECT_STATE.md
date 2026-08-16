@@ -35,6 +35,87 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (8)** — **Финален фикс по молба на потребителя** ("да
+  искам, но искам пълен повторен преглед на модула"). Систематична
+  cross-check проверка: всеки ключ в `discovery-config.json` срещу
+  реалната му употреба (`"key"` grep) в `youtube_discovery_engine.py`
+  — намерени и поправени всичките оставащи "мъртви" настройки:
+  1. **`self_track_ratio_min`** — вече реално означава нещо.
+     `build_insert_plan()`: ако текущият self-track ratio е под `min`
+     ("catch-up" режим), engine-ът позволява до 2 опита за вмъкване на
+     собствена песен в рамките на СЪЩИЯ run (вместо само 1); щом ratio
+     е в нормалния диапазон [min, max), поведението е точно каквото
+     беше преди (1 опит). `min_distance` constraint-ът (т.18, "никога
+     не насилвай ratio в малък playlist") важи за всеки опит поотделно
+     — не е заобиколен. Тествано изолирано (catch-up=2 опита, нормален
+     диапазон=1 опит) — и двата случая минават.
+  2. **`candidate_search_queries_per_playlist_per_run`** — вече прави
+     реално до N вариации на search заявката (до 4 шаблона: "music",
+     "official audio", "new release", "mix"), не винаги само 1. Спира
+     на първата неуспешна заявка (напр. изчерпана дневна YouTube
+     quota), но ПАЗИ вече намерените кандидати от предходните успешни
+     заявки в същия run — не ги изхвърля заради по-късна грешка.
+  3. **Намерен трети мъртъв конфиг при систематичната проверка** (не
+     флагнат преди):
+     **`min_playlist_size`** — активно UI поле в Настройки на Discovery
+     Engine ("Мин. размер на playlist", `js/youtube-discovery.js` ред
+     ~427, пише през същия GitHub Contents API механизъм като
+     останалите настройки) — потребителят реално може да го сменя,
+     очаквайки ефект, но backend-ът никога не го четеше. Огледално на
+     вече съществуващия `max_playlist_size` (горна граница), сега е
+     долна граница за `build_prune_plan()` — auto-removal никога не
+     смалява playlist под тази стойност, дори ако overflow над
+     max_size технически би позволил повече премахвания. Тествано
+     изолирано, включително ръбов случай с погрешно зададена
+     конфигурация (`max_playlist_size < min_playlist_size`) — guard-ът
+     пази долната граница коректно, не гърми.
+  4. За консистентност с manual override pattern-а (т.34), добавени
+     `self_track_ratio_min_override` и `min_playlist_size_override`
+     към схемата на playlist entry-то в `find_or_create_playlist()`
+     (огледално на вече съществуващите `self_track_ratio_override`/
+     `max_playlist_size_override`) — nullable, не пипа съществуващи
+     playlist записи в `data/playlists-state.json` (стар запис без тези
+     полета просто пада на cfg-level стойността през `.get()`, идентично
+     на всички останали override полета).
+  **Финална проверка:** cross-check скрипт потвърждава 0 останали
+  мъртви конфиги в целия discovery-config.json. `py_compile` чисто за
+  трите скрипта. `npm test` 85/85 (несвързано, но regression гард).
+  **Статус: пълен финален fix готов, чака потребителят да качи в
+  GitHub (директен repo commit, не incoming/ZIP).** С това всички
+  известни проблеми в YouTube Discovery Engine модула са адресирани —
+  crash бъга (запис 6), мъртвия Gemini API key (запис 7), и трите
+  мъртви config настройки (този запис).
+
+- **2026-08-16 (7)** — Продължение на разследването по молба на
+  потребителя ("други има ли"). Пълен ред-по-ред преглед на
+  `youtube_discovery_engine.py`, `_youtube_common.py` и
+  `catalog_bootstrap.py`. Намерени още 2 проблема:
+  1. **Реален бъг, поправен:** `.github/workflows/youtube-discovery.yml`
+     не подаваше `GEMINI_API_KEY` към скрипта, макар `_youtube_common.py`
+     (`_call_ai_json` арсенала) вече да го очаква — коментар в кода
+     показва, че Gemini е добавен в AI веригата "т.16.08.2026" (същия
+     ден), но env блока в workflow-а е пропуснат. Резултат: Gemini
+     tier-ът в AI класификацията (жанр/subgenre за catalog_bootstrap.py)
+     е бил 100% мъртъв в този конкретен workflow, дори при налична
+     `GEMINI_API_KEY` secret в GitHub — тихо пада на Mistral/GitHub
+     Models/Cloudflare/Pollinations/Anthropic. **Fix:** добавен редът в
+     env блока. YAML валидиран (`python3 -c "import yaml"`).
+  2. **Само флагнато, НЕ пипнато (behavior-променящо, изисква решение
+     от потребителя):** `self_track_ratio_min` (0.1 в конфига) и
+     `candidate_search_queries_per_playlist_per_run` (1) са дефинирани
+     в `discovery-config.json`, но никога не се четат никъде в
+     `youtube_discovery_engine.py` — "мъртви настройки", същия pattern
+     като `fresh_track_target_days`/`max_track_age_days` преди
+     по-ранния фикс (виж коментара на ред ~524 в кода). Практически
+     ефект в момента е малък (min ratio почти винаги де факто се пълни
+     инкрементално от съществуващата max-ratio логика), но не прави
+     точно каквото имената им обещават. Не пипнато — променя реално
+     поведение на playlist-строенето, изисква потребителско решение
+     (искаш ли активна долна граница / повече от 1 search заявка на run).
+  Компилиран целия `scripts/*.py` (`py_compile`), `npm test` 85/85.
+  **Статус: workflow фикс готов, чака потребителят да качи в GitHub
+  (директен repo commit, не incoming/ZIP — виж запис (6) по-горе).**
+
 - **2026-08-16 (6)** — **Критичен бъгфикс в `scripts/youtube_discovery_engine.py`**
   по молба на потребителя ("нещо куца логиката в Discovery Engine").
   **Root cause:** `_label_similarity(label_a, label_b)` — функцията,

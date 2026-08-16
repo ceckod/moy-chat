@@ -262,6 +262,7 @@ def find_or_create_playlist(cluster_key, cluster_label, state, yt: YouTubeClient
         "locked": False, "disabled": False,
         "excluded_video_ids": [], "forced_video_ids": [],
         "self_track_ratio_override": None, "max_playlist_size_override": None,
+        "self_track_ratio_min_override": None, "min_playlist_size_override": None,
     }
 
     if dry_run:
@@ -509,22 +510,47 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, 
         log(f"  ⚪ Candidate cache за '{cluster_label}' е свеж и достатъчно голям ({len(unused)}) — 0 search.list.")
         return unused, False
 
-    try:
-        found = _search_youtube(f"{cluster_label} music", yt, cfg["candidate_search_window_days"],
-                                 own_channel_id=own_channel_id,
-                                 max_duration_seconds=cfg.get("max_track_duration_seconds", 720),
-                                 min_duration_seconds=cfg.get("min_track_duration_seconds", 60))
-        run_log["candidate_searches"] += 1
-    except RuntimeError as e:
-        log(f"  ⚠ Discovery search неуспешен за '{cluster_label}': {e}")
-        run_log["warnings"].append(f"search неуспешен за '{cluster_label}': {e}")
+    # т.19.08.2026 бъгфикс: candidate_search_queries_per_playlist_per_run
+    # (discovery-config.json) стоеше дефиниран, но никога не се четеше —
+    # винаги правеше точно 1 заявка, независимо от стойността в конфига.
+    # Сега прави до N вариации на заявката (ограничени до броя шаблони по-
+    # долу), спира веднага при първата неуспешна (напр. изчерпана дневна
+    # quota), но пази каквото вече е намерил от предходните успешни заявки
+    # в СЪЩИЯ run — не изхвърля частичния резултат заради по-късна грешка.
+    query_templates = [
+        f"{cluster_label} music",
+        f"{cluster_label} official audio",
+        f"{cluster_label} new release",
+        f"{cluster_label} mix",
+    ]
+    queries_n = max(1, int(cfg.get("candidate_search_queries_per_playlist_per_run", 1)))
+    queries = query_templates[:queries_n]
+
+    did_search = False
+    total_added = 0
+    for q in queries:
+        try:
+            found = _search_youtube(q, yt, cfg["candidate_search_window_days"],
+                                     own_channel_id=own_channel_id,
+                                     max_duration_seconds=cfg.get("max_track_duration_seconds", 720),
+                                     min_duration_seconds=cfg.get("min_track_duration_seconds", 60))
+            run_log["candidate_searches"] += 1
+            did_search = True
+        except RuntimeError as e:
+            log(f"  ⚠ Discovery search неуспешен за '{cluster_label}' ('{q}'): {e}")
+            run_log["warnings"].append(f"search неуспешен за '{cluster_label}' ('{q}'): {e}")
+            break  # спри тук — не пробвай следващите заявки (напр. изчерпана quota), но пази вече намереното
+
+        known_ids = {c["video_id"] for c in entry["candidates"]}
+        added = [c for c in found if c["video_id"] not in known_ids]
+        entry["candidates"].extend(added)
+        total_added += len(added)
+
+    if not did_search:
         return unused, False
 
-    known_ids = {c["video_id"] for c in entry["candidates"]}
-    added = [c for c in found if c["video_id"] not in known_ids]
-    entry["candidates"].extend(added)
     entry["last_search_at"] = _iso(_now())
-    log(f"  🔎 search.list за '{cluster_label}': +{len(added)} нови кандидата в cache-а.")
+    log(f"  🔎 search.list за '{cluster_label}' ({len(queries)} заявки): +{total_added} нови кандидата в cache-а.")
     return [c for c in entry["candidates"] if c.get("status") == "unused"], True
 
 
@@ -611,23 +637,38 @@ def build_insert_plan(playlist_entry, my_tracks_pool, new_external, cfg):
         tracks.append({"youtube_video_id": ext["video_id"], "is_mine": False, "title": ext["title"], "added_at": "PENDING"})
         ops.append({"action": "insert", "video_id": ext["video_id"], "is_mine": False, "title": ext["title"], "position": None})
 
+    ratio_min = playlist_entry.get("self_track_ratio_min_override") or cfg.get("self_track_ratio_min", 0)
     ratio_max = playlist_entry.get("self_track_ratio_override") or cfg["self_track_ratio_max"]
-    if current_self_ratio(tracks) < ratio_max:
+    # т.19.08.2026 бъгфикс: self_track_ratio_min (discovery-config.json) беше
+    # дефиниран, но никога не се четеше — единствената активна граница беше
+    # ratio_max (винаги 1 опит за self-track вмъкване, докато ratio < max).
+    # Сега min реално означава нещо: ако сме СЪЩЕСТВЕНО под долната граница
+    # ("catch-up" режим), позволяваме до 2 опита за вмъкване в рамките на
+    # СЪЩИЯ run, вместо само 1 — иначе поведението остава напълно същото
+    # като преди (1 опит, докато ratio < max). min_distance ограничението
+    # (valid_insert_distance) важи за ВСЕКИ опит поотделно — т.18 "никога не
+    # насилвай ratio в малък playlist" не е засегнато от тази промяна.
+    max_attempts = 2 if current_self_ratio(tracks) < ratio_min else 1
+    inserted = 0
+    while inserted < max_attempts and current_self_ratio(tracks) < ratio_max:
         candidate = choose_self_track_to_insert(my_tracks_pool, tracks, cfg["min_playlist_size_for_self_tracks"])
-        if candidate:
-            n = len(tracks)
-            search_positions = list(range(max(0, n // 3), n + 1))
-            random.shuffle(search_positions)
-            for pos in search_positions:
-                if valid_insert_distance(tracks, pos, cfg["min_external_between_self"]):
-                    tracks.insert(pos, {"youtube_video_id": candidate["youtube_video_id"], "is_mine": True,
-                                         "title": candidate["title"], "added_at": "PENDING"})
-                    ops.append({"action": "insert", "video_id": candidate["youtube_video_id"], "is_mine": True,
-                                "title": candidate["title"], "position": pos})
-                    break
-            else:
-                log(f"    ⚪ Отложих моя песен в '{playlist_entry['label']}' — min_distance ограничението "
-                    f"не позволява безопасна позиция засега.")
+        if not candidate:
+            break
+        n = len(tracks)
+        search_positions = list(range(max(0, n // 3), n + 1))
+        random.shuffle(search_positions)
+        for pos in search_positions:
+            if valid_insert_distance(tracks, pos, cfg["min_external_between_self"]):
+                tracks.insert(pos, {"youtube_video_id": candidate["youtube_video_id"], "is_mine": True,
+                                     "title": candidate["title"], "added_at": "PENDING"})
+                ops.append({"action": "insert", "video_id": candidate["youtube_video_id"], "is_mine": True,
+                            "title": candidate["title"], "position": pos})
+                inserted += 1
+                break
+        else:
+            log(f"    ⚪ Отложих моя песен в '{playlist_entry['label']}' — min_distance ограничението "
+                f"не позволява безопасна позиция засега.")
+            break  # позицията пак ще липсва при следващ опит в СЪЩИЯ run — не зацикляй
 
     # т.34: forced_video_ids — ръчно принудени песни, добавят се независимо от ratio/discovery,
     # но НЕ заобикалят global каталог логиката (очаква се да е валиден video_id)
@@ -673,6 +714,16 @@ def build_prune_plan(playlist_entry, cfg):
     if len(tracks) <= max_size:
         return []
     overflow = len(tracks) - max_size
+    # т.19.08.2026 бъгфикс: min_playlist_size (discovery-config.json, UI label
+    # "Мин. размер на playlist" в Настройки на Discovery Engine — js/youtube-
+    # discovery.js) стоеше дефиниран и дори РЕДАКТИРУЕМ от потребителя през
+    # UI-то, но никога не се четеше тук — pruning нямаше долна граница.
+    # Огледално на max_playlist_size по-горе: никога не смалявай playlist-а
+    # под min_playlist_size, дори overflow над max_size да го позволява.
+    min_size = playlist_entry.get("min_playlist_size_override") or cfg.get("min_playlist_size", 0)
+    overflow = min(overflow, max(0, len(tracks) - min_size))
+    if overflow <= 0:
+        return []
     forced = set(playlist_entry.get("forced_video_ids", []))
     removable = [t for t in tracks if not t.get("is_mine") and t["youtube_video_id"] not in forced]
     removable.sort(key=lambda t: t.get("added_at") or "")  # най-старите (least fresh) първи
