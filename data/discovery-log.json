@@ -1378,6 +1378,22 @@
         "playlistItems.list",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "abf42c90",
+      "started_at": "2026-08-16T11:06:17.977808+00:00",
+      "dry_run": false,
+      "status": "paused",
+      "new_own_tracks": 0,
+      "clusters_changed": [],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": false,
+      "errors": [],
+      "warnings": []
     }
   ]
 }
