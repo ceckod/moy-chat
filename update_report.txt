@@ -1,18 +1,12 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-170539
+Timestamp: 20260816-171404
 
 Changed:
-  sw.js
-  index.html
   PROJECT_STATE.md
-  MODULE-MAP.md
-  js/nav.js
-  js/providers/gemini.js
-  js/providers/fallback-loop.js
-  js/providers/claude.js
+  scripts/youtube_discovery_engine.py
 
 Added:
-  js/cost-tracker.js
+  none
 
 Removed:
   none
@@ -23,10 +17,12 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   nav.js
   step1.js
   ui-bootstrap.js
+  sw.js
   load-app.mjs
   step4.js
   site-ai.html
   CDB-Dashboard.md
+  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -44,6 +40,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   viral-lab.js
   ai-cache.js
   aichat.html
+  MODULE-MAP.md
   ARCHITECTURE.md
   Технически-одит-CDB-Dashboard.md
   README.md
@@ -76,6 +73,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
+  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js
@@ -90,6 +88,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/system-log.js
   js/app-state.js
   js/network.js
+  js/cost-tracker.js
   js/quick-upload.js
   js/agent-roster.js
   js/ai-call-log.js
@@ -146,13 +145,15 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/catalog_bootstrap.py
   scripts/youtube_oauth_bootstrap.py
   scripts/clock-and-keys.js
-  scripts/youtube_discovery_engine.py
   scripts/track_niche_scores.py
   scripts/cleanup_dead_files.py
   scripts/_secret_scan.py
   scripts/track_stats.py
   scripts/track_trends.py
+  js/providers/gemini.js
   js/providers/openrouter.js
+  js/providers/fallback-loop.js
+  js/providers/claude.js
   js/providers/code-logo.js
   js/providers/subtitles.js
   js/providers/model-finder.js

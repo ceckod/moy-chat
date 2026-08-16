@@ -176,10 +176,22 @@ def build_playlist_description(cluster_label: str) -> str:
         f"🎧 {cluster_label} Discovery — a curated mix blending fresh {cluster_label} picks "
         f"with select original releases. Refreshed periodically by the CD-B Discovery Engine."
     )
-    """Грубa Jaccard similarity върху токенизирани label-и, за
+
+
+def _label_similarity(label_a: str, label_b: str) -> float:
+    """Груба Jaccard similarity върху токенизирани label-и, за
     CROSS_PLAYLIST_SIMILARITY_THRESHOLD (т.13). Съзнателна опростена
     евристика v1 — нямаме пълен style-embedding pipeline; документирано
-    ограничение, не претенция за точна музикална similarity."""
+    ограничение, не претенция за точна музикална similarity.
+
+    БЪГФИКС 2026-08-16: тази функция и докстринга ѝ преди стояха без
+    собствен `def` ред — бяха слети в тялото на build_playlist_description()
+    (СЛЕД неговия return, значи никога не се изпълняваха) като недостижим
+    код. `_label_similarity` реално НЕ съществуваше като име, докато
+    pick_candidates_for_playlist() я вика на ред ~547 при cross-playlist
+    dedup — NameError, необхванат от try/except по-нагоре, чупеше целия
+    run веднага щом даден candidate бъде преизползван между 2+ плейлиста.
+    Виж PROJECT_STATE.md за пълния анализ."""
     ta, tb = set(label_a.lower().split()), set(label_b.lower().split())
     if not ta or not tb:
         return 0.0

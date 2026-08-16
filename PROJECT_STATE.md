@@ -35,6 +35,34 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (6)** — **Критичен бъгфикс в `scripts/youtube_discovery_engine.py`**
+  по молба на потребителя ("нещо куца логиката в Discovery Engine").
+  **Root cause:** `_label_similarity(label_a, label_b)` — функцията,
+  ползвана за cross-playlist similarity dedup (т.13) — липсваше собствен
+  `def` ред. Тялото ѝ (docstring + Jaccard similarity код) стоеше слято
+  СЛЕД `return` в `build_playlist_description()`, значи никога не се
+  изпълняваше, а самото име `_label_similarity` реално не съществуваше
+  никъде в скрипта. `pick_candidates_for_playlist()` (ред ~547) я вика
+  при dedup на кандидат, вече използван в друг плейлист — гърми с
+  `NameError`, **необхванат от нито един try/except** между там и
+  top-level `main()`. Резултат: run-ът пада с необработен exception,
+  GitHub Actions стъпката "Run Discovery Engine" се проваля, следващите
+  стъпки (commit) не се изпълняват — нищо не се пише в
+  `data/discovery-log.json`. Обяснява защо логът е замръзнал на 3 стари
+  записа от 2026-08-14 (`status: ok`, но всички отпреди първото реално
+  cross-playlist reuse) — engine-ът вероятно тихо чупи всеки run оттогава.
+  **Fix:** добавен липсващият `def _label_similarity(label_a: str,
+  label_b: str) -> float:` ред, разделящ двете функции. Проверено
+  изолирано (Jaccard логиката работи коректно: same=1.0, different=0.0,
+  partial overlap правилно). `python3 -m py_compile` OK за целия файл;
+  героичен grep-heuristic за същия "docstring веднага след return"
+  patterN в останалите `scripts/*.py` — чисто, никъде другаде.
+  **Статус: fix готов, чака потребителят да качи в repo-то (Python
+  скрипт, НЕ минава през incoming/ZIP workflow-а на dashboard-а — виж
+  README.md за директен GitHub commit процес).** Следваща препоръка:
+  ръчно тригни workflow-а с "Run Now" (не dry-run) след merge, за да
+  провериш, че вече не гърми.
+
 - **2026-08-16 (5)** — Изпълнена реалната P1 Cost Control липса от
   Phase-0 одита (т.11 от Master Prompt-а): **нов модул
   `js/cost-tracker.js`** — приблизителен $ разход, изчислен от РЕАЛЕН
