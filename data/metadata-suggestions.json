@@ -92,7 +92,7 @@
         "данс поп хит"
       ],
       "ai_provider": "groq",
-      "status": "pending",
+      "status": "rejected",
       "generated_at": "2026-08-16T08:02:26.251204+00:00",
       "applied_at": null
     }
