@@ -93,9 +93,10 @@
         "Lyrics That Matter"
       ],
       "ai_provider": "groq",
-      "status": "approved",
+      "status": "applied",
       "generated_at": "2026-08-16T08:28:14.701596+00:00",
-      "applied_at": null
+      "applied_at": "2026-08-16T08:54:55.828742+00:00",
+      "applied_title": "He played both of us? 💔 (Original R&B Story)"
     }
   }
 }
