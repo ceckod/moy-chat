@@ -29,9 +29,10 @@
         "ново в музиката"
       ],
       "ai_provider": "groq",
-      "status": "approved",
+      "status": "failed",
       "generated_at": "2026-08-16T05:37:46.399129+00:00",
-      "applied_at": null
+      "applied_at": null,
+      "failed_reason": "HTTP 403 PUT https://www.googleapis.com/youtube/v3/videos: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Forbidden\",\n    \"errors\": [\n      {\n        \"message\": \"Forbidden\",\n        \"domain\": \"youtube.video\",\n        \"reason\": \"forbidden\"\n      }\n    ]\n  }\n}\n"
     }
   }
 }
