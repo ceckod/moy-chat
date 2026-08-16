@@ -85,6 +85,14 @@ def generate_suggestion(video_id):
         log(f"❌ {video_id} не е в data/catalog.json — не мога да генерирам предложение.")
         return None
 
+    if track.get("distribution") == "distrokid":
+        log(f"  ⚠ '{track.get('title')}' е дистрибутирана през DistroKid — видеото вероятно е "
+            f"'claim-нато' в YouTube Content ID/CMS системата при доставката, а не обикновен "
+            f"ъплоуд през твоя акаунт. YouTube ЧЕСТО отказва videos.update (title/description/tags) "
+            f"за такова съдържание, дори с валиден OAuth — метаданните може да се управляват само "
+            f"през самия дистрибутор (DistroKid), не през YouTube API директно. Продължавам да "
+            f"генерирам предложение, но 'Приложи' може да гръмне с 403 — това ще го покаже ясно.")
+
     trends_data = load_json(TRENDS_PATH, {"snapshots": []})
     signals = _relevant_trend_signals(track, trends_data)
     signals_txt = "\n".join(
@@ -198,8 +206,23 @@ def apply_suggestion(video_id, chosen_title=None, force=False):
         "description": item["suggested_description"],
         "tags": item["suggested_tags"],
     }
-    yt.write("videos", {"part": "snippet"}, {"id": video_id, "snippet": new_snippet},
-             "videos.update", method="PUT")
+    try:
+        yt.write("videos", {"part": "snippet"}, {"id": video_id, "snippet": new_snippet},
+                 "videos.update", method="PUT")
+    except RuntimeError as e:
+        msg = str(e)
+        if "HTTP 403" in msg:
+            log(f"❌ YouTube отказа videos.update за {video_id} (HTTP 403). Това ТИПИЧНО значи "
+                f"видеото е 'claim-нато' в Content ID/CMS системата на дистрибутор (DistroKid и "
+                f"т.н.) при доставката — метаданните не се управляват през личен OAuth API, само "
+                f"през самия дистрибутор (ако той изобщо предлага такава опция в неговия dashboard). "
+                f"НЕ Е бъг в скрипта — YouTube буквално отказва достъп. Пълна грешка: {msg[:300]}")
+        else:
+            log(f"❌ videos.update неуспешен за {video_id}: {msg[:300]}")
+        item["status"] = "failed"
+        item["failed_reason"] = msg[:500]
+        save_json(SUGGESTIONS_PATH, suggestions)
+        return False
 
     item["status"] = "applied"
     item["applied_at"] = _now_iso()

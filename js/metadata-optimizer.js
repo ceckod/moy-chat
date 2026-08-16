@@ -50,6 +50,7 @@ const MetadataOptimizer = {
         approved: `<span class="badge" style="background:#2a6;">✅ approved</span>`,
         applied: `<span class="badge" style="background:#268;">🚀 applied</span>`,
         rejected: `<span class="badge muted">🚫 rejected</span>`,
+        failed: `<span class="badge" style="background:#a33;">❌ failed</span>`,
       }[item.status] || item.status;
 
       const titlesHtml = (item.suggested_titles || []).map((t, i) => `
@@ -84,6 +85,7 @@ const MetadataOptimizer = {
               <button class="btn ghost sm" onclick="MetadataOptimizer.reject('${item.video_id}')">🚫 Отхвърли</button>
             ` : ""}
             ${item.status === "applied" ? `<span class="muted" style="font-size:11px;">Приложено: ${(item.applied_at || "").slice(0, 16).replace("T", " ")}</span>` : ""}
+            ${item.status === "failed" ? `<span style="font-size:11px;color:#c55;">${item.failed_reason && item.failed_reason.includes("HTTP 403") ? "YouTube отказа промяната (вероятно CMS/дистрибуторско съдържание — DistroKid и т.н., не се управлява през личен OAuth)." : (item.failed_reason || "Грешка при прилагане.")}</span>` : ""}
           </div>
         </div>`;
     }).join("");
