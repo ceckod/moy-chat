@@ -3116,7 +3116,9 @@
       "locked": false,
       "disabled": false,
       "excluded_video_ids": [],
-      "forced_video_ids": [],
+      "forced_video_ids": [
+        "DJWtHU1v-xg"
+      ],
       "self_track_ratio_override": null,
       "max_playlist_size_override": null
     },
