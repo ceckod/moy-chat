@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-15T03:34:44.006Z",
-  "total": 61,
+  "generated_at": "2026-08-16T03:43:59.606Z",
+  "total": 62,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 18
+      "count": 19
     },
     "static": {
       "ok": true,
@@ -26,6 +26,26 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "dots-studio/dots-3-note-preview:free",
+      "name": "Dots Studio: Dots3-Note Preview (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/dots-studio/dots-3-note-preview:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: dots-studio/dots-3-note-preview:free"
+    },
     {
       "source": "openrouter",
       "id": "liquid/lfm-2.5-2.6b:free",
