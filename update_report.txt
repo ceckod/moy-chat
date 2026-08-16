@@ -1,13 +1,15 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-084456
+Timestamp: 20260816-104555
 
 Changed:
+  sw.js
+  index.html
   PROJECT_STATE.md
-  README.md
-  AUDIT_PROGRESS.md
+  MODULE-MAP.md
+  js/nav.js
 
 Added:
-  none
+  js/dashboard.js
 
 Removed:
   none
@@ -18,12 +20,10 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   nav.js
   step1.js
   ui-bootstrap.js
-  sw.js
   load-app.mjs
   step4.js
   site-ai.html
   CDB-Dashboard.md
-  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -41,11 +41,12 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   viral-lab.js
   ai-cache.js
   aichat.html
-  MODULE-MAP.md
   ARCHITECTURE.md
   Технически-одит-CDB-Dashboard.md
+  README.md
   quota-tracker.js
   site-ai-agent.html
+  AUDIT_PROGRESS.md
   step2.js
   update_report.txt
   model-pref.js
@@ -72,7 +73,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
-  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js

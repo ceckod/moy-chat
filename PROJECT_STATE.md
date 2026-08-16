@@ -35,6 +35,22 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (2)** — Направен PHASE 0 FULL AUDIT срещу качен
+  "AI Music OS" Master Build Prompt (13-точков одит, файл предаден на
+  потребителя, не commit-нат в repo-то). Извод: приложението вече
+  покрива ~80% от prompt-а. Потвърдени липси: Idea Vault, Similarity
+  check, Cover artwork pipeline, единен "Current Project / Next
+  Action" dashboard. Изпълнено P0 #1 — **нов модул `js/dashboard.js`**
+  (aggregation layer, чете AppState/ProjectArchive/TrackRecord/
+  QuotaTracker, не въвежда нов storage key). Закачен в `index.html`
+  (`#projectNextAction`, най-отгоре на view `dashboard`), `js/nav.js`
+  (`Nav.showView("dashboard")`) и `sw.js` (`CACHE_VERSION` → v51).
+  `npm test` 85/85 преди/след. Обновена `MODULE-MAP.md` (нов раздел
+  2b). SSRF риск в `ai-model-finder/worker.js` — потребителят реши
+  "остави за сега", НЕ е поправен, чака бъдещо решение (allow-list vs
+  премахване). **Статус: завършено, чака потребителят да качи ZIP.**
+  Следваща P1 стъпка по одита: Idea Vault (нерешено кое е следващо).
+
 - **2026-08-16** — Нова сесия, качен `FULL.zip`. Одит + 2 бъгфикса:
   `js/nav.js` (`Nav.init()` игнорираше `location.hash`, refresh винаги
   връщаше на dashboard) и `index.html` SW регистрация (добавен

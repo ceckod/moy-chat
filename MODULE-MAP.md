@@ -59,6 +59,18 @@ js/providers/code-logo.js
 js/providers/subtitles.js
 ```
 
+## 2b. Project Dashboard — aggregation layer (добавен 2026-08-16, P0 от Phase-0 audit)
+
+```
+js/dashboard.js
+```
+Чете AppState/ProjectArchive/TrackRecord/QuotaTracker, извежда derived
+"текущ проект / etap / next action" в `#projectNextAction` (view
+`dashboard`, най-отгоре, преди "Бърз ъплоуд"). Не въвежда нов storage
+key, не мести данни. Вика се от `Nav.showView("dashboard")` редом до
+съществуващия `Stats.renderDashboard()` (различна отговорност — YouTube
+channel stats, не се пипа).
+
 ## 3. Song Creation Flow — Стъпки 1-4 + Бърз ъплоуд
 
 ```
