@@ -121,6 +121,9 @@ async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = fa
   if (data.stop_reason === "max_tokens" && _isRetry) {
     throw new Error("Отговорът на модела е твърде дълъг дори след удвоен лимит — опитай със по-къса заявка (по-кратък текст/по-малко елементи).");
   }
+  // Улавя реалния token usage за CostTracker (js/cost-tracker.js) —
+  // само добавка, не пипа връщания текст/публичния интерфейс.
+  if (data.usage) _lastAICallUsage = { input: data.usage.input_tokens || 0, output: data.usage.output_tokens || 0 };
   return data.content.map(b => b.text || "").join("\n").trim();
 }
 

@@ -51,6 +51,14 @@ async function runModelFallbackLoop(models, attemptFn, opts) {
         const result = await attemptFn(model);
         AICallLog.record({ provider: opts.provider, model, ok: true });
         QuotaTracker.record(opts.provider, model);
+        // CostTracker (js/cost-tracker.js) — четем usage-а, оставен от
+        // providers/claude.js или providers/gemini.js точно преди return,
+        // ако е наличен (OpenRouter/ModelFinder не го задават — не пращат
+        // usage, не се калкулира $ разход за тях по дизайн).
+        if (typeof CostTracker !== "undefined" && _lastAICallUsage) {
+          CostTracker.record(opts.provider, model, _lastAICallUsage.input, _lastAICallUsage.output);
+          _lastAICallUsage = null;
+        }
         return result;
       } catch (e) {
         lastError = e;

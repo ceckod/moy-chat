@@ -1,5 +1,5 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-105547
+Timestamp: 20260816-170539
 
 Changed:
   sw.js
@@ -7,9 +7,12 @@ Changed:
   PROJECT_STATE.md
   MODULE-MAP.md
   js/nav.js
+  js/providers/gemini.js
+  js/providers/fallback-loop.js
+  js/providers/claude.js
 
 Added:
-  js/learning-loop.js
+  js/cost-tracker.js
 
 Removed:
   none
@@ -112,6 +115,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/stats.js
   js/prefs.js
   js/youtube-discovery.js
+  js/learning-loop.js
   data/trends-history.json
   data/releases-catalog-cache.json
   data/playlists-state.json
@@ -148,10 +152,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/_secret_scan.py
   scripts/track_stats.py
   scripts/track_trends.py
-  js/providers/gemini.js
   js/providers/openrouter.js
-  js/providers/fallback-loop.js
-  js/providers/claude.js
   js/providers/code-logo.js
   js/providers/subtitles.js
   js/providers/model-finder.js

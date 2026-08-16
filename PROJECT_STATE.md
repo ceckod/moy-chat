@@ -35,6 +35,24 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (5)** — Изпълнена реалната P1 Cost Control липса от
+  Phase-0 одита (т.11 от Master Prompt-а): **нов модул
+  `js/cost-tracker.js`** — приблизителен $ разход, изчислен от РЕАЛЕН
+  token usage (не само брой повиквания, каквото прави съществуващия
+  QuotaTracker). Механизъм: `data.usage` (Claude) / `data.usageMetadata`
+  (Gemini) вече идваха в суровия API отговор, но никой не ги четеше —
+  сега се улавят в `_lastAICallUsage` точно преди return в
+  `providers/claude.js`/`providers/gemini.js`, и се консумират веднъж в
+  `providers/fallback-loop.js` след успешен call. Нито една публична
+  функция/връщан тип не е сменен — чиста добавка. OpenRouter/AI Model
+  Finder не пращат usage, не се калкулират (по дизайн ползват предимно
+  безплатни модели тук). UI до Quota Tracker в `set-keys` изгледа.
+  `sw.js` CACHE_VERSION → v54. `npm test` 85/85 преди/след. Обновена
+  `MODULE-MAP.md` (нов раздел 2e). **Статус: завършено, чака
+  потребителят да качи ZIP.** С това всички P0/P1 точки от Phase-0
+  одита са изчерпани; останал отворен само SSRF въпроса за
+  `ai-model-finder/worker.js` (отложен по избор на потребителя).
+
 - **2026-08-16 (4)** — **Корекция в Phase-0 одита:** проверих на код
   ниво (не само grep по английски термини) — Similarity check
   (`Step3.checkSimilarity()`) и Cover artwork generation (`Step3.

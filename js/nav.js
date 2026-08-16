@@ -30,7 +30,7 @@ const Nav = {
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); LearningLoop.render(); }
     if (id === "set-project") { ProjectArchive.render(); SystemUpdate.init(); }
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
-    if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); AgentRoster.render(); }
+    if (id === "set-keys") { AICallLog.render(); AICallLog.renderLeaderboard(); QuotaTracker.render(); CostTracker.render(); AgentRoster.render(); }
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "yt-discovery") { YouTubeDiscovery.render(); MetadataOptimizer.render(); }
     if (id === "app-logs") AppLog.render();

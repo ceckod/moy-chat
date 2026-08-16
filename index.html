@@ -1233,6 +1233,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-top:14px;">
+        <strong>💰 AI разход ($)</strong>
+        <p class="muted">Приблизителна оценка в долари, базирана на реалния token usage от Claude/Gemini отговорите. OpenRouter/AI Model Finder ползват предимно безплатни модели — не се калкулират тук.</p>
+        <div id="costTrackerOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
         <strong>🕐 AI Call Log</strong>
         <p class="muted">Кой provider/модел реално е отговорил на последните извиквания (и кои опити са гръмнали по пътя — напр. fallback между модели).</p>
         <div class="row" style="margin-top:10px;">
@@ -1452,6 +1458,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/app-state.js"></script>
 <script src="js/ai-cache.js"></script>
 <script src="js/quota-tracker.js"></script>
+<script src="js/cost-tracker.js"></script>
 <script src="js/prefs.js"></script>
 <script src="js/model-pref.js"></script>
 <script src="js/ai-provider-order.js"></script>

@@ -104,6 +104,24 @@ fallback + code-logo) се оказаха **вече напълно реализ
 mock — предишният grep search пропусна българските имена на функциите.
 Виж PROJECT_STATE.md за пълната корекция.
 
+## 2e. Cost Tracker — реален $ разход (добавен 2026-08-16, P1, Master Prompt т.11)
+
+```
+js/cost-tracker.js
+```
+Storage key `cdb_quota_tracker_v1` — отделен от `cdb_cost_tracker_v1`
+(QuotaTracker брои ПОВИКВАНИЯ, CostTracker изчислява $ от реален token usage).
+Механизъм: `providers/claude.js` и `providers/gemini.js` записват
+`data.usage`/`data.usageMetadata` от суровия API отговор в глобална
+`_lastAICallUsage` точно преди return (не сменя връщания тип/публичния
+интерфейс на нито една функция); `providers/fallback-loop.js` го чете
+веднъж след успешен call и подава на `CostTracker.record()`. OpenRouter/
+AI Model Finder не пращат usage — не се калкулират (по дизайн ползват
+предимно безплатни модели в това приложение). Цените в
+`AI_PRICING_PER_1M` са приблизителна ориентация, не официална фактура.
+UI: `index.html`, view `set-keys`, до `#quotaTrackerOut`. Вика се от
+`Nav.showView("set-keys")`.
+
 ## 3. Song Creation Flow — Стъпки 1-4 + Бърз ъплоуд
 
 ```

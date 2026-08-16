@@ -109,6 +109,14 @@ async function _callGeminiSingle(model, body, apiKey, timeoutMs) {
     throw err;
   }
   const data = await res.json();
+  // Улавя реалния token usage за CostTracker (js/cost-tracker.js) —
+  // само добавка, не пипа връщания текст/публичния интерфейс.
+  if (data.usageMetadata) {
+    _lastAICallUsage = {
+      input: data.usageMetadata.promptTokenCount || 0,
+      output: data.usageMetadata.candidatesTokenCount || 0
+    };
+  }
   return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "(няма отговор)";
 }
 
