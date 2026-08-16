@@ -954,7 +954,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T05:46:23.951088+00:00"
+      "last_search_at": "2026-08-16T05:46:43.560093+00:00"
     },
     "pop": {
       "candidates": [
@@ -1322,9 +1322,48 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "78wrful9cVU",
+          "title": "Olivia Rodrigo - drop dead (Official Music Video)",
+          "channel": "OliviaRodrigoVEVO",
+          "published_at": "2026-04-17T04:00:06Z",
+          "views": 55857227,
+          "duration_seconds": 251,
+          "discovered_at": "2026-08-16T05:46:44.422208+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "o6jQo3-iCao",
+          "title": "Harry Styles - American Girls (Official Video)",
+          "channel": "HarryStylesVEVO",
+          "published_at": "2026-03-06T17:00:06Z",
+          "views": 23882741,
+          "duration_seconds": 228,
+          "discovered_at": "2026-08-16T05:46:44.422229+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "qRAJowgHqxA",
+          "title": "PinkPantheress - Girl Like Me (Official Video)",
+          "channel": "Pinkpantheress",
+          "published_at": "2026-05-08T16:01:27Z",
+          "views": 18013584,
+          "duration_seconds": 157,
+          "discovered_at": "2026-08-16T05:46:44.422234+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-16T05:46:24.944031+00:00"
+      "last_search_at": "2026-08-16T05:46:44.422362+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2196,7 +2235,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T05:46:26.654297+00:00"
+      "last_search_at": "2026-08-16T05:46:47.150582+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3008,7 +3047,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T05:46:22.578355+00:00"
+      "last_search_at": "2026-08-16T05:46:42.649129+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
