@@ -1,0 +1,82 @@
+name: Metadata Optimizer
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "generate = AI предложение (title/description/tags) за video_id | apply = прилага ВЕЧЕ одобрено предложение в YouTube"
+        type: choice
+        options: [generate, apply]
+        default: generate
+      video_id:
+        description: "YouTube Video ID (11 символа)"
+        required: true
+
+permissions:
+  contents: write  # нужно за commit на data/metadata-suggestions.json
+
+concurrency:
+  group: metadata-optimizer
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Metadata Optimizer
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_OAUTH_CLIENT_ID: ${{ secrets.YOUTUBE_OAUTH_CLIENT_ID }}
+          YOUTUBE_OAUTH_CLIENT_SECRET: ${{ secrets.YOUTUBE_OAUTH_CLIENT_SECRET }}
+          YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_REFRESH_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_MODELS_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "apply" ]; then
+            python scripts/metadata_optimizer.py --apply "${{ github.event.inputs.video_id }}"
+          else
+            python scripts/metadata_optimizer.py --generate "${{ github.event.inputs.video_id }}"
+          fi
+
+      - name: Stage only data/metadata-suggestions.json
+        run: |
+          git add -f data/metadata-suggestions.json 2>/dev/null || true
+          echo "── git status ──"
+          git status --short
+          echo "── staged diff stat ──"
+          git diff --cached --stat
+
+      - name: Assert only data/metadata-suggestions.json staged
+        run: |
+          UNEXPECTED=$(git diff --cached --name-only | grep -v '^data/metadata-suggestions\.json$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "🚫 Неочаквани staged файлове — абортирам commit:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+
+      - name: Secret scan (т.39 — никога API ключове/токени в commit)
+        run: python scripts/_secret_scan.py
+
+      - name: Commit
+        run: |
+          git config user.name "cdb-metadata-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet --cached; then
+            echo "No changes — skip commit."
+          else
+            git commit -m "🏷️ Metadata Optimizer: ${{ github.event.inputs.mode }} за ${{ github.event.inputs.video_id }}"
+            git push
+          fi
