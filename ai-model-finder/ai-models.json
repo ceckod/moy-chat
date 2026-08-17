@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-16T03:43:59.606Z",
-  "total": 62,
+  "generated_at": "2026-08-17T03:45:57.183Z",
+  "total": 63,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 19
+      "count": 20
     },
     "static": {
       "ok": true,
@@ -145,6 +145,26 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: cohere/north-mini-code:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "z-ai/glm-5.2:free",
+      "name": "Z.ai: GLM 5.2 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/z-ai/glm-5.2:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: z-ai/glm-5.2:free"
     },
     {
       "source": "openrouter",
