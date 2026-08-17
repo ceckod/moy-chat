@@ -65,7 +65,8 @@ jobs:
         run: |
           for f in data/catalog.json data/playlists-state.json data/discovery-log.json \
                    data/track-performance.json data/discovery-candidates-cache.json \
-                   data/discovery-dry-run-preview.json data/releases-catalog-cache.json; do
+                   data/discovery-dry-run-preview.json data/releases-catalog-cache.json \
+                   data/stats-history.json; do
             if [ -f "$f" ]; then
               git add -f "$f"
             else
