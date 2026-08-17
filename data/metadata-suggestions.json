@@ -92,9 +92,10 @@
         "Кючек"
       ],
       "ai_provider": "groq",
-      "status": "approved",
+      "status": "applied",
       "generated_at": "2026-08-17T05:18:59.553529+00:00",
-      "applied_at": null
+      "applied_at": "2026-08-17T07:14:12.155484+00:00",
+      "applied_title": "ТЪМНА ЛЮБОВ - Българска Поп Музика"
     }
   }
 }
