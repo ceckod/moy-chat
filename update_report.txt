@@ -1,9 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260817-045529
+Timestamp: 20260817-050908
 
 Changed:
   PROJECT_STATE.md
-  js/step3.js
+  js/metadata-optimizer.js
 
 Added:
   none
@@ -78,6 +78,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/ui-bootstrap.js
   js/step4.js
   js/release-roadmap.js
+  js/step3.js
   js/niche-data-sources.js
   js/dashboard.js
   js/ai-helpers.js
@@ -106,7 +107,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/ai-provider-order.js
   js/system-test.js
   js/system-update.js
-  js/metadata-optimizer.js
   js/lyrics-history.js
   js/settings.js
   js/youtube.js

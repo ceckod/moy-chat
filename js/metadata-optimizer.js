@@ -42,6 +42,7 @@ const MetadataOptimizer = {
       (a, b) => (b.generated_at || "").localeCompare(a.generated_at || "")
     );
     const byId = Object.fromEntries((catalog.tracks || []).map(t => [t.youtube_video_id, t]));
+    const resolvedCount = items.filter(i => i.status === "applied" || i.status === "rejected").length;
 
     const rows = items.map(item => {
       const track = byId[item.video_id];
@@ -65,7 +66,9 @@ const MetadataOptimizer = {
         <div class="card" style="margin-top:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <strong>${track?.title || item.video_id}</strong>
-            ${statusBadge}
+            <span style="display:flex;align-items:center;gap:6px;">${statusBadge}
+              <button class="btn ghost sm" title="Изтрий този запис" onclick="MetadataOptimizer.remove('${item.video_id}')">🗑️</button>
+            </span>
           </div>
           <p class="muted" style="margin-top:4px;font-size:12px;">Текущо заглавие: ${item.current_title}</p>
           <p class="muted" style="font-size:12px;">Предложени заглавия (избери едно):</p>
@@ -91,8 +94,9 @@ const MetadataOptimizer = {
     }).join("");
 
     out.innerHTML = `
-      <div class="card">
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
         <button class="btn" onclick="MetadataOptimizer.openGeneratePicker()">➕ Генерирай предложение за песен</button>
+        ${resolvedCount ? `<button class="btn ghost sm" onclick="MetadataOptimizer.cleanupResolved()">🧹 Изчисти приложени/отхвърлени (${resolvedCount})</button>` : ""}
       </div>
       ${rows || `<p class="muted" style="margin-top:10px;">Няма предложения още.</p>`}
     `;
@@ -218,5 +222,32 @@ const MetadataOptimizer = {
       return suggestions;
     });
     if (ok) { toast("✅ Отхвърлено"); this.render(true); }
+  },
+
+  // ---------- Чистене на стари записи (2026-08-17, по молба на потребителя) ----------
+  async remove(videoId) {
+    if (!confirm("Изтрий този запис от Metadata Optimizer? (не пипа самото видео в YouTube)")) return;
+    toast("⏳ Изтривам...");
+    const ok = await this._writeSuggestions(suggestions => {
+      delete suggestions.items[videoId];
+      return suggestions;
+    });
+    if (ok) { toast("✅ Изтрито"); this.render(true); }
+  },
+
+  async cleanupResolved() {
+    const { suggestions } = await this.loadAll();
+    const items = Object.values(suggestions.items || {});
+    const count = items.filter(i => i.status === "applied" || i.status === "rejected").length;
+    if (!count) return toast("Няма приложени/отхвърлени записи за чистене.");
+    if (!confirm(`Изтрий ${count} приложени/отхвърлени записа? (само записа в Dashboard-а, не пипа видеата в YouTube; "pending"/"approved" не се пипат)`)) return;
+    toast("⏳ Чистя...");
+    const ok = await this._writeSuggestions(suggestions => {
+      for (const [vid, item] of Object.entries(suggestions.items)) {
+        if (item.status === "applied" || item.status === "rejected") delete suggestions.items[vid];
+      }
+      return suggestions;
+    });
+    if (ok) { toast(`✅ Изчистени ${count} записа`); this.render(true); }
   },
 };
