@@ -35,6 +35,80 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-17 (11)** — По молба на потребителя ("Metadata Optimizer
+  трябва да му намериш място и не искам да ползва същия лист който
+  ползват плейлистите ... вчера качих видео и още не ми е излязло").
+  Разследвано и обяснено (не всичко изискваше код фикс):
+  1. **"Видеото не се показва" — обяснено от вече поправения crash бъг
+     (запис 6).** `sync_new_tracks()` (catalog sync) се вика в
+     `youtube_discovery_engine.py` ПРЕДИ мястото, където гърмеше
+     `_label_similarity` NameError-а — значи е обработвало/класифицирало
+     локално всеки run, но защото Python процесът после гърми по-нататък
+     в цикъла, GitHub Actions никога не стига до "Commit" стъпката —
+     локалният, вече обновен `catalog.json` се губи при спиране на
+     runner-а, при ВСЕКИ неуспешен run. Не е нов бъг — директна
+     последица от вече фиксирания в запис 6. Ще се оправи само след
+     успешен run с вече дадения fix.
+  2. **"Не искам да ползва същия лист" — вече е вярно на код ниво, но
+     не беше видимо/документирано за потребителя.** Playlist self-track
+     eligibility = `releases_url` (YouTube "Releases" таб scrape, само
+     DistroKid/дистрибуторски релийзи). Metadata Optimizer picker =
+     `data/catalog.json`, построен от ЦЕЛИЯ ъплоуд лист на канала
+     (`stats-history.json` от `track_stats.py`) — вече различни листи
+     на код ниво, само проблема по т.1 правеше и двата да изглеждат
+     "счупени" едновременно. Добавен обяснителен текст в UI-то (виж по-
+     долу), за да е видимо занапред, вместо мълчаливо поведение.
+  3. **UI реорганизация ("трябва да му намериш място"):** Metadata
+     Optimizer беше натъпкан най-долу в изгледа на YouTube Discovery
+     Engine (view `yt-discovery`), все едно под-функция. Изваден в
+     собствен nav бутон + view `#view-metadata-optimizer`,
+     `js/nav.js` съответно разделен (`yt-discovery` вече вика само
+     `YouTubeDiscovery.render()`, новия `metadata-optimizer` вика
+     `MetadataOptimizer.render()`). `js/metadata-optimizer.js` НЕ е
+     пипан — вече четеше правилния (широк) source, не се нуждаеше от
+     логическа промяна, само UI местоположение.
+  Full-file `<div>`/`</div>` баланс проверен (383/383), `node --check`
+  чисто, `npm test` 85/85. **Статус: UI reorg готов, обичайният
+  `incoming/` ZIP workflow (само `index.html` + `js/nav.js` +
+  документация — Python/YAML фиксовете от преди вече чакат ръчно
+  качване, отделно).**
+
+- **2026-08-16 (10)** — Последен кръг ("друго около модула има ли?").
+  Прочетени докрай останалите свързани файлове, необхванати преди:
+  целия workflow YAML стъпка по стъпка, `_secret_scan.py` (чисто),
+  `track_stats.py` (чисто, самостоятелен), `reclassify_unknown()` в
+  `catalog_bootstrap.py`. Намерен **1 допълнителен проблем** (по-лек —
+  waste, не crash):
+  - При ръчно пуснат `reclassify_unknown: true` workflow branch,
+    `track_stats.py` се вика първо нарочно (за да е свеж
+    `stats-history.json`, от който `reclassify_unknown()` реално чете
+    title+description), харчи YouTube API quota (channel stats + до
+    200 видео статистики) — но `data/stats-history.json` липсваше в
+    whitelist-а на "Stage only expected data files", значи резултатът
+    никога не се commit-ваше. Свежите данни се ползваха еднократно
+    локално за самия reclassify pass (това работеше коректно), но
+    после се изхвърляха при спиране на runner-а — чист waste на
+    quota при всяко ръчно пускане, без реална загуба на функционалност
+    в единичния run. **Fix:** добавен `data/stats-history.json` в
+    whitelist-а. Безопасно за нормални (non-reclassify) run-ове — само
+    ако файлът реално се е променил (никога при обикновен discovery
+    run, `track_stats.py` не се вика там), `git add -f` е no-op.
+  - Проверен `daily-stats.yml` (09:00 UTC) срещу `youtube-discovery.yml`
+    (11:00 UTC) за race condition при commit — 2-часова разлика,
+    практически без риск при нормален cron; единствен теоретичен ръб е
+    ръчно тригнат reclassify_unknown точно по време на daily run-а,
+    твърде рядък edge case, за да оправдае допълнителна locking логика.
+  Извън обхвата на този модул (другите workflows — scrape-ai-models,
+  daily-trends, niche-scores, cleanup-dead-files, metadata-optimizer,
+  auto-update, run-tests) НЕ са преглеждани в тази сесия — само
+  Discovery Engine по изричната молба на потребителя.
+  `py_compile` чисто за всички засегнати `scripts/*.py`, YAML валиден,
+  `npm test` 85/85. **Статус: fix готов, качва се заедно с останалите
+  YAML/Python фиксове (директен GitHub commit, не incoming/ZIP). С
+  това Discovery Engine модула е прегледан изчерпателно от край до
+  край — engine логика, buttons, config wiring, workflow permissions/
+  staging/secret-scan, помощни скриптове.**
+
 - **2026-08-16 (9)** — По молба на потребителя ("бутоните работят ли
   правилно?") — проверени всичките 9 бутона в Discovery Engine UI
   (`js/youtube-discovery.js`): Run Now, Dry Run, Pause/Resume, Refresh,

@@ -1,9 +1,10 @@
 CDB UPDATE REPORT
-Timestamp: 20260817-040818
+Timestamp: 20260817-043129
 
 Changed:
+  index.html
   PROJECT_STATE.md
-  js/youtube-discovery.js
+  js/nav.js
 
 Added:
   none
@@ -22,7 +23,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   step4.js
   site-ai.html
   CDB-Dashboard.md
-  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -73,7 +73,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
-  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js
@@ -113,6 +112,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/youtube.js
   js/stats.js
   js/prefs.js
+  js/youtube-discovery.js
   js/learning-loop.js
   data/trends-history.json
   data/releases-catalog-cache.json
