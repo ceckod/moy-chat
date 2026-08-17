@@ -1,9 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260816-172731
+Timestamp: 20260817-040818
 
 Changed:
   PROJECT_STATE.md
-  scripts/youtube_discovery_engine.py
+  js/youtube-discovery.js
 
 Added:
   none
@@ -113,7 +113,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/youtube.js
   js/stats.js
   js/prefs.js
-  js/youtube-discovery.js
   js/learning-loop.js
   data/trends-history.json
   data/releases-catalog-cache.json
@@ -145,6 +144,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/catalog_bootstrap.py
   scripts/youtube_oauth_bootstrap.py
   scripts/clock-and-keys.js
+  scripts/youtube_discovery_engine.py
   scripts/track_niche_scores.py
   scripts/cleanup_dead_files.py
   scripts/_secret_scan.py

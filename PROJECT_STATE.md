@@ -35,6 +35,27 @@ GitHub Pages hosting. GitHub Actions върши всичко, което изи�
 
 ## Последно работено по (най-нов запис отгоре, максимум ~15 записа — по-старите се местят в README changelog)
 
+- **2026-08-16 (9)** — По молба на потребителя ("бутоните работят ли
+  правилно?") — проверени всичките 9 бутона в Discovery Engine UI
+  (`js/youtube-discovery.js`): Run Now, Dry Run, Pause/Resume, Refresh,
+  Rebuild, Lock/Unlock, Enable/Disable, Exclude track, Force track,
+  Запази настройки. **8 от 9 коректни.** Намерен и поправен **реален
+  бъг в "🔁 Rebuild"**: пишеше `last_candidate_search_at: null` в
+  `data/playlists-state.json` (playlist entry-то) — поле, което
+  backend-ът (`youtube_discovery_engine.py`) НИКОГА не чете. Реалната
+  staleness проверка е `entry["last_search_at"]` в
+  `data/discovery-candidates-cache.json` (per cluster, различен файл,
+  различно поле-име — виж `refresh_candidate_pool()`). Бутонът на
+  практика правеше само обикновен Run Now, без реално да маркира
+  кандидат-кеша като остарял — "Rebuild" не опресняваше нищо.
+  **Fix:** пренасочен към правилния файл/поле
+  (`discovery-candidates-cache.json` → `clusters[key].last_search_at
+  = null`), с GitHub Contents API GET-sha/PUT цикъл, идентичен на
+  вече съществуващия `_writeConfig()` механизъм. `node --check` чисто,
+  `npm test` 85/85. **Статус: fix готов, това е `js/*.js` файл — минава
+  през обичайния `incoming/` ZIP workflow (за разлика от Python/YAML
+  фиксовете в записи 6-8, които изискват директен GitHub commit).**
+
 - **2026-08-16 (8)** — **Финален фикс по молба на потребителя** ("да
   искам, но искам пълен повторен преглед на модула"). Систематична
   cross-check проверка: всеки ключ в `discovery-config.json` срещу

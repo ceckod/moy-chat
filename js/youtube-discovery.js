@@ -335,6 +335,14 @@ const YouTubeDiscovery = {
   },
 
   // ---------- Rebuild (per-playlist): нулира candidate cache и тригва run ----------
+  //
+  // БЪГФИКС 2026-08-16: преди тази функция пишеше last_candidate_search_at
+  // в data/playlists-state.json (playlist entry-то) — поле, което backend-ът
+  // (scripts/youtube_discovery_engine.py) НИКОГА не чете. Реалната staleness
+  // проверка е entry["last_search_at"] в data/discovery-candidates-cache.json
+  // (per cluster, виж refresh_candidate_pool() в Python скрипта) — различен
+  // файл, различно поле. Бутонът правеше на практика само обикновен Run Now,
+  // без реално да маркира кеша като остарял; "Rebuild" не опресняваше нищо.
   async rebuildPlaylist(clusterKey) {
     const { state } = await this.loadAll();
     const pl = state.playlists.find(p => p.cluster_key === clusterKey);
@@ -342,12 +350,14 @@ const YouTubeDiscovery = {
     if (!confirm(`Опресни кандидатите за "${pl.label}" при следващия run?`)) return;
     const k = Keys.load();
     const branch = k.ghBranch || "main";
-    const path = `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/contents/data/playlists-state.json`;
+    const path = `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/contents/data/discovery-candidates-cache.json`;
     try {
       const shaRes = await fetchTimeout(`${path}?ref=${branch}`, { headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json" } });
       const sha = shaRes.ok ? (await shaRes.json()).sha : undefined;
-      const updatedState = { ...state, playlists: state.playlists.map(p => p.cluster_key === clusterKey ? { ...p, last_candidate_search_at: null } : p) };
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedState, null, 2) + "\n")));
+      const cache = await this._fetchJson("discovery-candidates-cache.json", { schema_version: 1, clusters: {} });
+      const entry = cache.clusters[clusterKey];
+      if (entry) entry.last_search_at = null; // следващият run вижда стар кеш → форсира search.list
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(cache, null, 2) + "\n")));
       await fetchTimeout(path, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
