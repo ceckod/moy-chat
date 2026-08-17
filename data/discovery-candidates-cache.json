@@ -473,7 +473,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-15T11:59:28.568950+00:00"
+      "last_search_at": "2026-08-17T04:20:41.978180+00:00"
     },
     "rap": {
       "candidates": [
@@ -984,9 +984,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "YhUqxWR4mnE",
+          "title": "Drake - Whisper My Name",
+          "channel": "DrakeVEVO",
+          "published_at": "2026-05-15T13:51:14Z",
+          "views": 31128051,
+          "duration_seconds": 310,
+          "discovered_at": "2026-08-17T04:20:43.833895+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "pPy4qcgjdmY",
+          "title": "Rylo Rodriguez - Bruddas",
+          "channel": "RyloRodriguezVEVO",
+          "published_at": "2026-06-05T04:00:13Z",
+          "views": 5534142,
+          "duration_seconds": 183,
+          "discovered_at": "2026-08-17T04:20:43.833916+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-16T18:55:12.442926+00:00"
+      "last_search_at": "2026-08-17T04:20:43.833984+00:00"
     },
     "pop": {
       "candidates": [
@@ -1021,8 +1047,10 @@
           "published_at": "2026-04-03T14:00:02Z",
           "views": 815324,
           "discovered_at": "2026-08-14T18:28:37.764337+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         },
         {
           "video_id": "9vHkUSsljXE",
@@ -1211,8 +1239,10 @@
           "published_at": "2026-02-20T11:00:00Z",
           "views": 752418,
           "discovered_at": "2026-08-14T19:38:17.366094+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         },
         {
           "video_id": "G2AE6d-e8Wg",
@@ -1397,7 +1427,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T18:55:13.125681+00:00"
+      "last_search_at": "2026-08-17T04:20:44.719007+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2292,7 +2322,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T18:55:14.813778+00:00"
+      "last_search_at": "2026-08-17T04:20:45.940030+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3130,7 +3160,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-16T18:55:10.412400+00:00"
+      "last_search_at": "2026-08-17T04:20:43.037743+00:00"
     },
     "bulgarian-pop": {
       "candidates": [

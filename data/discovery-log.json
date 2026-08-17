@@ -1575,6 +1575,49 @@
         "playlistItems.insert",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "d0f1af4c",
+      "started_at": "2026-08-17T04:20:41.074260+00:00",
+      "dry_run": true,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "unknown",
+        "rap",
+        "pop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 5,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 515,
+      "quota_calls": [
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }
