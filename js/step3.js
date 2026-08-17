@@ -171,10 +171,17 @@ const Step3 = {
     if (!p.title) return toast("Първо генерирай концепция в Стъпка 1");
     const el = document.getElementById("spotifyAppleOut");
     el.innerHTML = "⏳ Генерирам...";
+    // т.17.08.2026 бъгфикс: описанията се генерираха винаги на български
+    // (езика на самия промпт), независимо на какъв език е песента. Тук
+    // няма изричен language field (за разлика от вече публикувани песни
+    // в catalog.json) — вадим hint директно от текста на песента.
+    const langHint = p.lyrics
+      ? `\nЕЗИК: генерирай ги на СЪЩИЯ език като текста на песента (виж откъс по-долу за разпознаване) — НЕ превеждай на български по подразбиране, освен ако песента самата е на български.\nОткъс от текста: "${p.lyrics.slice(0, 200).replace(/\n/g, " ")}"`
+      : "";
     const prompt = `За песен със заглавие "${p.title}" в жанр "${p.chosenNiche || "pop"}", генерирай:
 - spotify_bio: кратко Spotify for Artists "Pitch to editors" описание (до 500 знака) — какво прави песента специална, звучене, настроение.
 - apple_bio: кратко Apple Music for Artists описание на пускането (до 400 знака), малко по-формален тон.
-- release_note: 1-2 изречения "бележка към феновете" за социалните мрежи.
+- release_note: 1-2 изречения "бележка към феновете" за социалните мрежи.${langHint}
 Върни ЧИСТ JSON: {"spotify_bio":"...", "apple_bio":"...", "release_note":"..."}`;
     try {
       const raw = await callAI(prompt, 500);
@@ -204,8 +211,11 @@ const Step3 = {
     if (!p.title) return toast("Първо генерирай концепция в Стъпка 1");
     const el = document.getElementById("abTitlesOut");
     el.innerHTML = "⏳ Генерирам...";
+    const langHint = p.lyrics
+      ? `\nЕЗИК: title и thumbnail_text на СЪЩИЯ език като текста на песента (откъс за разпознаване: "${p.lyrics.slice(0, 150).replace(/\n/g, " ")}") — НЕ превеждай на български по подразбиране.`
+      : "";
     const prompt = `За песен "${p.title}" в жанр "${p.chosenNiche || "pop"}", генерирай 3 РАЗЛИЧНИ YouTube A/B варианта:
-За всеки: title (до 60 символа, clickable но не clickbait), thumbnail_text (2-4 думи за thumbnail overlay).
+За всеки: title (до 60 символа, clickable но не clickbait), thumbnail_text (2-4 думи за thumbnail overlay).${langHint}
 Върни ЧИСТ JSON масив: [{"title":"...", "thumbnail_text":"..."}]`;
     try {
       const raw = await callAI(prompt, 500);
@@ -250,9 +260,12 @@ ${variants.map((v, i) => `${i + 1}. "${v.title}"`).join("\n")}
       || p.viralReport?.chorus_analysis?.summary
       || "";
     const chorusLine = (p.lyrics || "").split("\n").find(l => l.trim().length > 0) || "";
+    const langHint = p.lyrics
+      ? `\nЕЗИК: caption текстовете на СЪЩИЯ език като текста на песента (откъс: "${p.lyrics.slice(0, 150).replace(/\n/g, " ")}") — НЕ превеждай на български по подразбиране; hashtags могат да останат смесени/на английски за discoverability.`
+      : "";
     const prompt = `За песен "${p.title}" в жанр "${p.chosenNiche || "pop"}"${emotionHint ? `, емоционален тон: ${emotionHint}` : ""}, генерирай 3 РАЗЛИЧНИ кратки видео сценария (15-30 сек, за TikTok/Reels/YouTube Shorts) за ПРОМОТИРАНЕ на песента — не текста на самата песен.
 Всеки сценарий трябва да е различен формат: 1) POV сценарий, 2) Behind-the-scenes/студио момент, 3) чист visual hook (силен кадър/текст overlay в първите 2 секунди).
-За всеки: format (кратко име), hook_line (какво се случва/пише се на екрана в първите 2 секунди — критично за задържане на вниманието), beats (масив от 3-4 кратки визуални стъпки/кадъра по време на клипа), caption (готов социален caption текст), hashtags (масив от 4-5 хаштага).
+За всеки: format (кратко име), hook_line (какво се случва/пише се на екрана в първите 2 секунди — критично за задържане на вниманието), beats (масив от 3-4 кратки визуални стъпки/кадъра по време на клипа), caption (готов социален caption текст), hashtags (масив от 4-5 хаштага).${langHint}
 Върни ЧИСТ JSON масив: [{"format":"...", "hook_line":"...", "beats":["...","..."], "caption":"...", "hashtags":["...","..."]}]`;
     try {
       const raw = await callAI(prompt, 1000);

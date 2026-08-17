@@ -1,10 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260817-043129
+Timestamp: 20260817-045529
 
 Changed:
-  index.html
   PROJECT_STATE.md
-  js/nav.js
+  js/step3.js
 
 Added:
   none
@@ -23,6 +22,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   step4.js
   site-ai.html
   CDB-Dashboard.md
+  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -73,11 +73,11 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
+  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js
   js/release-roadmap.js
-  js/step3.js
   js/niche-data-sources.js
   js/dashboard.js
   js/ai-helpers.js
