@@ -1758,6 +1758,55 @@
         "playlistItems.list",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "66cdd136",
+      "started_at": "2026-08-18T11:17:42.211120+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "ai-music",
+        "rap"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 2,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 5,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "Verification: 'AI Music' — 1 добавени видеа не се виждат все още в playlist-а.",
+        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а."
+      ],
+      "quota_spent_units": 617,
+      "quota_calls": [
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.insert",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }

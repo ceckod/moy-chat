@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-18T06:49:57.015911+00:00"
+      "last_search_at": "2026-08-18T11:17:43.138921+00:00"
     },
     "rap": {
       "candidates": [
@@ -1060,9 +1060,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "bp2ApikvvKE",
+          "title": "HUT",
+          "channel": "Ratchet Lo - Topic",
+          "published_at": "2026-03-02T10:03:53Z",
+          "views": 3837240,
+          "duration_seconds": 220,
+          "discovered_at": "2026-08-18T11:17:45.890665+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-18T06:49:59.885513+00:00"
+      "last_search_at": "2026-08-18T11:17:45.890743+00:00"
     },
     "pop": {
       "candidates": [
@@ -1477,7 +1490,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-18T06:50:01.242824+00:00"
+      "last_search_at": "2026-08-18T11:17:47.408937+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2372,7 +2385,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-18T06:50:02.319889+00:00"
+      "last_search_at": "2026-08-18T11:17:48.492390+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3219,9 +3232,22 @@
           "discovered_at": "2026-08-18T06:49:59.055173+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "cLNxgkKVG-Y",
+          "title": "Runaround Sue (Dion) – AI Generated Cover | Vintage Doo-Wop Vibes",
+          "channel": "Rock'n'Twist Euphoria",
+          "published_at": "2026-02-26T15:00:06Z",
+          "views": 1018514,
+          "duration_seconds": 195,
+          "discovered_at": "2026-08-18T11:17:44.296709+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-18T06:49:59.055290+00:00"
+      "last_search_at": "2026-08-18T11:17:44.296807+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
