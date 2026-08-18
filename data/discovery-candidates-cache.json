@@ -471,9 +471,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "TLKaUsKOPMg",
+          "title": "Smooth Jazz & Soul R&B 24/7 – Midnight Jazz Lounge | Relaxing Instrumental Vibes",
+          "channel": "Late Night Jazz",
+          "published_at": "2026-06-24T15:15:03Z",
+          "views": 666113,
+          "duration_seconds": null,
+          "discovered_at": "2026-08-18T06:49:57.015800+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-17T11:18:20.120669+00:00"
+      "last_search_at": "2026-08-18T06:49:57.015911+00:00"
     },
     "rap": {
       "candidates": [
@@ -1034,9 +1047,22 @@
           "discovered_at": "2026-08-17T11:18:22.529830+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "eyj5J5AZaG4",
+          "title": "Tee Grizzley - No Effort 2 [Official Video]",
+          "channel": "Tee Grizzley",
+          "published_at": "2026-07-31T04:00:06Z",
+          "views": 1332510,
+          "duration_seconds": 158,
+          "discovered_at": "2026-08-18T06:49:59.885422+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-17T11:18:22.530034+00:00"
+      "last_search_at": "2026-08-18T06:49:59.885513+00:00"
     },
     "pop": {
       "candidates": [
@@ -1451,7 +1477,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-17T11:18:23.041327+00:00"
+      "last_search_at": "2026-08-18T06:50:01.242824+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2346,7 +2372,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-17T11:18:24.013804+00:00"
+      "last_search_at": "2026-08-18T06:50:02.319889+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3182,9 +3208,20 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "1Weurw_e9k0",
+          "title": "Kimo Sounds ✦ Rise Slow (Deep House)",
+          "channel": "Kimo Sounds",
+          "published_at": "2026-05-08T18:51:59Z",
+          "views": 15260432,
+          "duration_seconds": 232,
+          "discovered_at": "2026-08-18T06:49:59.055173+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-17T11:18:21.669134+00:00"
+      "last_search_at": "2026-08-18T06:49:59.055290+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
