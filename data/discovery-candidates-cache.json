@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-19T11:18:11.123000+00:00"
+      "last_search_at": "2026-08-19T19:02:16.437610+00:00"
     },
     "rap": {
       "candidates": [
@@ -1073,9 +1073,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "_6rt7lQRfMY",
+          "title": "WELCOME TO MY BAD SIDE 💀 | Savage Dirty Outlaw Country Rap Anthem 2026 |(lyrical  music video)",
+          "channel": "DustyMic",
+          "published_at": "2026-03-26T18:00:06Z",
+          "views": 1437309,
+          "duration_seconds": 308,
+          "discovered_at": "2026-08-19T19:02:18.195172+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-19T11:18:13.857770+00:00"
+      "last_search_at": "2026-08-19T19:02:18.195296+00:00"
     },
     "pop": {
       "candidates": [
@@ -1501,7 +1514,7 @@
           "used_in": []
         }
       ],
-      "last_search_at": null
+      "last_search_at": "2026-08-19T19:02:19.748423+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2409,7 +2422,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-19T11:18:15.589769+00:00"
+      "last_search_at": "2026-08-19T19:02:20.801779+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3297,7 +3310,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-19T11:18:12.056388+00:00"
+      "last_search_at": "2026-08-19T19:02:17.420919+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
