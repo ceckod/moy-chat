@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-18T11:17:43.138921+00:00"
+      "last_search_at": "2026-08-19T11:18:11.123000+00:00"
     },
     "rap": {
       "candidates": [
@@ -1075,7 +1075,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-18T11:17:45.890743+00:00"
+      "last_search_at": "2026-08-19T11:18:13.857770+00:00"
     },
     "pop": {
       "candidates": [
@@ -1488,9 +1488,20 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "syc4SzrubKY",
+          "title": "DaBaby - POP DAT THANG",
+          "channel": "DaBabyVEVO",
+          "published_at": "2026-03-13T16:00:06Z",
+          "views": 12636807,
+          "duration_seconds": 139,
+          "discovered_at": "2026-08-19T11:18:14.476603+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-18T11:17:47.408937+00:00"
+      "last_search_at": "2026-08-19T11:18:14.476725+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2383,9 +2394,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "Mnu5-meFyfI",
+          "title": "Dancin (Krono Remix)",
+          "channel": "Aaron Smith - Topic",
+          "published_at": "2026-02-28T17:25:38Z",
+          "views": 44698511,
+          "duration_seconds": 199,
+          "discovered_at": "2026-08-19T11:18:15.589628+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-18T11:17:48.492390+00:00"
+      "last_search_at": "2026-08-19T11:18:15.589769+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3245,9 +3269,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "Im4KPf98ecs",
+          "title": "Si Ai - Tayna - AFRO HOUSE REMIX I SAVANNA ECHO #afroremix",
+          "channel": "Savanna Echo",
+          "published_at": "2026-04-10T10:00:25Z",
+          "views": 4685913,
+          "duration_seconds": 395,
+          "discovered_at": "2026-08-19T11:18:12.056260+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "YrZSC2zyoP4",
+          "title": "Earth Angel – Reimagined 2026 AI Cover | Vintage Doo-Wop Feel",
+          "channel": "Rock'n'Twist Euphoria",
+          "published_at": "2026-03-08T17:00:06Z",
+          "views": 544975,
+          "duration_seconds": 206,
+          "discovered_at": "2026-08-19T11:18:12.056276+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-18T11:17:44.296807+00:00"
+      "last_search_at": "2026-08-19T11:18:12.056388+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
