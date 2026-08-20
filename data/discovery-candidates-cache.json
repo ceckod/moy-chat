@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-19T19:02:53.672067+00:00"
+      "last_search_at": "2026-08-20T11:18:51.796886+00:00"
     },
     "rap": {
       "candidates": [
@@ -1086,9 +1086,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "YaemrEaCarE",
+          "title": "6IX9INE & Cardi B - HOT ft. Offset, Takeoff, Lil Durk (RapKing Music Video)",
+          "channel": "RapKing",
+          "published_at": "2026-04-15T13:01:00Z",
+          "views": 523620,
+          "duration_seconds": 293,
+          "discovered_at": "2026-08-20T11:18:53.476882+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-19T19:02:55.713685+00:00"
+      "last_search_at": "2026-08-20T11:18:53.476958+00:00"
     },
     "pop": {
       "candidates": [
@@ -1512,9 +1525,20 @@
           "discovered_at": "2026-08-19T11:18:14.476603+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "kSBQZH3dkZ8",
+          "title": "Tyla - THAT GIRL (Official Music Video)",
+          "channel": "TylaVEVO",
+          "published_at": "2026-07-29T13:00:06Z",
+          "views": 2095686,
+          "duration_seconds": 178,
+          "discovered_at": "2026-08-20T11:18:54.968591+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-19T19:02:56.454474+00:00"
+      "last_search_at": "2026-08-20T11:18:54.968648+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2420,9 +2444,35 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "7sMsuQTna4A",
+          "title": "Baby Dance - Scooby Doo Pa Pa (Music Video 4k HD)",
+          "channel": "Release Music Group",
+          "published_at": "2026-05-11T22:00:06Z",
+          "views": 6300152,
+          "duration_seconds": 189,
+          "discovered_at": "2026-08-20T11:18:55.961366+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "M12F2FAf04g",
+          "title": "Baby Dolls - 'Oooh Lala Baby' Official Music Video",
+          "channel": "ABS-CBN Star Music",
+          "published_at": "2026-07-03T12:00:06Z",
+          "views": 13889816,
+          "duration_seconds": 194,
+          "discovered_at": "2026-08-20T11:18:55.961378+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-19T19:02:57.548586+00:00"
+      "last_search_at": "2026-08-20T11:18:55.961423+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3310,7 +3360,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-19T19:02:54.858687+00:00"
+      "last_search_at": "2026-08-20T11:18:52.763920+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
