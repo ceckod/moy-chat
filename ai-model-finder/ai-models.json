@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-20T03:42:46.479Z",
-  "total": 63,
+  "generated_at": "2026-08-21T03:47:02.725Z",
+  "total": 64,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 20
+      "count": 21
     },
     "static": {
       "ok": true,
@@ -26,6 +26,26 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "stealth/ox-alpha",
+      "name": "Ox Alpha",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/stealth/ox-alpha",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: stealth/ox-alpha"
+    },
     {
       "source": "openrouter",
       "id": "dots-studio/dots-3-note-preview:free",
