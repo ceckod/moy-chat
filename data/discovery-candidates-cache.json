@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-20T11:18:51.796886+00:00"
+      "last_search_at": "2026-08-21T11:18:20.336305+00:00"
     },
     "rap": {
       "candidates": [
@@ -1099,9 +1099,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "qmIqxwc7n6U",
+          "title": "SR - RING 2.0 (Official video)",
+          "channel": "SR",
+          "published_at": "2026-08-20T18:00:06Z",
+          "views": 17720,
+          "duration_seconds": 135,
+          "discovered_at": "2026-08-21T11:18:22.435001+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-20T11:18:53.476958+00:00"
+      "last_search_at": "2026-08-21T11:18:22.435213+00:00"
     },
     "pop": {
       "candidates": [
@@ -1538,7 +1551,7 @@
           "used_in": []
         }
       ],
-      "last_search_at": "2026-08-20T11:18:54.968648+00:00"
+      "last_search_at": "2026-08-21T11:18:24.088346+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2472,7 +2485,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-20T11:18:55.961423+00:00"
+      "last_search_at": "2026-08-21T11:18:25.318651+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3358,9 +3371,20 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "kpourTvIHLc",
+          "title": "BLACK WATER DAMNED",
+          "channel": "Release - Topic",
+          "published_at": "2026-05-19T12:26:02Z",
+          "views": 932584,
+          "duration_seconds": 184,
+          "discovered_at": "2026-08-21T11:18:21.458949+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-20T11:18:52.763920+00:00"
+      "last_search_at": "2026-08-21T11:18:21.459062+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
