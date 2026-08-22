@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-21T11:18:19.198573+00:00",
+  "last_run": "2026-08-22T11:13:30.172517+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -332,7 +332,7 @@
       "name": "Rap — Discover",
       "description": "🎧 Rap Discovery — a curated mix blending fresh Rap picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:31.096950+00:00",
-      "last_updated": "2026-08-21T11:18:22.887890+00:00",
+      "last_updated": "2026-08-22T11:13:33.976747+00:00",
       "tracks": [
         {
           "youtube_video_id": "495zc7_vGgA",
@@ -877,7 +877,7 @@
       "name": "Pop — Discover",
       "description": "🎧 Pop Discovery — a curated mix blending fresh Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:35.674863+00:00",
-      "last_updated": "2026-08-16T18:55:13.704919+00:00",
+      "last_updated": "2026-08-22T11:13:34.804940+00:00",
       "tracks": [
         {
           "youtube_video_id": "o3FYn6Hsdyw",
@@ -1581,7 +1581,7 @@
       "name": "Dance — Discover",
       "description": "🎧 Dance Discovery — a curated mix blending fresh Dance picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:44.793950+00:00",
-      "last_updated": "2026-08-20T11:18:57.051058+00:00",
+      "last_updated": "2026-08-22T11:13:37.491534+00:00",
       "tracks": [
         {
           "youtube_video_id": "RQxQZV66Bl8",
@@ -1944,7 +1944,7 @@
       "name": "Кавър — Discover",
       "description": "🎧 Български хип-хоп Discovery — a curated mix blending fresh Български хип-хоп picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:46.485991+00:00",
-      "last_updated": "2026-08-18T06:49:58.215842+00:00",
+      "last_updated": "2026-08-22T11:13:32.058101+00:00",
       "tracks": [
         {
           "youtube_video_id": "uGSxkRifGPc",
@@ -2384,7 +2384,7 @@
       "name": "AI Music — Discover",
       "description": "🎧 AI Music Discovery — a curated mix blending fresh AI Music picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:50.961665+00:00",
-      "last_updated": "2026-08-19T11:18:12.950989+00:00",
+      "last_updated": "2026-08-22T11:13:33.055645+00:00",
       "tracks": [
         {
           "youtube_video_id": "9Txb15fKgjY",
@@ -2733,7 +2733,7 @@
       "name": "Bulgarian Pop — Discover",
       "description": "🎧 Bulgarian Pop Discovery — a curated mix blending fresh Bulgarian Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:57.105921+00:00",
-      "last_updated": "2026-08-15T18:59:08.385549+00:00",
+      "last_updated": "2026-08-22T11:13:35.628109+00:00",
       "tracks": [
         {
           "youtube_video_id": "PybjeAvIfck",
@@ -2992,7 +2992,7 @@
       "name": "Bulgarian Folk — Discover",
       "description": "🎧 Bulgarian Folk Discovery — a curated mix blending fresh Bulgarian Folk picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:58:21.958822+00:00",
-      "last_updated": "2026-08-16T18:55:18.989008+00:00",
+      "last_updated": "2026-08-22T11:13:39.118530+00:00",
       "tracks": [
         {
           "youtube_video_id": "r-DJKOhYoYs",

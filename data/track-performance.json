@@ -20,9 +20,14 @@
       "added_at": "2026-08-14T19:45:55.746641+00:00",
       "views_before": 424,
       "views_24h": 425,
-      "views_7d": null,
+      "views_7d": 444,
       "views_30d": null,
-      "lift_estimate": null
+      "lift_estimate": {
+        "value": 2.9,
+        "unit": "views/day since added",
+        "confidence": "low",
+        "note": "Correlation/lift estimate спрямо views преди добавянето — НЕ доказана причинност. Изисква минимален sample size, за да се ползва за repositioning (т.28)."
+      }
     },
     {
       "video_id": "cpxqhiJh9gQ",
