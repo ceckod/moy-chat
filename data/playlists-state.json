@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-22T11:13:30.172517+00:00",
+  "last_run": "2026-08-22T15:51:20.689781+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -332,7 +332,7 @@
       "name": "Rap — Discover",
       "description": "🎧 Rap Discovery — a curated mix blending fresh Rap picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:31.096950+00:00",
-      "last_updated": "2026-08-22T11:13:33.976747+00:00",
+      "last_updated": "2026-08-22T15:51:44.980705+00:00",
       "tracks": [
         {
           "youtube_video_id": "495zc7_vGgA",
@@ -1581,7 +1581,7 @@
       "name": "Dance — Discover",
       "description": "🎧 Dance Discovery — a curated mix blending fresh Dance picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:44.793950+00:00",
-      "last_updated": "2026-08-22T11:13:37.491534+00:00",
+      "last_updated": "2026-08-22T15:51:46.862643+00:00",
       "tracks": [
         {
           "youtube_video_id": "RQxQZV66Bl8",

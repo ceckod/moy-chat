@@ -36,9 +36,14 @@
       "added_at": "2026-08-15T13:14:37.090050+00:00",
       "views_before": 66,
       "views_24h": 68,
-      "views_7d": null,
+      "views_7d": 78,
       "views_30d": null,
-      "lift_estimate": null
+      "lift_estimate": {
+        "value": 1.7,
+        "unit": "views/day since added",
+        "confidence": "low",
+        "note": "Correlation/lift estimate спрямо views преди добавянето — НЕ доказана причинност. Изисква минимален sample size, за да се ползва за repositioning (т.28)."
+      }
     }
   ]
 }

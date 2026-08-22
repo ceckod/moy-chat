@@ -484,9 +484,20 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "-CepAYN0WyM",
+          "title": "Chris Brown - Fallin' (Official Video) ft. Leon Thomas",
+          "channel": "ChrisBrownVEVO",
+          "published_at": "2026-05-01T16:00:00Z",
+          "views": 12516018,
+          "duration_seconds": 508,
+          "discovered_at": "2026-08-22T15:51:42.945934+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-22T11:13:31.153074+00:00"
+      "last_search_at": "2026-08-22T15:51:42.946040+00:00"
     },
     "rap": {
       "candidates": [
@@ -1125,9 +1136,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "h1kZA_DXExI",
+          "title": "Roddy Ricch - Conversations with Myself ( 2026 Official Music Video)",
+          "channel": "Worldwide Music",
+          "published_at": "2026-04-13T23:52:19Z",
+          "views": 3585477,
+          "duration_seconds": 392,
+          "discovered_at": "2026-08-22T15:51:44.980444+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:33.976664+00:00"
+      "last_search_at": "2026-08-22T15:51:44.980567+00:00"
     },
     "pop": {
       "candidates": [
@@ -1577,7 +1601,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:34.804845+00:00"
+      "last_search_at": "2026-08-22T15:51:45.654473+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2522,9 +2546,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "KfgbLyF9t80",
+          "title": "The Gambler (MDB Dance Cover) Bounce Bootleg🔥",
+          "channel": "MDB",
+          "published_at": "2026-06-09T19:08:28Z",
+          "views": 2248183,
+          "duration_seconds": 228,
+          "discovered_at": "2026-08-22T15:51:46.862434+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:37.491438+00:00"
+      "last_search_at": "2026-08-22T15:51:46.862548+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3488,7 +3525,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:33.055549+00:00"
+      "last_search_at": "2026-08-22T15:51:44.162038+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
