@@ -9,7 +9,7 @@
   "max_playlists": 18,
   "min_playlist_size_for_self_tracks": 0,
   "max_playlist_size": 60,
-  "min_playlist_size": 15,
+  "min_playlist_size": 10,
   "max_track_age_days": 540,
   "fresh_track_target_days": 90,
   "min_candidate_views": 500,
