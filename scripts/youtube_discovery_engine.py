@@ -76,7 +76,13 @@ MAX_LOG_RUNS = 60
 
 def slugify(text: str) -> str:
     text = (text or "unknown").strip().lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
+    # т.22.08.2026 бъгфикс: преди тук беше [^a-z0-9], което трие ЦЯЛОСТНО
+    # всеки кирилски етикет (напр. "Български Хип-Хоп" -> "") и пада на
+    # "unknown" fallback-а — всички кирилски subgenre-и се сливаха в ЕДИН
+    # общ клъстер вместо да отиват в правилния си (bulgarian-hip-hop,
+    # bulgarian-pop, bulgarian-folk...). Добавен диапазон а-я, за да се
+    # пази кирилицата в slug-а вместо да се трие.
+    text = re.sub(r"[^a-zа-я0-9]+", "-", text)
     return re.sub(r"-+", "-", text).strip("-") or "unknown"
 
 
@@ -706,6 +712,54 @@ def build_reorder_plan(playlist_entry, cfg):
 # PRUNING (т.14, 18-19) — само external, никога self, никога forced/excluded
 # ---------------------------------------------------------------------------
 
+def fetch_video_status_map(video_ids, yt: YouTubeClient, run_log):
+    """т.22.08.2026: батчва videos.list?part=status за до 50 ID-та наведнъж
+    (API лимит на един повик). Връща {video_id: privacyStatus}; ID-та,
+    които изобщо липсват от отговора (изтрити/terminated канал/напълно
+    недостъпни за API ключа), НЕ фигурират в резултата — липсата от dict-а
+    Е самата сигнализация за 'изчезнало видео', проверявай с 'in status_map'."""
+    status_map = {}
+    ids = sorted(set(video_ids))
+    for i in range(0, len(ids), 50):
+        batch = ids[i:i + 50]
+        try:
+            data = retry(lambda: yt.get("videos", {"part": "status", "id": ",".join(batch)}, "videos.list"),
+                          label="videos.list (availability check)")
+        except RuntimeError as e:
+            log(f"  ⚠ Availability check неуспешен за батч от {len(batch)} видеа: {e}")
+            if run_log is not None:
+                run_log["warnings"].append(f"Availability check неуспешен: {e}")
+            continue
+        for item in data.get("items", []):
+            status_map[item["id"]] = item.get("status", {}).get("privacyStatus")
+    return status_map
+
+
+def build_availability_prune_plan(playlist_entry, status_map):
+    """т.22.08.2026: премахва песни, които вече НЕ са публично достъпни
+    (privacyStatus == 'private') или изобщо липсват от YouTube отговора
+    (изтрити/terminated канал) — преди тази проверка НИКОГА не се
+    правеше след първоначалното добавяне, значи веднъж заседнала
+    'счупена' (private/изтрита) песен стоеше в playlist-а завинаги.
+
+    За разлика от build_prune_plan (capacity-базиран, само external),
+    тук важи за ВСИЧКИ песни в playlist-а — включително is_mine и
+    forced_video_ids — защото private/изтрито видео е технически
+    счупено за зрителя независимо от curation статуса; 'unlisted' НЕ се
+    трие тук, защото unlisted видео все пак се пуска нормално, когато се
+    отвори директно от playlist-а."""
+    tracks = playlist_entry["tracks"]
+    ops = []
+    for t in tracks:
+        vid = t["youtube_video_id"]
+        status = status_map.get(vid)  # None = липсва изцяло от отговора
+        if status is None or status == "private":
+            ops.append({"action": "delete", "video_id": vid, "title": t.get("title", ""),
+                        "playlist_item_id": t.get("playlist_item_id"),
+                        "reason": "deleted-or-inaccessible" if status is None else "private"})
+    return ops
+
+
 def build_prune_plan(playlist_entry, cfg):
     if not cfg.get("enable_auto_removal_of_external_tracks", True):
         return []
@@ -948,6 +1002,13 @@ def _run(cfg, dry_run, run_log):
     cache = load_json(CACHE_PATH, {"schema_version": 1, "clusters": {}})
     cache.setdefault("clusters", {})
 
+    # т.22.08.2026: единична batch проверка за наличност на ВСИЧКИ песни,
+    # вече седящи във всички playlist-и (не само тези, добавени този run) —
+    # видеа станали 'private' или изтрити СЛЕД добавянето никога не се
+    # преоткриваха от старата логика, значи си стояха завинаги.
+    all_current_video_ids = {t["youtube_video_id"] for p in state["playlists"] for t in p.get("tracks", [])}
+    video_status_map = fetch_video_status_map(all_current_video_ids, yt, run_log) if all_current_video_ids else {}
+
     for cluster_key, cluster in clusters.items():
         label = cluster["label"]
         log(f"\n── Клъстер: {label} ({len(cluster['tracks'])} мои песни) ──")
@@ -1007,7 +1068,11 @@ def _run(cfg, dry_run, run_log):
         insert_ops = build_insert_plan(entry, my_release_pool, new_external, cfg)
         reorder_ops = build_reorder_plan(entry, cfg)
         prune_ops = build_prune_plan(entry, cfg)
-        ops = insert_ops + reorder_ops + prune_ops
+        availability_prune_ops = build_availability_prune_plan(entry, video_status_map)
+        if availability_prune_ops:
+            log(f"  🧹 {len(availability_prune_ops)} песен(ни) вече не са публично достъпни "
+                f"(private/изтрити) — премахвам от playlist-а.")
+        ops = insert_ops + reorder_ops + prune_ops + availability_prune_ops
 
         if not ops:
             log("  ✅ Няма промяна за този playlist днес (NO CHANGES).")
