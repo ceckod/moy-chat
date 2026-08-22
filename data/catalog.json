@@ -2,7 +2,7 @@
   "schema_version": 1,
   "notes": "Canonical каталог на авторските песни. Генерира се/обновява се от scripts/catalog_bootstrap.py (bootstrap от data/stats-history.json + AI класификация) и от scripts/youtube_discovery_engine.py (нови видеа при daily run). НЕ се редактира ръчно, освен ако не поправяш конкретна грешна класификация на едно поле.",
   "last_bootstrap": "2026-08-14T07:20:41.453294+00:00",
-  "last_updated": "2026-08-17T11:18:19.444456+00:00",
+  "last_updated": "2026-08-22T20:38:59.797566+00:00",
   "tracks": [
     {
       "id": "track_cpxqhiJh9gQ",
@@ -342,14 +342,11 @@
       "mood": "unknown",
       "energy": "unknown",
       "bpm": null,
-      "language": "bg",
-      "style_tags": [
-        "#music",
-        "#tsetskoboyanov"
-      ],
-      "source": "ai-classified (groq)",
-      "confidence": "medium",
-      "classified_at": "2026-08-15T12:55:25.131329+00:00",
+      "language": "unknown",
+      "style_tags": [],
+      "source": "heuristic-fallback",
+      "confidence": "low",
+      "classified_at": "2026-08-22T20:38:59.797530+00:00",
       "distribution": "channel-upload"
     },
     {
@@ -1234,7 +1231,7 @@
       "style_tags": [],
       "source": "heuristic-fallback",
       "confidence": "low",
-      "classified_at": "2026-08-17T11:18:19.444456+00:00"
+      "classified_at": "2026-08-22T20:38:59.797563+00:00"
     },
     {
       "id": "track_PG4heKnXn8k",
