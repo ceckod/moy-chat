@@ -497,7 +497,7 @@
           "used_in": []
         }
       ],
-      "last_search_at": "2026-08-22T15:51:42.946040+00:00"
+      "last_search_at": "2026-08-22T20:39:44.617951+00:00"
     },
     "rap": {
       "candidates": [
@@ -1151,7 +1151,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-22T15:51:44.980567+00:00"
+      "last_search_at": "2026-08-22T20:39:46.210860+00:00"
     },
     "pop": {
       "candidates": [
@@ -1601,7 +1601,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-22T15:51:45.654473+00:00"
+      "last_search_at": "2026-08-22T20:39:46.890195+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2561,7 +2561,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-22T15:51:46.862548+00:00"
+      "last_search_at": "2026-08-22T20:39:48.012080+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3523,9 +3523,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "PqHwQcYbXgM",
+          "title": "I RIDE IT",
+          "channel": "BURNIN' BRIDGES Ai Music - Topic",
+          "published_at": "2026-06-01T07:04:23Z",
+          "views": 172292,
+          "duration_seconds": 185,
+          "discovered_at": "2026-08-22T20:39:45.436551+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-22T15:51:44.162038+00:00"
+      "last_search_at": "2026-08-22T20:39:45.436642+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
