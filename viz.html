@@ -1,1024 +1,121 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎵 VisualizerGrabber v5 – Ultimate</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
-.container { max-width: 1300px; margin: 0 auto; padding: 20px; }
-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #2a2a4a; }
-header h1 { font-size: 2em; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-header p { color: #888; margin-top: 8px; }
-.card { background: #14141f; border-radius: 12px; padding: 20px; border: 1px solid #2a2a3a; margin-bottom: 20px; }
-.card h2 { font-size: 1.2em; margin-bottom: 15px; color: #48dbfb; }
-label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.9em; }
-input, select, textarea { width: 100%; padding: 10px 14px; background: #1e1e2f; border: 1px solid #3a3a5a; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 12px; }
-input:focus, select:focus { outline: none; border-color: #48dbfb; }
-textarea { min-height: 60px; resize: vertical; font-family: 'Consolas', monospace; font-size: 13px; }
-.btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-.btn-primary { background: linear-gradient(135deg, #48dbfb, #0a85d0); color: #fff; }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(72,219,251,0.4); }
-.btn-danger { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: #fff; }
-.btn-success { background: linear-gradient(135deg, #00d2d3, #01a3a4); color: #fff; }
-.btn-warning { background: linear-gradient(135deg, #feca57, #f0932b); color: #1a1a2e; }
-.btn-secondary { background: #2a2a4a; color: #fff; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-.log { background: #0a0a12; border: 1px solid #1a1a2a; border-radius: 8px; padding: 12px; height: 250px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.6; margin-top: 10px; }
-.log .info { color: #48dbfb; }
-.log .success { color: #00d2d3; }
-.log .warn { color: #feca57; }
-.log .error { color: #ff6b6b; }
-.progress-bar { height: 6px; background: #2a2a4a; border-radius: 3px; margin: 10px 0; overflow: hidden; }
-.progress-bar div { height: 100%; width: 0%; background: linear-gradient(90deg, #48dbfb, #0a85d0); border-radius: 3px; transition: width 0.3s; }
-.source-item { padding: 8px 12px; background: #1a1a2a; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-.tab-bar { display: flex; gap: 4px; margin-bottom: 15px; flex-wrap: wrap; }
-.tab { padding: 8px 16px; background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 13px; }
-.tab.active { background: #14141f; border-bottom-color: #14141f; color: #48dbfb; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-pre.code { background: #0a0a12; padding: 15px; border-radius: 8px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
-.copy-btn { font-size: 12px; padding: 4px 10px; }
-.status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.status-on { background: #00d2d3; color: #000; }
-.status-off { background: #ff6b6b; color: #fff; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 VisualizerGrabber Web</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #0a0a0f; color: #fff; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: #14141f; padding: 20px; border-radius: 12px; border: 1px solid #2a2a4a; margin-bottom: 20px; }
+        h1 { color: #48dbfb; margin-bottom: 10px; }
+        label { display: block; margin: 10px 0 5px; color: #aaa; }
+        input { width: 100%; padding: 10px; background: #1e1e2f; border: 1px solid #3a3a5a; border-radius: 6px; color: #fff; }
+        button { padding: 10px 20px; margin-top: 10px; background: #0a85d0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #48dbfb; color: #000; }
+        .log { background: #0a0a12; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; height: 200px; overflow-y: auto; margin-top: 10px; }
+        .item { background: #1a1a2a; padding: 10px; margin-top: 5px; border-radius: 6px; word-break: break-all; }
+    </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>🎵 VisualizerGrabber v5</h1>
-    <p>Ultimate Music Visualizer Scraper — Cloudflare Worker ✔️ | Popup Capture ✔️ | Multi-strategy ✔️</p>
-  </header>
-
-  <!-- DEPLOY WORKER SECTION -->
-  <div class="card" style="border-color: #feca57;">
-    <h2>☁️ Стъпка 1: Deploy Cloudflare Worker (безплатно)</h2>
-    <p style="color:#aaa;font-size:14px;margin-bottom:10px;">Това е ключът за bypass на Cloudflare, DistroKid, и всякакви защити. 100k заявки/ден безплатно.</p>
-    <button class="btn btn-warning" onclick="showWorkerDeploy()" id="deployBtn">📋 Покажи инструкции за deploy</button>
-    <div id="workerDeployInstructions" style="display:none;margin-top:15px;">
-      <p style="color:#feca57;font-weight:600;">Инструкции:</p>
-      <ol style="color:#ccc;margin-left:20px;line-height:1.8;">
-        <li>Отиди на <a href="https://dash.cloudflare.com/" target="_blank" style="color:#48dbfb;">dashboard.cloudflare.com</a> → Workers &amp; Pages → Create Worker</li>
-        <li>Изтрий шаблонния код и постави това:</li>
-      </ol>
-      <pre class="code" id="workerCode">export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    const target = url.searchParams.get('url');
-    if (!target) return new Response('Missing ?url=', { status: 400 });
-
-    // Clone headers, strip problematic ones, add realistic browser headers
-    const headers = new Headers(request.headers);
-    headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36');
-    headers.set('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8');
-    headers.set('Accept-Language', 'en-US,en;q=0.9');
-    headers.set('Referer', 'https://www.google.com/');
-    headers.delete('Origin');
-    headers.delete('CF-Access-Client-Id');
-    headers.delete('CF-Access-Client-Secret');
-
-    const response = await fetch(target, {
-      method: request.method,
-      headers: headers,
-      redirect: 'follow',
-    });
-
-    // CORS headers
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
-      'Access-Control-Max-Age': '86400',
-    };
-
-    // For HTML pages, inject a script to extract video/audio sources
-    const contentType = response.headers.get('content-type') || '';
-    let body = response.body;
-    
-    if (contentType.includes('text/html')) {
-      const text = await response.text();
-      const injected = `&lt;script&gt;
-        (function() {
-          const sources = [];
-          document.querySelectorAll('video source, video, audio source, audio, [data-url], iframe').forEach(el => {
-            const src = el.src || el.dataset.url || el.href;
-            if (src) sources.push(src);
-          });
-          const meta = {
-            title: document.title,
-            url: window.location.href,
-            sources: sources,
-            videoCount: document.querySelectorAll('video').length,
-            canvasCount: document.querySelectorAll('canvas').length,
-          };
-          // Store for postMessage
-          window.__vizMeta = meta;
-          // Also try to extract from scripts
-          document.querySelectorAll('script').forEach(s => {
-            const c = s.textContent || '';
-            const matches = c.match(/https?:\\/\\/[^\"'\\s]+(?:\\.mp4|\\.webm|\\/video\\/|\\/stream\\/)[^\"'\\s]*/g);
-            if (matches) meta.sources.push(...matches);
-          });
-          console.log('VizMeta:', JSON.stringify(meta));
-        })();
-      &lt;/script&gt;&lt;/body&gt;`;
-      body = text.replace('&lt;/body&gt;', injected);
-      body = new Blob([body], { type: 'text/html' });
-    }
-
-    const responseHeaders = new Headers(response.headers);
-    Object.entries(corsHeaders).forEach(([k,v]) => responseHeaders.set(k,v));
-    responseHeaders.set('Content-Type', contentType);
-
-    return new Response(body, {
-      status: response.status,
-      headers: responseHeaders,
-    });
-  }
-}</pre>
-      <button class="btn btn-secondary copy-btn" onclick="copyWorkerCode()">📋 Копирай кода</button>
-      <ol start="3" style="color:#ccc;margin-left:20px;line-height:1.8;margin-top:10px;">
-        <li>Натисни "Save and Deploy"</li>
-        <li>Копирай URL-а на worker-а (напр. <code>https://vizmoe-worker.yourname.workers.dev</code>)</li>
-        <li>Постави го долу в полето <strong>"Cloudflare Worker URL"</strong></li>
-        <li>Натисни "<strong>✅ Активирай Worker</strong>" – и всичко ще работи</li>
-      </ol>
-      <div style="margin-top:15px;padding:15px;background:#1a1a2a;border-radius:8px;">
-        <label>Cloudflare Worker URL</label>
-        <div style="display:flex;gap:10px;">
-          <input type="text" id="workerUrlInput" placeholder="https://vizgrabber-worker.yourname.workers.dev" style="flex:1;margin-bottom:0;">
-          <button class="btn btn-success" onclick="activateWorker()">✅ Активирай Worker</button>
-        </div>
-        <div id="workerStatus" style="margin-top:8px;font-size:13px;color:#888;">⏳ Изчакване на Worker URL...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN CONTROLS -->
-  <div class="grid">
-    <div>
-      <div class="card">
-        <h2>🎯 Target</h2>
-        <div class="tab-bar">
-          <div class="tab active" data-tab="url-tab">URL Scrape</div>
-          <div class="tab" data-tab="popup-tab">🪟 Popup Capture</div>
-          <div class="tab" data-tab="record-tab">⏺️ Screen Record</div>
+    <div class="container">
+        <div class="card">
+            <h1>🎵 VisualizerGrabber Web</h1>
+            
+            <label>1. Настройка на Cloudflare Worker URL</label>
+            <input type="url" id="workerUrl" placeholder="https://my-grabber.username.workers.dev">
+            
+            <label>2. URL на визуализатор</label>
+            <input type="url" id="targetUrl" placeholder="https://example.com/vizy">
+            
+            <button onclick="startScrape()">🚀 Извлечи ресурси</button>
+            <button onclick="startScreenRecord()" style="background:#ff6b6b;">⏺️ Запис на екран (Canvas)</button>
         </div>
 
-        <!-- URL SCRAPE TAB -->
-        <div id="url-tab" class="tab-content active">
-          <label>URL на визуализатор</label>
-          <input type="url" id="targetUrl" placeholder="https://distrokid.com/vizy/new/solar, YouTube, Vimeo, etc.">
-          <label>Платформа (auto или ръчно)</label>
-          <select id="platformSelect">
-            <option value="auto">🔍 Автоматично разпознаване</option>
-            <option value="youtube">YouTube</option>
-            <option value="vimeo">Vimeo</option>
-            <option value="dailymotion">Dailymotion</option>
-            <option value="soundcloud">SoundCloud (thumbnail)</option>
-            <option value="direct">Директен MP4/WebM</option>
-            <option value="worker">🌐 През Worker (Cloudflare сайтове)</option>
-            <option value="generic">Общ HTML scraping</option>
-          </select>
-          <div style="display:flex;gap:10px;">
-            <button class="btn btn-primary" onclick="startScrape()" style="flex:1;">🚀 Извлечи</button>
-            <button class="btn btn-secondary" onclick="addToQueue()">➕ Queue</button>
-          </div>
-          <div id="directUrls" style="margin-top:10px;display:none;">
-            <label>Директни URL-ове (по един на ред)</label>
-            <textarea id="directUrlsInput" placeholder="https://example.com/viz1.mp4&#10;https://example.com/viz2.mp4"></textarea>
-            <button class="btn btn-primary" onclick="scrapeDirectUrls()">📥 Извлечи всички</button>
-          </div>
+        <div class="card">
+            <h2>📦 Намерени ресурси</h2>
+            <div id="results"></div>
+            <div id="log" class="log"></div>
         </div>
-
-        <!-- POPUP CAPTURE TAB -->
-        <div id="popup-tab" class="tab-content">
-          <p style="color:#feca57;font-size:13px;margin-bottom:10px;">🪟 Отваря сайта в popup прозорец, inject-ва скрипт, и извлича meta данните + media. Работи дори при Cloudflare.</p>
-          <label>URL за popup</label>
-          <input type="url" id="popupUrl" placeholder="https://distrokid.com/vizy/new/solar">
-          <div style="display:flex;gap:10px;">
-            <button class="btn btn-warning" onclick="openPopupCapture()">🪟 Отвори Popup &amp; Capture</button>
-            <button class="btn btn-danger" onclick="closePopup()">✖ Затвори Popup</button>
-          </div>
-          <div id="popupStatus" style="margin-top:10px;padding:10px;background:#1a1a2a;border-radius:8px;font-size:13px;color:#888;">
-            ⏳ Popup не е отворен
-          </div>
-          <div id="popupResults" style="margin-top:10px;"></div>
-        </div>
-
-        <!-- SCREEN RECORD TAB -->
-        <div id="record-tab" class="tab-content">
-          <p style="color:#feca57;font-size:13px;margin-bottom:10px;">⏺️ Записва екрана – работи за ВСИЧКО (WebGL, Canvas, дори DRM видео). Използва getDisplayMedia.</p>
-          <label>URL за предварително отваряне (или остави празно)</label>
-          <input type="url" id="recordUrl" placeholder="https://distrokid.com/vizy/new/solar (или празно)">
-          <label>Продължителност (секунди)</label>
-          <input type="number" id="recordDuration" value="30" min="5" max="300">
-          <label>Резолюция</label>
-          <select id="recordResolution">
-            <option value="1920">1920x1080 (Full HD)</option>
-            <option value="1280">1280x720 (HD)</option>
-            <option value="3840">3840x2160 (4K)</option>
-          </select>
-          <button class="btn btn-danger" onclick="startScreenRecord()">⏺️ Започни Screen Record</button>
-        </div>
-
-        <!-- QUEUE SECTION -->
-        <div style="margin-top:15px;">
-          <h3 style="font-size:14px;color:#888;margin-bottom:8px;">📋 Опашка: <span id="queueCount">0</span> items</h3>
-          <div id="queueList" style="max-height:150px;overflow-y:auto;"></div>
-        </div>
-      </div>
     </div>
 
-    <!-- OUTPUT & LOG -->
-    <div>
-      <div class="card">
-        <h2>📦 Output</h2>
-        <label>Име на проекта</label>
-        <input type="text" id="projectName" value="visualizer_grab">
-        <div class="progress-bar"><div id="progressFill"></div></div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-success" onclick="downloadPackage()" id="downloadBtn" disabled style="flex:1;">📥 Свали ZIP</button>
-          <button class="btn btn-secondary" onclick="clearAll()">🗑️ Изчисти</button>
-        </div>
-        <div id="logContainer" class="log"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script>
-// ============ STATE ============
-let workerActive = false;
-let workerUrl = '';
-let popupWindow = null;
-let popupTimer = null;
-let downloadQueue = [];
-let capturedData = [];
-let mediaRecorder = null;
-let recordedChunks = [];
-
-const logEl = document.getElementById('logContainer');
-function log(msg, type = 'info') {
-  const e = document.createElement('div');
-  e.className = type;
-  e.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  logEl.appendChild(e);
-  logEl.scrollTop = logEl.scrollHeight;
-}
-
-function updateQueueUI() {
-  document.getElementById('queueCount').textContent = downloadQueue.length + capturedData.length;
-  const list = document.getElementById('queueList');
-  list.innerHTML = '';
-  downloadQueue.forEach((item, i) => {
-    const d = document.createElement('div');
-    d.className = 'source-item';
-    d.innerHTML = `<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title || item.url.slice(0,50)}</span>
-      <span style="color:#888;font-size:11px;margin-left:8px;">${item.size ? (item.size/1024/1024).toFixed(1)+'MB' : ''}</span>
-      <button class="btn btn-danger" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="removeItem(${i})">✕</button>`;
-    list.appendChild(d);
-  });
-  document.getElementById('downloadBtn').disabled = (downloadQueue.length === 0 && capturedData.length === 0);
-}
-
-function removeItem(idx) {
-  downloadQueue.splice(idx, 1);
-  updateQueueUI();
-}
-
-function clearAll() {
-  downloadQueue = [];
-  capturedData = [];
-  updateQueueUI();
-  log('🗑️ Всичко изчистено', 'warn');
-}
-
-function addToQueue() {
-  const url = document.getElementById('targetUrl').value.trim();
-  if (!url) { log('❌ Въведи URL', 'error'); return; }
-  downloadQueue.push({ url, title: url.split('/').pop() || 'visualizer', pending: true });
-  updateQueueUI();
-  log(`➕ Добавено: ${url.slice(0,60)}`, 'info');
-}
-
-// ============ CLOUDFLARE WORKER ============
-function showWorkerDeploy() {
-  const el = document.getElementById('workerDeployInstructions');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-function copyWorkerCode() {
-  const code = document.getElementById('workerCode').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    log('📋 Worker кодът е копиран!', 'success');
-  }).catch(() => {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = code;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-    log('📋 Worker кодът е копиран!', 'success');
-  });
-}
-
-function activateWorker() {
-  const url = document.getElementById('workerUrlInput').value.trim();
-  if (!url) { log('❌ Въведи Worker URL', 'error'); return; }
-  
-  // Normalize URL
-  let normalized = url.replace(/\/+$/, '');
-  if (!normalized.startsWith('http')) normalized = 'https://' + normalized;
-  
-  // Test the worker
-  const testUrl = normalized + '?url=' + encodeURIComponent('https://example.com');
-  
-  fetch(testUrl)
-    .then(r => {
-      if (r.ok) {
-        workerActive = true;
-        workerUrl = normalized;
-        document.getElementById('workerStatus').innerHTML = `<span class="status-badge status-on">✅ АКТИВЕН</span> ${normalized}`;
-        log(`☁️ Worker активиран: ${normalized}`, 'success');
-        log('💡 Вече можеш да извличаш от DistroKid, Cloudflare сайтове и др.', 'success');
-      } else {
-        throw new Error(`HTTP ${r.status}`);
-      }
-    })
-    .catch(e => {
-      document.getElementById('workerStatus').innerHTML = `<span class="status-badge status-off">❌ ГРЕШКА</span> ${e.message}`;
-      log(`❌ Worker test fail: ${e.message}. Провери URL-а.`, 'error');
-    });
-}
-
-function fetchWithWorker(url) {
-  if (!workerActive || !workerUrl) return null;
-  return workerUrl + '?url=' + encodeURIComponent(url);
-}
-
-// ============ FETCH ENGINE ============
-async function smartFetch(url, options = {}) {
-  const { worker, proxy, timeout = 30000 } = options;
-  
-  // Strategy 1: Worker (if active and requested)
-  if (worker !== false && workerActive && workerUrl) {
-    const wUrl = fetchWithWorker(url);
-    if (wUrl) {
-      try {
-        log(`  🌐 Опит през Worker...`, 'info');
-        const resp = await fetch(wUrl, {
-          signal: AbortSignal.timeout(timeout),
-          headers: { 'Accept': options.accept || 'text/html,*/*' }
-        });
-        if (resp.ok) {
-          log(`  ✅ Успех през Worker`, 'success');
-          return { resp, source: 'worker' };
+    <script>
+        function log(msg) {
+            const l = document.getElementById('log');
+            l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            l.scrollTop = l.scrollHeight;
         }
-      } catch(e) { log(`  ⚠️ Worker fail: ${e.message}`, 'warn'); }
-    }
-  }
-  
-  // Strategy 2: corsproxy.io
-  if (proxy !== false) {
-    const proxyUrls = [
-      `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    ];
-    for (const pUrl of proxyUrls) {
-      try {
-        log(`  🌐 Опит през proxy...`, 'info');
-        const resp = await fetch(pUrl, {
-          signal: AbortSignal.timeout(timeout),
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0 Safari/537.36',
-            'Accept': options.accept || 'text/html,*/*'
-          }
-        });
-        if (resp.ok) {
-          log(`  ✅ Успех през proxy`, 'success');
-          return { resp, source: 'proxy' };
+
+        async function startScrape() {
+            const worker = document.getElementById('workerUrl').value.trim();
+            const target = document.getElementById('targetUrl').value.trim();
+            const resultsDiv = document.getElementById('results');
+
+            if (!worker || !target) {
+                alert('Попълни Worker URL и Target URL!');
+                return;
+            }
+
+            log(`🚀 Заявка към Worker за: ${target}`);
+            resultsDiv.innerHTML = 'Зареждане...';
+
+            try {
+                const res = await fetch(`${worker}?url=${encodeURIComponent(target)}`);
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                log(`✅ Страница заглавие: ${data.title}`);
+                log(`✅ Намерени източници: ${data.sources.length}`);
+
+                resultsDiv.innerHTML = '';
+                if (data.sources.length === 0) {
+                    resultsDiv.innerHTML = '<div>Няма намерени директни медийни линкове. Използвай "Запис на екран".</div>';
+                }
+
+                data.sources.forEach(src => {
+                    resultsDiv.innerHTML += `
+                        <div class="item">
+                            <div>${src}</div>
+                            <a href="${src}" target="_blank" style="color:#48dbfb;">Свали / Отвори</a>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                log(`❌ Грешка: ${err.message}`);
+                resultsDiv.innerHTML = 'Грешка при извличането.';
+            }
         }
-      } catch(e) { log(`  ⚠️ Proxy fail: ${e.message}`, 'warn'); }
-    }
-  }
-  
-  // Strategy 3: Direct (same-origin only, will likely fail)
-  try {
-    log(`  🌐 Опит direct...`, 'info');
-    const resp = await fetch(url, {
-      signal: AbortSignal.timeout(timeout),
-      mode: 'cors',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0 Safari/537.36',
-      }
-    });
-    if (resp.ok) {
-      log(`  ✅ Успех direct`, 'success');
-      return { resp, source: 'direct' };
-    }
-  } catch(e) { log(`  ⚠️ Direct fail: ${e.message}`, 'warn'); }
-  
-  throw new Error('Всички стратегии се провалиха. Пробвай Popup Capture или Screen Record.');
-}
 
-// ============ YOUTUBE EXTRACTION ============
-async function extractYoutube(url) {
-  log('🎯 YouTube extraction...', 'info');
-  
-  // Try yt-api.com
-  const id = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)?.[1];
-  if (!id) { log('  ❌ Невалиден YouTube ID', 'error'); return null; }
-  
-  const apis = [
-    { url: `https://yt-api.com/api/yt/${id}`, accept: 'application/json' },
-    { url: `https://youtubeking.com/api/getVideo/${id}`, accept: 'application/json' },
-    { url: `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, accept: 'application/json' },
-  ];
-  
-  for (const api of apis) {
-    try {
-      const result = await smartFetch(api.url, { accept: api.accept, worker: true, proxy: true, timeout: 15000 });
-      const data = await result.resp.json();
-      const vidUrl = data.url || data.downloadUrl || data.results?.[0]?.url || data.thumbnail_url;
-      if (vidUrl) {
-        return { 
-          title: data.title || data.name || 'youtube_viz', 
-          url: vidUrl, 
-          ext: 'mp4',
-          thumbnail: data.thumbnail_url || data.thumbnail
-        };
-      }
-    } catch(e) { log(`  ⚠️ API fail: ${e.message}`, 'warn'); }
-  }
-  
-  // Final: try redirect method
-  log('  🔄 Опит с redirect метод...', 'info');
-  try {
-    const resp = await fetch(`https://www.youtube.com/watch?v=${id}`, {
-      redirect: 'follow',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0 Safari/537.36' }
-    });
-    if (resp.ok) {
-      const html = await resp.text();
-      const patterns = [
-        /"url":"([^"]+\.(?:mp4|webm)[^"]*)"/,
-        /hlsManifestUrl["']:\s*["']([^"']+)["']/,
-        /"url_encoded_fmt_stream_map"\s*:\s*"([^"]+)"/
-      ];
-      for (const p of patterns) {
-        const m = html.match(p);
-        if (m) {
-          let foundUrl = m[1].replace(/\\u0026/g, '&');
-          if (foundUrl.includes('%')) foundUrl = decodeURIComponent(foundUrl);
-          const titleMatch = html.match(/<title>([^<]+)<\/title>/);
-          return { 
-            title: titleMatch?.[1]?.replace(' - YouTube','')?.trim() || 'youtube_viz',
-            url: foundUrl,
-            ext: 'mp4'
-          };
+        async function startScreenRecord() {
+            try {
+                log('⏺️ Изберете прозореца с визуализатора...');
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { displaySurface: "browser" },
+                    audio: true
+                });
+
+                const mediaRecorder = new MediaRecorder(stream);
+                const chunks = [];
+
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `visualizer_${Date.now()}.webm`;
+                    a.click();
+                    log('✅ Записът е свален успешно!');
+                };
+
+                mediaRecorder.start();
+                log('⏺️ Записването започна. Натиснете Stop Sharing в браузъра за край.');
+            } catch (err) {
+                log(`❌ Грешка при запис: ${err.message}`);
+            }
         }
-      }
-    }
-  } catch(e) {}
-  
-  log('  ❌ YouTube: всички методи неуспешни', 'error');
-  return null;
-}
-
-// ============ VIMEO EXTRACTION ============
-async function extractVimeo(url) {
-  log('🎯 Vimeo extraction...', 'info');
-  const id = url.match(/vimeo\.com\/(\d+)/)?.[1];
-  if (!id) { log('  ❌ Невалиден Vimeo ID', 'error'); return null; }
-  
-  // Try oembed
-  try {
-    const result = await smartFetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${id}`, {
-      accept: 'application/json',
-      worker: true,
-      proxy: true,
-      timeout: 10000
-    });
-    const data = await result.resp.json();
-    if (data) {
-      return { 
-        title: data.title || 'vimeo_viz', 
-        url: `https://vimeo.com/${id}`,
-        ext: 'mp4',
-        thumbnail: data.thumbnail_url,
-        embedHtml: data.html,
-        type: 'embed'
-      };
-    }
-  } catch(e) { log(`  ⚠️ Oembed fail: ${e.message}`, 'warn'); }
-  
-  // Try direct config extraction via proxy
-  try {
-    const result = await smartFetch(`https://vimeo.com/${id}`, { 
-      worker: true, proxy: true, timeout: 15000
-    });
-    const html = await result.resp.text();
-    const configMatch = html.match(/playerConfig:\s*({.+?}),?\s*\n/);
-    if (configMatch) {
-      try {
-        const config = JSON.parse(configMatch[1]);
-        const video = config.request?.files?.progressive?.find(f => f?.quality === '1080p') 
-          || config.request?.files?.progressive?.[0]
-          || config.request?.files?.hls?.default;
-        if (video?.url) return { title: config.video?.title || 'vimeo_viz', url: video.url, ext: 'mp4' };
-      } catch(e) {}
-    }
-  } catch(e) { log(`  ⚠️ Vimeo config fail: ${e.message}`, 'warn'); }
-  
-  log('  ❌ Vimeo: неуспешно', 'error');
-  return null;
-}
-
-// ============ EXTRACT WORKER (for Cloudflare-protected sites) ============
-async function extractViaWorker(url) {
-  log('🌐 Извличане през Worker...', 'info');
-  if (!workerActive) {
-    log('❌ Worker не е активиран! Деплойни първо.', 'error');
-    return null;
-  }
-  
-  try {
-    const result = await smartFetch(url, { worker: true, proxy: false });
-    const html = await result.resp.text();
-    
-    const sources = [];
-    const patterns = [
-      /<video[^>]+src="([^"]+\.(?:mp4|webm))"[^>]*>/gi,
-      /<source[^>]+src="([^"]+\.(?:mp4|webm))"[^>]*>/gi,
-      /"url":"([^"]+\.(?:mp4|webm)[^"]*)"/g,
-      /data-url="([^"]+\.(?:mp4|webm))"/gi,
-    ];
-    for (const p of patterns) {
-      let m;
-      while ((m = p.exec(html)) !== null) {
-        sources.push(m[1]);
-      }
-    }
-    
-    // Unique sources
-    const uniqueSources = [...new Set(sources)];
-    
-    const titleMatch = html.match(/<title>([^<]+)<\/title>/);
-    const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
-    
-    if (uniqueSources.length > 0) {
-      log(`  ✅ Намерени ${uniqueSources.length} източника`, 'success');
-      return { title, url: uniqueSources[0], ext: 'mp4', sources: uniqueSources, html };
-    }
-    
-    // If no video sources, save as HTML page reference
-    return { title, url, ext: 'html', type: 'reference', html };
-    
-  } catch(e) {
-    log(`  ❌ Worker extraction fail: ${e.message}`, 'error');
-    return null;
-  }
-}
-
-// ============ MAIN SCRAPE ============
-async function startScrape() {
-  const url = document.getElementById('targetUrl').value.trim();
-  if (!url) { log('❌ Въведи URL', 'error'); return; }
-  
-  let platform = document.getElementById('platformSelect').value;
-  if (platform === 'auto') {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) platform = 'youtube';
-    else if (url.includes('vimeo.com')) platform = 'vimeo';
-    else if (url.includes('dailymotion.com') || url.includes('dai.ly')) platform = 'dailymotion';
-    else if (url.includes('soundcloud.com')) platform = 'soundcloud';
-    else if (url.match(/\.(mp4|webm|ogg|avi|mov)$/i)) platform = 'direct';
-    else if (workerActive && (url.includes('distrokid') || url.includes('cloudflare'))) platform = 'worker';
-    else platform = 'generic';
-  }
-  
-  log(`🚀 Scrape: ${url.slice(0,80)} [${platform}]`, 'info');
-  document.getElementById('progressFill').style.width = '10%';
-  
-  let result = null;
-  switch(platform) {
-    case 'youtube': result = await extractYoutube(url); break;
-    case 'vimeo': result = await extractVimeo(url); break;
-    case 'worker': result = await extractViaWorker(url); break;
-    case 'direct': result = { title: url.split('/').pop()?.split('?')[0] || 'direct', url, ext: url.match(/\.(\w+)(?:\?|$)/)?.[1] || 'mp4' }; break;
-    default: result = await extractViaWorker(url); break; // generic uses worker
-  }
-  
-  document.getElementById('progressFill').style.width = '60%';
-  
-  if (result && result.url) {
-    downloadQueue.push({
-      title: result.title || 'visualizer',
-      url: result.url,
-      ext: result.ext || 'mp4',
-      size: 0,
-      sources: result.sources,
-      thumbnail: result.thumbnail,
-      html: result.html
-    });
-    updateQueueUI();
-    log(`✅ Извлечено: ${result.title || 'visualizer'}`, 'success');
-    
-    // Try to download content
-    try {
-      const fetchResult = await smartFetch(result.url, { worker: false, proxy: true, timeout: 60000 });
-      const blob = await fetchResult.resp.blob();
-      const lastItem = downloadQueue[downloadQueue.length - 1];
-      lastItem.blob = blob;
-      lastItem.size = blob.size;
-      log(`  📥 Свалено: ${(blob.size/1024/1024).toFixed(2)} MB`, 'success');
-      
-      if (confirm(`✅ "${result.title}" (${(blob.size/1024/1024).toFixed(2)} MB). Свали веднага?`)) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `${sanitize(result.title)}.${result.ext || 'mp4'}`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
-    } catch(e) {
-      log(`  ⚠️ Cannot download: ${e.message}. Ще добавим URL reference.`, 'warn');
-    }
-  } else {
-    log('❌ Scrape failed. Опитай Popup Capture или Screen Record.', 'error');
-  }
-  
-  document.getElementById('progressFill').style.width = '100%';
-  setTimeout(() => document.getElementById('progressFill').style.width = '0%', 1500);
-}
-
-function sanitize(s) { return s.replace(/[<>:"/\\|?*]/g, '_').slice(0,80); }
-
-// ============ POPUP CAPTURE ============
-function openPopupCapture() {
-  const url = document.getElementById('popupUrl').value.trim();
-  if (!url) { log('❌ Въведи URL за popup', 'error'); return; }
-  
-  if (popupWindow && !popupWindow.closed) {
-    log('⚠️ Popup вече е отворен. Затвори го първо.', 'warn');
-    return;
-  }
-  
-  log(`🪟 Отваряне на popup: ${url}`, 'info');
-  
-  // Open popup with features
-  const w = 1200;
-  const h = 800;
-  const left = (screen.width - w) / 2;
-  const top = (screen.height - h) / 2;
-  
-  popupWindow = window.open(url, 'vizpopup', 
-    `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-  
-  if (!popupWindow) {
-    log('❌ Popup blocked! Позволи popup-и за този сайт.', 'error');
-    return;
-  }
-  
-  document.getElementById('popupStatus').innerHTML = 
-    `<span class="status-badge status-on">🪟 ОТВОРЕН</span> ${url}`;
-  
-  // Wait for page to load then try to extract
-  let attempts = 0;
-  const maxAttempts = 30;
-  
-  popupTimer = setInterval(async () => {
-    attempts++;
-    try {
-      // Try to access popup DOM (same-origin only, will fail for cross-origin)
-      if (popupWindow.document && popupWindow.document.body) {
-        const doc = popupWindow.document;
-        const sources = [];
-        
-        // Find video sources
-        doc.querySelectorAll('video').forEach(v => {
-          if (v.src) sources.push(v.src);
-          v.querySelectorAll('source').forEach(s => { if (s.src) sources.push(s.src); });
-        });
-        doc.querySelectorAll('iframe').forEach(f => { if (f.src) sources.push(f.src); });
-        
-        const title = doc.title || 'popup_viz';
-        const canvases = doc.querySelectorAll('canvas').length;
-        
-        document.getElementById('popupResults').innerHTML = `
-          <div style="background:#1a1a2a;border-radius:8px;padding:12px;">
-            <div style="color:#00d2d3;font-weight:600;">📄 Page Info:</div>
-            <div style="color:#aaa;font-size:13px;">Title: ${title}</div>
-            <div style="color:#aaa;font-size:13px;">Canvas elements: ${canvases}</div>
-            <div style="color:#aaa;font-size:13px;">Video sources: ${sources.length}</div>
-            ${sources.length > 0 ? `<div style="margin-top:8px;">
-              <button class="btn btn-success" style="font-size:12px;padding:6px 12px;" onclick="addPopupSource('${sources[0].replace(/'/g, "\\'")}', '${title.replace(/'/g, "\\'")}')">📥 Добави в queue</button>
-            </div>` : ''}
-            <div style="margin-top:8px;color:#feca57;font-size:12px;">💡 Използвай "Screen Record" за canvas съдържание</div>
-          </div>
-        `;
-        
-        clearInterval(popupTimer);
-        log(`✅ Popup data extracted: ${title} (${canvases} canvases, ${sources.length} videos)`, 'success');
-        return;
-      }
-    } catch(e) {
-      // Cross-origin error expected - show instructions instead
-      if (attempts === 5) {
-        document.getElementById('popupResults').innerHTML = `
-          <div style="background:#1a1a2a;border-radius:8px;padding:12px;">
-            <div style="color:#feca57;font-weight:600;">🪟 Popup отворен (cross-origin)</div>
-            <div style="color:#aaa;font-size:13px;margin-top:8px;">
-              Не мога да прочета съдържанието директно (CORS ограничение).<br>
-              Действия:<br>
-              1️⃣ Ако има canvas визуализатор → избери <strong>Screen Record</strong> таб<br>
-              2️⃣ Ако има video → опитай да копираш URL от popup адресната лента<br>
-              3️⃣ Използвай браузър DevTools (F12) за да намериш media URLs
-            </div>
-            <div style="margin-top:10px;">
-              <button class="btn btn-danger" style="font-size:12px;padding:6px 12px;" onclick="closePopup()">✖ Затвори Popup</button>
-            </div>
-          </div>
-        `;
-        log('🪟 Popup отворен. Screen Record-вай за canvas/WebGL.', 'info');
-      }
-    }
-    
-    if (attempts >= maxAttempts) {
-      clearInterval(popupTimer);
-      log('⏰ Popup timeout', 'warn');
-    }
-  }, 1000);
-}
-
-function addPopupSource(url, title) {
-  downloadQueue.push({ title: title || 'popup_source', url, ext: 'mp4', size: 0 });
-  updateQueueUI();
-  log(`➕ Добавено от popup: ${title || url.slice(0,50)}`, 'success');
-}
-
-function closePopup() {
-  if (popupTimer) clearInterval(popupTimer);
-  if (popupWindow && !popupWindow.closed) popupWindow.close();
-  popupWindow = null;
-  document.getElementById('popupStatus').innerHTML = '⏳ Popup не е отворен';
-  log('✖ Popup затворен', 'warn');
-}
-
-// ============ SCREEN RECORD ============
-async function startScreenRecord() {
-  const url = document.getElementById('recordUrl').value.trim();
-  const duration = parseInt(document.getElementById('recordDuration').value) || 30;
-  const resolution = parseInt(document.getElementById('recordResolution').value) || 1920;
-  
-  if (url) {
-    log(`⏺️ Отваряне на ${url} в нов прозорец...`, 'info');
-    window.open(url, 'record_tab', `width=${resolution},height=${Math.round(resolution*9/16)},resizable=yes`);
-    log('⏳ Изчакване 5 секунди за зареждане...', 'info');
-    await new Promise(r => setTimeout(r, 5000));
-  }
-  
-  try {
-    log('⏺️ Започва screen record... избери прозореца с визуализатора', 'info');
-    
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        cursor: "never",
-        displaySurface: "browser",
-        width: { ideal: resolution },
-        height: { ideal: Math.round(resolution * 9/16) }
-      },
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        sampleRate: 44100,
-      }
-    });
-    
-    recordedChunks = [];
-    const mimeType = 'video/webm;codecs=vp9,opus';
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : 'video/webm'
-    });
-    
-    mediaRecorder.ondataavailable = e => {
-      if (e.data.size > 0) recordedChunks.push(e.data);
-    };
-    
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      capturedData.push({
-        title: `screen_record_${Date.now()}`,
-        blob: blob,
-        ext: 'webm',
-        size: blob.size,
-        duration: duration
-      });
-      updateQueueUI();
-      
-      log(`✅ Screen record завършен: ${(blob.size/1024/1024).toFixed(2)} MB`, 'success');
-      
-      if (confirm(`✅ Record готов (${(blob.size/1024/1024).toFixed(2)} MB). Свали?`)) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `visualizer_record_${Date.now()}.webm`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
-      
-      stream.getTracks().forEach(t => t.stop());
-      // Clean up stop button
-      const btn = document.getElementById('stopRecordBtn');
-      if (btn) btn.remove();
-    };
-    
-    mediaRecorder.start(1000);
-    
-    // Auto-stop button
-    const existing = document.getElementById('stopRecordBtn');
-    if (existing) existing.remove();
-    
-    const stopBtn = document.createElement('button');
-    stopBtn.id = 'stopRecordBtn';
-    stopBtn.className = 'btn btn-danger';
-    stopBtn.textContent = `⏹️ Спри Record (автоматично след ${duration}s)`;
-    stopBtn.style.marginTop = '10px';
-    stopBtn.style.display = 'block';
-    stopBtn.onclick = () => {
-      if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
-    };
-    
-    const parent = document.querySelector('#record-tab .tab-content') || document.querySelector('#record-tab');
-    if (parent) parent.appendChild(stopBtn);
-    
-    log(`⏺️ Записва се... ${duration} секунди`, 'info');
-    
-    // Auto-stop
-    setTimeout(() => {
-      if (mediaRecorder?.state === 'recording') {
-        mediaRecorder.stop();
-        log('⏹️ Auto-stop', 'info');
-      }
-    }, duration * 1000);
-    
-  } catch(e) {
-    log(`❌ Screen record fail: ${e.message}`, 'error');
-  }
-}
-
-// ============ DIRECT URLS BULK ============
-function scrapeDirectUrls() {
-  const text = document.getElementById('directUrlsInput').value.trim();
-  if (!text) { log('❌ Въведи URL-ове', 'error'); return; }
-  
-  const urls = text.split('\n').filter(u => u.trim());
-  
-  urls.forEach(url => {
-    url = url.trim();
-    const ext = url.match(/\.(\w+)(?:\?|$)/)?.[1] || 'mp4';
-    downloadQueue.push({ title: url.split('/').pop()?.split('?')[0] || 'direct', url, ext, size: 0 });
-  });
-  
-  updateQueueUI();
-  log(`📥 Добавени ${urls.length} директни URL-а`, 'success');
-}
-
-// ============ DOWNLOAD PACKAGE ============
-async function downloadPackage() {
-  const projectName = document.getElementById('projectName').value || 'visualizer_grab';
-  
-  if (downloadQueue.length === 0 && capturedData.length === 0) {
-    log('❌ Няма нищо за сваляне', 'error');
-    return;
-  }
-  
-  log('📦 Пакетиране в ZIP...', 'info');
-  document.getElementById('progressFill').style.width = '10%';
-  
-  const zip = new JSZip();
-  const folder = zip.folder(sanitize(projectName));
-  
-  // Metadata
-  folder.file('metadata.json', JSON.stringify({
-    exportDate: new Date().toISOString(),
-    totalItems: downloadQueue.length,
-    totalCaptures: capturedData.length,
-    items: downloadQueue.map(i => ({ title: i.title, url: i.url, ext: i.ext, size: i.size, sources: i.sources })),
-    captures: capturedData.map(c => ({ title: c.title, ext: c.ext, size: c.size })),
-    tool: 'VisualizerGrabber v5',
-    workerActive
-  }, null, 2));
-  
-  document.getElementById('progressFill').style.width = '20%';
-  
-  // Add scraped items
-  for (let i = 0; i < downloadQueue.length; i++) {
-    const item = downloadQueue[i];
-    try {
-      if (item.blob) {
-        folder.file(`${sanitize(item.title || `item_${i}`)}.${item.ext || 'mp4'}`, item.blob);
-      } else if (item.sources?.length) {
-        // Try to download each source
-        for (let j = 0; j < item.sources.length; j++) {
-          try {
-            const result = await smartFetch(item.sources[j], { worker: false, proxy: true, timeout: 30000 });
-            const blob = await result.resp.blob();
-            const ext = item.sources[j].match(/\.(\w+)(?:\?|$)/)?.[1] || 'mp4';
-            folder.file(`${sanitize(item.title || 'source')}_${j+1}.${ext}`, blob);
-          } catch(e) {
-            folder.file(`${sanitize(item.title || 'source')}_${j+1}_url.txt`, item.sources[j]);
-          }
-        }
-      } else if (item.url) {
-        try {
-          const result = await smartFetch(item.url, { worker: false, proxy: true, timeout: 30000 });
-          const blob = await result.resp.blob();
-          folder.file(`${sanitize(item.title || `item_${i}`)}.${item.ext || 'mp4'}`, blob);
-        } catch(e) {
-          folder.file(`${sanitize(item.title || `item_${i}`)}_url.txt`, item.url);
-        }
-      }
-    } catch(e) {
-      log(`  ⚠️ Item ${i}: ${e.message}`, 'warn');
-    }
-    document.getElementById('progressFill').style.width = `${20 + (i/downloadQueue.length) * 50}%`;
-  }
-  
-  // Add captured screen records
-  for (let i = 0; i < capturedData.length; i++) {
-    const cap = capturedData[i];
-    if (cap.blob) {
-      folder.file(`${sanitize(cap.title)}.${cap.ext || 'webm'}`, cap.blob);
-    }
-  }
-  
-  document.getElementById('progressFill').style.width = '80%';
-  
-  // Add README
-  folder.file('README.txt', 
-    `🎵 VisualizerGrabber v5 Export\n` +
-    `═══════════════════════════════\n` +
-    `Project: ${projectName}\n` +
-    `Date: ${new Date().toISOString()}\n` +
-    `Worker: ${workerActive ? '✅ Active' : '❌ Not active'}\n\n` +
-    `Items: ${downloadQueue.length}\n` +
-    `Captures: ${capturedData.length}\n\n` +
-    `Sources:\n` +
-    downloadQueue.map((i, idx) => `  ${idx+1}. ${i.title} → ${i.url}`).join('\n') +
-    `\n\n-- VisualizerGrabber v5 --`
-  );
-  
-  document.getElementById('progressFill').style.width = '90%';
-  
-  try {
-    const zipBlob = await zip.generateAsync({
-      type: 'blob',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 9 }
-    }, (update) => {
-      document.getElementById('progressFill').style.width = `${90 + update.percent * 0.1}%`;
-    });
-    
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = `${sanitize(projectName)}_visualizers.zip`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    
-    document.getElementById('progressFill').style.width = '100%';
-    log(`✅ ZIP готов: ${(zipBlob.size/1024/1024).toFixed(2)} MB`, 'success');
-  } catch(e) {
-    log(`❌ ZIP error: ${e.message}`, 'error');
-  }
-}
-
-// ============ TABS ============
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    this.classList.add('active');
-    document.getElementById(this.dataset.tab).classList.add('active');
-  });
-});
-
-// Platform-specific UI
-document.getElementById('platformSelect').addEventListener('change', function() {
-  document.getElementById('directUrls').style.display = this.value === 'direct' ? 'block' : 'none';
-});
-
-// ============ INIT ============
-log('🎵 VisualizerGrabber v5 loaded', 'success');
-log('💡 Стъпка 1: Deploy Cloudflare Worker (безплатно)', 'info');
-log('💡 Стъпка 2: Въведи URL и натисни "Извлечи"', 'info');
-log('💡 За DistroKid/Vizy: Popup Capture или Screen Record', 'info');
-log('💡 Worker-ът е ключът за bypass на Cloudflare', 'info');
-updateQueueUI();
-</script>
+    </script>
 </body>
 </html>
