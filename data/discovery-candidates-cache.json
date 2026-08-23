@@ -191,8 +191,10 @@
           "published_at": "2026-08-14T18:27:08Z",
           "views": 535,
           "discovered_at": "2026-08-14T19:38:16.171461+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "ciBnSTTRbOc",
@@ -457,8 +459,10 @@
           "published_at": "2026-08-15T08:40:39Z",
           "views": 2834,
           "discovered_at": "2026-08-15T11:59:28.568894+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "e6xYffnZOqA",
@@ -493,11 +497,13 @@
           "views": 12516018,
           "duration_seconds": 508,
           "discovered_at": "2026-08-22T15:51:42.945934+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "R&B (reconciled-duplicate)"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T04:47:29.056726+00:00"
+      "last_search_at": "2026-08-23T15:01:21.213313+00:00"
     },
     "rap": {
       "candidates": [
@@ -592,8 +598,10 @@
           "published_at": "2026-01-11T00:01:56Z",
           "views": 440844,
           "discovered_at": "2026-08-14T18:28:32.910509+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "qb2JsIHu6Fk",
@@ -602,8 +610,10 @@
           "published_at": "2025-08-02T19:00:41Z",
           "views": 5819705,
           "discovered_at": "2026-08-14T18:28:32.910511+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "JVDUsaqgSq0",
@@ -732,8 +742,10 @@
           "published_at": "2026-02-25T14:00:21Z",
           "views": 1345663,
           "discovered_at": "2026-08-14T19:38:16.733018+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "FdzPyCJpl_A",
@@ -754,8 +766,10 @@
           "published_at": "2026-04-15T21:00:03Z",
           "views": 8865351,
           "discovered_at": "2026-08-14T19:38:16.733023+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "noKWHhLR9Mc",
@@ -788,8 +802,10 @@
           "published_at": "2026-04-08T21:00:00Z",
           "views": 1610104,
           "discovered_at": "2026-08-14T19:38:16.733031+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "2zRoR5A9_fI",
@@ -1056,8 +1072,10 @@
           "views": 2753607,
           "duration_seconds": 296,
           "discovered_at": "2026-08-17T11:18:22.529830+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Rap (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "eyj5J5AZaG4",
@@ -1151,7 +1169,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T04:47:30.691092+00:00"
+      "last_search_at": "2026-08-23T15:01:22.987252+00:00"
     },
     "pop": {
       "candidates": [
@@ -1426,8 +1444,10 @@
           "published_at": "2026-08-14T18:00:06Z",
           "views": 2437,
           "discovered_at": "2026-08-15T04:24:56.126169+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "-6ieuiRd4l4",
@@ -1573,8 +1593,10 @@
           "views": 12636807,
           "duration_seconds": 139,
           "discovered_at": "2026-08-19T11:18:14.476603+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "kSBQZH3dkZ8",
@@ -1584,8 +1606,10 @@
           "views": 2095686,
           "duration_seconds": 178,
           "discovered_at": "2026-08-20T11:18:54.968591+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Pop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "T7LtL1tyomU",
@@ -1601,7 +1625,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T04:47:31.473040+00:00"
+      "last_search_at": "2026-08-23T15:01:23.725710+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -1648,8 +1672,10 @@
           "published_at": "2025-11-06T17:00:06Z",
           "views": 377231,
           "discovered_at": "2026-08-14T18:28:42.039371+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "-O8wSrc456o",
@@ -1706,8 +1732,10 @@
           "published_at": "2026-04-21T21:27:37Z",
           "views": 167964,
           "discovered_at": "2026-08-14T18:28:42.039385+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "oDs1boOYiZo",
@@ -1800,8 +1828,10 @@
           "published_at": "2026-03-16T21:33:17Z",
           "views": 1065982,
           "discovered_at": "2026-08-14T19:38:17.945033+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "wdLIhg0PItA",
@@ -1858,8 +1888,10 @@
           "published_at": "2026-03-12T15:00:18Z",
           "views": 38002256,
           "discovered_at": "2026-08-14T19:38:17.945050+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "WGmwQFxU1AA",
@@ -1892,8 +1924,10 @@
           "published_at": "2026-02-28T00:00:07Z",
           "views": 424966,
           "discovered_at": "2026-08-14T19:38:17.945058+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "xCkf2L7gFnI",
@@ -1984,8 +2018,10 @@
           "published_at": "2026-03-14T15:00:06Z",
           "views": 2633228,
           "discovered_at": "2026-08-15T15:58:08.997236+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "VPNmjBKLQgw",
@@ -1994,8 +2030,10 @@
           "published_at": "2026-08-07T19:23:06Z",
           "views": 64587,
           "discovered_at": "2026-08-15T15:58:08.997240+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Reggaeton (reconciled-duplicate)"
+          ]
         }
       ],
       "last_search_at": "2026-08-22T11:13:36.623047+00:00"
@@ -2561,7 +2599,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T04:47:32.382795+00:00"
+      "last_search_at": "2026-08-23T15:01:24.943457+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3458,8 +3496,10 @@
           "views": 15260432,
           "duration_seconds": 232,
           "discovered_at": "2026-08-18T06:49:59.055173+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "cLNxgkKVG-Y",
@@ -3508,8 +3548,10 @@
           "views": 932584,
           "duration_seconds": 184,
           "discovered_at": "2026-08-21T11:18:21.458949+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "AI Music (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "973kw6x_zBs",
@@ -3538,7 +3580,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T04:47:29.843785+00:00"
+      "last_search_at": "2026-08-23T15:01:22.130363+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -3844,8 +3886,10 @@
           "published_at": "2026-07-20T07:00:12Z",
           "views": 504,
           "discovered_at": "2026-08-15T12:58:20.392874+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "b3tLOikocQQ",
@@ -3854,8 +3898,10 @@
           "published_at": "2026-03-02T20:04:05Z",
           "views": 10146545,
           "discovered_at": "2026-08-15T12:58:20.392877+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "Lk0LD_Z4H4I",
@@ -3876,8 +3922,10 @@
           "published_at": "2026-03-23T07:00:23Z",
           "views": 941,
           "discovered_at": "2026-08-15T12:58:20.392882+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "wYCSYxQ3iHM",
@@ -3898,8 +3946,10 @@
           "published_at": "2026-04-09T07:00:39Z",
           "views": 1751,
           "discovered_at": "2026-08-15T12:58:20.392887+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "bjo5bEMdpTY",
@@ -4080,8 +4130,10 @@
           "published_at": "2026-04-28T16:56:51Z",
           "views": 1012737,
           "discovered_at": "2026-08-15T12:58:23.173900+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "b3tLOikocQQ",
@@ -4090,8 +4142,10 @@
           "published_at": "2026-03-02T20:04:05Z",
           "views": 10146545,
           "discovered_at": "2026-08-15T12:58:23.173903+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "ul3PpS5PEII",
@@ -4122,8 +4176,10 @@
           "published_at": "2026-03-06T16:00:28Z",
           "views": 1918385,
           "discovered_at": "2026-08-15T12:58:23.173910+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "6wSQAhgNnys",
@@ -4154,8 +4210,10 @@
           "published_at": "2026-03-21T16:00:06Z",
           "views": 10420676,
           "discovered_at": "2026-08-15T12:58:23.173930+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "z3Qdgjt8_Ns",
