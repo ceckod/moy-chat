@@ -650,7 +650,21 @@ def pick_candidates_for_playlist(cluster_key, cluster_label, unused_candidates, 
             if best_sim < cfg["cross_playlist_similarity_threshold"]:
                 continue
         elif c["video_id"] in used_globally:
-            continue  # защитна мрежа — не би трябвало да стигне дотук без used_in запис
+            # т.23.08.2026 бъгфикс: тази защитна мрежа само отхвърляше
+            # кандидата всеки run, БЕЗ да поправя status-а му в кеша —
+            # значи "фантомни" unused записи (реално вече седящи в
+            # playlist-а, но без used_in следа — най-вероятно от самото
+            # bootstrap-ване на playlist-а, преди тази bookkeeping да
+            # хване всички пътища) оставаха 'unused' ЗАВИНАГИ. Това
+            # изкуствено държеше len(unused) >= min_candidate_pool за
+            # засегнатите клъстери, блокирайки refresh_candidate_pool от
+            # нов search.list — playlist-ът спираше да получава каквото и
+            # да е ново, без нито една грешка/warning в лога (виж Reggaeton:
+            # 7/8 'unused' кандидата се оказаха вече в playlist-а).
+            # Самолекуваме статуса тук, за да не се повтаря блокажа.
+            c["status"] = "used"
+            c.setdefault("used_in", []).append(f"{cluster_label} (reconciled-duplicate)")
+            continue
         picked.append(c)
 
     for c in picked:
