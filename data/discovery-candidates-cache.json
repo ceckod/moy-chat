@@ -516,7 +516,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:49.740150+00:00"
+      "last_search_at": "2026-08-23T15:27:11.966952+00:00"
     },
     "rap": {
       "candidates": [
@@ -1180,9 +1180,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "QeXZChv5kGM",
+          "title": "YOUNG WAVE-I'M BACK (Official Music Video) prod.4Z",
+          "channel": "YOUNG WAVE MUSIC",
+          "published_at": "2026-07-10T14:30:06Z",
+          "views": 696446,
+          "duration_seconds": 165,
+          "discovered_at": "2026-08-23T15:27:13.654892+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:51.743421+00:00"
+      "last_search_at": "2026-08-23T15:27:13.655067+00:00"
     },
     "pop": {
       "candidates": [
@@ -1636,9 +1649,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "Rt9tW3cMLhI",
+          "title": "Olivia Rodrigo - stupid song (Official Music Video)",
+          "channel": "OliviaRodrigoVEVO",
+          "published_at": "2026-06-12T04:00:06Z",
+          "views": 26579083,
+          "duration_seconds": 217,
+          "discovered_at": "2026-08-23T15:27:14.610002+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:52.610038+00:00"
+      "last_search_at": "2026-08-23T15:27:14.610124+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2075,7 +2101,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:53.625070+00:00"
+      "last_search_at": "2026-08-23T15:27:15.672960+00:00"
     },
     "dance": {
       "candidates": [
@@ -2638,7 +2664,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:54.452214+00:00"
+      "last_search_at": "2026-08-23T15:27:16.516544+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3619,7 +3645,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:16:50.756008+00:00"
+      "last_search_at": "2026-08-23T15:27:12.774833+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
