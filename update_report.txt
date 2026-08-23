@@ -1,18 +1,17 @@
 CDB UPDATE REPORT
-Timestamp: 20260823-062935
+Timestamp: 20260823-112255
 
 Changed:
-  index.html
-  js/step3.js
-  js/ai-helpers.js
-  js/agent-registry.js
-  js/settings.js
-  js/providers/code-logo.js
+  update_report.txt
+  data/trends-history.json
+  data/playlists-state.json
+  data/stats-history.json
+  data/discovery-candidates-cache.json
+  data/discovery-log.json
   js/providers/model-finder.js
 
 Added:
-  js/providers/cloudflare-image.js
-  js/providers/musicgen.js
+  none
 
 Removed:
   none
@@ -20,6 +19,7 @@ Removed:
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   Технически-одит-CDB-Dashboard.md
   visualizer.html
+  viz.html
   drafts/ВРЕМЕННА ПАПКА.txt
   js/providers/pollinations-image.js
 
