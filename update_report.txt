@@ -1,12 +1,16 @@
 CDB UPDATE REPORT
-Timestamp: 20260817-050908
+Timestamp: 20260823-053737
 
 Changed:
-  PROJECT_STATE.md
-  js/metadata-optimizer.js
+  index.html
+  js/nav.js
+  js/providers/gemini.js
+  js/providers/openrouter.js
+  js/providers/claude.js
 
 Added:
-  none
+  js/agent-registry.js
+  js/ai-chat.js
 
 Removed:
   none
@@ -22,7 +26,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   step4.js
   site-ai.html
   CDB-Dashboard.md
-  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -38,6 +41,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   update_engine.py
   app-state.test.mjs
   viral-lab.js
+  PROJECT_STATE.md
   ai-cache.js
   aichat.html
   MODULE-MAP.md
@@ -73,7 +77,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/README.md
   ai-model-finder/ai-models.json
   js/suno-preview.js
-  js/nav.js
   js/step1.js
   js/ui-bootstrap.js
   js/step4.js
@@ -107,6 +110,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/ai-provider-order.js
   js/system-test.js
   js/system-update.js
+  js/metadata-optimizer.js
   js/lyrics-history.js
   js/settings.js
   js/youtube.js
@@ -150,10 +154,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/_secret_scan.py
   scripts/track_stats.py
   scripts/track_trends.py
-  js/providers/gemini.js
-  js/providers/openrouter.js
   js/providers/fallback-loop.js
-  js/providers/claude.js
   js/providers/code-logo.js
   js/providers/subtitles.js
   js/providers/model-finder.js

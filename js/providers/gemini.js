@@ -218,3 +218,23 @@ async function callGeminiMultimodal(prompt, base64Audio, mimeType, useSearch = f
 
   return await callGeminiWithFallback(body, k.gemini, 90000); // аудио анализ е по-бавен от чист текст
 }
+
+// Като callGemini(), но за чат секцията (виж js/ai-chat.js) — приема
+// произволен брой прикачени файлове (снимки и/или PDF) наведнъж, за разлика
+// от callGeminiMultimodal (само 1 аудио файл, фиксиран случай на употреба).
+// attachments = [{ base64, mimeType }, ...] — Gemini inline_data приема и
+// image/* и application/pdf през СЪЩИЯ формат, затова няма нужда от
+// отделен "kind" превключвател тук (за разлика от Claude — виж claude.js).
+async function callGeminiChat(prompt, attachments, useSearch = false) {
+  const k = Keys.load();
+  if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
+
+  const parts = [{ text: prompt }];
+  for (const a of (attachments || [])) {
+    parts.push({ inline_data: { mime_type: a.mimeType || "image/png", data: a.base64 } });
+  }
+  const body = { contents: [{ parts }] };
+  if (useSearch) body.tools = [{ google_search: {} }];
+
+  return await callGeminiWithFallback(body, k.gemini, 60000);
+}

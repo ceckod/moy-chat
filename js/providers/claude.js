@@ -84,10 +84,25 @@ async function getClaudeModelList(apiKey, forceRefresh = false) {
 
 /* ---------- ЕДИНИЧНО ИЗВИКВАНЕ + FALLBACK МЕЖДУ МОДЕЛИ ---------- */
 
+// Превръща прикачени файлове (виж js/ai-chat.js) в Claude "content blocks".
+// attachments = [{ base64, mimeType, kind: "image"|"pdf" }, ...] — kind "pdf"
+// ползва Anthropic-native "document" блок (директно разбира PDF, без нужда
+// от отделно OCR/извличане на текст на клиента).
+function _buildClaudeContent(prompt, attachments) {
+  if (!attachments || !attachments.length) return prompt; // старо поведение — чист текст, непроменено
+  const blocks = attachments.map(a => a.kind === "pdf"
+    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: a.base64 } }
+    : { type: "image", source: { type: "base64", media_type: a.mimeType || "image/png", data: a.base64 } });
+  blocks.push({ type: "text", text: prompt });
+  return blocks;
+}
+
 // Единично извикване към КОНКРЕТЕН Claude модел (с вградения max_tokens
 // retry за отрязани отговори). Не пипа списъка с модели — това е грижа на
 // callClaude() по-долу, който обвива това с fallback между модели.
-async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = false) {
+// attachments е по избор (виж _buildClaudeContent по-горе) — подава се само
+// от чат секцията; всички стари извиквания без 5-и аргумент работят 1:1 както преди.
+async function _callClaudeSingle(model, prompt, maxTokens, apiKey, attachments = [], _isRetry = false) {
   const res = await fetchTimeout(proxied("https://api.anthropic.com/v1/messages"), {
     method: "POST",
     headers: {
@@ -100,7 +115,7 @@ async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = fa
     body: JSON.stringify({
       model,
       max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }]
+      messages: [{ role: "user", content: _buildClaudeContent(prompt, attachments) }]
     })
   }, 60000); // по-дълъг timeout — генериране на текст отнема повече от кратка проверка
   if (!res.ok) {
@@ -116,7 +131,7 @@ async function _callClaudeSingle(model, prompt, maxTokens, apiKey, _isRetry = fa
   // автоматично ОЩЕ ВЕДНЪЖ с двойно по-голям бюджет, вместо да върнем счупен
   // JSON и объркваща грешка. Само 1 повторен опит, за да не увисне безкрайно.
   if (data.stop_reason === "max_tokens" && !_isRetry) {
-    return _callClaudeSingle(model, prompt, Math.min(maxTokens * 2, 8000), apiKey, true);
+    return _callClaudeSingle(model, prompt, Math.min(maxTokens * 2, 8000), apiKey, attachments, true);
   }
   if (data.stop_reason === "max_tokens" && _isRetry) {
     throw new Error("Отговорът на модела е твърде дълъг дори след удвоен лимит — опитай със по-къса заявка (по-кратък текст/по-малко елементи).");
@@ -143,7 +158,10 @@ function _classifyClaudeError(e, model) {
 
 // Пробва Claude моделите, върнати от getClaudeModelList(), по ред — виж
 // _classifyClaudeError по-горе за реда, по който се превключва между модели.
-async function callClaude(prompt, maxTokens = 1200) {
+// attachments по избор (виж _buildClaudeContent по-горе) — подава се само от
+// чат секцията (js/ai-chat.js); всички стари извиквания callClaude(prompt) /
+// callClaude(prompt, maxTokens) работят 1:1 както преди.
+async function callClaude(prompt, maxTokens = 1200, attachments = []) {
   const k = Keys.load();
   if (!k.claude) { toast("⚠️ Липсва Claude API ключ (виж Настройки)"); throw new Error("no key"); }
 
@@ -160,7 +178,7 @@ async function callClaude(prompt, maxTokens = 1200) {
 
   return runModelFallbackLoop(
     models,
-    (model) => _callClaudeSingle(model, prompt, maxTokens, k.claude),
+    (model) => _callClaudeSingle(model, prompt, maxTokens, k.claude, attachments),
     {
       provider: "claude",
       classify: _classifyClaudeError,

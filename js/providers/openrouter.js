@@ -63,7 +63,22 @@ async function getOpenRouterFreeModels(forceRefresh = false) {
 // защото реалният им output бюджет често е по-малък от заявения
 // max_tokens — затова "finish_reason === length" тук е важна проверка,
 // не само отсъствие на текст. Само 1 повторен опит, за да не увисне.
-async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry = false) {
+// Прикачени снимки → OpenAI-съвместим "image_url" content блок (OpenRouter
+// говори този формат) — PDF НЕ се поддържа тук нарочно (виж capabilities.pdf
+// = false в js/agent-registry.js), защото не всички безплатни vision модели
+// на OpenRouter четат PDF надеждно; attachments, различни от снимка, просто
+// се прескачат тук, вместо да чупят заявката.
+function _buildOpenRouterContent(prompt, attachments) {
+  if (!attachments || !attachments.length) return prompt; // старо поведение — чист текст, непроменено
+  const images = attachments.filter(a => a.kind !== "pdf");
+  if (!images.length) return prompt;
+  return [
+    { type: "text", text: prompt },
+    ...images.map(a => ({ type: "image_url", image_url: { url: `data:${a.mimeType || "image/png"};base64,${a.base64}` } }))
+  ];
+}
+
+async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, attachments = [], _isRetry = false) {
   const res = await fetchTimeout(proxied("https://openrouter.ai/api/v1/chat/completions"), {
     method: "POST",
     headers: {
@@ -73,7 +88,7 @@ async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry 
       "HTTP-Referer": window.location.origin,
       "X-Title": "AI Music Suite - CD-B Records Dashboard"
     },
-    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] })
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: _buildOpenRouterContent(prompt, attachments) }] })
   }, 60000);
 
   if (!res.ok) {
@@ -88,7 +103,7 @@ async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, _isRetry 
   if (!text) throw new Error("OpenRouter не върна съдържание в отговора");
 
   if (choice.finish_reason === "length" && !_isRetry) {
-    return _callOpenRouterSingle(model, prompt, Math.min(maxTokens * 2, 4000), apiKey, true);
+    return _callOpenRouterSingle(model, prompt, Math.min(maxTokens * 2, 4000), apiKey, attachments, true);
   }
   if (choice.finish_reason === "length" && _isRetry) {
     // Дори с двоен бюджет пак е отрязан — този безплатен модел реално не
@@ -124,7 +139,7 @@ function _classifyOpenRouterError(e, model) {
 // претоварен/недостъпен, или реже отговорите — виж _callOpenRouterSingle
 // по-горе — при безплатните модели това се случва по-често, тъй като
 // споделят обща опашка/по-малък бюджет между всички потребители).
-async function callOpenRouter(prompt, maxTokens = 900) {
+async function callOpenRouter(prompt, maxTokens = 900, attachments = []) {
   const k = Keys.load();
   if (!k.openrouterKey) { toast("⚠️ Липсва OpenRouter API ключ (виж Настройки)"); throw new Error("no key"); }
 
@@ -140,7 +155,7 @@ async function callOpenRouter(prompt, maxTokens = 900) {
 
   return runModelFallbackLoop(
     models,
-    (model) => _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey),
+    (model) => _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey, attachments),
     {
       provider: "openrouter",
       classify: _classifyOpenRouterError,

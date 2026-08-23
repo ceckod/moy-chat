@@ -41,6 +41,11 @@ const Nav = {
     if (id === "model-finder") { Settings.fillFields(); ModelFinder.render(); }
     if (id === "suno-preview") { SunoPreview.render(); }
     if (id === "idea-vault") { IdeaVault.render(); }
+    if (id === "ai-chat") { AIChat.render(); }
+    // Плаващият "AI Чат" бутон (виж #aiChatFab в index.html) е излишен,
+    // докато самата чат секция вече е активна — скрий го само тогава.
+    const fab = document.getElementById("aiChatFab");
+    if (fab) fab.style.display = (id === "ai-chat") ? "none" : "flex";
     window.scrollTo(0, 0);
     if (!fromHistory) history.pushState({ cdbView: id }, "", "#" + id);
     // На мобилен sidebar-ът е overlay меню (виж CSS media query) — след
