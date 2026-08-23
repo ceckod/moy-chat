@@ -2503,6 +2503,57 @@
         "playlistItems.list",
         "playlistItems.list"
       ]
+    },
+    {
+      "run_id": "972181df",
+      "started_at": "2026-08-23T15:52:11.992757+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "r-b",
+        "bulgarian-pop",
+        "bulgarian-hip-hop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 6,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "search неуспешен за 'Reggaeton' ('Reggaeton music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    "
+      ],
+      "quota_spent_units": 719,
+      "quota_calls": [
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
     }
   ]
 }
