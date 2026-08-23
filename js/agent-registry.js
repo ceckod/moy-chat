@@ -1,35 +1,44 @@
 /* =========================================================
-   AGENT REGISTRY — единен, разширяем списък от AI "агенти" за новата
-   чат секция (виж js/ai-chat.js). Всеки запис описва:
+   AGENT REGISTRY — единен, разширяем списък от AI "агенти" за чат
+   секцията (виж js/ai-chat.js). Всеки запис описва:
      - id/name/icon         — визуално
-     - keyField              — кое поле в Keys.load() трябва да е
-                                попълнено, за да е "наличен" агентът
+     - keyField/extraKeyField — кое(и) полета в Keys.load() трябва да
+                                са попълнени, за да е "наличен" агентът
                                 (null = винаги наличен, без ключ)
      - capabilities          — какво РЕАЛНО поддържа агентът точно
-                                сега (текст / прикачени снимки /
-                                прикачени PDF / генериране на снимка)
-     - about                 — кратко описание за потребителя (за
-                                какво да го ползва), показва се в
-                                агент-превключвателя в чата
-     - send(prompt, atts)    — реалното извикване; винаги връща или
-                                { text } или { imageUrl } (виж
-                                js/ai-chat.js/_renderReply)
+                                сега (текст / прикачени снимки / PDF /
+                                генериране на снимка)
+     - about                 — кратко описание за потребителя
+     - send(prompt, atts)    — реалното извикване; ВИНАГИ връща
+                                { text, model } или { imageUrl } —
+                                model е РЕАЛНОТО име на конкретния
+                                модел, който е отговорил (виж
+                                getLastAgentAnswer() в fallback-loop.js)
+                                — показва се в чата вместо само общото
+                                име на агента.
 
-   ВАЖНО за бъдещи агенти: добавянето на СЪВСЕМ НОВ доставчик (не
-   Claude/Gemini/OpenRouter/Model Finder/Pollinations) винаги ще
-   изисква малко реален код за самото API извикване (различни
-   доставчици говорят различни протоколи) — регистърът прави
-   превключването/UI-то автоматично, но не измисля API-то на
-   доставчика вместо теб. Затова е отделен файл: нов агент = нов
-   запис тук + евентуално нова функция в js/providers/, БЕЗ да се
-   пипа js/ai-chat.js или index.html.
+   ВАЖНО: всеки запис тук говори САМО с посочения доставчик — никога не
+   прескача към друга компания при грешка (напр. избереш ли Mistral,
+   получаваш отговор от Mistral или ясна грешка, никога тихо от Groq).
+   Единствената "верига" вътре е между МОДЕЛИТЕ на СЪЩИЯ доставчик
+   (напр. Claude пробва няколко свои модела, Groq — няколко свои).
+
+   Бивша обединена точка "AI Model Finder" (Groq+Mistral+GitHub Models+
+   Cloudflare слети в едно) е нарочно РАЗДЕЛЕНА тук на 4 отделни агента —
+   точно за да можеш да избереш конкретно кой да ти отговори, вместо да
+   гадаеш кой реално се е обадил зад общото име.
+
+   ВАЖНО за бъдещи агенти: добавянето на СЪВСЕМ НОВ доставчик винаги ще
+   изисква малко реален код за самото API извикване (различни доставчици
+   говорят различни протоколи) — регистърът прави превключването/UI-то
+   автоматично, но не измисля API-то на доставчика вместо теб.
 
    Зависи от: Keys (storage.js), callClaude (providers/claude.js),
    callGeminiChat (providers/gemini.js), callOpenRouter
-   (providers/openrouter.js), callModelFinder (providers/model-finder.js),
-   pollinationsImageUrl (providers/pollinations-image.js) — всички
-   викани само ВЪТРЕ във функции, затова редът на <script> таговете
-   не е критичен (виж бележката в providers/claude.js).
+   (providers/openrouter.js), callModelFinderSource (providers/model-finder.js),
+   pollinationsImageUrl (providers/pollinations-image.js),
+   getLastAgentAnswer (providers/fallback-loop.js) — всички викани само
+   ВЪТРЕ във функции, затова редът на <script> таговете не е критичен.
    ========================================================= */
 
 const AGENT_REGISTRY = [
@@ -39,10 +48,10 @@ const AGENT_REGISTRY = [
     icon: "🟣",
     keyField: "claude",
     capabilities: { text: true, images: true, pdf: true, imageGen: false },
-    about: "Разговор, анализ, код, по-дълъг текст. Разбира прикачени снимки и PDF файлове.",
+    about: "Разговор, анализ, код, по-дълъг текст. Разбира прикачени снимки и PDF файлове (не генерира нови снимки).",
     async send(prompt, attachments) {
       const text = await callClaude(prompt, 1600, attachments);
-      return { text };
+      return { text, model: getLastAgentAnswer()?.model };
     }
   },
   {
@@ -51,10 +60,10 @@ const AGENT_REGISTRY = [
     icon: "🔵",
     keyField: "gemini",
     capabilities: { text: true, images: true, pdf: true, imageGen: false },
-    about: "Разговор, анализ + достъп до Google Search за актуални резултати. Разбира прикачени снимки и PDF файлове.",
+    about: "Разговор, анализ + достъп до Google Search за актуални резултати. Разбира прикачени снимки и PDF файлове (не генерира нови снимки — за това виж Pollinations по-долу в менюто).",
     async send(prompt, attachments) {
       const text = await callGeminiChat(prompt, attachments, false);
-      return { text };
+      return { text, model: getLastAgentAnswer()?.model };
     }
   },
   {
@@ -63,22 +72,59 @@ const AGENT_REGISTRY = [
     icon: "🟠",
     keyField: "openrouterKey",
     capabilities: { text: true, images: true, pdf: false, imageGen: false },
-    about: "Безплатни модели от различни доставчици. Част от тях разбират прикачени снимки — PDF не се поддържа тук.",
+    about: "Безплатни модели от различни доставчици (моделът, който точно ще отговори, се вижда след всяко съобщение). Част от тях разбират прикачени снимки — PDF не се поддържа тук.",
     async send(prompt, attachments) {
       const text = await callOpenRouter(prompt, 1200, attachments);
-      return { text };
+      return { text, model: getLastAgentAnswer()?.model };
     }
   },
   {
-    id: "modelfinder",
-    name: "AI Model Finder",
-    icon: "🧠",
-    keyField: null, // винаги наличен — вътре пада на безплатен Pollinations текст, ако няма нито един ключ
+    id: "groq",
+    name: "Groq",
+    icon: "⚡",
+    keyField: "groqKey",
     capabilities: { text: true, images: false, pdf: false, imageGen: false },
-    about: "Резервен текстов агент (Groq/Mistral/GitHub Models/Cloudflare, ако имаш ключове + винаги достъпен безплатен fallback). Не приема прикачени файлове.",
+    about: "Много бърз безплатен текстов агент (Llama/DeepSeek модели, хоствани от Groq). Не приема прикачени файлове.",
     async send(prompt) {
-      const text = await callModelFinder(prompt, 1200);
-      return { text };
+      const text = await callModelFinderSource("groq", prompt, 1200);
+      return { text, model: getLastAgentAnswer()?.model };
+    }
+  },
+  {
+    id: "mistral",
+    name: "Mistral AI",
+    icon: "🌬️",
+    keyField: "mistralKey",
+    capabilities: { text: true, images: false, pdf: false, imageGen: false },
+    about: "Безплатен текстов агент от Mistral AI. Не приема прикачени файлове.",
+    async send(prompt) {
+      const text = await callModelFinderSource("mistral", prompt, 1200);
+      return { text, model: getLastAgentAnswer()?.model };
+    }
+  },
+  {
+    id: "github-models",
+    name: "GitHub Models",
+    icon: "🐙",
+    keyField: "githubModelsToken",
+    capabilities: { text: true, images: false, pdf: false, imageGen: false },
+    about: "Безплатен текстов агент през GitHub Models (напр. GPT-4o-mini, Phi-4, Llama). Не приема прикачени файлове.",
+    async send(prompt) {
+      const text = await callModelFinderSource("github", prompt, 1200);
+      return { text, model: getLastAgentAnswer()?.model };
+    }
+  },
+  {
+    id: "cloudflare",
+    name: "Cloudflare Workers AI",
+    icon: "🧡",
+    keyField: "cfApiToken",
+    extraKeyField: "cfAccountId",
+    capabilities: { text: true, images: false, pdf: false, imageGen: false },
+    about: "Безплатен текстов агент през Cloudflare Workers AI. Не приема прикачени файлове.",
+    async send(prompt) {
+      const text = await callModelFinderSource("cloudflare", prompt, 1200);
+      return { text, model: getLastAgentAnswer()?.model };
     }
   },
   {
@@ -87,9 +133,9 @@ const AGENT_REGISTRY = [
     icon: "🎨",
     keyField: null, // без ключ
     capabilities: { text: false, images: false, pdf: false, imageGen: true },
-    about: "Не е чат агент — превръща описанието ти в готова генерирана снимка, без нужда от ключ. Пиши какво искаш да видиш.",
+    about: "Единственият агент тук, който РЕАЛНО генерира изображение по описание — без нужда от ключ. Не е чат агент за разговор, пиши какво искаш да видиш.",
     async send(prompt) {
-      return { imageUrl: pollinationsImageUrl(prompt) };
+      return { imageUrl: pollinationsImageUrl(prompt), model: "pollinations" };
     }
   }
 ];
@@ -98,13 +144,16 @@ const AgentRegistry = {
   all() { return AGENT_REGISTRY; },
   get(id) { return AGENT_REGISTRY.find(a => a.id === id) || null; },
   // Само агентите, които РЕАЛНО могат да бъдат ползвани точно сега
-  // (имат нужния ключ, или изобщо не изискват ключ).
+  // (имат нужния ключ — и допълнителния, ако изисква такъв — или изобщо
+  // не изискват ключ).
   available() {
     const k = Keys.load();
-    return AGENT_REGISTRY.filter(a => !a.keyField || !!k[a.keyField]);
+    return AGENT_REGISTRY.filter(a => this.hasKey(a, k));
   },
   hasKey(agent, k) {
     k = k || Keys.load();
-    return !agent.keyField || !!k[agent.keyField];
+    if (agent.keyField && !k[agent.keyField]) return false;
+    if (agent.extraKeyField && !k[agent.extraKeyField]) return false;
+    return true;
   }
 };

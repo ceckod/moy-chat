@@ -25,6 +25,8 @@ const AIChat = {
       const avail = AgentRegistry.available();
       this.agentId = avail.length ? avail[0].id : AgentRegistry.all()[0].id;
     }
+    if (this._lastAnsweredModel === undefined) this._lastAnsweredModel = null;
+    if (this._lastAnsweredAgentId === undefined) this._lastAnsweredAgentId = null;
   },
 
   render() {
@@ -37,6 +39,7 @@ const AIChat = {
 
   selectAgent(id) {
     this.agentId = id;
+    this._lastAnsweredModel = null;
     this._renderAgentAbout();
   },
 
@@ -96,12 +99,15 @@ const AIChat = {
     this._setTyping(true);
     try {
       const result = await agent.send(prompt, attachmentsForSend);
-      this.messages.push({ role: "agent", agentId: agent.id, text: result.text, imageUrl: result.imageUrl });
+      this.messages.push({ role: "agent", agentId: agent.id, text: result.text, imageUrl: result.imageUrl, model: result.model });
+      this._lastAnsweredModel = result.model || null;
+      this._lastAnsweredAgentId = agent.id;
     } catch (e) {
       this.messages.push({ role: "agent", agentId: agent.id, error: e.message || "Неочаквана грешка" });
     } finally {
       this.sending = false;
       this._setTyping(false);
+      this._renderAgentAbout();
       this._renderMessages(true);
     }
   },
@@ -109,8 +115,11 @@ const AIChat = {
   clear() {
     this.messages = [];
     this.pendingAttachments = [];
+    this._lastAnsweredModel = null;
+    this._lastAnsweredAgentId = null;
     this._renderMessages();
     this._renderAttachments();
+    this._renderAgentAbout();
   },
 
   /* ---------- РЕНДИРАНЕ ---------- */
@@ -141,7 +150,13 @@ const AIChat = {
     if (a.capabilities.images) caps.push("🖼️ разбира снимки");
     if (a.capabilities.pdf) caps.push("📄 разбира PDF");
     if (a.capabilities.imageGen) caps.push("🎨 генерира снимки");
-    el.innerHTML = `<div>${_escape(a.about)}</div><div style="margin-top:4px;color:var(--muted-2);font-size:11.5px;">${caps.join(" · ")}</div>`;
+    // Реалният модел, който последно е отговорил ОТ ТОЗИ агент в текущия
+    // разговор (виж AIChat.send() → _lastAnsweredModel) — така "AI Model
+    // Finder" вече не звучи анонимно: пише се точно "gpt-4o-mini" и т.н.
+    const modelLine = (this._lastAnsweredModel && this._lastAnsweredAgentId === this.agentId && this._lastAnsweredModel !== a.id)
+      ? `<div style="margin-top:2px;color:var(--cyan);font-size:11.5px;">В момента говориш с: <strong>${_escape(this._lastAnsweredModel)}</strong></div>`
+      : "";
+    el.innerHTML = `<div>${_escape(a.about)}</div><div style="margin-top:4px;color:var(--muted-2);font-size:11.5px;">${caps.join(" · ")}</div>${modelLine}`;
   },
 
   _renderAttachments() {
@@ -166,7 +181,8 @@ const AIChat = {
   _bubble(m) {
     const isUser = m.role === "user";
     const agent = !isUser ? AgentRegistry.get(m.agentId) : null;
-    const label = isUser ? "Ти" : (agent ? `${agent.icon} ${agent.name}` : "Агент");
+    const showModel = m.model && agent && m.model !== agent.id;
+    const label = isUser ? "Ти" : (agent ? `${agent.icon} ${agent.name}${showModel ? " · " + _escape(m.model) : ""}` : "Агент");
     let body = "";
     if (m.error) body = `<div style="color:var(--red);">⚠️ ${_escape(m.error)}</div>`;
     else if (m.imageUrl) body = `<img src="${m.imageUrl}" style="max-width:100%;border-radius:10px;margin-top:2px;" alt="генерирано изображение">`;

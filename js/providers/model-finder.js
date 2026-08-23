@@ -310,3 +310,30 @@ async function callModelFinder(prompt, maxTokens = 900) {
     }
   );
 }
+
+// Като callModelFinder(), но САМО за ЕДИН конкретен източник (Groq ИЛИ
+// Mistral ИЛИ GitHub Models ИЛИ Cloudflare) — ползва се от чат секцията
+// (виж js/agent-registry.js), когато потребителят изрично е избрал ТОЧНО
+// този агент от менюто. За разлика от callModelFinder() по-горе (fallback
+// верига през ВСИЧКИ източници, ползвана само като последна мярка от
+// callAI() другаде в таблото), тук НИКОГА не се прескача към друга
+// компания при грешка — само между МОДЕЛИТЕ на СЪЩИЯ избран източник
+// (напр. ако llama-3.3 на Groq гръмне, пробва llama-3.1 — пак Groq,
+// не изведнъж Mistral). Точно това разделяне разреши объркването "избрах
+// Mistral, но отговори друг доставчик".
+async function callModelFinderSource(source, prompt, maxTokens = 900) {
+  const keys = Keys.load();
+  if (!_modelFinderSourceAvailable(source, keys)) throw new Error("no key");
+  const models = await ModelFinder.modelsForSource(source);
+  if (!models.length) throw new Error(`Няма известни модели за ${MODEL_FINDER_SOURCES[source].label}`);
+
+  return runModelFallbackLoop(
+    models,
+    (model) => _callModelFinderSingle(source, model, prompt, maxTokens, keys),
+    {
+      provider: "modelfinder:" + source,
+      classify: () => ({ action: "next", removeFromRoster: false }),
+      exhaustedMsg: `${MODEL_FINDER_SOURCES[source].label}: неуспешно след всички известни модела`
+    }
+  );
+}

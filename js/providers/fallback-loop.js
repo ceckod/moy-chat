@@ -37,6 +37,13 @@
      exhaustedMsg        — текст на грешката, ако ВСИЧКИ модели се провалят
    ========================================================= */
 
+// Кой реален provider/модел отговори ПОСЛЕДНО успешно — задава се точно
+// преди return result по-долу. Ползва се от чат секцията (viж
+// js/agent-registry.js/js/ai-chat.js), за да покаже РЕАЛНОТО име на модела,
+// с който потребителят в момента говори, вместо само общото име на агента.
+let _lastAgentAnswer = null;
+function getLastAgentAnswer() { return _lastAgentAnswer; }
+
 async function runModelFallbackLoop(models, attemptFn, opts) {
   const maxRetriesPerModel = opts.maxRetriesPerModel || 0;
   let lastError;
@@ -51,6 +58,7 @@ async function runModelFallbackLoop(models, attemptFn, opts) {
         const result = await attemptFn(model);
         AICallLog.record({ provider: opts.provider, model, ok: true });
         QuotaTracker.record(opts.provider, model);
+        _lastAgentAnswer = { provider: opts.provider, model };
         // CostTracker (js/cost-tracker.js) — четем usage-а, оставен от
         // providers/claude.js или providers/gemini.js точно преди return,
         // ако е наличен (OpenRouter/ModelFinder не го задават — не пращат
