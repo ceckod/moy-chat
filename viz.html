@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 VisualizerGrabber v4 – Ultimate Music Visualizer Scraper</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #2a2a4a; }
+header h1 { font-size: 2em; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+header p { color: #888; margin-top: 8px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card { background: #14141f; border-radius: 12px; padding: 20px; border: 1px solid #2a2a3a; }
+.card h2 { font-size: 1.2em; margin-bottom: 15px; color: #48dbfb; }
+@media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.9em; }
+input, select, textarea { width: 100%; padding: 10px 14px; background: #1e1e2f; border: 1px solid #3a3a5a; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 12px; }
+input:focus, select:focus { outline: none; border-color: #48dbfb; box-shadow: 0 0 0 2px rgba(72,219,251,0.2); }
+textarea { min-height: 80px; resize: vertical; font-family: 'Consolas', monospace; }
+.btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, #48dbfb, #0a85d0); color: #fff; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(72,219,251,0.4); }
+.btn-danger { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: #fff; }
+.btn-success { background: linear-gradient(135deg, #00d2d3, #01a3a4); color: #fff; }
+.btn-secondary { background: #2a2a4a; color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+.btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.progress-bar { height: 6px; background: #2a2a4a; border-radius: 3px; margin: 10px 0; overflow: hidden; }
+.progress-bar div { height: 100%; width: 0%; background: linear-gradient(90deg, #48dbfb, #0a85d0); border-radius: 3px; transition: width 0.3s; }
+.log { background: #0a0a12; border: 1px solid #1a1a2a; border-radius: 8px; padding: 12px; height: 300px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.6; margin-top: 10px; }
+.log .info { color: #48dbfb; }
+.log .success { color: #00d2d3; }
+.log .warn { color: #feca57; }
+.log .error { color: #ff6b6b; }
+.log .data { color: #a29bfe; }
+.source-list { max-height: 200px; overflow-y: auto; }
+.source-item { padding: 8px 12px; background: #1a1a2a; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.source-item .url { color: #aaa; font-size: 12px; word-break: break-all; flex: 1; }
+.source-item .actions { display: flex; gap: 6px; margin-left: 10px; }
+.recorder-preview { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; margin-bottom: 10px; }
+.recorder-preview video, .recorder-preview canvas { width: 100%; height: 100%; border-radius: 8px; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 15px; }
+.tab { padding: 8px 16px; background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 13px; }
+.tab.active { background: #14141f; border-bottom-color: #14141f; color: #48dbfb; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎵 VisualizerGrabber v4</h1>
+    <p>Ultimate Music Visualizer Scraper &amp; Downloader — Zero сервър, напълно client-side</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>🎯 Източник</h2>
+      <div class="tab-bar">
+        <div class="tab active" data-tab="url-tab">URL / Link</div>
+        <div class="tab" data-tab="search-tab">Търсене</div>
+        <div class="tab" data-tab="capture-tab">Capture</div>
+      </div>
+
+      <div id="url-tab" class="tab-content active">
+        <label>Постави URL (YouTube, Vimeo, Dailymotion, SoundCloud, или директен линк)</label>
+        <input type="text" id="targetUrl" placeholder="https://www.youtube.com/watch?v=... или https://example.com/visualizer.mp4">
+        <label>Избери платформа (auto-detect или ръчно)</label>
+        <select id="platformSelect">
+          <option value="auto">Автоматично</option>
+          <option value="youtube">YouTube</option>
+          <option value="vimeo">Vimeo</option>
+          <option value="dailymotion">Dailymotion</option>
+          <option value="soundcloud">SoundCloud</option>
+          <option value="direct">Директен URL (MP4/WebM)</option>
+          <option value="generic">Общ HTML scraping</option>
+        </select>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="startScrape()">🚀 Извлечи</button>
+          <button class="btn btn-secondary" onclick="addToQueue()">➕ Добави в опашка</button>
+        </div>
+      </div>
+
+      <div id="search-tab" class="tab-content">
+        <label>Търси музикални визуализатори</label>
+        <input type="text" id="searchQuery" placeholder="например: synthwave visualizer, audio visualization, etc.">
+        <label>Платформа</label>
+        <select id="searchPlatform">
+          <option value="youtube">YouTube</option>
+          <option value="vimeo">Vimeo</option>
+          <option value="soundcloud">SoundCloud</option>
+          <option value="all">Всички</option>
+        </select>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="searchVisualizers()">🔍 Търси</button>
+        </div>
+        <div id="searchResults" class="source-list" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="capture-tab" class="tab-content">
+        <label>Capture live WebGL/Canvas визуализатор от текущ page (въведи URL)</label>
+        <input type="text" id="captureUrl" placeholder="https://example.com/webgl-visualizer" value="about:blank">
+        <label>Продължителност на запис (секунди)</label>
+        <input type="number" id="captureDuration" value="30" min="5" max="300">
+        <button class="btn btn-danger" onclick="startCapture()">⏺️ Старт Record</button>
+        <div class="recorder-preview" id="recorderPreview"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📦 Output &amp; Log</h2>
+      <label>Име на проекта</label>
+      <input type="text" id="projectName" value="visualizer_export">
+      <label>Формат</label>
+      <select id="outputFormat">
+        <option value="zip">ZIP архив (всичко)</option>
+        <option value="mp4">MP4 видео (capture)</option>
+        <option value="gif">GIF (capture)</option>
+        <option value="webm">WebM видео</option>
+      </select>
+      <div id="statusBar">
+        <div class="progress-bar"><div id="progressFill"></div></div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-success" onclick="downloadPackage()" id="downloadBtn" disabled>📥 Свали ZIP</button>
+        <button class="btn btn-secondary" onclick="clearQueue()">🗑️ Изчисти опашка</button>
+      </div>
+      <div id="queueInfo" style="font-size:13px;color:#888;margin-top:8px;"></div>
+      <div id="logContainer" class="log"></div>
+    </div>
+  </div>
+  
+  <div class="card" style="margin-top:20px;">
+    <h2>⚙️ Разширени настройки</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;">
+      <div>
+        <label>CORS Proxy</label>
+        <select id="corsProxySelect">
+          <option value="auto">Автоматичен (6 fallback-а)</option>
+          <option value="worker">Cloudflare Worker (ако имаш)</option>
+          <option value="corsproxy.io">corsproxy.io</option>
+          <option value="api.allorigins.win">allorigins.win</option>
+          <option value="corsproxy.help">corsproxy.help</option>
+          <option value="none">Без прокси (само same-origin)</option>
+        </select>
+      </div>
+      <div>
+        <label>User-Agent стратегия</label>
+        <select id="uaStrategy">
+          <option value="rotate">Ротация (50+ UAs)</option>
+          <option value="chrome">Chrome latest</option>
+          <option value="firefox">Firefox latest</option>
+          <option value="mobile">Mobile (Android)</option>
+        </select>
+      </div>
+      <div>
+        <label>Rate Limit защита</label>
+        <select id="rateLimitStrategy">
+          <option value="smart">Smart (адаптивен)</option>
+          <option value="slow">Бавно (2-5s)</option>
+          <option value="fast">Бързо (500ms-1s)</option>
+          <option value="none">Без забавяне</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <label>Custom Cloudflare Worker URL (ако ползваш Worker)</label>
+      <input type="text" id="customWorkerUrl" placeholder="https://your-worker.your-subdomain.workers.dev/">
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.6.2/RecordRTC.min.js"></script>
+<script>
+// ============================================================
+// 🛡️ ANTI-DETECTION ENGINE
+// ============================================================
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/17.5',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/125.0.6422.142 Safari/537.36',
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148',
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/126.0.6478.71 Mobile Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.6422.112 Safari/537.36 Edg/125.0.2535.67',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36 Vivaldi/6.6.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126.0.6478.62 Safari/537.36 OPR/112.0.0.0',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/127.0.0.0 Safari/537.36',
+];
+const REFERRERS = [
+  'https://www.google.com/search?q=music+visualizer',
+  'https://www.youtube.com/',
+  'https://www.bing.com/search?q=audio+visualization',
+  'https://www.reddit.com/r/visualizer/',
+  'https://twitter.com/explore',
+  'https://www.facebook.com/',
+  '',
+];
+
+let currentUAIndex = 0;
+function getNextUA() { currentUAIndex = (currentUAIndex + 1) % USER_AGENTS.length; return USER_AGENTS[currentUAIndex]; }
+function getRandomReferrer() { return REFERRERS[Math.floor(Math.random() * REFERRERS.length)]; }
+function getRandomDelay(min=800, max=3000) { return Math.floor(Math.random() * (max - min) + min); }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// 🔄 CORS PROXY ENGINE — Multi-fallback
+// ============================================================
+const PROXIES = {
+  'corsproxy.io': u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  'api.allorigins.win': u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  'corsproxy.help': u => `https://corsproxy.help/api?url=${encodeURIComponent(u)}`,
+  'worker': u => {
+    const w = document.getElementById('customWorkerUrl').value;
+    return w ? w + '?url=' + encodeURIComponent(u) : null;
+  },
+  'none': u => u,
+};
+
+let proxyIndices = {};
+function getProxyUrl(url, proxyKey = null) {
+  if (proxyKey && proxyKey !== 'auto' && proxyKey !== 'worker') {
+    const fn = PROXIES[proxyKey];
+    return fn ? fn(url) : url;
+  }
+  if (proxyKey === 'worker' || proxyKey === 'auto') {
+    const w = document.getElementById('customWorkerUrl').value;
+    if (w) return w + '?url=' + encodeURIComponent(url);
+  }
+  const order = ['corsproxy.io', 'api.allorigins.win', 'corsproxy.help'];
+  if (!proxyIndices[url]) proxyIndices[url] = 0;
+  for (let i = 0; i < order.length; i++) {
+    const idx = (proxyIndices[url] + i) % order.length;
+    try {
+      const fn = PROXIES[order[idx]];
+      if (fn) return fn(url);
+    } catch(e) {}
+  }
+  proxyIndices[url] = (proxyIndices[url] + 1) % order.length;
+  return url;
+}
+
+// ============================================================
+// 📝 LOG SYSTEM
+// ============================================================
+const logEl = document.getElementById('logContainer');
+function log(msg, type='info') {
+  const entry = document.createElement('div');
+  entry.className = type;
+  const ts = new Date().toLocaleTimeString();
+  entry.textContent = `[${ts}] ${msg}`;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ============================================================
+// 📦 DOWNLOAD QUEUE
+// ============================================================
+let downloadQueue = [];
+let capturedBlobs = [];
+let fetchedItems = [];
+
+function addToQueue() {
+  const url = document.getElementById('targetUrl').value.trim();
+  if (!url) { log('Моля, въведи URL', 'warn'); return; }
+  downloadQueue.push({ url, platform: document.getElementById('platformSelect').value });
+  updateQueueInfo();
+  log(`➕ Добавен в опашка: ${url.slice(0,60)}...`, 'info');
+}
+
+function clearQueue() {
+  downloadQueue = [];
+  fetchedItems = [];
+  capturedBlobs = [];
+  updateQueueInfo();
+  document.getElementById('downloadBtn').disabled = true;
+  log('🗑️ Опашката е изчистена', 'warn');
+}
+
+function updateQueueInfo() {
+  document.getElementById('queueInfo').textContent = 
+    `📋 Опашка: ${downloadQueue.length} | 📦 Извлечено: ${fetchedItems.length} | 🎥 Capture: ${capturedBlobs.length}`;
+}
+
+// ============================================================
+// 🔍 PLATFORM DETECTION & EXTRACTION
+// ============================================================
+function detectPlatform(url) {
+  const u = url.toLowerCase();
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  if (u.includes('vimeo.com')) return 'vimeo';
+  if (u.includes('dailymotion.com') || u.includes('dai.ly')) return 'dailymotion';
+  if (u.includes('soundcloud.com')) return 'soundcloud';
+  if (u.match(/\.(mp4|webm|ogg|avi|mov)$/i)) return 'direct';
+  return 'generic';
+}
+
+async function extractYouTube(url) {
+  log('🎯 Извличане от YouTube...', 'info');
+  const strategies = [
+    { label: 'invidious', fn: async () => {
+      const invidious = ['https://inv.nadeko.net', 'https://yewtu.be', 'https://invidious.private.coffee'];
+      for (const inst of invidious) {
+        try {
+          const apiUrl = `${inst}/api/v1/videos/${extractYouTubeId(url)}`;
+          const resp = await fetchWithProxy(apiUrl, {headers: {'Accept': 'application/json'}});
+          if (resp.ok) {
+            const data = await resp.json();
+            const video = data.formatStreams?.find(f => f.type?.includes('video')) || data.formatStreams?.[0];
+            if (video) {
+              return { title: data.title, url: video.url, ext: 'mp4', thumbnail: data.videoThumbnails?.[0]?.url };
+            }
+          }
+        } catch(e) { log(`Invidious ${inst} fail: ${e.message}`, 'warn'); }
+      }
+      return null;
+    }},
+    { label: 'piped', fn: async () => {
+      try {
+        const pipedInst = 'https://pipedapi.kavin.rocks';
+        const id = extractYouTubeId(url);
+        const resp = await fetchWithProxy(`${pipedInst}/streams/${id}`, {headers: {'Accept': 'application/json'}});
+        if (resp.ok) {
+          const data = await resp.json();
+          const v = data.videoStreams?.find(s => s.quality?.includes('720') || s.quality?.includes('480')) || data.videoStreams?.[0];
+          if (v) return { title: data.title, url: v.url, ext: 'mp4', thumbnail: data.thumbnailUrl };
+        }
+      } catch(e) { log(`Piped fail: ${e.message}`, 'warn'); }
+      return null;
+    }},
+    { label: 'yt-dlp-web', fn: async () => {
+      const services = [
+        `https://yt-api.com/api/yt/${extractYouTubeId(url)}`,
+        `https://youtubeking.com/api/getVideo/${extractYouTubeId(url)}`,
+      ];
+      for (const srv of services) {
+        try {
+          const resp = await fetchWithProxy(srv);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.url || data.downloadUrl) {
+              return { title: data.title || 'youtube_visualizer', url: data.url || data.downloadUrl, ext: 'mp4' };
+            }
+          }
+        } catch(e) {}
+      }
+      return null;
+    }},
+    { label: 'direct_html', fn: async () => {
+      try {
+        const resp = await fetchWithProxy(`https://www.youtube.com/watch?v=${extractYouTubeId(url)}`, {
+          headers: {'Accept-Language': 'en-US,en;q=0.9'}
+        });
+        const html = await resp.text();
+        const patterns = [
+          /"url_encoded_fmt_stream_map"\s*:\s*"([^"]+)"/,
+          /"adaptive_fmts"\s*:\s*"([^"]+)"/,
+          /"hlsManifestUrl"\s*:\s*"([^"]+)"/,
+        ];
+        for (const p of patterns) {
+          const m = html.match(p);
+          if (m) {
+            const decoded = m[1].replace(/\\u0026/g, '&');
+            const urls = decoded.match(/https?:\/\/[^",]+/g);
+            if (urls?.length) return { title: 'youtube_extracted', url: urls[0], ext: 'mp4' };
+          }
+        }
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+        const title = titleMatch?.[1]?.replace(' - YouTube', '')?.trim() || 'youtube_visualizer';
+        const urlMatch = html.match(/"url":"([^"]+\.(?:mp4|webm)[^"]+)"/);
+        if (urlMatch) return { title, url: urlMatch[1].replace(/\\u0026/g,'&'), ext: 'mp4' };
+      } catch(e) { log(`HTML extraction fail: ${e.message}`, 'warn'); }
+      return null;
+    }}
+  ];
+  
+  for (const s of strategies) {
+    log(`  → Опит: ${s.label}...`, 'info');
+    const result = await s.fn();
+    if (result && result.url) {
+      log(`  ✅ Успех чрез ${s.label}: ${result.title || 'визуализатор'}`, 'success');
+      return result;
+    }
+    await sleep(getRandomDelay(300, 800));
+  }
+  log('  ❌ YouTube: всички стратегии неуспешни', 'error');
+  return null;
+}
+
+function extractYouTubeId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+    /yt_([a-zA-Z0-9_-]{11})/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return url;
+}
+
+async function extractVimeo(url) {
+  log('🎯 Извличане от Vimeo...', 'info');
+  const vimeoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
+  if (!vimeoId) { log('  ❌ Невалиден Vimeo ID', 'error'); return null; }
+  try {
+    const resp = await fetchWithProxy(`https://vimeo.com/api/v2/video/${vimeoId}.json`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (Array.isArray(data) && data[0]) {
+        return { title: data[0].title, url: data[0].hd?.url || data[0].sd?.url, ext: 'mp4', thumbnail: data[0].thumbnail_large };
+      }
+    }
+  } catch(e) {
+    // try alternative
+    try {
+      const resp2 = await fetchWithProxy(`https://vimeo.com/${vimeoId}`, {headers: {'User-Agent': getNextUA()}});
+      const html = await resp2.text();
+      const configMatch = html.match(/playerConfig:\s*({.+?}),?\s*\n/);
+      if (configMatch) {
+        const config = JSON.parse(configMatch[1]);
+        const video = config.request?.files?.progressive?.[0] || config.request?.files?.hls?.default;
+        if (video) return { title: config.video?.title || 'vimeo_visualizer', url: video.url || video, ext: 'mp4' };
+      }
+    } catch(e2) { log(`  ❌ Vimeo fail: ${e2.message}`, 'error'); }
+  }
+  return null;
+}
+
+async function extractDailymotion(url) {
+  log('🎯 Извличане от Dailymotion...', 'info');
+  const dmId = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/)?.[1] || url.match(/dai\.ly\/([a-zA-Z0-9]+)/)?.[1];
+  if (!dmId) { log('  ❌ Невалиден Dailymotion ID', 'error'); return null; }
+  try {
+    const resp = await fetchWithProxy(`https://www.dailymotion.com/player/metadata/video/${dmId}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const video = data.qualities?.auto?.[0] || data.qualities?.best?.[0];
+      if (video?.url) return { title: data.title || 'dm_visualizer', url: video.url, ext: 'mp4', thumbnail: data.thumbnail_url };
+    }
+  } catch(e) { log(`  ❌ Dailymotion fail: ${e.message}`, 'error'); }
+  return null;
+}
+
+async function extractSoundCloud(url) {
+  log('🎯 Извличане от SoundCloud...', 'info');
+  try {
+    const resp = await fetchWithProxy(`https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+    if (resp.ok) {
+      const data = await resp.json();
+      return { title: data.title, url: data.thumbnail_url?.replace('large', 't500x500'), ext: 'jpg', type: 'thumbnail' };
+    }
+  } catch(e) { log(`  ❌ SoundCloud fail: ${e.message}`, 'warn'); }
+  return null;
+}
+
+async function extractDirect(url) {
+  log('🎯 Директен URL...', 'info');
+  return { title: url.split('/').pop()?.split('?')[0] || 'direct_visualizer', url, ext: url.match(/\.(\w+)(?:\?|$)/)?.[1] || 'mp4' };
+}
+
+async function extractGeneric(url) {
+  log('🎯 Общ HTML scraping...', 'info');
+  try {
+    const resp = await fetchWithProxy(url);
+    const html = await resp.text();
+    // try to find video/audio sources
+    const sources = [];
+    const patterns = [
+      /<source[^>]+src="([^"]+\.(?:mp4|webm|ogg))"[^>]*>/gi,
+      /<video[^>]+src="([^"]+)"[^>]*>/gi,
+      /<iframe[^>]+src="([^"]*youtube[^"]+)"[^>]*>/gi,
+      /<iframe[^>]+src="([^"]*vimeo[^"]+)"[^>]*>/gi,
+      /href="([^"]+\.(?:mp4|webm|zip))"[^>]*>/gi,
+      /data-url="([^"]+\.(?:mp4|webm))"/gi,
+      /playerUrl\s*=\s*['"]([^'"]+)['"]/gi,
+    ];
+    for (const p of patterns) {
+      let m;
+      while ((m = p.exec(html)) !== null) {
+        sources.push(m[1]);
+      }
+    }
+    if (sources.length) {
+      log(`  ✅ Намерени ${sources.length} потенциални източника`, 'success');
+      return { title: new URL(url).hostname, url: sources[0], ext: sources[0].match(/\.(\w+)(?:\?|$)/)?.[1] || 'mp4', sources };
+    }
+    // try to extract title
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+    const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
+    return { title, url, ext: 'html', type: 'page', html };
+  } catch(e) { log(`  ❌ Generic scraping fail: ${e.message}`, 'error'); }
+  return null;
+}
+
+// ============================================================
+// 🌐 FETCH WITH FULL ANTI-DETECTION
+// ============================================================
+async function fetchWithProxy(url, options = {}) {
+  const strategy = document.getElementById('rateLimitStrategy').value;
+  if (strategy !== 'none') {
+    const delay = strategy === 'slow' ? getRandomDelay(2000, 5000) : strategy === 'smart' ? getRandomDelay(500, 2500) : getRandomDelay(300, 1000);
+    await sleep(delay);
+  }
+  
+  const uaOption = document.getElementById('uaStrategy').value;
+  let userAgent;
+  if (uaOption === 'rotate') userAgent = getNextUA();
+  else if (uaOption === 'chrome') userAgent = USER_AGENTS[0];
+  else if (uaOption === 'firefox') userAgent = USER_AGENTS[2];
+  else userAgent = USER_AGENTS[5];
+  
+  const headers = {
+    'User-Agent': userAgent,
+    'Accept': options.headers?.Accept || 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': options.headers?.['Accept-Language'] || 'en-US,en;q=0.9,tr;q=0.8',
+    'Referer': getRandomReferrer(),
+    'Sec-Fetch-Dest': options.headers?.Accept?.includes('json') ? 'empty' : 'document',
+    'Sec-Fetch-Mode': options.headers?.Accept?.includes('json') ? 'cors' : 'navigate',
+    'Sec-Fetch-Site': 'cross-site',
+    ...options.headers,
+  };
+  
+  let proxyKey = document.getElementById('corsProxySelect').value;
+  const proxiedUrl = getProxyUrl(url, proxyKey);
+  
+  log(`  🌐 Fetch: ${url.slice(0,80)}... -> прокси: ${proxyKey}`, 'info');
+  
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  
+  try {
+    const resp = await fetch(proxiedUrl, { headers, signal: controller.signal, redirect: 'follow' });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    return resp;
+  } catch(e) {
+    clearTimeout(timeout);
+    // fallback - try without proxy or with different proxy
+    if (proxyKey === 'auto' || proxyKey === 'worker') {
+      log(`  ⚠️ Proxy fail: ${e.message}. Опит без прокси...`, 'warn');
+      try {
+        const directResp = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+        if (directResp.ok) return directResp;
+      } catch(e2) {}
+      log(`  ⚠️ И direct fetch fail. Опит с друг proxy...`, 'warn');
+      const altProxyKey = proxyKey === 'auto' ? 'corsproxy.help' : 'corsproxy.io';
+      const altUrl = PROXIES[altProxyKey](url);
+      if (altUrl) {
+        const altResp = await fetch(altUrl, { headers, signal: AbortSignal.timeout(20000) });
+        if (altResp.ok) return altResp;
+      }
+    }
+    throw e;
+  }
+}
+
+// ============================================================
+// 🚀 MAIN SCRAPE FUNCTION
+// ============================================================
+async function startScrape() {
+  const url = document.getElementById('targetUrl').value.trim();
+  if (!url) { log('❌ Моля, въведи URL', 'error'); return; }
+  
+  const platform = document.getElementById('platformSelect').value === 'auto' ? detectPlatform(url) : document.getElementById('platformSelect').value;
+  log(`🚀 Започва scraре за: ${url} [${platform}]`, 'info');
+  
+  let result = null;
+  switch(platform) {
+    case 'youtube': result = await extractYouTube(url); break;
+    case 'vimeo': result = await extractVimeo(url); break;
+    case 'dailymotion': result = await extractDailymotion(url); break;
+    case 'soundcloud': result = await extractSoundCloud(url); break;
+    case 'direct': result = await extractDirect(url); break;
+    default: result = await extractGeneric(url); break;
+  }
+  
+  if (result && result.url) {
+    fetchedItems.push(result);
+    updateQueueInfo();
+    document.getElementById('downloadBtn').disabled = false;
+    log(`✅ Успешно извлечено: ${result.title || 'visualizer'} (${result.ext || 'mp4'})`, 'success');
+    // Try to download the content
+    await downloadContent(result);
+  } else {
+    log('❌ Неуспешно извличане. Опитай друг URL или платформа.', 'error');
+  }
+}
+
+async function downloadContent(item) {
+  log(`📥 Сваляне на: ${item.title || 'content'}...`, 'info');
+  try {
+    const resp = await fetchWithProxy(item.url);
+    const blob = await resp.blob();
+    item.blob = blob;
+    item.size = blob.size;
+    log(`  ✅ Свалено: ${(blob.size / 1024 / 1024).toFixed(2)} MB`, 'success');
+    
+    // Auto-download option for single file
+    if (confirm(`✅ "${item.title || 'visualizer'}" е извлечен (${(blob.size/1024/1024).toFixed(2)} MB).\nДа свалиш веднага?`)) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${sanitizeName(item.title || 'visualizer')}.${item.ext || 'mp4'}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+  } catch(e) {
+    log(`  ⚠️ Грешка при сваляне: ${e.message}. Но метадата е запазена.`, 'warn');
+  }
+}
+
+function sanitizeName(name) {
+  return name.replace(/[<>:"/\\|?*]/g, '_').slice(0, 80);
+}
+
+// ============================================================
+// 🔍 SEARCH VISUALIZERS
+// ============================================================
+async function searchVisualizers() {
+  const query = document.getElementById('searchQuery').value.trim();
+  if (!query) { log('❌ Въведи търсене', 'error'); return; }
+  const platform = document.getElementById('searchPlatform').value;
+  log(`🔍 Търсене: "${query}" на ${platform}...`, 'info');
+  
+  const resultsDiv = document.getElementById('searchResults');
+  resultsDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">🔎 Търсене...</div>';
+  
+  const results = [];
+  
+  if (platform === 'youtube' || platform === 'all') {
+    try {
+      // YouTube search via invidious
+      const invidious = ['https://inv.nadeko.net', 'https://yewtu.be'];
+      for (const inst of invidious) {
+        try {
+          const resp = await fetchWithProxy(`${inst}/api/v1/search?q=${encodeURIComponent(query + " music visualizer")}&type=video`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data?.items?.length) {
+              for (const v of data.items.slice(0, 10)) {
+                results.push({ title: v.title, url: `https://www.youtube.com/watch?v=${v.videoId}`, platform: 'YouTube', thumbnail: v.videoThumbnails?.[0]?.url, author: v.author });
+              }
+              break;
+            }
+          }
+        } catch(e) {}
+      }
+    } catch(e) { log(`YouTube search fail: ${e.message}`, 'warn'); }
+  }
+  
+  if (platform === 'vimeo' || platform === 'all') {
+    try {
+      const resp = await fetchWithProxy(`https://vimeo.com/api/v2/video?q=${encodeURIComponent(query)}&per_page=10`);
+      if (resp.ok) {
+        const data = await resp.json();
+        // process vimeo results
+      }
+    } catch(e) {}
+  }
+  
+  resultsDiv.innerHTML = '';
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">Няма резултати. Опитай друго търсене.</div>';
+    log('⚠️ Няма намерени резултати', 'warn');
+    return;
+  }
+  
+  for (const r of results) {
+    const div = document.createElement('div');
+    div.className = 'source-item';
+    div.innerHTML = `
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:14px;">${r.title}</div>
+        <div style="color:#888;font-size:11px;">${r.platform} • ${r.author || ''} • ${r.url.slice(0,60)}...</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="document.getElementById('targetUrl').value='${r.url.replace(/'/g,"\\'")}';startScrape()">📥</button>
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="document.getElementById('targetUrl').value='${r.url.replace(/'/g,"\\'")}';addToQueue()">➕</button>
+      </div>
+    `;
+    resultsDiv.appendChild(div);
+  }
+  log(`✅ Намерени ${results.length} резултата`, 'success');
+}
+
+// ============================================================
+// ⏺️ CAPTURE LIVE VISUALIZER
+// ============================================================
+let mediaRecorder = null;
+let recordedChunks = [];
+
+async function startCapture() {
+  const url = document.getElementById('captureUrl').value.trim();
+  const duration = parseInt(document.getElementById('captureDuration').value) || 30;
+  
+  if (url && url !== 'about:blank') {
+    log(`🎯 Отваряне на визуализатор: ${url}`, 'info');
+    // Open in iframe within preview
+    const preview = document.getElementById('recorderPreview');
+    preview.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;" id="captureFrame"></iframe>`;
+    await sleep(3000); // wait for load
+  }
+  
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { cursor: "never", displaySurface: "browser" },
+      audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+    });
+    
+    const format = document.getElementById('outputFormat').value;
+    const mimeType = format === 'webm' ? 'video/webm;codecs=vp9,opus' : 'video/mp4';
+    
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : 'video/webm;codecs=vp8,opus'
+    });
+    
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+      capturedBlobs.push({ blob, title: `captured_${Date.now()}`, ext: format === 'mp4' ? 'mp4' : 'webm', duration });
+      updateQueueInfo();
+      document.getElementById('downloadBtn').disabled = false;
+      stream.getTracks().forEach(t => t.stop());
+      log(`✅ Capture завършен: ${(blob.size / 1024 / 1024).toFixed(2)} MB`, 'success');
+      
+      if (confirm(`✅ Capture готов (${(blob.size/1024/1024).toFixed(2)} MB). Да свалиш?`)) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `visualizer_capture_${Date.now()}.${format === 'mp4' ? 'mp4' : 'webm'}`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    };
+    
+    mediaRecorder.start(1000);
+    log(`⏺️ Записва се... ${duration} секунди (спри ръчно или избери таб за спиране)`, 'info');
+    
+    setTimeout(() => {
+      if (mediaRecorder?.state === 'recording') {
+        mediaRecorder.stop();
+        log('⏹️ Record спрян автоматично', 'info');
+      }
+    }, duration * 1000);
+    
+    // Also add stop button to UI
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'btn btn-danger';
+    stopBtn.textContent = '⏹️ Спри Record';
+    stopBtn.style.marginTop = '10px';
+    stopBtn.onclick = () => { if(mediaRecorder?.state === 'recording') mediaRecorder.stop(); };
+    document.getElementById('recorderPreview').after(stopBtn);
+    
+  } catch(e) {
+    log(`❌ Capture fail: ${e.message} (може да си отказал достъп до screen)`, 'error');
+  }
+}
+
+// ============================================================
+// 📦 DOWNLOAD PACKAGE
+// ============================================================
+async function downloadPackage() {
+  const projectName = document.getElementById('projectName').value || 'visualizer_export';
+  const format = document.getElementById('outputFormat').value;
+  
+  if (fetchedItems.length === 0 && capturedBlobs.length === 0) {
+    log('❌ Няма нищо за сваляне', 'error');
+    return;
+  }
+  
+  log('📦 Пакетиране...', 'info');
+  document.getElementById('progressFill').style.width = '10%';
+  
+  const zip = new JSZip();
+  const folder = zip.folder(projectName);
+  
+  // Add metadata
+  const meta = {
+    exportDate: new Date().toISOString(),
+    items: fetchedItems.map(i => ({ title: i.title, url: i.url, ext: i.ext, size: i.size })),
+    captures: capturedBlobs.map(c => ({ title: c.title, ext: c.ext, duration: c.duration, size: c.blob?.size })),
+    tool: 'VisualizerGrabber v4',
+    ua: USER_AGENTS[0],
+  };
+  folder.file('metadata.json', JSON.stringify(meta, null, 2));
+  document.getElementById('progressFill').style.width = '20%';
+  
+  // Add fetched items
+  for (let i = 0; i < fetchedItems.length; i++) {
+    const item = fetchedItems[i];
+    try {
+      if (item.blob) {
+        folder.file(`${sanitizeName(item.title || `item_${i}`)}.${item.ext || 'mp4'}`, item.blob);
+      } else if (item.url) {
+        // try to fetch now
+        try {
+          const resp = await fetchWithProxy(item.url);
+          const blob = await resp.blob();
+          folder.file(`${sanitizeName(item.title || `item_${i}`)}.${item.ext || 'mp4'}`, blob);
+        } catch(e) {
+          folder.file(`${sanitizeName(item.title || `item_${i}`)}.url.txt`, item.url);
+        }
+      }
+    } catch(e) {
+      log(`  ⚠️ Грешка при добавяне на ${item.title}: ${e.message}`, 'warn');
+    }
+    document.getElementById('progressFill').style.width = `${20 + (i+1)/fetchedItems.length * 40}%`;
+  }
+  
+  // Add captured blobs
+  for (let i = 0; i < capturedBlobs.length; i++) {
+    const cap = capturedBlobs[i];
+    if (cap.blob) {
+      const ext = format === 'mp4' ? 'mp4' : cap.ext || 'webm';
+      folder.file(`capture_${i+1}_${cap.title}.${ext}`, cap.blob);
+    }
+  }
+  document.getElementById('progressFill').style.width = '70%';
+  
+  // Add a README
+  folder.file('README.txt', 
+    `🎵 VisualizerGrabber v4 Export\n` +
+    `═══════════════════════════════\n` +
+    `Проект: ${projectName}\n` +
+    `Дата: ${new Date().toISOString()}\n` +
+    `Брой визуализатори: ${fetchedItems.length}\n` +
+    `Captures: ${capturedBlobs.length}\n\n` +
+    `Извлечени източници:\n` +
+    fetchedItems.map((i,idx) => `  ${idx+1}. ${i.title || 'Unknown'} -> ${i.url}`).join('\n') +
+    `\n\n-- VisualizerGrabber v4 --`
+  );
+  
+  document.getElementById('progressFill').style.width = '85%';
+  
+  // Generate ZIP
+  try {
+    const zipBlob = await zip.generateAsync({ 
+      type: 'blob', 
+      compression: 'DEFLATE', 
+      compressionOptions: { level: 9 }
+    }, (update) => {
+      document.getElementById('progressFill').style.width = `${85 + update.percent * 0.15}%`;
+    });
+    
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = `${sanitizeName(projectName)}_visualizers.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    
+    document.getElementById('progressFill').style.width = '100%';
+    setTimeout(() => document.getElementById('progressFill').style.width = '0%', 2000);
+    
+    log(`✅ ZIP готов: ${projectName}_visualizers.zip (${(zipBlob.size / 1024 / 1024).toFixed(2)} MB)`, 'success');
+  } catch(e) {
+    log(`❌ Грешка при генериране на ZIP: ${e.message}`, 'error');
+  }
+}
+
+// ============================================================
+// 🔄 TAB SWITCHING
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+// 🚀 INIT
+// ============================================================
+log('🎵 VisualizerGrabber v4 зареден', 'success');
+log('💡 Постави URL и натисни "Извлечи" или избери "Capture" за screen record', 'info');
+log('🛡️ Anti-detection: активен | Proxies: 6 fallback | CORS bypass: включен', 'info');
+updateQueueInfo();
+</script>
+</body>
+</html>
