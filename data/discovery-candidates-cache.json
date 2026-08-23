@@ -501,9 +501,22 @@
           "used_in": [
             "R&B (reconciled-duplicate)"
           ]
+        },
+        {
+          "video_id": "S0UOQ00Cg4Y",
+          "title": "Endless Love – Diana Ross & Lionel Richie (R&B Cover) | Emotional & Intimate | RnB Lounge Studio",
+          "channel": "RnB Lounge Studio",
+          "published_at": "2026-05-07T13:37:58Z",
+          "views": 800443,
+          "duration_seconds": 288,
+          "discovered_at": "2026-08-23T15:16:49.740049+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:01:21.213313+00:00"
+      "last_search_at": "2026-08-23T15:16:49.740150+00:00"
     },
     "rap": {
       "candidates": [
@@ -1169,7 +1182,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:01:22.987252+00:00"
+      "last_search_at": "2026-08-23T15:16:51.743421+00:00"
     },
     "pop": {
       "candidates": [
@@ -1625,7 +1638,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:01:23.725710+00:00"
+      "last_search_at": "2026-08-23T15:16:52.610038+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2034,9 +2047,35 @@
           "used_in": [
             "Reggaeton (reconciled-duplicate)"
           ]
+        },
+        {
+          "video_id": "lz0JbSUzZxM",
+          "title": "Ozuna x Omar Courtz - ZIZI  (Video Oficial)",
+          "channel": "Ozuna",
+          "published_at": "2026-08-04T16:00:04Z",
+          "views": 17412979,
+          "duration_seconds": 264,
+          "discovered_at": "2026-08-23T15:16:53.624939+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "PnGn85nYoso",
+          "title": "Standly, Yeri Mua, Oscar Maydon, Cachirula - Chaparrita (Remix)",
+          "channel": "Standly",
+          "published_at": "2026-02-27T00:00:07Z",
+          "views": 16804091,
+          "duration_seconds": 278,
+          "discovered_at": "2026-08-23T15:16:53.624954+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:36.623047+00:00"
+      "last_search_at": "2026-08-23T15:16:53.625070+00:00"
     },
     "dance": {
       "candidates": [
@@ -2599,7 +2638,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:01:24.943457+00:00"
+      "last_search_at": "2026-08-23T15:16:54.452214+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3580,7 +3619,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:01:22.130363+00:00"
+      "last_search_at": "2026-08-23T15:16:50.756008+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
