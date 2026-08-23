@@ -516,7 +516,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:11.966952+00:00"
+      "last_search_at": "2026-08-23T15:30:22.421573+00:00"
     },
     "rap": {
       "candidates": [
@@ -1195,7 +1195,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:13.655067+00:00"
+      "last_search_at": "2026-08-23T15:30:24.431222+00:00"
     },
     "pop": {
       "candidates": [
@@ -1664,7 +1664,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:14.610124+00:00"
+      "last_search_at": "2026-08-23T15:30:25.251183+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2099,9 +2099,35 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "kuPZD7uEJPo",
+          "title": "OMAR COURTZ (((ousi))) - KOKO (Lyric Video)",
+          "channel": "Omar Courtz",
+          "published_at": "2026-03-08T01:45:49Z",
+          "views": 29382291,
+          "duration_seconds": 196,
+          "discovered_at": "2026-08-23T15:30:26.170031+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
+        },
+        {
+          "video_id": "bJ1Y9S6SR9I",
+          "title": "Luister La Voz - La María (Video Oficial)",
+          "channel": "Luister La Voz",
+          "published_at": "2026-03-19T18:00:06Z",
+          "views": 36263523,
+          "duration_seconds": 221,
+          "discovered_at": "2026-08-23T15:30:26.170038+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:15.672960+00:00"
+      "last_search_at": "2026-08-23T15:30:26.170151+00:00"
     },
     "dance": {
       "candidates": [
@@ -2662,9 +2688,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "OcE_LTj1-Bk",
+          "title": "DJ XOXO – I Like To Move It 💃 Summer Dance Music 2026",
+          "channel": "DJ XOXO ‎ ",
+          "published_at": "2026-05-20T15:00:13Z",
+          "views": 994956,
+          "duration_seconds": 189,
+          "discovered_at": "2026-08-23T15:30:26.850919+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:16.516544+00:00"
+      "last_search_at": "2026-08-23T15:30:26.851027+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3645,7 +3684,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:27:12.774833+00:00"
+      "last_search_at": "2026-08-23T15:30:23.549202+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
