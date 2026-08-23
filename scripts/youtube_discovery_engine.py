@@ -138,6 +138,31 @@ def release_soft_lock():
 # КЛЪСТЕРИРАНЕ
 # ---------------------------------------------------------------------------
 
+_CANONICAL_CLUSTER_KEY_MAP = {
+    # т.23.08.2026: вчерашният кирилски slugify() фикс поправи "всичко се
+    # губи в unknown", НО разкри страничен ефект — AI класификаторът
+    # присвоява леко различни варианти на едно и също име ("Български
+    # Хип-Хоп" vs "Български хип-хоп"), а slugify() по дизайн третира
+    # всяка буквена разлика като ОТДЕЛЕН клъстер. За жанрове, за които
+    # вече съществува playlist със стар (английски) cluster_key, това
+    # значеше НОВ, дублиращ playlist вместо просъединение към стария
+    # (напр. 17 песни щяха да отидат в нов "български-хип-хоп" playlist,
+    # вместо в съществуващия "bulgarian-hip-hop"). Тази карта пренасочва
+    # само машинния key към канoничния — показваният label/описание си
+    # остава каквото AI-то е присвоило (кирилица), не се пипа.
+    "български хип-хоп": "bulgarian-hip-hop",
+    "bulgarian hip-hop": "bulgarian-hip-hop",
+    "bulgarian hiphop": "bulgarian-hip-hop",
+    "българска поп музика": "bulgarian-pop",
+    "български поп": "bulgarian-pop",
+    "bulgarian pop": "bulgarian-pop",
+    "чалга": "bulgarian-folk",
+    "кючек": "bulgarian-folk",
+    "поп-фолк": "bulgarian-folk",
+    "bulgarian folk": "bulgarian-folk",
+}
+
+
 def cluster_catalog(catalog_tracks, min_cluster_size):
     """Групира по AI-присвоения subgenre (fallback: genre), пази само групи
     с >= min_cluster_size песни. Връща {cluster_key: {"label":..., "tracks":[...]}}"""
@@ -147,9 +172,9 @@ def cluster_catalog(catalog_tracks, min_cluster_size):
         label = t.get("subgenre") if t.get("subgenre") not in (None, "unknown", "") else t.get("genre")
         if not label or label == "unknown":
             continue
-        key = slugify(label)
+        key = _CANONICAL_CLUSTER_KEY_MAP.get(label.strip().lower()) or slugify(label)
         buckets[key].append(t)
-        labels[key] = label
+        labels.setdefault(key, label)  # първият видян label печели показвания текст
 
     significant = {k: {"label": labels[k], "tracks": v} for k, v in buckets.items() if len(v) >= min_cluster_size}
     skipped = {k: len(v) for k, v in buckets.items() if len(v) < min_cluster_size}
