@@ -1,15 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260823-113629
+Timestamp: 20260823-114820
 
 Changed:
-  index.html
   update_report.txt
-  js/ai-helpers.js
-  js/agent-registry.js
-  js/settings.js
-  js/ai-chat.js
-  js/providers/openrouter.js
-  js/providers/model-finder.js
+  js/providers/musicgen.js
 
 Added:
   none

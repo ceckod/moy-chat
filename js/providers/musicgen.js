@@ -11,6 +11,14 @@
        (моделът може да отнеме 20-60 сек да "събуди" при първа заявка —
        връща 503 с estimated_time, тогава просто пробваме пак)
 
+   ЗАБЕЛЕЖКА (2026-08-23): старият api-inference.huggingface.co домейн е
+   ОКОНЧАТЕЛНО спрян от Hugging Face — заменен от router.huggingface.co
+   (виж huggingface.co/docs/inference-providers). Извикване към стария
+   домейн вече не връща обичайна HTTP грешка, а странна HTTP 530 (Cloudflare
+   ниво — старият домейн вече не сочи никъде), затова е лесно объркващо.
+   Пътят по-долу е обновен на новия router — форматът на заявката/отговора
+   е същият (POST {inputs: prompt} → аудио байтове директно).
+
    Нужен ключ: hfApiKey — безплатен акаунт+токен от
    https://huggingface.co/settings/tokens (роля "Read" стига)
 
@@ -20,7 +28,7 @@
    ========================================================= */
 
 const MUSICGEN_MODEL = "facebook/musicgen-small";
-const MUSICGEN_URL = `https://api-inference.huggingface.co/models/${MUSICGEN_MODEL}`;
+const MUSICGEN_URL = `https://router.huggingface.co/hf-inference/models/${MUSICGEN_MODEL}`;
 
 async function musicGenAsync(prompt, hfApiKey, opts = {}) {
   if (!hfApiKey) {
@@ -63,6 +71,13 @@ async function musicGenAsync(prompt, hfApiKey, opts = {}) {
     }
 
     const errText = await res.text().catch(() => "");
+    // 530/404 от router-а обикновено значи, че facebook/musicgen-small
+    // няма активен Inference Provider точно в момента (HF мигрираха от
+    // "винаги наличен безплатен сървър" към провайдър-базиран модел през
+    // 2025-2026) — казваме го ясно, вместо просто "HTTP 530".
+    if (res.status === 530 || res.status === 404) {
+      throw new Error(`MusicGen HTTP ${res.status}: моделът в момента няма активен безплатен Inference Provider на Hugging Face — пробвай пак по-късно, или провери huggingface.co/facebook/musicgen-small дали моделът все още поддържа "Inference Providers" безплатно.`);
+    }
     throw new Error(`MusicGen HTTP ${res.status}${errText ? ": " + errText.slice(0, 200) : ""}`);
   }
 
