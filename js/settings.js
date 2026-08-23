@@ -23,7 +23,6 @@ const Settings = {
     set("key_openrouter", k.openrouterKey);
     set("key_groq", k.groqKey);
     set("key_mistral", k.mistralKey);
-    set("key_github_models", k.githubModelsToken);
     set("key_cf_token", k.cfApiToken);
     set("key_cf_account", k.cfAccountId);
     set("key_hf", k.hfApiKey);
@@ -184,7 +183,6 @@ const Settings = {
       openrouterKey: val("key_openrouter") ?? prev.openrouterKey,
       groqKey: val("key_groq") ?? prev.groqKey,
       mistralKey: val("key_mistral") ?? prev.mistralKey,
-      githubModelsToken: val("key_github_models") ?? prev.githubModelsToken,
       cfApiToken: val("key_cf_token") ?? prev.cfApiToken,
       cfAccountId: val("key_cf_account") ?? prev.cfAccountId,
       hfApiKey: val("key_hf") ?? prev.hfApiKey,
@@ -212,7 +210,6 @@ const Settings = {
       openrouterKey: document.getElementById("key_openrouter")?.value.trim(),
       groqKey: document.getElementById("key_groq")?.value.trim(),
       mistralKey: document.getElementById("key_mistral")?.value.trim(),
-      githubModelsToken: document.getElementById("key_github_models")?.value.trim(),
       cfApiToken: document.getElementById("key_cf_token")?.value.trim(),
       cfAccountId: document.getElementById("key_cf_account")?.value.trim(),
       ytApiKey: document.getElementById("key_yt_apikey").value.trim(),
@@ -345,8 +342,8 @@ const Settings = {
       } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
     }
 
-    // AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare Workers AI
-    // (виж js/providers/model-finder.js). Всичките 4 изискват безплатна
+    // AI Model Finder — Groq/Mistral/Cloudflare Workers AI (виж
+    // js/providers/model-finder.js). Всичките 3 изискват безплатна
     // регистрация — ако нито един ключ не е попълнен, този провайдър просто
     // няма да отговори (вече не е "винаги достъпен" без ключ).
     try {
@@ -412,8 +409,8 @@ const Settings = {
     return lines;
   },
 
-  // Тества САМО 4-те AI Model Finder ключа (Groq/Mistral/GitHub Models/
-  // Cloudflare) и извежда резултата в #modelFinderKeyTestOut —
+  // Тества САМО 3-те AI Model Finder ключа (Groq/Mistral/Cloudflare) и
+  // извежда резултата в #modelFinderKeyTestOut —
   // за бутона "🧪 Тествай ключовете" във view "AI Model Finder".
   // ЗАЩО отделна функция от testKeys(): testKeys() тества И Claude/Gemini/
   // OpenRouter/YouTube/Spotify/GitHub Token, но пише резултата САМО в
@@ -424,11 +421,10 @@ const Settings = {
   async testModelFinderKeys() {
     const out = document.getElementById("modelFinderKeyTestOut");
     if (!out) return;
-    out.textContent = "⏳ Тествам Groq/Mistral/GitHub Models/Cloudflare...";
+    out.textContent = "⏳ Тествам Groq/Mistral/Cloudflare...";
     const k = {
       groqKey: document.getElementById("key_groq")?.value.trim(),
       mistralKey: document.getElementById("key_mistral")?.value.trim(),
-      githubModelsToken: document.getElementById("key_github_models")?.value.trim(),
       cfApiToken: document.getElementById("key_cf_token")?.value.trim(),
       cfAccountId: document.getElementById("key_cf_account")?.value.trim(),
     };

@@ -1135,7 +1135,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <p class="muted">
           Отделен скрапер (обединен в това repo на 2026-08-08), който всяка нощ
           (GitHub Actions, 03:00 UTC) обхожда Hugging Face, OpenRouter, Gemini,
-          Groq, Mistral, Cloudflare Workers AI, GitHub Models и
+          Groq, Mistral, Cloudflare Workers AI и
           Jina и генерира <code>ai-model-finder/ai-models.json</code> —
           готов списък с безплатни AI модели, endpoint-и и инструкции за
           връзка. Не заменя Claude/Gemini/OpenRouter по-горе — това е
@@ -1164,9 +1164,6 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <label>Mistral API Key <span class="optional-tag">безплатен план</span></label>
         <input type="password" id="key_mistral">
         <p class="muted" style="margin-top:6px;">От <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>.</p>
-        <label>GitHub Models — Personal Access Token <span class="optional-tag">безплатен с GitHub акаунт</span></label>
-        <input type="password" id="key_github_models" placeholder="ghp_... (различен от GitHub токена в API Ключове)">
-        <p class="muted" style="margin-top:6px;">От <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> — може да е същият PAT, който ползваш и за AI редакция на repo-то, стига да няма ограничени scope-ове.</p>
         <label>Cloudflare API Token</label>
         <input type="password" id="key_cf_token">
         <label>Cloudflare Account ID</label>
@@ -1355,7 +1352,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div class="set-row"><div class="txt"><strong>Тъмна / Светла тема</strong><span>Превключи външния вид на цялото табло.</span></div><div class="switch" id="themeSwitch3" onclick="Prefs.toggleTheme()"><div class="knob"></div></div></div>
         <div class="set-row"><div class="txt"><strong>Проверка на ключовете при зареждане</strong><span>Тиха проверка дали някой ключ е "умрял" — предупреждение горе вместо грешка по средата на работа.</span></div><div class="switch on" id="healthSwitch2" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div></div>
         <div class="set-row">
-          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter/AI Model Finder), докато някой не отговори. AI Model Finder е винаги последен резерв — работи с поне един от 4-те безплатни ключа (Groq/Mistral/GitHub Models/Cloudflare, Настройки → AI Model Finder). Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
+          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter/AI Model Finder), докато някой не отговори. AI Model Finder е винаги последен резерв — работи с поне един от 3-те безплатни ключа (Groq/Mistral/Cloudflare, Настройки → AI Model Finder). Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
           <select id="contentProviderSelect" style="width:auto;min-width:140px;" onchange="Prefs.setContentProvider(this.value)">
             <option value="auto">🔄 Автоматично (по теста)</option>
             <option value="claude">Claude</option>
@@ -1478,6 +1475,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="ai-chat-wrap">
         <div class="ai-chat-agentbar">
           <select id="aiChatAgentSelect" style="width:auto;min-width:170px;" onchange="AIChat.selectAgent(this.value)"></select>
+          <select id="aiChatModelSelect" style="width:auto;min-width:170px;display:none;" onchange="AIChat.selectModel(this.value)"></select>
           <div id="aiChatAgentAbout" style="flex:1;min-width:220px;font-size:12.5px;color:var(--muted);"></div>
           <button class="btn ghost sm" style="width:auto;" onclick="AIChat.clear()" title="Изчисти разговора">🧹 Изчисти</button>
         </div>

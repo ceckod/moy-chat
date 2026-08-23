@@ -139,19 +139,29 @@ function _classifyOpenRouterError(e, model) {
 // претоварен/недостъпен, или реже отговорите — виж _callOpenRouterSingle
 // по-горе — при безплатните модели това се случва по-често, тъй като
 // споделят обща опашка/по-малък бюджет между всички потребители).
-async function callOpenRouter(prompt, maxTokens = 900, attachments = []) {
+//
+// forcedModel (по избор) — потребителят изрично е избрал КОНКРЕТЕН модел
+// от падащото меню в AI Чат (виж js/ai-chat.js) вместо "Автоматично".
+// Тогава НЕ пробваме други модели при грешка — заявката отива само към
+// избрания, грешката излиза ясно като негова, а не тихо от друг модел.
+async function callOpenRouter(prompt, maxTokens = 900, attachments = [], forcedModel = null) {
   const k = Keys.load();
   if (!k.openrouterKey) { toast("⚠️ Липсва OpenRouter API ключ (виж Настройки)"); throw new Error("no key"); }
 
-  // OpenRouter може да върне ДЕСЕТКИ безплатни модели (виж бележката в
-  // js/agent-roster.js) — вместо да преравяме всички при всяка задача,
-  // ползваме първо малкия, вече проверен списък от днешния AgentRoster.
-  // Пълният списък остава резерва накрая, ако всичко от ростъра гръмне.
-  const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("openrouter") : null;
-  const fullList = await getOpenRouterFreeModels();
-  const models = (roster && roster.length)
-    ? [...roster, ...fullList.filter(m => !roster.includes(m))]
-    : fullList;
+  let models;
+  if (forcedModel) {
+    models = [forcedModel];
+  } else {
+    // OpenRouter може да върне ДЕСЕТКИ безплатни модели (виж бележката в
+    // js/agent-roster.js) — вместо да преравяме всички при всяка задача,
+    // ползваме първо малкия, вече проверен списък от днешния AgentRoster.
+    // Пълният списък остава резерва накрая, ако всичко от ростъра гръмне.
+    const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("openrouter") : null;
+    const fullList = await getOpenRouterFreeModels();
+    models = (roster && roster.length)
+      ? [...roster, ...fullList.filter(m => !roster.includes(m))]
+      : fullList;
+  }
 
   return runModelFallbackLoop(
     models,

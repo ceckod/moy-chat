@@ -72,9 +72,13 @@ const AGENT_REGISTRY = [
     icon: "🟠",
     keyField: "openrouterKey",
     capabilities: { text: true, images: true, pdf: false, imageGen: false },
-    about: "Безплатни модели от различни доставчици (моделът, който точно ще отговори, се вижда след всяко съобщение). Част от тях разбират прикачени снимки — PDF не се поддържа тук.",
-    async send(prompt, attachments) {
-      const text = await callOpenRouter(prompt, 1200, attachments);
+    about: "Безплатни модели от различни доставчици. Избери конкретен модел от менюто вдясно, или остави \"Автоматично\" да пробва сам кой отговаря.",
+    // ~50 реални безплатни модела на OpenRouter — потребителят вижда и
+    // избира ТОЧНО кой да отговори, вместо да гадае след факта (виж
+    // AIChat._renderModelSelect в js/ai-chat.js).
+    listModels: async () => getOpenRouterFreeModels(),
+    async send(prompt, attachments, model) {
+      const text = await callOpenRouter(prompt, 1200, attachments, model || null);
       return { text, model: getLastAgentAnswer()?.model };
     }
   },
@@ -84,9 +88,10 @@ const AGENT_REGISTRY = [
     icon: "⚡",
     keyField: "groqKey",
     capabilities: { text: true, images: false, pdf: false, imageGen: false },
-    about: "Много бърз безплатен текстов агент (Llama/DeepSeek модели, хоствани от Groq). Не приема прикачени файлове.",
-    async send(prompt) {
-      const text = await callModelFinderSource("groq", prompt, 1200);
+    about: "Много бърз безплатен текстов агент (Llama/GPT-OSS модели, хоствани от Groq). Не приема прикачени файлове.",
+    listModels: async () => ModelFinder.modelsForSource("groq", Keys.load(), 20),
+    async send(prompt, attachments, model) {
+      const text = await callModelFinderSource("groq", prompt, 1200, model || null);
       return { text, model: getLastAgentAnswer()?.model };
     }
   },
@@ -97,20 +102,9 @@ const AGENT_REGISTRY = [
     keyField: "mistralKey",
     capabilities: { text: true, images: false, pdf: false, imageGen: false },
     about: "Безплатен текстов агент от Mistral AI. Не приема прикачени файлове.",
-    async send(prompt) {
-      const text = await callModelFinderSource("mistral", prompt, 1200);
-      return { text, model: getLastAgentAnswer()?.model };
-    }
-  },
-  {
-    id: "github-models",
-    name: "GitHub Models",
-    icon: "🐙",
-    keyField: "githubModelsToken",
-    capabilities: { text: true, images: false, pdf: false, imageGen: false },
-    about: "Безплатен текстов агент през GitHub Models (напр. GPT-4o-mini, Phi-4, Llama). Не приема прикачени файлове.",
-    async send(prompt) {
-      const text = await callModelFinderSource("github", prompt, 1200);
+    listModels: async () => ModelFinder.modelsForSource("mistral", Keys.load(), 20),
+    async send(prompt, attachments, model) {
+      const text = await callModelFinderSource("mistral", prompt, 1200, model || null);
       return { text, model: getLastAgentAnswer()?.model };
     }
   },
@@ -122,8 +116,9 @@ const AGENT_REGISTRY = [
     extraKeyField: "cfAccountId",
     capabilities: { text: true, images: false, pdf: false, imageGen: false },
     about: "Безплатен текстов агент през Cloudflare Workers AI. Не приема прикачени файлове.",
-    async send(prompt) {
-      const text = await callModelFinderSource("cloudflare", prompt, 1200);
+    listModels: async () => ModelFinder.modelsForSource("cloudflare", Keys.load(), 20),
+    async send(prompt, attachments, model) {
+      const text = await callModelFinderSource("cloudflare", prompt, 1200, model || null);
       return { text, model: getLastAgentAnswer()?.model };
     }
   },

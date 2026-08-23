@@ -1,13 +1,14 @@
 CDB UPDATE REPORT
-Timestamp: 20260823-112255
+Timestamp: 20260823-113629
 
 Changed:
+  index.html
   update_report.txt
-  data/trends-history.json
-  data/playlists-state.json
-  data/stats-history.json
-  data/discovery-candidates-cache.json
-  data/discovery-log.json
+  js/ai-helpers.js
+  js/agent-registry.js
+  js/settings.js
+  js/ai-chat.js
+  js/providers/openrouter.js
   js/providers/model-finder.js
 
 Added:

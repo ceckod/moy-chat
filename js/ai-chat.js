@@ -16,6 +16,7 @@
 
 const AIChat = {
   agentId: null,
+  selectedModel: null,     // конкретен модел, избран от падащото меню — null = "Автоматично"
   messages: [],            // {role:"user"|"agent", text, imageUrl, error, attachments, agentId}
   pendingAttachments: [],  // {name, mimeType, kind:"image"|"pdf", base64}
   sending: false,
@@ -32,6 +33,7 @@ const AIChat = {
   render() {
     this.init();
     this._renderAgentSelect();
+    this._renderModelSelect();
     this._renderAgentAbout();
     this._renderMessages();
     this._renderAttachments();
@@ -39,8 +41,14 @@ const AIChat = {
 
   selectAgent(id) {
     this.agentId = id;
+    this.selectedModel = null;
     this._lastAnsweredModel = null;
+    this._renderModelSelect();
     this._renderAgentAbout();
+  },
+
+  selectModel(v) {
+    this.selectedModel = v || null;
   },
 
   /* ---------- ПРИКАЧЕНИ ФАЙЛОВЕ ---------- */
@@ -98,7 +106,7 @@ const AIChat = {
     this.sending = true;
     this._setTyping(true);
     try {
-      const result = await agent.send(prompt, attachmentsForSend);
+      const result = await agent.send(prompt, attachmentsForSend, this.selectedModel);
       this.messages.push({ role: "agent", agentId: agent.id, text: result.text, imageUrl: result.imageUrl, model: result.model });
       this._lastAnsweredModel = result.model || null;
       this._lastAnsweredAgentId = agent.id;
@@ -140,6 +148,34 @@ const AIChat = {
     }).join("");
   },
 
+  // Падащо меню с КОНКРЕТНИТЕ модели на текущия агент (само за агенти с
+  // listModels — OpenRouter/Groq/Mistral/Cloudflare) — вместо да оставяш
+  // сайта сам да гадае кой от ~50-те модела да отговори, избираш точно
+  // кой. Списъкът се тегли АСИНХРОННО (реален živo извикване към
+  // доставчика при OpenRouter/Groq/..., виж съответните listModels по-горе
+  // в agent-registry.js) — затова първо показваме "⏳ Зареждам модели...".
+  async _renderModelSelect() {
+    const sel = document.getElementById("aiChatModelSelect");
+    if (!sel) return;
+    const agent = AgentRegistry.get(this.agentId);
+    if (!agent || !agent.listModels) { sel.style.display = "none"; sel.innerHTML = ""; return; }
+
+    sel.style.display = "";
+    sel.innerHTML = `<option value="">⏳ Зареждам модели...</option>`;
+    const myAgentId = this.agentId; // защита срещу превключване на агент, докато чака мрежата
+    let models = [];
+    try { models = await agent.listModels(); } catch (e) { models = []; }
+    if (this.agentId !== myAgentId) return; // потребителят вече е сменил агента — резултатът вече не важи
+
+    if (!models.length) {
+      sel.innerHTML = `<option value="">Автоматично (списъкът не се зареди)</option>`;
+      return;
+    }
+    sel.innerHTML =
+      `<option value="">🤖 Автоматично (пробва сам)</option>` +
+      models.map(m => `<option value="${_escape(m)}" ${m === this.selectedModel ? "selected" : ""}>${_escape(m)}</option>`).join("");
+  },
+
   _renderAgentAbout() {
     const el = document.getElementById("aiChatAgentAbout");
     if (!el) return;
@@ -151,9 +187,9 @@ const AIChat = {
     if (a.capabilities.pdf) caps.push("📄 разбира PDF");
     if (a.capabilities.imageGen) caps.push("🎨 генерира снимки");
     // Реалният модел, който последно е отговорил ОТ ТОЗИ агент в текущия
-    // разговор (виж AIChat.send() → _lastAnsweredModel) — така "AI Model
-    // Finder" вече не звучи анонимно: пише се точно "gpt-4o-mini" и т.н.
-    const modelLine = (this._lastAnsweredModel && this._lastAnsweredAgentId === this.agentId && this._lastAnsweredModel !== a.id)
+    // разговор — полезно най-вече при "Автоматично" (viж AIChat.send() →
+    // _lastAnsweredModel), когато не е избран изричен модел от менюто.
+    const modelLine = (!this.selectedModel && this._lastAnsweredModel && this._lastAnsweredAgentId === this.agentId && this._lastAnsweredModel !== a.id)
       ? `<div style="margin-top:2px;color:var(--cyan);font-size:11.5px;">В момента говориш с: <strong>${_escape(this._lastAnsweredModel)}</strong></div>`
       : "";
     el.innerHTML = `<div>${_escape(a.about)}</div><div style="margin-top:4px;color:var(--muted-2);font-size:11.5px;">${caps.join(" · ")}</div>${modelLine}`;

@@ -5,19 +5,24 @@
    информационен панел. callAI() (app.js) вече го включва в края на
    fallback реда (Claude → Gemini → OpenRouter → Model Finder), така че
    ако трите "основни" провайдъра нямат ключ или гръмнат, таблото пак има
-   работещ AI път — стига поне ЕДИН от 4-те безплатни ключа по-долу
-   (Groq/Mistral/GitHub Models/Cloudflare) да е конфигуриран.
+   работещ AI път — стига поне ЕДИН от 3-те безплатни ключа по-долу
+   (Groq/Mistral/Cloudflare) да е конфигуриран.
 
-   Извиква директно 4 безплатни източника (OpenAI-съвместими,
+   Извиква директно 3 безплатни източника (OpenAI-съвместими,
    освен Cloudflare, който има собствен формат):
      - Groq            (нужен ключ: groqKey)
      - Mistral AI      (нужен ключ: mistralKey)
-     - GitHub Models   (нужен ключ: githubModelsToken — PAT със scope "models: read")
      - Cloudflare Workers AI (нужни: cfApiToken + cfAccountId)
+
+   GitHub Models БЕШЕ тук като четвърти източник, но Microsoft/GitHub
+   го спряха ОКОНЧАТЕЛНО за всички потребители на 2026-07-30 (виж
+   github.blog/changelog/2026-07-30-github-models-is-now-retired) —
+   endpoint-ът вече връща HTTP 410 гарантирано, никакъв ключ не помага,
+   затова е премахнат тук изцяло вместо да стои като "мъртъв" вариант.
 
    Pollinations БЕШЕ тук като "без ключ, винаги достъпен" резерв, но е
    премахнат — споделена анонимна опашка с нестабилно качество/uptime.
-   Всичките 4 източника по-горе имат безплатен tier, който изисква само
+   Всичките 3 източника по-горе имат безплатен tier, който изисква само
    регистрация (без плащане), затова таблото винаги моли за поне един
    от тези 4 ключа вместо да разчита на "без ключ въобще".
 
@@ -25,7 +30,7 @@
    информационния списък по-долу и отделно в js/providers/musicgen.js за
    музика) — HF скрейпва хиляди произволни community модели с несигурен/
    непредвидим chat формат, рисковано е за автоматичен fallback.
-   Groq/Mistral/GitHub Models/Cloudflare имат стабилни, документирани
+   Groq/Mistral/Cloudflare имат стабилни, документирани
    OpenAI-съвместими endpoint-и.
 
    Зависи от: js/network.js (fetchTimeout, proxied) и
@@ -95,34 +100,6 @@ const MODEL_FINDER_SOURCES = {
     parseModels: data => _parseOpenAICompatModelsList(data, ["embed", "moderation", "ocr", "transcribe"]),
     curated: ["open-mistral-nemo", "open-mixtral-8x22b", "ministral-8b-2410"]
   },
-  github: {
-    label: "GitHub Models", keyField: "githubModelsToken", special: null,
-    chatUrl: "https://models.github.ai/inference/chat/completions",
-    modelsUrl: () => "https://models.github.ai/catalog/models",
-    modelsHeaders: keys => ({
-      "Authorization": `Bearer ${keys.githubModelsToken}`,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28"
-    }),
-    // GitHub Models catalog връща плосък масив от обекти с id/task/
-    // supported_input_modalities/supported_output_modalities — пазим само
-    // текст-към-текст модели, махаме embeddings/аудио/изображения по task или модалности.
-    parseModels: data => {
-      const arr = Array.isArray(data) ? data : (data?.models || []);
-      return arr
-        .filter(m => {
-          const task = (m.task || m.task_name || "").toLowerCase();
-          const outMods = (m.supported_output_modalities || m.output_modalities || []).map(x => String(x).toLowerCase());
-          const inMods = (m.supported_input_modalities || m.input_modalities || []).map(x => String(x).toLowerCase());
-          if (task) return task.includes("chat") || task.includes("completion");
-          if (outMods.length) return outMods.includes("text") && inMods.includes("text");
-          return true; // няма достатъчно инфо да филтрираме — по-добре да минем, отколкото да чупим
-        })
-        .map(m => m.id || m.name)
-        .filter(Boolean);
-    },
-    curated: ["openai/gpt-4o-mini", "meta/meta-llama-3.1-8b-instruct", "microsoft/phi-4"]
-  },
   cloudflare: {
     label: "Cloudflare Workers AI", keyField: "cfApiToken", extraKeyField: "cfAccountId", special: "cloudflare",
     modelsUrl: keys => `https://api.cloudflare.com/client/v4/accounts/${keys.cfAccountId}/ai/models/search?task=Text+Generation&per_page=20`,
@@ -135,7 +112,7 @@ const MODEL_FINDER_SOURCES = {
   }
 };
 // Фиксиран приоритет — по-щедри/по-бързи безплатни tier-ове напред.
-const MODEL_FINDER_SOURCE_ORDER = ["groq", "mistral", "github", "cloudflare"];
+const MODEL_FINDER_SOURCE_ORDER = ["groq", "mistral", "cloudflare"];
 
 // Извиква доставчика директно за живия му моделен списък, кешира резултата
 // (per-source, MODEL_FINDER_LIVE_CACHE_HOURS) — при грешка връща последния
@@ -221,7 +198,7 @@ const ModelFinder = {
   //   3) curated (ръчно записан резерв) — само ако 1 и 2 върнат празно.
   // keys е по избор — ако липсва (напр. testKeys() ги подава директно),
   // живото откриване просто се пропуска за source-и без ключ в тях.
-  async modelsForSource(source, keys = null) {
+  async modelsForSource(source, keys = null, limit = 6) {
     const cfg = MODEL_FINDER_SOURCES[source];
     const live = (keys && _modelFinderSourceAvailable(source, keys))
       ? await _liveModelsForSource(source, keys)
@@ -233,7 +210,7 @@ const ModelFinder = {
       ...discovered.filter(m => !(live || []).includes(m)),
       ...cfg.curated.filter(m => !(live || []).includes(m) && !discovered.includes(m))
     ];
-    return merged.slice(0, 6); // не пробвай безкраен списък при всяка заявка
+    return merged.slice(0, limit); // не пробвай безкраен списък при всяка заявка
   },
 
   async refresh() {
@@ -248,7 +225,7 @@ const ModelFinder = {
     const { models, error, generatedAt } = await this._load();
     if (error) {
       out.innerHTML = `<span style="color:var(--danger,#e5484d)">⚠️ Още няма генериран списък (${error}). Не е проблем — ` +
-        `Groq/Mistral/GitHub Models/Cloudflare по-долу пак работят с вградените резервни модели (стига да имаш поне един ключ). ` +
+        `Groq/Mistral/Cloudflare по-долу пак работят с вградените резервни модели (стига да имаш поне един ключ). ` +
         `Отвори <a href="ai-model-finder/index.html" target="_blank" rel="noopener">AI Model Finder</a> и натисни ` +
         `„Намери ми AI модели", или пусни GitHub Action-а „AI Model Finder — обновяване на модели" веднъж ръчно за пълния списък.</span>`;
       return;
@@ -284,7 +261,7 @@ const ModelFinder = {
 
   // ---------- Тест на ключовете (извиква се от Settings.testKeys()) ----------
   // formKeys = обект с ТЕКУЩО въведените (още незапазени) стойности от формата:
-  // { groqKey, mistralKey, githubModelsToken, cfApiToken, cfAccountId }
+  // { groqKey, mistralKey, cfApiToken, cfAccountId }
   async testKeys(formKeys) {
     const lines = [];
     let anyOk = false;
@@ -417,8 +394,8 @@ async function callModelFinder(prompt, maxTokens = 900) {
 }
 
 // Като callModelFinder(), но САМО за ЕДИН конкретен източник (Groq ИЛИ
-// Mistral ИЛИ GitHub Models ИЛИ Cloudflare) — ползва се от чат секцията
-// (виж js/agent-registry.js), когато потребителят изрично е избрал ТОЧНО
+// Mistral ИЛИ Cloudflare) — ползва се от чат секцията (виж
+// js/agent-registry.js), когато потребителят изрично е избрал ТОЧНО
 // този агент от менюто. За разлика от callModelFinder() по-горе (fallback
 // верига през ВСИЧКИ източници, ползвана само като последна мярка от
 // callAI() другаде в таблото), тук НИКОГА не се прескача към друга
@@ -426,10 +403,15 @@ async function callModelFinder(prompt, maxTokens = 900) {
 // (напр. ако llama-3.3 на Groq гръмне, пробва llama-3.1 — пак Groq,
 // не изведнъж Mistral). Точно това разделяне разреши объркването "избрах
 // Mistral, но отговори друг доставчик".
-async function callModelFinderSource(source, prompt, maxTokens = 900) {
+//
+// forcedModel (по избор) — потребителят изрично е избрал КОНКРЕТЕН модел
+// от падащото меню в AI Чат вместо "Автоматично". Тогава пробваме САМО
+// него — грешката излиза ясно като негова, вместо тихо да мине towards
+// друг модел от същия доставчик.
+async function callModelFinderSource(source, prompt, maxTokens = 900, forcedModel = null) {
   const keys = Keys.load();
   if (!_modelFinderSourceAvailable(source, keys)) throw new Error("no key");
-  const models = await ModelFinder.modelsForSource(source, keys);
+  const models = forcedModel ? [forcedModel] : await ModelFinder.modelsForSource(source, keys);
   if (!models.length) throw new Error(`Няма известни модели за ${MODEL_FINDER_SOURCES[source].label}`);
 
   return runModelFallbackLoop(
