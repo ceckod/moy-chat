@@ -171,16 +171,74 @@ def _is_bulgarian_style_label(label: str) -> bool:
     return any(h in low for h in _BG_STYLE_HINTS) or bool(re.search(r"[а-яА-Я]", label))
 
 
+_HASHTAG_MAP = {
+    "hip-hop": ["#HipHop", "#Rap"],
+    "хип-хоп": ["#HipHop", "#Rap", "#BulgarianRap"],
+    "rap": ["#Rap", "#HipHop"],
+    "r&b": ["#RnB"],
+    "pop": ["#Pop", "#PopMusic"],
+    "поп": ["#Pop", "#PopMusic"],
+    "reggaeton": ["#Reggaeton", "#LatinMusic"],
+    "dance": ["#Dance", "#EDM"],
+    "folk": ["#Folk"],
+    "фолк": ["#BulgarianFolk"],
+    "ai music": ["#AIMusic", "#AIGenerated"],
+    "чалга": ["#Chalga", "#BulgarianMusic"],
+    "кючек": ["#Kyuchek"],
+    "латин": ["#LatinMusic", "#Latino"],
+}
+
+
+def build_playlist_hashtags(cluster_label: str) -> list:
+    """т.22.08.2026: генерира до 8 relevant hashtag-а за максимален YouTube
+    алгоритъмен reach — първите 3 в description-а стават кликаеми над
+    заглавието на плейлиста в YouTube. Комбинира: (1) generic силни
+    tag-ове винаги в началото (#Music/#NewMusic), (2) genre-specific от
+    малка curated карта (разпознава кирилица И английски label-и),
+    (3) #Balkan за специфично-български стилове, (4) fallback CamelCase
+    версия на самия label, ако нищо от картата не съвпадне — за да няма
+    playlist без НИТО един genre-specific tag. YouTube спира да брои
+    hashtag-ове след 15-ия в description-а (по-нататъшните тихо се
+    игнорират) — тук спираме на 8, съзнателно под лимита."""
+    label_low = cluster_label.lower()
+    tags = ["#Music", "#NewMusic"]
+    matched = []
+    for key, tag_list in _HASHTAG_MAP.items():
+        if key in label_low:
+            for t in tag_list:
+                if t not in matched:
+                    matched.append(t)
+    if not matched:
+        camel = "".join(w.capitalize() for w in re.split(r"[\s\-]+", cluster_label) if w)
+        if camel:
+            matched.append(f"#{camel}")
+    tags.extend(matched[:4])
+    if _is_bulgarian_style_label(cluster_label) and "#Balkan" not in tags:
+        tags.append("#Balkan")
+    tags.append("#Playlist")
+    seen, out = set(), []
+    for t in tags:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out[:8]
+
+
 def build_playlist_description(cluster_label: str) -> str:
     """Генерира описание на плейлиста. По подразбиране на английски (т.42
     — по искане: описанията да са четими за по-широка аудитория), но
     самото име на стила/жанра НИКОГА не се превежда/транслитерира —
     запазва се точно както AI класификаторът го е присвоил (важно за
     специфично-български стилове като чалга/кючек, за които няма добър
-    английски еквивалент и превод би звучал криво)."""
+    английски еквивалент и превод би звучал криво).
+
+    т.22.08.2026: добавени hashtag-ове в края (build_playlist_hashtags) —
+    по изрично искане, за максимален reach от YouTube алгоритъма."""
+    hashtags = build_playlist_hashtags(cluster_label)
     return (
         f"🎧 {cluster_label} Discovery — a curated mix blending fresh {cluster_label} picks "
-        f"with select original releases. Refreshed periodically by the CD-B Discovery Engine."
+        f"with select original releases. Refreshed periodically by the CD-B Discovery Engine.\n\n"
+        f"{' '.join(hashtags)}"
     )
 
 
