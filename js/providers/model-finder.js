@@ -5,22 +5,28 @@
    информационен панел. callAI() (app.js) вече го включва в края на
    fallback реда (Claude → Gemini → OpenRouter → Model Finder), така че
    ако трите "основни" провайдъра нямат ключ или гръмнат, таблото пак има
-   работещ AI път — вкл. с НУЛА конфигурирани ключове, благодарение на
-   Pollinations (безплатен, без ключ).
+   работещ AI път — стига поне ЕДИН от 4-те безплатни ключа по-долу
+   (Groq/Mistral/GitHub Models/Cloudflare) да е конфигуриран.
 
-   Извиква директно 5 безплатни/евтини източника (OpenAI-съвместими,
+   Извиква директно 4 безплатни източника (OpenAI-съвместими,
    освен Cloudflare, който има собствен формат):
      - Groq            (нужен ключ: groqKey)
      - Mistral AI      (нужен ключ: mistralKey)
      - GitHub Models   (нужен ключ: githubModelsToken — PAT със scope "models: read")
      - Cloudflare Workers AI (нужни: cfApiToken + cfAccountId)
-     - Pollinations    (БЕЗ ключ — винаги достъпен)
 
-   Hugging Face НЕ участва в автоматичното извикване тук (само в
-   информационния списък по-долу) — HF скрейпва хиляди произволни
-   community модели с несигурен/непредвидим chat формат, рисковано е за
-   автоматичен fallback. Groq/Mistral/GitHub Models/Cloudflare/
-   Pollinations имат стабилни, документирани OpenAI-съвместими endpoint-и.
+   Pollinations БЕШЕ тук като "без ключ, винаги достъпен" резерв, но е
+   премахнат — споделена анонимна опашка с нестабилно качество/uptime.
+   Всичките 4 източника по-горе имат безплатен tier, който изисква само
+   регистрация (без плащане), затова таблото винаги моли за поне един
+   от тези 4 ключа вместо да разчита на "без ключ въобще".
+
+   Hugging Face НЕ участва в автоматичното текстово извикване тук (само в
+   информационния списък по-долу и отделно в js/providers/musicgen.js за
+   музика) — HF скрейпва хиляди произволни community модели с несигурен/
+   непредвидим chat формат, рисковано е за автоматичен fallback.
+   Groq/Mistral/GitHub Models/Cloudflare имат стабилни, документирани
+   OpenAI-съвместими endpoint-и.
 
    Зависи от: js/network.js (fetchTimeout, proxied) и
    js/providers/fallback-loop.js (runModelFallbackLoop) — заредени преди
@@ -61,21 +67,14 @@ const MODEL_FINDER_SOURCES = {
   cloudflare: {
     label: "Cloudflare Workers AI", keyField: "cfApiToken", extraKeyField: "cfAccountId", special: "cloudflare",
     curated: ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct-fp8", "@cf/qwen/qwen2.5-coder-32b-instruct"]
-  },
-  pollinations: {
-    label: "Pollinations", keyField: null, special: null,
-    chatUrl: "https://text.pollinations.ai/openai", // самият endpoint = /chat/completions еквивалент, без суфикс
-    curated: ["openai", "openai-large", "mistral", "llama"]
   }
 };
-// Фиксиран приоритет — по-щедри/по-бързи безплатни tier-ове напред,
-// Pollinations последен (винаги достъпен без ключ, но споделена опашка
-// без автентикация → по-вероятно да е претоварен под чуждо натоварване).
-const MODEL_FINDER_SOURCE_ORDER = ["groq", "mistral", "github", "cloudflare", "pollinations"];
+// Фиксиран приоритет — по-щедри/по-бързи безплатни tier-ове напред.
+const MODEL_FINDER_SOURCE_ORDER = ["groq", "mistral", "github", "cloudflare"];
 
 function _modelFinderSourceAvailable(source, keys) {
   const cfg = MODEL_FINDER_SOURCES[source];
-  if (!cfg.keyField) return true; // Pollinations
+  if (!cfg.keyField) return true; // (нито един текущ source вече е без ключ)
   if (!keys[cfg.keyField]) return false;
   if (cfg.extraKeyField && !keys[cfg.extraKeyField]) return false;
   return true;
@@ -143,7 +142,7 @@ const ModelFinder = {
     const { models, error, generatedAt } = await this._load();
     if (error) {
       out.innerHTML = `<span style="color:var(--danger,#e5484d)">⚠️ Още няма генериран списък (${error}). Не е проблем — ` +
-        `Groq/Mistral/GitHub Models/Cloudflare/Pollinations по-долу пак работят с вградените резервни модели. ` +
+        `Groq/Mistral/GitHub Models/Cloudflare по-долу пак работят с вградените резервни модели (стига да имаш поне един ключ). ` +
         `Отвори <a href="ai-model-finder/index.html" target="_blank" rel="noopener">AI Model Finder</a> и натисни ` +
         `„Намери ми AI модели", или пусни GitHub Action-а „AI Model Finder — обновяване на модели" веднъж ръчно за пълния списък.</span>`;
       return;
@@ -187,7 +186,7 @@ const ModelFinder = {
       const cfg = MODEL_FINDER_SOURCES[source];
       if (!_modelFinderSourceAvailable(source, formKeys)) {
         if (cfg.keyField) lines.push(`${cfg.label}: ⚪ няма ключ`);
-        continue; // pollinations никога не влиза тук (винаги available)
+        continue;
       }
       const models = await this.modelsForSource(source);
       let found = null;
@@ -262,7 +261,7 @@ async function _callModelFinderSingle(source, model, prompt, maxTokens, keys) {
   if (cfg.special === "cloudflare") {
     return _callModelFinderCloudflareSingle(model, prompt, maxTokens, keys.cfApiToken, keys.cfAccountId);
   }
-  const apiKey = cfg.keyField ? keys[cfg.keyField] : null; // null за Pollinations
+  const apiKey = cfg.keyField ? keys[cfg.keyField] : null;
   return _callModelFinderOpenAICompatSingle(cfg.chatUrl, model, prompt, maxTokens, apiKey);
 }
 

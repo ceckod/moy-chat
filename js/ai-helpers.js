@@ -43,17 +43,21 @@
    ========================================================= */
 async function callAI(prompt, maxTokens = 1200, forceFirst = null) {
   const k = Keys.load();
-  const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey, modelfinder: true };
+  // "modelfinder" (Groq/Mistral/GitHub Models/Cloudflare) вече изисква
+  // поне ЕДИН от тези 4 безплатни ключа — Pollinations (без ключ) е
+  // премахнат, затова вече НЕ е гарантирано "винаги достъпен".
+  const hasModelFinderKey = !!(k.groqKey || k.mistralKey || k.githubModelsToken || (k.cfApiToken && k.cfAccountId));
+  const hasKey = { claude: !!k.claude, gemini: !!k.gemini, openrouter: !!k.openrouterKey, modelfinder: hasModelFinderKey };
   const run = { claude: () => callClaude(prompt, maxTokens), gemini: () => callGemini(prompt), openrouter: () => callOpenRouter(prompt, maxTokens), modelfinder: () => callModelFinder(prompt, maxTokens) };
 
   // Ръчният избор (ако не е "auto") отива първи; после следва редът от
   // последния реален тест; накрая всеки provider с ключ, който по някаква
   // причина липсва от горните (напр. ключ, добавен след последния тест).
-  // "modelfinder" (AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare/
-  // Pollinations) винаги стои в самия край на списъка по подразбиране —
-  // Pollinations работи без никакъв ключ, така че таблото има работещ AI
-  // път дори с нулева конфигурация, докато основните 3 провайдъра не бъдат
-  // настроени. testKeys() може да го избута напред, ако РЕАЛНО е по-надежден.
+  // "modelfinder" (AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare)
+  // винаги стои в самия край на списъка по подразбиране — всичките 4 имат
+  // безплатен tier, но изискват регистрация (виж Настройки → AI Model
+  // Finder → Ключове). testKeys() може да го избута напред, ако РЕАЛНО е
+  // по-надежден от избрания ред.
   //
   // forceFirst — по избор (напр. "claude"), за конкретни извиквания, където
   // качеството на самия текст е критично (напр. текст на песен — искаме

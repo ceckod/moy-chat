@@ -26,6 +26,7 @@ const Settings = {
     set("key_github_models", k.githubModelsToken);
     set("key_cf_token", k.cfApiToken);
     set("key_cf_account", k.cfAccountId);
+    set("key_hf", k.hfApiKey);
     set("key_yt_client_id", k.ytClientId);
     set("key_yt_apikey", k.ytApiKey);
     set("key_spotify_client_id", k.spotifyClientId);
@@ -186,6 +187,7 @@ const Settings = {
       githubModelsToken: val("key_github_models") ?? prev.githubModelsToken,
       cfApiToken: val("key_cf_token") ?? prev.cfApiToken,
       cfAccountId: val("key_cf_account") ?? prev.cfAccountId,
+      hfApiKey: val("key_hf") ?? prev.hfApiKey,
       ytClientId: val("key_yt_client_id") ?? prev.ytClientId,
       ytApiKey: val("key_yt_apikey") ?? prev.ytApiKey,
       spotifyClientId: val("key_spotify_client_id") ?? prev.spotifyClientId,
@@ -343,9 +345,10 @@ const Settings = {
       } catch (e) { lines.push("OpenRouter: ❌ " + e.message); }
     }
 
-    // AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare Workers AI/
-    // Pollinations (виж js/providers/model-finder.js). Pollinations няма
-    // ключ и се пробва ВИНАГИ, дори ако нищо друго тук не е попълнено.
+    // AI Model Finder — Groq/Mistral/GitHub Models/Cloudflare Workers AI
+    // (виж js/providers/model-finder.js). Всичките 4 изискват безплатна
+    // регистрация — ако нито един ключ не е попълнен, този провайдър просто
+    // няма да отговори (вече не е "винаги достъпен" без ключ).
     try {
       const mf = await ModelFinder.testKeys(k);
       providerOk.modelfinder = mf.ok;
@@ -409,8 +412,8 @@ const Settings = {
     return lines;
   },
 
-  // Тества САМО 5-те AI Model Finder ключа (Groq/Mistral/GitHub Models/
-  // Cloudflare/Pollinations) и извежда резултата в #modelFinderKeyTestOut —
+  // Тества САМО 4-те AI Model Finder ключа (Groq/Mistral/GitHub Models/
+  // Cloudflare) и извежда резултата в #modelFinderKeyTestOut —
   // за бутона "🧪 Тествай ключовете" във view "AI Model Finder".
   // ЗАЩО отделна функция от testKeys(): testKeys() тества И Claude/Gemini/
   // OpenRouter/YouTube/Spotify/GitHub Token, но пише резултата САМО в
@@ -421,7 +424,7 @@ const Settings = {
   async testModelFinderKeys() {
     const out = document.getElementById("modelFinderKeyTestOut");
     if (!out) return;
-    out.textContent = "⏳ Тествам Groq/Mistral/GitHub Models/Cloudflare/Pollinations...";
+    out.textContent = "⏳ Тествам Groq/Mistral/GitHub Models/Cloudflare...";
     const k = {
       groqKey: document.getElementById("key_groq")?.value.trim(),
       mistralKey: document.getElementById("key_mistral")?.value.trim(),

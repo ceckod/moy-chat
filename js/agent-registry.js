@@ -36,7 +36,7 @@
    Зависи от: Keys (storage.js), callClaude (providers/claude.js),
    callGeminiChat (providers/gemini.js), callOpenRouter
    (providers/openrouter.js), callModelFinderSource (providers/model-finder.js),
-   pollinationsImageUrl (providers/pollinations-image.js),
+   cloudflareImageAsync (providers/cloudflare-image.js),
    getLastAgentAnswer (providers/fallback-loop.js) — всички викани само
    ВЪТРЕ във функции, затова редът на <script> таговете не е критичен.
    ========================================================= */
@@ -60,7 +60,7 @@ const AGENT_REGISTRY = [
     icon: "🔵",
     keyField: "gemini",
     capabilities: { text: true, images: true, pdf: true, imageGen: false },
-    about: "Разговор, анализ + достъп до Google Search за актуални резултати. Разбира прикачени снимки и PDF файлове (не генерира нови снимки — за това виж Pollinations по-долу в менюто).",
+    about: "Разговор, анализ + достъп до Google Search за актуални резултати. Разбира прикачени снимки и PDF файлове (не генерира нови снимки — за това виж Cloudflare (изображения) по-долу в менюто).",
     async send(prompt, attachments) {
       const text = await callGeminiChat(prompt, attachments, false);
       return { text, model: getLastAgentAnswer()?.model };
@@ -128,14 +128,17 @@ const AGENT_REGISTRY = [
     }
   },
   {
-    id: "pollinations",
-    name: "Pollinations",
+    id: "cloudflare-image",
+    name: "Cloudflare (изображения)",
     icon: "🎨",
-    keyField: null, // без ключ
+    keyField: "cfApiToken",
+    extraKeyField: "cfAccountId",
     capabilities: { text: false, images: false, pdf: false, imageGen: true },
-    about: "Единственият агент тук, който РЕАЛНО генерира изображение по описание — без нужда от ключ. Не е чат агент за разговор, пиши какво искаш да видиш.",
+    about: "Единственият агент тук, който РЕАЛНО генерира изображение по описание — безплатно (FLUX, 10 000 neuroni/ден на Cloudflare). Не е чат агент за разговор, пиши какво искаш да видиш.",
     async send(prompt) {
-      return { imageUrl: pollinationsImageUrl(prompt), model: "pollinations" };
+      const k = Keys.load();
+      const imageUrl = await cloudflareImageAsync(prompt, {}, k.cfApiToken, k.cfAccountId);
+      return { imageUrl, model: "cloudflare-flux" };
     }
   }
 ];

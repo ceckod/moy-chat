@@ -33,9 +33,8 @@ const Step3 = {
 
   // Генерира обложка. Ако има Gemini/Imagen ключ, пробва него първи
   // (обикновено по-високо качество); ако няма ключ ИЛИ Gemini гръмне
-  // грешка, автоматично пада на Pollinations — безплатен image-gen без
-  // никакъв ключ (js/providers/pollinations-image.js) — така функцията
-  // винаги работи, дори с нулева конфигурация.
+  // грешка, автоматично пада на Cloudflare Workers AI (FLUX) — безплатно
+  // (10 000 neuroni/ден), нужни са само cfApiToken+cfAccountId в Настройки.
   async generateCoverImage() {
     const prompt = document.getElementById("coverPromptOut").value.trim();
     if (!prompt) return toast("Първо генерирай визуалния промпт");
@@ -51,13 +50,13 @@ const Step3 = {
         AppState.save();
         return;
       } catch (e) {
-        toast(`⚠️ Gemini/Imagen гръмна (${e.message}) — превключвам на безплатния Pollinations...`, 4000);
+        toast(`⚠️ Gemini/Imagen гръмна (${e.message}) — превключвам на безплатния Cloudflare...`, 4000);
       }
     }
 
     try {
-      const imgUrl = await this._generateCoverImagePollinations(prompt);
-      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Pollinations)</div>`;
+      const imgUrl = await this._generateCoverImageCloudflare(prompt, k.cfApiToken, k.cfAccountId);
+      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Cloudflare FLUX)</div>`;
       AppState.data.project.coverImageUrl = imgUrl;
       AppState.save();
     } catch (e) {
@@ -88,10 +87,9 @@ const Step3 = {
     return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
   },
 
-  // Директна извиквка към безплатния провайдър (виж providers/pollinations-image.js).
-  // Ползваме async варианта (реално сваля байтовете → data: URL), за да
-  // хванем грешка/timeout ТУК и да покажем ясен ❌, вместо счупена <img>
-  // икона; резултатът е data: URL — същия формат, който Step3 вече пази
+  // Директна извиквка към безплатния провайдър (виж providers/cloudflare-image.js —
+  // Cloudflare Workers AI, FLUX-1-schnell, 10 000 neuroni/ден безплатно).
+  // Резултатът е data: URL — същия формат, който Step3 вече пази
   // в AppState.project.coverImageUrl от Gemini/Imagen пътя.
   //
   // ВАЖНО: тук НЕ добавяме предефиниращ текст като "Square album cover
@@ -99,8 +97,8 @@ const Step3 = {
   // records", а не "обложка на албум", добавен чужд контекст само
   // обърква/конкурира модела с точно това, което е поискал. Добавяме
   // САМО технически quality-суфикс накрая, който не променя СЪДЪРЖАНИЕТО.
-  async _generateCoverImagePollinations(prompt) {
-    return pollinationsImageUrlAsync(`${prompt}, high quality, high resolution, sharp focus`, { width: 1024, height: 1024 });
+  async _generateCoverImageCloudflare(prompt, cfApiToken, cfAccountId) {
+    return cloudflareImageAsync(`${prompt}, high quality, high resolution, sharp focus`, { width: 1024, height: 1024 }, cfApiToken, cfAccountId);
   },
 
   // Бутон "🆓 Безплатна обложка" — прескача Gemini директно, дори да има ключ
@@ -108,14 +106,42 @@ const Step3 = {
   async generateCoverImageFree() {
     const prompt = document.getElementById("coverPromptOut").value.trim();
     if (!prompt) return toast("Първо генерирай визуалния промпт");
-    document.getElementById("coverImgOut").innerHTML = "⏳ Генерирам безплатна обложка (Pollinations)...";
+    const k = Keys.load();
+    if (!k.cfApiToken || !k.cfAccountId) {
+      return toast("Нужни са безплатни Cloudflare ключове — Настройки → AI Model Finder → Ключове.", 5000);
+    }
+    document.getElementById("coverImgOut").innerHTML = "⏳ Генерирам безплатна обложка (Cloudflare FLUX)...";
     try {
-      const imgUrl = await this._generateCoverImagePollinations(prompt);
-      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Pollinations)</div>`;
+      const imgUrl = await this._generateCoverImageCloudflare(prompt, k.cfApiToken, k.cfAccountId);
+      document.getElementById("coverImgOut").innerHTML = `<img src="${imgUrl}" style="max-width:300px;border-radius:8px;"><div class="muted" style="margin-top:4px;">🆓 Генерирано безплатно (Cloudflare FLUX)</div>`;
       AppState.data.project.coverImageUrl = imgUrl;
       AppState.save();
     } catch (e) {
       document.getElementById("coverImgOut").innerHTML = `❌ ${e.message}`;
+    }
+  },
+
+  // 16 — AI Демо мелодия (MusicGen през Hugging Face, безплатно) —
+  // кратък инструментален откъс (~15 сек) по жанра/концепцията на песента,
+  // за бърза идея/референция. Само инструментал, без вокали — виж
+  // providers/musicgen.js за реалните ограничения на безплатния tier.
+  async generateDemoMelody() {
+    const p = AppState.data.project;
+    const genre = p.chosenNiche || "pop";
+    const mood = p.viralReport?.emotional_impact?.summary || "";
+    const k = Keys.load();
+    const el = document.getElementById("demoMelodyOut");
+    if (!k.hfApiKey) {
+      el.innerHTML = "⚠️ Нужен е безплатен Hugging Face API токен — Настройки → AI Model Finder → Ключове (huggingface.co/settings/tokens).";
+      return;
+    }
+    const prompt = `${genre} instrumental${mood ? ", mood: " + mood : ""}, high quality studio production`;
+    el.innerHTML = "⏳ Генерирам демо мелодия (може да отнеме до 1 мин при първо ползване)...";
+    try {
+      const audioUrl = await musicGenAsync(prompt, k.hfApiKey);
+      el.innerHTML = `<audio controls src="${audioUrl}" style="width:100%;margin-top:6px;"></audio><div class="muted" style="margin-top:4px;">🆓 MusicGen (Hugging Face) — инструментал, ~15 сек, само за идея/референция</div>`;
+    } catch (e) {
+      el.innerHTML = `❌ ${e.message}`;
     }
   },
 
