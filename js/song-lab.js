@@ -96,11 +96,10 @@ const SongLab = {
       genre: genre || "",
       language: language || "",
       release_date: releaseDate || "",
-      status: "new",                    // new → analyzing → analyzed (бъдещи фази)
+      status: "new",                    // new → analyzing → analyzed
       created_at: now,
       updated_at: now,
-      // Плейсхолдъри за бъдещи фази — умишлено празни/null сега (PART 10 — No Fake Data):
-      analysis: null
+      analysis: null                    // попълва се от Фаза 2 (analyzeSong)
     };
     const list = this._readAll();
     list.push(song);
@@ -128,6 +127,7 @@ const SongLab = {
 
   // ---------- UI: "Нова песен" форма ----------
   _pendingFile: null, // File обект, само в паметта, НИКОГА не се сериализира
+  _sessionFiles: {},  // { songId: File } — само за текущата сесия/таб, губи се при презареждане (умишлено, виж бележката в началото на файла)
 
   onFileSelected(input) {
     const f = input.files && input.files[0];
@@ -161,6 +161,10 @@ const SongLab = {
         if (typeof toast === "function") toast("Грешка при запис (localStorage пълен?).");
         return;
       }
+      // Пазим File обекта само в паметта (сесийно), обвързан към Song ID —
+      // позволява реален audio анализ веднага след създаване, БЕЗ да
+      // сериализираме самия файл никъде. Изчезва при презареждане.
+      if (this._pendingFile) this._sessionFiles[song.id] = this._pendingFile;
       this._pendingFile = null;
       // изчистване на формата
       ["songlabTitle", "songlabArtist", "songlabGenre", "songlabLanguage", "songlabReleaseDate"].forEach(id => {
@@ -254,7 +258,12 @@ const SongLab = {
   },
 
   _statusLabel(status) {
-    return { new: "🆕 нов", analyzing: "⏳ анализира се", analyzed: "✅ анализиран" }[status] || status;
+    return {
+      new: "🆕 нов",
+      analyzing: "⏳ анализира се",
+      analyzed: "✅ анализиран",
+      analysis_failed: "⚠️ анализът гръмна"
+    }[status] || status;
   },
 
   _fmtDuration(sec) {
@@ -293,10 +302,8 @@ const SongLab = {
           Дата на издаване: ${song.release_date || "—"} ·
           Статус: ${this._statusLabel(song.status)}
         </p>
-        <p class="muted" style="margin-top:10px;">
-          🚧 AI анализ (жанр, hook потенциал, TikTok/YouTube стратегия и т.н.) идва в следваща фаза
-          (Фаза 2 от спецификацията) — тук ще се показват структурираните резултати.
-        </p>
+        <div class="section-title" style="font-size:15px;margin-top:14px;">📊 AI Анализ</div>
+        ${this._renderAnalysisBlock(song)}
       </div>
     `;
   },
@@ -304,6 +311,158 @@ const SongLab = {
   _closeWorkspace() {
     const modal = document.getElementById("songlabWorkspaceOut");
     if (modal) { modal.style.display = "none"; modal.innerHTML = ""; }
+  },
+
+  // =========================================================
+  // ФАЗА 2 — BASIC SONG ANALYSIS
+  // =========================================================
+  // Използва СЪЩЕСТВУВАЩАТА AI инфраструктура на сайта за самото
+  // извикване (callAI / callGeminiMultimodal / extractJson от
+  // js/ai-helpers.js и js/providers/gemini.js) — но резултатът се пази
+  // ИЗЦЯЛО в собственото storage на SongLab (song.analysis), никога в
+  // старите AppState/ViralLab структури.
+  //
+  // Два режима, избрани честно според наличните данни (PART 10 — No Fake
+  // Data — никога не се преструваме, че сме "чули" песен, която нямаме):
+  //   1) AUDIO режим — файлът все още е в паметта (this._sessionFiles[id],
+  //      само ако анализираш веднага след качване, в същата сесия) →
+  //      реален multimodal анализ през Gemini (callGeminiMultimodal),
+  //      изисква Gemini ключ.
+  //   2) TEXT режим — файлът НЕ е наличен (нова сесия / презареждане) →
+  //      анализ само от наличните метаданни + по избор пейстнат текст на
+  //      песента (textarea в работното пространство) → callAI() (Claude/
+  //      Gemini/OpenRouter/ModelFinder fallback верига). Резултатът се
+  //      маркира изрично като "текстов анализ, без чуто аудио".
+
+  _ANALYSIS_SCHEMA_HINT: `Върни ЕДИНСТВЕНО валиден JSON обект (без коментари, без markdown code fence) с точно тези полета:
+{
+  "genre": "string",
+  "subgenre": "string",
+  "mood": "string",
+  "emotional_character": "string",
+  "audience": "string",
+  "strengths": ["string", "..."],
+  "weaknesses": ["string", "..."],
+  "hook_potential": number (0-100),
+  "replay_potential": number (0-100),
+  "short_form_potential": number (0-100),
+  "visual_potential": number (0-100),
+  "positioning": "string",
+  "overall_score": number (0-100),
+  "biggest_strength": "string",
+  "biggest_weakness": "string",
+  "recommended_direction": "string",
+  "next_action": "string"
+}
+Ако някое поле реално не може да се прецени от наличната информация, върни за него "Недостатъчно данни" (за текстовите полета) или null (за числата) — НИКОГА не измисляй правдоподобно звучаща стойност.`,
+
+  async analyzeSong(id) {
+    const song = this.get(id);
+    if (!song) return;
+
+    this.update(id, { status: "analyzing" });
+    this._showWorkspace(id);
+
+    const file = this._sessionFiles[id] || null;
+    const lyricsHint = (document.getElementById("songlabLyricsInput")?.value || "").trim();
+
+    const baseContext = `
+Заглавие: ${song.title}
+Изпълнител: ${song.artist || "неизвестен"}
+Жанр (посочен от потребителя, по избор): ${song.genre || "не е посочен"}
+Език (посочен от потребителя, по избор): ${song.language || "не е посочен"}
+Времетраене: ${song.duration ? this._fmtDuration(song.duration) : "неизвестно"}
+${lyricsHint ? `Текст на песента (пейстнат от потребителя):\n${lyricsHint}` : "Текст на песента: не е предоставен."}`;
+
+    try {
+      let raw, method;
+
+      if (file) {
+        // AUDIO режим — реален multimodal анализ
+        const prompt = `Ти си музикален анализатор. Изслушай приложения аудио файл на песента и я анализирай за нуждите на дигитален release/маркетинг план.\n${baseContext}\n\n${this._ANALYSIS_SCHEMA_HINT}`;
+        const base64 = await fileToBase64(file);
+        raw = await callGeminiMultimodal(prompt, base64, file.type || "audio/mpeg", false);
+        method = "audio";
+      } else {
+        // TEXT режим — честно казано, само по метаданни/текст, БЕЗ да сме чули песента
+        const prompt = `Ти си музикален анализатор. НЯМАШ достъп до самото аудио на песента — само до текстовата информация по-долу. Анализирай доколкото е реалистично базирано САМО на тази информация, и изрично отбележи в текстовите полета, когато нещо не може да се прецени без да чуеш песента.\n${baseContext}\n\n${this._ANALYSIS_SCHEMA_HINT}`;
+        raw = await callAI(prompt, 1500);
+        method = "text";
+      }
+
+      const parsed = extractJson(raw);
+      const analysis = {
+        ...parsed,
+        method,                    // "audio" | "text" — честно за произхода на анализа
+        analyzed_at: Date.now()
+      };
+      this.update(id, { status: "analyzed", analysis });
+      if (typeof toast === "function") {
+        toast(method === "audio" ? "✅ Анализът е готов (реално изслушано аудио)." : "✅ Анализът е готов (текстов режим — без чуто аудио).");
+      }
+    } catch (e) {
+      console.error("SongLab.analyzeSong грешка:", e);
+      this.update(id, { status: "analysis_failed" });
+      if (typeof toast === "function") toast(`❌ Анализът гръмна: ${e.message}`);
+      else alert(`Анализът гръмна: ${e.message}`);
+    }
+
+    this.render();
+    this._showWorkspace(id);
+  },
+
+  // Рендира структурираните резултати (или honest "няма още" state).
+  _renderAnalysisBlock(song) {
+    if (song.status === "analyzing") {
+      return `<p class="muted" style="margin-top:10px;">⏳ Анализира се... (не затваряй раздела)</p>`;
+    }
+    if (song.status === "analysis_failed") {
+      return `<p class="muted" style="margin-top:10px;">⚠️ Последният опит за анализ гръмна — виж toast съобщението за причината (напр. липсващ AI ключ). Опитай пак.</p>`;
+    }
+    const a = song.analysis;
+    if (!a) {
+      return `
+        <div style="margin-top:10px;">
+          <label class="muted" style="display:block;margin-bottom:4px;">Текст на песента (по избор — подобрява текстовия анализ, ако аудиото вече не е в паметта):</label>
+          <textarea id="songlabLyricsInput" rows="4" style="width:100%;" placeholder="Пейстни текста на песента тук (по избор)..."></textarea>
+        </div>
+        <p class="muted" style="margin-top:8px;">${this._sessionFiles[song.id] ? "🎧 Аудио файлът е все още в паметта — анализът ще го изслуша реално." : "ℹ️ Аудио файлът не е наличен в тази сесия — анализът ще е само по текст/метаданни, изрично отбелязано като такъв."}</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn grad" onclick="SongLab.analyzeSong('${song.id}')">🔍 Анализирай</button>
+        </div>`;
+    }
+    const bar = (label, val) => `
+      <div style="margin:6px 0;">
+        <div class="muted" style="font-size:12px;">${label}: ${val == null ? "Недостатъчно данни" : val + "/100"}</div>
+        ${val != null ? `<div style="background:var(--panel-2);border-radius:5px;height:10px;overflow:hidden;"><div style="width:${Math.max(2, val)}%;height:100%;background:var(--accent, #7c5cff);"></div></div>` : ""}
+      </div>`;
+    return `
+      <div style="margin-top:10px;">
+        <span class="muted">Метод: ${a.method === "audio" ? "🎧 реално изслушано аудио" : "📝 текстов анализ (без чуто аудио)"} · ${new Date(a.analyzed_at).toLocaleString("bg-BG")}</span>
+      </div>
+      <div class="row" style="margin-top:8px;gap:24px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:220px;">
+          ${bar("Hook потенциал", a.hook_potential)}
+          ${bar("Replay потенциал", a.replay_potential)}
+          ${bar("Short-form потенциал", a.short_form_potential)}
+          ${bar("Визуален потенциал", a.visual_potential)}
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <div><strong>Общ резултат:</strong> ${a.overall_score == null ? "Недостатъчно данни" : a.overall_score + "/100"}</div>
+          <div class="muted" style="margin-top:4px;">Жанр/подстил: ${this._esc(a.genre)} / ${this._esc(a.subgenre)}</div>
+          <div class="muted">Настроение: ${this._esc(a.mood)}</div>
+          <div class="muted">Аудитория: ${this._esc(a.audience)}</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div>🔥 <strong>Най-силна страна:</strong> ${this._esc(a.biggest_strength)}</div>
+        <div style="margin-top:4px;">⚠️ <strong>Най-слаба страна:</strong> ${this._esc(a.biggest_weakness)}</div>
+        <div style="margin-top:4px;">🧭 <strong>Препоръчана посока:</strong> ${this._esc(a.recommended_direction)}</div>
+        <div style="margin-top:4px;">👉 <strong>NEXT ACTION:</strong> ${this._esc(a.next_action)}</div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button onclick="SongLab.analyzeSong('${song.id}')">🔄 Анализирай отново</button>
+      </div>`;
   },
 
   // ---------- Инициализация при показване на view-а ----------
