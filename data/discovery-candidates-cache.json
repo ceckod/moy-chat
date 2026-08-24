@@ -516,7 +516,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:13.643663+00:00"
+      "last_search_at": "2026-08-24T11:19:26.964336+00:00"
     },
     "rap": {
       "candidates": [
@@ -1193,9 +1193,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "9d6cbYircbQ",
+          "title": "Rod Wave - Hustle (Official Music Video)",
+          "channel": "RodWave",
+          "published_at": "2026-07-31T04:00:06Z",
+          "views": 5317276,
+          "duration_seconds": 148,
+          "discovered_at": "2026-08-24T11:19:28.435475+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:15.640682+00:00"
+      "last_search_at": "2026-08-24T11:19:28.435573+00:00"
     },
     "pop": {
       "candidates": [
@@ -1662,9 +1675,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "8aMYha7xe8Q",
+          "title": "PinkPantheress - Stateside + Zara Larsson",
+          "channel": "LatinHype",
+          "published_at": "2026-03-14T16:56:41Z",
+          "views": 4938861,
+          "duration_seconds": 186,
+          "discovered_at": "2026-08-24T11:19:29.140471+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:16.530600+00:00"
+      "last_search_at": "2026-08-24T11:19:29.140553+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2127,7 +2153,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-23T15:30:26.170151+00:00"
+      "last_search_at": "2026-08-24T11:19:29.950487+00:00"
     },
     "dance": {
       "candidates": [
@@ -2701,9 +2727,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "YoscxohnQgs",
+          "title": "New Tiktok Mashup 2026 Philippines Party Music Viral Dance Trends August 23rd",
+          "channel": "Kuya Magik",
+          "published_at": "2026-08-23T00:42:16Z",
+          "views": 323192,
+          "duration_seconds": 417,
+          "discovered_at": "2026-08-24T11:19:30.658864+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:18.839005+00:00"
+      "last_search_at": "2026-08-24T11:19:30.658995+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3682,9 +3721,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "yh-VBKHh4hs",
+          "title": "#မချစ်ရင် #AiVersion မူရင်းအဆိုရှင် - ပိုပို #Credit #banbanmusicstudio #song #aimusic #music #ai",
+          "channel": "Ban Ban Music Studio",
+          "published_at": "2026-04-23T04:30:20Z",
+          "views": 317116,
+          "duration_seconds": 237,
+          "discovered_at": "2026-08-24T11:19:27.638239+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:14.577867+00:00"
+      "last_search_at": "2026-08-24T11:19:27.638320+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
