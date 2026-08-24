@@ -1,9 +1,17 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-11T05:35:28.861884+00:00",
+  "generated_at": "2026-08-24T08:49:59.119853+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
+    {
+      "term": "sam smith",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
     {
       "term": "pooh shiesty",
       "confirmed_by": [
@@ -13,14 +21,14 @@
       "confidence": "HIGH"
     },
     {
-      "term": "all eyes",
+      "term": "kanye west",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "eyes shiest",
+      "term": "evel knievel",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -28,7 +36,14 @@
       "confidence": "HIGH"
     },
     {
-      "term": "all eyes shiest",
+      "term": "rap battles",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "belly gang",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -36,36 +51,42 @@
       "confidence": "HIGH"
     },
     {
-      "term": "hip hop",
+      "term": "epic rap",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "this that",
+      "term": "pink blush",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "man breathin",
+      "term": "constant companion",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     },
     {
-      "term": "last man breathin",
+      "term": "deep house",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "dolly babe",
       "confirmed_by": [
         "wikipedia"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "stray kids",
+      "term": "elvis presley",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -73,36 +94,11 @@
       "confidence": "HIGH"
     },
     {
-      "term": "pooh sheisty",
+      "term": "can help",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "atlanta pooh",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "atlanta pooh shiesty",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "shiesty season",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     }
   ]
 }
