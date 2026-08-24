@@ -416,6 +416,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     </div>
 
     <div class="nav-group">
+      <div class="nav-label">Song Intelligence Lab</div>
+      <button class="nav-btn" data-view="song-lab" onclick="Nav.showView('song-lab')"><span class="ic">🎵</span> Song Intelligence Lab</button>
+    </div>
+
+    <div class="nav-group">
       <div class="nav-label">Създаване на песен</div>
       <button class="nav-btn" data-view="step1" onclick="Nav.showView('step1')"><span class="ic">🔍</span> 1. Пазарен анализ</button>
       <button class="nav-btn" data-view="step2" onclick="Nav.showView('step2')"><span class="ic">🎬</span> 2. Визуализатор</button>
@@ -1049,6 +1054,21 @@ hr{border:none;border-top:1px solid var(--border-soft);}
     </div>
 
     <!-- ============ IDEA VAULT VIEW ============ -->
+    <!-- ============ SONG INTELLIGENCE LAB VIEW (напълно самостоятелен, виж js/song-lab.js) ============ -->
+    <div class="view" id="view-song-lab">
+      <div class="section-title">🎵 Song Intelligence Lab</div>
+      <div class="card">
+        <strong>➕ Нова песен</strong>
+        <p class="muted">Създай нов Song Project. Аудио файлът се използва само временно (не се съхранява) — пази се само информацията за песента.</p>
+        <div id="songlabNewFormOut"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <strong>📁 Моите песни</strong>
+        <div id="songlabListOut" style="margin-top:10px;"></div>
+      </div>
+      <div id="songlabWorkspaceOut" style="display:none;"></div>
+    </div>
+
     <div class="view" id="view-idea-vault">
       <div class="section-title">💡 Idea Vault</div>
       <div class="card">
@@ -1547,6 +1567,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/suno-preview.js"></script>
 <script src="js/idea-vault.js"></script>
 <script src="js/learning-loop.js"></script>
+<script src="js/song-lab.js"></script>
 <script src="js/step2.js"></script>
 <script src="js/step4.js"></script>
 <script src="js/step3.js"></script>

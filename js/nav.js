@@ -27,6 +27,7 @@ const Nav = {
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === id));
     if (id === "step2") Step2.syncTitleToVisualizer();
     if (id === "dashboard") { ProjectDashboard.render(); Stats.renderDashboard(); }
+    if (id === "song-lab") { SongLab.init(); }
     if (id === "stats-analytics") { Stats.renderAnalytics(); TrackRecord.render(); LearningLoop.render(); }
     if (id === "set-project") { ProjectArchive.render(); SystemUpdate.init(); }
     if (id === "set-keys" || id === "set-proxy") Settings.fillFields();
