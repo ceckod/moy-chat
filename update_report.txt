@@ -1,11 +1,12 @@
 CDB UPDATE REPORT
-Timestamp: 20260824-105920
+Timestamp: 20260824-125922
 
 Changed:
-  js/song-lab.js
+  none
 
 Added:
-  none
+  PHASE_0.5_STATUS_SongIntelligence.md
+  update.zip
 
 Removed:
   none
@@ -89,6 +90,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/system-log.js
   js/app-state.js
   js/network.js
+  js/song-lab.js
   js/cost-tracker.js
   js/quick-upload.js
   js/agent-roster.js
