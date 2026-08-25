@@ -516,7 +516,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:26.964336+00:00"
+      "last_search_at": "2026-08-25T11:19:21.598285+00:00"
     },
     "rap": {
       "candidates": [
@@ -1208,7 +1208,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:28.435573+00:00"
+      "last_search_at": "2026-08-25T11:19:23.212465+00:00"
     },
     "pop": {
       "candidates": [
@@ -1690,7 +1690,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:29.140553+00:00"
+      "last_search_at": "2026-08-25T11:19:23.893472+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2151,9 +2151,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "SqnuecuECJ4",
+          "title": "Chencho Corleone - Tus Labios (Video Music)",
+          "channel": "TrapUrbanoTV",
+          "published_at": "2026-05-27T22:28:54Z",
+          "views": 4704602,
+          "duration_seconds": 252,
+          "discovered_at": "2026-08-25T11:19:24.857221+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:29.950487+00:00"
+      "last_search_at": "2026-08-25T11:19:24.857348+00:00"
     },
     "dance": {
       "candidates": [
@@ -2740,9 +2753,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "-t_3huuJZhM",
+          "title": "🔥 Michael Jackson – Billie Jean | Afro House Remix | Golden Safari 🌍",
+          "channel": "Golden Safari",
+          "published_at": "2026-07-01T17:00:39Z",
+          "views": 1602931,
+          "duration_seconds": 610,
+          "discovered_at": "2026-08-25T11:19:25.558724+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:30.658995+00:00"
+      "last_search_at": "2026-08-25T11:19:25.558853+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3736,7 +3762,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-24T11:19:27.638320+00:00"
+      "last_search_at": "2026-08-25T11:19:22.468621+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
