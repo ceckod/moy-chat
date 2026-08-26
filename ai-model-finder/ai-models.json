@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T03:44:31.906Z",
-  "total": 63,
+  "generated_at": "2026-08-26T03:50:52.999Z",
+  "total": 64,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 20
+      "count": 21
     },
     "static": {
       "ok": true,
@@ -265,6 +265,26 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-ultra-550b-a55b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "minimax/minimax-m3:free",
+      "name": "MiniMax: MiniMax M3 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/minimax/minimax-m3:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: minimax/minimax-m3:free"
     },
     {
       "source": "openrouter",
