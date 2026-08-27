@@ -926,8 +926,18 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="ssAudioInfo" class="muted" style="margin-top:6px;"></div>
         <label style="margin-top:12px;">Име на песента (задължителна част от всяко заглавие)</label>
         <input type="text" id="ssSongName" placeholder="напр. Само ти">
+        <label style="margin-top:12px;">Артист/канал (помага за точно намиране на Spotify/Apple Music линковете)</label>
+        <input type="text" id="ssArtistName" placeholder="напр. CD-B Records" oninput="ShortsStudio.saveArtistName(this.value)">
         <label style="margin-top:12px;">Текст на песента (по избор — помага на AI да избере по-добри моменти)</label>
         <textarea id="ssLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, AI ще анализира само звука."></textarea>
+
+        <label style="margin-top:12px;">🔗 Линкове за стрийминг (по избор — влизат автоматично във всяко описание)</label>
+        <div class="muted" style="font-size:12px;margin-bottom:4px;">Ако ги оставиш празни, съответният ред просто няма да се появи в описанието — AI-ят НЕ си измисля линкове.</div>
+        <input type="text" id="ssLinkSpotify" placeholder="Spotify линк (https://open.spotify.com/track/...)">
+        <input type="text" id="ssLinkApple" placeholder="Apple Music линк" style="margin-top:6px;">
+        <input type="text" id="ssLinkDistrokid" placeholder="DistroKid / друг линк (ръчно — няма публично търсене)" style="margin-top:6px;">
+        <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music автоматично</button>
+        <div id="ssLinksStatus" class="muted" style="margin-top:6px;"></div>
 
         <label style="margin-top:12px;">Колко Shorts да направи?</label>
         <select id="ssCount">

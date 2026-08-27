@@ -1,14 +1,12 @@
 CDB UPDATE REPORT
-Timestamp: 20260827-075832
+Timestamp: 20260827-221216
 
 Changed:
-  sw.js
   index.html
-  ARCHITECTURE.md
-  visualizer.html
+  js/shorts-studio.js
 
 Added:
-  js/shorts-studio.js
+  shorts-studio.js
 
 Removed:
   none
