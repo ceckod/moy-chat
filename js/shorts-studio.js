@@ -1,0 +1,346 @@
+/* =========================================================
+   Header коментар (виж ARCHITECTURE.md, "Правила за бъдеща работа" т.3):
+   Зависимости (всички runtime, вътре в методи):
+   fileToBase64(), callGeminiMultimodal(), callAI(), extractJson(),
+   toast(), guardClick() (само от index.html onclick), Step4.uploadVideo()
+   (само от uploadAll — не пипа Step4, само го извиква), AppState (по избор,
+   за да прочете текущото име на песента от активния проект).
+   Кой го ползва: само index.html (view-shorts-studio, бутони + input-и).
+   Собствен namespace — не пипа app.js/QuickUpload/Step4 отвътре, само
+   извиква публичните им методи.
+   ========================================================= */
+/* =========================================================
+   AI SHORTS STUDIO — "качи 1 песен → получи N различни Shorts,
+   готови за YouTube"
+   Pipeline: аудио → (Gemini, multimodal) анализ + избор на N различни
+   "hook" момента (timestamp диапазони) → (Claude) уникално заглавие/
+   описание/хаштагове за всеки момент → визуализаторът (собствен скрит
+   iframe, презарежда се за всеки клип) изрязва точно този диапазон
+   във вертикално (9:16) видео → преглед/редакция → 1 бутон качва
+   всички последователно в YouTube (unlisted, като останалата част
+   от dashboard-а).
+   ========================================================= */
+const ShortsStudio = {
+  audioFile: null,
+  items: [],          // [{ index, start, end, hookReason, hookText, title, description, tags, videoBlob, fileName, status }]
+  analysis: null,      // {genre, mood, energy, language, language_code, lyrics}
+  _msgBound: false,
+  _renderQueueBusy: false,
+
+  onAudioSelected(input) {
+    const f = input.files[0];
+    const infoEl = document.getElementById("ssAudioInfo");
+    if (!f) { if (infoEl) infoEl.textContent = ""; this.audioFile = null; return; }
+    this.audioFile = f;
+    if (infoEl) infoEl.textContent = `Избрано: ${f.name} (${Math.round(f.size / 1024 / 1024 * 10) / 10} MB)`;
+    const nameEl = document.getElementById("ssSongName");
+    if (nameEl && !nameEl.value.trim()) {
+      nameEl.value = f.name.replace(/\.[^/.]+$/, "").replace(/[_\-]+/g, " ").trim();
+    }
+    document.getElementById("ssStartBtn").disabled = false;
+  },
+
+  log(msg) {
+    const el = document.getElementById("ssLog");
+    if (!el) return;
+    const time = new Date().toLocaleTimeString("bg-BG");
+    el.innerHTML += `<div>[${time}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+  },
+
+  _setRunning(v) {
+    const btn = document.getElementById("ssStartBtn");
+    if (btn) btn.disabled = v;
+    const spinner = document.getElementById("ssRunning");
+    if (spinner) spinner.style.display = v ? "block" : "none";
+  },
+
+  _pastedLyrics() {
+    const el = document.getElementById("ssLyricsPaste");
+    return el ? el.value.trim() : "";
+  },
+
+  _getCount() {
+    const el = document.getElementById("ssCount");
+    return el ? parseInt(el.value, 10) || 3 : 3;
+  },
+
+  // Чете продължителността на аудиото в браузъра (нужна на AI-я, за да не
+  // предлага timestamp-и извън реалната дължина на песента).
+  _getAudioDuration(file) {
+    return new Promise((resolve, reject) => {
+      const el = new Audio();
+      el.preload = "metadata";
+      el.onloadedmetadata = () => { const d = el.duration; URL.revokeObjectURL(el.src); resolve(d); };
+      el.onerror = () => reject(new Error("Не успях да прочета продължителността на аудиото."));
+      el.src = URL.createObjectURL(file);
+    });
+  },
+
+  _fmtTime(t) {
+    if (!isFinite(t) || t < 0) t = 0;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  },
+
+  // Основен вход — целият pipeline: анализ+избор на моменти → метаданни → видео за всеки → преглед.
+  async runFull() {
+    if (!this.audioFile) return toast("Първо избери аудио файл");
+    const songNameEl = document.getElementById("ssSongName");
+    const songName = (songNameEl && songNameEl.value.trim()) || this.audioFile.name.replace(/\.[^/.]+$/, "");
+    const count = this._getCount();
+
+    this.items = [];
+    this.analysis = null;
+    document.getElementById("ssLog").innerHTML = "";
+    document.getElementById("ssResultsWrap").style.display = "none";
+    document.getElementById("ssItemsWrap").innerHTML = "";
+    const progWrap = document.getElementById("ssVideoProgressWrap");
+    if (progWrap) progWrap.style.display = "none";
+    this._setRunning(true);
+    this.log(`🚀 Стартирам — искам ${count} различен Short${count > 1 ? "а" : ""} от "${songName}".`);
+
+    try {
+      await this._analyzeAndPickMoments(songName, count);
+      await this._generateMetaForAll(songName, count);
+      await this._renderAllClips(songName);
+      this._renderResults();
+      document.getElementById("ssResultsWrap").style.display = "block";
+      this.log("🎉 Всички Shorts са готови — прегледай/поправи по-долу и качи с бутона.");
+    } catch (e) {
+      this.log("❌ Грешка: " + e.message);
+    } finally {
+      this._setRunning(false);
+    }
+  },
+
+  async _analyzeAndPickMoments(songName, count) {
+    this.log("🎧 Gemini слуша песента и избира " + count + " различни \"hook\" момента (за максимален watch time)...");
+    const totalDur = await this._getAudioDuration(this.audioFile);
+    const base64 = await fileToBase64(this.audioFile);
+    const mimeType = this.audioFile.type || "audio/mpeg";
+    const pasted = this._pastedLyrics();
+
+    const prompt = `Ти си музикален анализатор и YouTube Shorts стратег. Слушай приложения аудио файл (песен "${songName}", обща продължителност ${Math.round(totalDur)} секунди / ${this._fmtTime(totalDur)}) и направи следното:
+
+1. Анализирай звука: genre (жанр/поджанр, 2-4 думи), mood (настроение, 2-4 думи), energy ("ниско"/"средно"/"високо"), language (ЕЗИКЪТ, на който се пее — определи го САМО от това, което чуваш), language_code (ISO 639-1, напр. "bg"/"en").
+2. lyrics — текстът на песента, на РЕАЛНИЯ й език (НЕ превеждай)${pasted ? " — по-долу е дадена ГОТОВА версия от потребителя, ползвай я КАКТО Е" : " — РАЗПОЗНАЙ го от аудиото, доколкото е разбираемо"}.
+${pasted ? `Текст, пейстнат от потребителя:\n---\n${pasted}\n---\n` : ""}
+3. Избери ТОЧНО ${count} различни, силно "залепващи" момента от песента, всеки — кандидат за отделен YouTube Short:
+   - "start"/"end" в секунди, цели числа, 0 <= start < end <= ${Math.floor(totalDur)}
+   - продължителност на всеки момент между 18 и 58 секунди
+   - предпочитай момент, който звучи завършено сам по себе си (хук/припев/drop/емоционален връх/изненадващ ред), не по средата на дума
+   - ${count > 1 ? `ЗАДЪЛЖИТЕЛНО ${count}-те момента трябва да са от РАЗЛИЧНИ части на песента (не се припокриват, различно усещане всеки — напр. интро-кука, припев, бридж/drop, финален момент и т.н.)` : "избери НАЙ-силния 1 момент от цялата песен"}
+   - "hook_reason": 1 изречение защо точно този момент е избран (вътрешна бележка, не се показва публично)
+   - "hook_text": кратък текст за overlay върху видеото (до 40 символа), на езика на песента, който възбужда любопитство/емоция (не просто заглавието на песента)
+
+Върни ЧИСТ JSON, без нищо друго:
+{"genre":"...", "mood":"...", "energy":"...", "language":"...", "language_code":"...", "lyrics":"...", "segments":[{"start":0,"end":30,"hook_reason":"...","hook_text":"..."}]}`;
+
+    const raw = await callGeminiMultimodal(prompt, base64, mimeType);
+    const parsed = extractJson(raw);
+    this.analysis = {
+      genre: parsed.genre, mood: parsed.mood, energy: parsed.energy,
+      language: parsed.language, language_code: parsed.language_code, lyrics: parsed.lyrics
+    };
+    let segments = Array.isArray(parsed.segments) ? parsed.segments : [];
+
+    // Гаранция на кода (не само на промпта): изрязваме/поправяме диапазони извън
+    // реалната продължителност на файла и подсигуряваме точен брой елементи,
+    // за да не се счупи рендерирането по-долу дори ако AI-я върне грешен формат.
+    segments = segments
+      .map(s => ({
+        start: Math.max(0, Math.floor(Number(s.start) || 0)),
+        end: Math.min(Math.floor(totalDur), Math.ceil(Number(s.end) || 0)),
+        hook_reason: s.hook_reason || "",
+        hook_text: (s.hook_text || songName).toString().slice(0, 60)
+      }))
+      .filter(s => s.end - s.start >= 10)
+      .slice(0, count);
+
+    if (!segments.length) {
+      // Резервен вариант, ако AI-ят не върне валидни диапазони — равномерно
+      // разпределени 30-сек. откъса по цялата песен, за да не спре целият pipeline.
+      const clipLen = Math.min(30, Math.max(15, Math.floor(totalDur / (count + 1))));
+      for (let i = 0; i < count; i++) {
+        const start = Math.floor((totalDur / (count + 1)) * (i + 1) - clipLen / 2);
+        segments.push({ start: Math.max(0, start), end: Math.min(Math.floor(totalDur), Math.max(0, start) + clipLen), hook_reason: "резервен избор", hook_text: songName });
+      }
+      this.log("⚠️ AI-ят не върна валидни моменти — ползвам резервно равномерно разпределение.");
+    }
+    while (segments.length < count) segments.push(segments[segments.length - 1]);
+
+    this.items = segments.map((s, i) => ({
+      index: i, start: s.start, end: s.end, hookReason: s.hook_reason, hookText: s.hook_text,
+      title: "", description: "", tags: [], videoBlob: null, fileName: "", status: "pending"
+    }));
+    this.log(`✅ Избрани моменти: ` + this.items.map(it => `#${it.index + 1} [${this._fmtTime(it.start)}–${this._fmtTime(it.end)}]`).join(", "));
+  },
+
+  async _generateMetaForAll(songName, count) {
+    this.log("✍️ Claude генерира заглавие/описание/хаштагове за всеки Short (всеки — различен ъгъл)...");
+    const a = this.analysis || {};
+    const segList = this.items.map(it =>
+      `#${it.index + 1}: [${this._fmtTime(it.start)}–${this._fmtTime(it.end)}] причина: ${it.hookReason || "—"} · overlay текст: "${it.hookText}"`
+    ).join("\n");
+
+    const prompt = `За YouTube Shorts от песента "${songName}" (жанр: ${a.genre || "?"}, настроение: ${a.mood || "?"}, енергия: ${a.energy || "?"}, език: ${a.language || "?"} / ${a.language_code || "?"}).
+Текст на песента (откъс, за контекст на темата — НЕ го копирай изцяло): ${(a.lyrics || "").slice(0, 600)}
+
+По-долу е списък от ${count} различни момента от песента, всеки ще стане ОТДЕЛЕН YouTube Short:
+${segList}
+
+За ВСЕКИ от ${count}-те момента (в СЪЩИЯ ред по номер) генерирай метаданни, оптимизирани за максимален watch time и виралност:
+- title: ЗАДЪЛЖИТЕЛНО започва или съдържа точното име на песента "${songName}", плюс кука/curiosity gap базирана на overlay текста и причината за момента; до 90 символа общо; на езика на песента (${a.language || "?"}); може 1 подходящ emoji
+- description: на езика на песента — 2-3 изречения хук/контекст за конкретния момент (НЕ generic), после 2-3 placeholder реда за линкове ("🎧 Spotify: [линк]", "🍏 Apple Music: [линк]", "📀 DistroKid: [линк]"), после блок от 15-20 релевантни хаштага с # (ЗАДЪЛЖИТЕЛНО включва #shorts и #short, плюс жанрови/тематични/общи viral хаштагове, разумна смесица от езика на песента и общоприети английски)
+- tags: масив от 10-15 YouTube ключови тагове (кратки думи/фрази, БЕЗ #), предимно на езика на песента + 1-2 общоприети английски (жанр, "shorts" и т.н.)
+
+ЗАДЪЛЖИТЕЛНО: ${count > 1 ? `всичките ${count} комплекта title/description ТРЯБВА да звучат забележимо различно едно от друго (различен ъгъл/кука за всеки момент) — НЕ преизползвай едни и същи фрази/структура.` : "направи го възможно най-примамливо за клик."}
+
+Върни ЧИСТ JSON масив от точно ${count} обекта, по един на всеки момент, В СЪЩИЯ РЕД:
+[{"title":"...", "description":"...", "tags":["...", "..."]}]`;
+
+    const raw = await callAI(prompt, 1400);
+    let metaList = extractJson(raw);
+    if (!Array.isArray(metaList)) metaList = [metaList].filter(Boolean);
+
+    this.items.forEach((it, i) => {
+      const m = metaList[i] || {};
+      let title = (m.title || `${songName} - Short ${i + 1}`).toString().trim();
+      if (!title.toLowerCase().includes(songName.trim().toLowerCase())) title = `${songName} - ${title}`;
+      it.title = title.slice(0, 100);
+      it.description = (m.description || `${songName}\n\n#shorts #short`).toString();
+      it.tags = Array.isArray(m.tags) ? m.tags.map(t => String(t).trim()).filter(Boolean) : [];
+    });
+    this.log("✅ Заглавия/описания/тагове готови за всичките " + count + ".");
+  },
+
+  // Рендерира клиповете ПОСЛЕДОВАТЕЛНО (един по един) — визуализаторът е canvas
+  // recording, не може да пише две видеа паралелно в един и същ таб.
+  async _renderAllClips(songName) {
+    this._bindMessageListener();
+    const total = this.items.length;
+    for (let i = 0; i < total; i++) {
+      const it = this.items[i];
+      this.log(`🎬 Клип ${i + 1}/${total} [${this._fmtTime(it.start)}–${this._fmtTime(it.end)}] — рендирам вертикално видео...`);
+      this._setClipProgress(i + 1, total, 0);
+      await this._renderOneClip(it);
+      this.log(`✅ Клип ${i + 1}/${total} готов (${Math.round(it.videoBlob.size / 1024 / 1024 * 10) / 10} MB).`);
+    }
+  },
+
+  _setClipProgress(current, total, pct) {
+    const wrap = document.getElementById("ssVideoProgressWrap");
+    const bar = document.getElementById("ssVideoProgressBar");
+    const label = document.getElementById("ssVideoProgressLabel");
+    if (!bar) return;
+    if (wrap) wrap.style.display = "block";
+    bar.style.width = pct + "%";
+    if (label) label.textContent = pct >= 100
+      ? `Клип ${current}/${total}: готово ✅`
+      : `Клип ${current}/${total}: записва се… ${pct}%`;
+  },
+
+  _bindMessageListener() {
+    if (this._msgBound) return;
+    this._msgBound = true;
+    window.addEventListener("message", (ev) => {
+      const frame = document.getElementById("shortsVisualizerFrame");
+      if (!frame || ev.source !== frame.contentWindow || !ev.data) return;
+      if (ev.data.type === "cdb-video-ready" && this._pendingResolve) {
+        const resolve = this._pendingResolve;
+        this._pendingResolve = null;
+        resolve({ blob: ev.data.blob, fileName: ev.data.fileName || "short.webm" });
+      }
+      if (ev.data.type === "cdb-video-progress" && this._pendingIndex != null) {
+        this._setClipProgress(this._pendingIndex + 1, this.items.length, ev.data.percent);
+      }
+      if (ev.data.type === "cdb-video-error" && this._pendingReject) {
+        const reject = this._pendingReject;
+        this._pendingReject = null;
+        reject(new Error(ev.data.message || "Грешка от визуализатора"));
+      }
+    });
+  },
+
+  _renderOneClip(item) {
+    return new Promise((resolve, reject) => {
+      this._pendingIndex = item.index;
+      this._pendingResolve = async ({ blob, fileName }) => {
+        item.videoBlob = blob;
+        item.fileName = fileName;
+        item.status = "rendered";
+        resolve();
+      };
+      this._pendingReject = (err) => { item.status = "error"; reject(err); };
+
+      const frame = document.getElementById("shortsVisualizerFrame");
+      const send = () => frame.contentWindow.postMessage({
+        type: "cdb-quick-audio",
+        file: this.audioFile,
+        title: item.hookText,
+        clipStart: item.start,
+        clipEnd: item.end,
+        aspect: "9:16"
+      }, "*");
+      // Презареждаме iframe-а за всеки клип — гарантира чисто, свежо състояние
+      // на визуализатора (без остатъчни clip/aspect стойности от предния клип).
+      frame.onload = send;
+      frame.src = "visualizer.html";
+    });
+  },
+
+  _renderResults() {
+    const wrap = document.getElementById("ssItemsWrap");
+    wrap.innerHTML = this.items.map(it => {
+      const url = URL.createObjectURL(it.videoBlob);
+      return `
+      <div class="card" style="margin-top:12px;" id="ssItem${it.index}">
+        <strong>Short ${it.index + 1} · ${this._fmtTime(it.start)}–${this._fmtTime(it.end)}</strong>
+        <video src="${url}" controls playsinline style="max-width:220px;width:100%;border-radius:10px;margin-top:8px;display:block;background:#000;"></video>
+        <label style="margin-top:10px;">Заглавие</label>
+        <input type="text" id="ssTitle${it.index}" value="${this._escAttr(it.title)}">
+        <label style="margin-top:8px;">Описание</label>
+        <textarea id="ssDesc${it.index}" style="min-height:110px;">${this._esc(it.description)}</textarea>
+        <label style="margin-top:8px;">Тагове (запетая разделени)</label>
+        <input type="text" id="ssTags${it.index}" value="${this._escAttr(it.tags.join(", "))}">
+        <div id="ssItemUploadStatus${it.index}" class="muted" style="margin-top:8px;"></div>
+      </div>`;
+    }).join("");
+  },
+
+  _esc(s) { return (s || "").toString().replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); },
+  _escAttr(s) { return this._esc(s).replace(/"/g, "&quot;"); },
+
+  // Качва всички готови Shorts последователно в YouTube (unlisted, като
+  // останалата част от dashboard-а). Продължава към следващия дори ако
+  // един качване гръмне, за да не изгуби вече готовите останали.
+  async uploadAll() {
+    if (!this.items.length) return toast("Няма готови Shorts още");
+    if (!Step4.accessToken) return toast("⚠️ Първо влез с Google бутона по-горе");
+    const overall = document.getElementById("ssUploadOverallProgress");
+    let okCount = 0;
+    for (const it of this.items) {
+      const statusEl = document.getElementById(`ssItemUploadStatus${it.index}`);
+      if (overall) overall.textContent = `⏳ Качвам ${it.index + 1}/${this.items.length}...`;
+      const title = document.getElementById(`ssTitle${it.index}`).value || it.title;
+      const description = document.getElementById(`ssDesc${it.index}`).value || it.description;
+      const tags = document.getElementById(`ssTags${it.index}`).value.split(",").map(s => s.trim()).filter(Boolean);
+      const file = new File([it.videoBlob], it.fileName || `short_${it.index + 1}.webm`, { type: "video/webm" });
+      try {
+        const tempProgId = `ssUploadProgress${it.index}`;
+        if (statusEl) statusEl.innerHTML = `<div id="${tempProgId}">⏳ Качвам...</div>`;
+        const result = await Step4.uploadVideo(file, { title, description, tags, madeForKids: false }, tempProgId);
+        okCount++;
+        this.log(`✅ Short ${it.index + 1} качен (unlisted) — Video ID: ${result?.id || "?"}`);
+      } catch (e) {
+        this.log(`❌ Short ${it.index + 1} — грешка при качване: ${e.message}`);
+        if (statusEl) statusEl.innerHTML = `❌ ${e.message}`;
+      }
+      // Кратка пауза между качванията — по-щадящо към YouTube API квотата.
+      await new Promise(r => setTimeout(r, 1200));
+    }
+    if (overall) overall.textContent = `🎉 Готово — ${okCount}/${this.items.length} Shorts качени успешно.`;
+    toast(`Качени ${okCount}/${this.items.length} Shorts`);
+  }
+};

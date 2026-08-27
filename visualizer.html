@@ -373,6 +373,16 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     if (ev.data && ev.data.type === 'cdb-quick-audio' && ev.data.file) {
       quickMode = true;
       quickAutoExportPending = true;
+      // По избор: clipStart/clipEnd (секунди) — ако са зададени, записваме
+      // само този откъс от песента вместо цялата (ползва се от Shorts Studio,
+      // за да изреже отделни "hook" моменти от една и съща песен). aspect —
+      // по избор форсира съотношение (напр. "9:16") преди записа, вместо да
+      // разчита на текущата стойност на aspectSelect в UI-то.
+      quickClipStart = (typeof ev.data.clipStart === 'number' && ev.data.clipStart >= 0) ? ev.data.clipStart : 0;
+      quickClipEnd = (typeof ev.data.clipEnd === 'number' && ev.data.clipEnd > quickClipStart) ? ev.data.clipEnd : null;
+      if (typeof ev.data.aspect === 'string' && aspectSelect.querySelector(`option[value="${ev.data.aspect}"]`)) {
+        aspectSelect.value = ev.data.aspect;
+      }
       if (typeof ev.data.title === 'string' && ev.data.title.trim()) songTitleInput.value = ev.data.title;
       loadAudioFile(ev.data.file);
     }
@@ -387,8 +397,10 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
   let rafId = null;
   let isRecording = false;
   let isSeeking = false;
-  let quickMode = false; // true когато аудиото е подадено от родителя (Бърз ъплоуд), не от ръчния input
+  let quickMode = false; // true когато аудиото е подадено от родителя (Бърз ъплоуд/Shorts Studio), не от ръчния input
   let quickAutoExportPending = false; // чака всичко (аудио + клипове) да е готово, за да стартира export автоматично
+  let quickClipStart = 0; // по избор (Shorts Studio) — записва само откъс [quickClipStart, quickClipEnd] вместо цялата песен
+  let quickClipEnd = null;
 
   let introReady = false, smokeAReady = false, smokeBReady = false, logoReady = false;
   let activeLayer = null; // 'intro' | 'smoke'
@@ -1576,8 +1588,14 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     downloadLink.classList.remove('show');
     statusMsg.textContent = "Записвам видеото — не сменяй раздела…";
 
+    // Clip режим (Shorts Studio): записваме само [clipStart, clipEnd] вместо
+    // цялата песен. Извън quick режим (или без клип) — поведението е same-as-before.
+    const clipActive = quickMode && quickClipEnd != null;
+    const clipStart = clipActive ? Math.min(quickClipStart, Math.max(0, audioEl.duration - 0.2)) : 0;
+    const clipEnd = clipActive ? Math.min(quickClipEnd, audioEl.duration) : audioEl.duration;
+
     audioEl.pause();
-    audioEl.currentTime = 0;
+    audioEl.currentTime = clipStart;
     activeLayer = null;
     particles = []; rings = []; hitPulse = 0; bassEnv = 0; bassEnvSlow = 0;
     shakeTrauma = 0; smokePlaybackRateSmooth = 1;
@@ -1609,7 +1627,8 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     const chunks = [];
     recorder.ondataavailable = (e)=>{ if(e.data.size>0) chunks.push(e.data); };
 
-    const dur = audioEl.duration;
+    const dur = clipEnd; // спираме записа при clipEnd (или пълната продължителност, ако няма клип)
+    if (clipActive) verseStartInput.value = fmtTime(clipStart); // заглавие/плейър видими веднага в откъса
 
     recorder.onstop = ()=>{
       const blob = new Blob(chunks, {type:'video/webm'});
@@ -1639,7 +1658,7 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     function renderLoop(){
       const t = audioEl.currentTime;
       draw();
-      const pct = Math.min(100, (t/dur*100));
+      const pct = Math.min(100, ((t-clipStart)/(dur-clipStart||1)*100));
       progressInner.style.width = pct + '%';
       if(quickMode){
         const pctInt = Math.floor(pct);

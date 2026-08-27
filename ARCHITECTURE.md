@@ -175,6 +175,36 @@ YouTube публикуване (unlisted).
   `callGroqTranscribe()`, `segmentsToSrt()` (нови, виж
   `js/providers/subtitles.js`), `Step4.uploadCaptions()`.
 
+### `js/shorts-studio.js` — `ShortsStudio` (нов)
+"🎞️ AI Shorts Studio" — качваш 1 песен → AI избира N различни "hook"
+момента → визуализаторът прави по едно 9:16 видео за всеки → AI
+генерира уникално заглавие/описание/хаштагове за всеки → 1 бутон качва
+всички последователно в YouTube (unlisted).
+- Методи: `onAudioSelected`, `runFull`, `_analyzeAndPickMoments` (Gemini
+  multimodal — жанр/настроение/език/текст + масив от N `{start,end,
+  hook_reason,hook_text}` диапазона), `_generateMetaForAll` (Claude —
+  масив от N `{title,description,tags}`, всеки различен от другите),
+  `_renderAllClips`/`_renderOneClip` (последователно, презарежда
+  собствен скрит iframe `#shortsVisualizerFrame` за всеки клип с ново
+  `cdb-quick-audio` съобщение + `clipStart`/`clipEnd`/`aspect:"9:16"`),
+  `_renderResults` (преглед/редакция), `uploadAll` (цикъл през
+  `Step4.uploadVideo` за всеки готов клип).
+- **Зависимости:** `fileToBase64()`, `callGeminiMultimodal()`,
+  `callAI()`, `extractJson()`, `toast()`, `Step4.uploadVideo()`,
+  `Step4.accessToken`/`Step4.initGoogleAuth()` (споделен Google вход
+  чрез генеричните `.g-auth-status`/`.g-signin-slot` селектори).
+- **Не пипа `visualizer.html`-я public API извън добавка** — виж
+  следващия раздел.
+- **Кой го ползва:** само `index.html` (`view-shorts-studio`).
+
+### `visualizer.html` — разширение за clip режим (v за Shorts Studio)
+`cdb-quick-audio` съобщението вече приема по избор `clipStart`/
+`clipEnd` (секунди) и `aspect` — ако са зададени, `startExport()`
+записва САМО този диапазон от песента (вместо цялата), със заглавие/
+плейър видими веднага от началото на диапазона. Без тези полета
+поведението е 100% same-as-before (използва се от `QuickUpload`
+непроменено).
+
 ### `js/stats.js` — `Stats`
 YouTube Тракер / Analytics dashboard (data/*.json от GitHub Actions).
 - Методи: `saveRepoConfig`, `trendsUrl`, `dataUrl`, `fetchData`,

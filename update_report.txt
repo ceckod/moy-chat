@@ -1,12 +1,14 @@
 CDB UPDATE REPORT
-Timestamp: 20260824-125922
+Timestamp: 20260827-075832
 
 Changed:
-  none
+  sw.js
+  index.html
+  ARCHITECTURE.md
+  visualizer.html
 
 Added:
-  PHASE_0.5_STATUS_SongIntelligence.md
-  update.zip
+  js/shorts-studio.js
 
 Removed:
   none
@@ -17,12 +19,10 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   nav.js
   step1.js
   ui-bootstrap.js
-  sw.js
   load-app.mjs
   step4.js
   site-ai.html
   CDB-Dashboard.md
-  index.html
   step3.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ai.html
@@ -32,6 +32,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   vault-keys.test.mjs
   project-archive.js
   app-state.js
+  PHASE_0.5_STATUS_SongIntelligence.md
   package.json
   quick-upload.js
   ai-call-log.js
@@ -42,7 +43,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-cache.js
   aichat.html
   MODULE-MAP.md
-  ARCHITECTURE.md
   Технически-одит-CDB-Dashboard.md
   README.md
   quota-tracker.js
@@ -51,11 +51,11 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   step2.js
   update_report.txt
   model-pref.js
-  visualizer.html
   gemini-validator.js
   track-record.js
   ai-provider-order.js
   REMOVE_MISSING
+  update.zip
   system-update.js
   viz.html
   lyrics-history.js
