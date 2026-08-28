@@ -3016,6 +3016,28 @@
           "trend_growth_ratio": -0.583
         }
       ]
+    },
+    {
+      "date": "2026-08-28",
+      "timestamp": "2026-08-28T19:55:09.013328+00:00",
+      "niches": [
+        {
+          "niche": "Latin trap",
+          "score": 60.0,
+          "reason": "Растящо темпо на публикуване (+12% за 14 дни), ~93039 видеа конкуренция (30 дни).",
+          "search_signal": "расте (+12% за 14 дни)",
+          "competition_signal": "93039 видеа  ~274 156 avg views (30д)",
+          "trend_growth_ratio": 0.116
+        },
+        {
+          "niche": "Balkan phonk",
+          "score": 40.0,
+          "reason": "Спадащо темпо на публикуване (-42% за 14 дни), ~10657 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-42% за 14 дни)",
+          "competition_signal": "10657 видеа  ~8 956 avg views (30д)",
+          "trend_growth_ratio": -0.421
+        }
+      ]
     }
   ]
 }
