@@ -83,10 +83,14 @@ const ShortsStudio = {
   },
 
   // Минава през ЦЯЛАТА импортирана DistroKid библиотека (не само текущата
-  // песен) и за всеки запис търси реален Spotify + Apple Music + YouTube
-  // линк, през същите официални API-та като findLinks() (никога не измисля
-  // URL). Резултатите се записват обратно в библиотеката (localStorage),
-  // за да не се търсят повторно следващия път.
+  // песен). Приоритет 1: чете директно HyperFollow страницата на всяка
+  // песен (entry.url) и извлича ВСИЧКИ вградени платформени линкове наведнъж
+  // (Spotify/Apple/Deezer/Tidal/iHeart/... — виж _PLATFORM_PATTERNS) —
+  // гарантирано точна песен, без риск от грешно съвпадение. Приоритет 2
+  // (fallback само за платформи, които страницата НЕ съдържа): Spotify Web
+  // API / iTunes Search API / YouTube Data API търсене по име. Резултатите
+  // се записват обратно в библиотеката (localStorage), за да не се търсят
+  // повторно следващия път.
   async enrichLibrary() {
     const lib = this._loadDistrokidLibrary();
     if (!lib.length) return toast("Първо импортирай DistroKid библиотеката по-горе");
@@ -97,65 +101,80 @@ const ShortsStudio = {
 
     let spotifyToken = null;
     try { spotifyToken = await NicheToolkit._getSpotifyToken(); }
-    catch (e) { this.log("⚠️ Spotify token: " + e.message + " — пропускам Spotify колоната."); }
+    catch (e) { this.log("⚠️ Spotify token: " + e.message + " — Spotify fallback търсенето няма да работи (страницата пак може да го намери)."); }
     const ytKey = Keys.load().ytApiKey;
-    if (!ytKey) this.log("⚪ Няма YouTube API Key в Настройки — пропускам YouTube колоната (Spotify/Apple продължават).");
+    if (!ytKey) this.log("⚪ Няма YouTube API Key в Настройки — YouTube fallback търсенето е изключено (страницата пак може да съдържа YouTube линк).");
 
     for (let i = 0; i < total; i++) {
       const e = lib[i];
       if (statusEl) statusEl.textContent = `⏳ ${i + 1}/${total}: ${e.song}...`;
+      e.platforms = e.platforms || {};
 
-      if (!e.spotifyUrl && spotifyToken) {
+      // Приоритет 1 — четем реалната HyperFollow страница на песента.
+      if (e.url) {
+        const found = await this._fetchPlatformLinksFromPage(e.url);
+        Object.assign(e.platforms, found); // не трием вече намерени от преди, само допълваме
+      }
+
+      // Приоритет 2 — fallback търсене по име, само за платформи, които
+      // страницата не съдържаше.
+      if (!e.platforms.spotify && spotifyToken) {
         try {
           const q = `track:${e.song} artist:${e.artist}`;
           const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
             headers: { "Authorization": `Bearer ${spotifyToken}` }
           }, 15000);
-          if (res.ok) { const d = await res.json(); e.spotifyUrl = d.tracks?.items?.[0]?.external_urls?.spotify || ""; }
+          if (res.ok) { const d = await res.json(); const u = d.tracks?.items?.[0]?.external_urls?.spotify; if (u) e.platforms.spotify = u; }
         } catch (err) { /* тихо — просто оставаме без Spotify за тази песен */ }
       }
-
-      if (!e.appleUrl) {
+      if (!e.platforms.apple) {
         try {
           const term = `${e.artist} ${e.song}`;
           const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
-          if (res.ok) { const d = await res.json(); e.appleUrl = d.results?.[0]?.trackViewUrl || ""; }
+          if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
         } catch (err) { /* тихо */ }
       }
-
-      if (!e.youtubeUrl && ytKey) {
+      if (!e.platforms.youtube && ytKey) {
         try {
           const q = `${e.artist} ${e.song}`;
           const res = await fetchTimeout(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(q)}&key=${ytKey}`, {}, 15000);
           if (res.ok) {
             const d = await res.json();
             const vid = d.items?.[0]?.id?.videoId;
-            e.youtubeUrl = vid ? `https://www.youtube.com/watch?v=${vid}` : "";
+            if (vid) e.platforms.youtube = `https://www.youtube.com/watch?v=${vid}`;
           }
         } catch (err) { /* тихо */ }
       }
 
+      // Обратна съвместимост с по-стари полета, ако другаде в кода/данните
+      // все още се четат директно (напр. стар импорт от преди тази версия).
+      e.spotifyUrl = e.platforms.spotify || e.spotifyUrl || "";
+      e.appleUrl = e.platforms.apple || e.appleUrl || "";
+      e.youtubeUrl = e.platforms.youtube || e.youtubeUrl || "";
+
       resultsEl.innerHTML += this._enrichRowHtml(e);
       resultsEl.scrollTop = resultsEl.scrollHeight;
-      // Кратка пауза между песните — по-щадящо към Spotify/YouTube квотата.
-      await new Promise(r => setTimeout(r, 350));
+      // Кратка пауза между песните — по-щадящо към API квотите.
+      await new Promise(r => setTimeout(r, 300));
     }
 
     try { localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(lib)); } catch (err) { /* не е фатално */ }
-    const foundSpotify = lib.filter(e => e.spotifyUrl).length;
-    const foundApple = lib.filter(e => e.appleUrl).length;
-    const foundYoutube = lib.filter(e => e.youtubeUrl).length;
-    if (statusEl) statusEl.textContent = `✅ Готово: Spotify ${foundSpotify}/${total} · Apple Music ${foundApple}/${total} · YouTube ${foundYoutube}/${total}.`;
-    this.log(`🔍 Обогатяване на библиотеката готово — Spotify ${foundSpotify}/${total}, Apple ${foundApple}/${total}, YouTube ${foundYoutube}/${total}.`);
+    const counts = {};
+    for (const key of Object.keys(this._PLATFORM_LABELS)) counts[key] = lib.filter(e => e.platforms?.[key]).length;
+    const summary = Object.entries(counts).filter(([, n]) => n > 0).map(([k, n]) => `${this._platformLabel(k)} ${n}/${total}`).join(" · ");
+    if (statusEl) statusEl.textContent = `✅ Готово: ${summary || "нищо не се намери"}.`;
+    this.log(`🔍 Обогатяване на библиотеката готово — ${summary || "нищо не се намери"}.`);
   },
 
   _enrichRowHtml(e) {
-    const link = (url, label) => url
-      ? `<a href="${this._escAttr(url)}" target="_blank" rel="noopener">${label} ✅</a>`
-      : `<span class="muted">${label} —</span>`;
+    const platforms = e.platforms || {};
+    const chips = Object.keys(this._PLATFORM_LABELS)
+      .filter(key => platforms[key])
+      .map(key => `<a href="${this._escAttr(platforms[key])}" target="_blank" rel="noopener">${this._platformLabel(key)} ✅</a>`)
+      .join(" · ");
     return `<div style="padding:6px 0;border-bottom:1px solid var(--border);">
       <strong>${this._esc(e.song)}</strong><br>
-      ${link(e.spotifyUrl, "Spotify")} · ${link(e.appleUrl, "Apple")} · ${link(e.youtubeUrl, "YouTube")}
+      ${chips || '<span class="muted">— нищо намерено —</span>'}
     </div>`;
   },
 
@@ -252,67 +271,82 @@ const ShortsStudio = {
     if (!song) { toast("Първо въведи име на песента"); return; }
     if (statusEl) statusEl.textContent = "⏳ Търся...";
     let foundAny = false;
+    let pageLinks = null;
 
-    // Spotify — през вече съществуващия token helper на NicheToolkit
-    // (официален Client Credentials, ако има ключове в Настройки, иначе
-    // анонимен fallback — вижте js/niche-toolkit.js за детайли).
-    try {
-      const token = await NicheToolkit._getSpotifyToken();
-      const q = artist ? `track:${song} artist:${artist}` : song;
-      const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
-        headers: { "Authorization": `Bearer ${token}` }
-      }, 15000);
-      if (res.ok) {
-        const data = await res.json();
-        const track = data.tracks?.items?.[0];
-        const url = track?.external_urls?.spotify;
-        if (url) {
-          document.getElementById("ssLinkSpotify").value = url;
-          foundAny = true;
-          this.log(`✅ Намерен Spotify линк: ${track.name} — ${track.artists?.[0]?.name || "?"}`);
-        } else {
-          this.log("⚪ Spotify: няма намерена песен с това заглавие (може още да не е качена).");
-        }
-      } else {
-        this.log(`⚠️ Spotify търсене неуспешно (${res.status}).`);
-      }
-    } catch (e) {
-      this.log("⚠️ Spotify: " + e.message);
-    }
-
-    // Apple Music — публичен iTunes Search API (безплатен, без ключове).
-    try {
-      const term = artist ? `${artist} ${song}` : song;
-      const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
-      if (res.ok) {
-        const data = await res.json();
-        const track = data.results?.[0];
-        const url = track?.trackViewUrl;
-        if (url) {
-          document.getElementById("ssLinkApple").value = url;
-          foundAny = true;
-          this.log(`✅ Намерен Apple Music линк: ${track.trackName} — ${track.artistName || "?"}`);
-        } else {
-          this.log("⚪ Apple Music: няма намерена песен с това заглавие.");
-        }
-      } else {
-        this.log(`⚠️ Apple Music търсене неуспешно (${res.status}).`);
-      }
-    } catch (e) {
-      this.log("⚠️ Apple Music: " + e.message);
-    }
-
-    // DistroKid/HyperFollow — приоритет 1: точен линк от импортираната
-    // библиотека с песни (всяка песен си има СОБСТВЕНА HyperFollow страница,
-    // само общ юзърнейм не стига). Приоритет 2 (fallback, ако няма съвпадение
-    // в библиотеката): генеричната artist-страница hyperfollow.com/{юзърнейм},
-    // проверена реално дали резолвва, преди да я сложим.
+    // Приоритет 1: ако песента я има в импортираната DistroKid библиотека,
+    // директно ЧЕТЕМ реалната ѝ HyperFollow страница — тя вече съдържа
+    // истинските Spotify/Apple/Deezer/iHeart/... линкове, вградени от самия
+    // DistroKid (за Facebook/Instagram preview). Това е ТОЧНО тази песен,
+    // без риск да хванем грешен артист със същото заглавие (какъвто риск
+    // има при търсене по име в Spotify/iTunes API).
     const libMatch = this._findDistrokidLink(song);
     if (libMatch) {
       document.getElementById("ssLinkDistrokid").value = libMatch.url;
       foundAny = true;
-      this.log(`✅ Намерен точен DistroKid линк от библиотеката: "${libMatch.song}" → ${libMatch.url}`);
-    } else {
+      this.log(`✅ Намерена песента в библиотеката: "${libMatch.song}" → чета HyperFollow страницата ѝ...`);
+      pageLinks = await this._fetchPlatformLinksFromPage(libMatch.url);
+      if (pageLinks && pageLinks.spotify) { document.getElementById("ssLinkSpotify").value = pageLinks.spotify; foundAny = true; }
+      if (pageLinks && pageLinks.apple) { document.getElementById("ssLinkApple").value = pageLinks.apple; foundAny = true; }
+      if (pageLinks && Object.keys(pageLinks).length) {
+        this.log(`✅ От HyperFollow страницата: ${Object.keys(pageLinks).map(k => this._platformLabel(k)).join(", ")}.`);
+      } else {
+        this.log("⚪ HyperFollow страницата не съдържа платформени линкове (може още да не е пуснала песента).");
+      }
+    }
+
+    // Fallback (само ако песента НЕ е в библиотеката) — търсене по име през
+    // Spotify Web API / iTunes Search API, с известен риск от грешно
+    // съвпадение при често срещани заглавия.
+    if (!pageLinks || !pageLinks.spotify) {
+      try {
+        const token = await NicheToolkit._getSpotifyToken();
+        const q = artist ? `track:${song} artist:${artist}` : song;
+        const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+          headers: { "Authorization": `Bearer ${token}` }
+        }, 15000);
+        if (res.ok) {
+          const data = await res.json();
+          const track = data.tracks?.items?.[0];
+          const url = track?.external_urls?.spotify;
+          if (url) {
+            document.getElementById("ssLinkSpotify").value = url;
+            foundAny = true;
+            this.log(`✅ Намерен Spotify линк (търсене по име): ${track.name} — ${track.artists?.[0]?.name || "?"}`);
+          } else {
+            this.log("⚪ Spotify: няма намерена песен с това заглавие (може още да не е качена).");
+          }
+        } else {
+          this.log(`⚠️ Spotify търсене неуспешно (${res.status}).`);
+        }
+      } catch (e) {
+        this.log("⚠️ Spotify: " + e.message);
+      }
+    }
+
+    if (!pageLinks || !pageLinks.apple) {
+      try {
+        const term = artist ? `${artist} ${song}` : song;
+        const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+        if (res.ok) {
+          const data = await res.json();
+          const track = data.results?.[0];
+          const url = track?.trackViewUrl;
+          if (url) {
+            document.getElementById("ssLinkApple").value = url;
+            foundAny = true;
+            this.log(`✅ Намерен Apple Music линк (търсене по име): ${track.trackName} — ${track.artistName || "?"}`);
+          } else {
+            this.log("⚪ Apple Music: няма намерена песен с това заглавие.");
+          }
+        } else {
+          this.log(`⚠️ Apple Music търсене неуспешно (${res.status}).`);
+        }
+      } catch (e) {
+        this.log("⚠️ Apple Music: " + e.message);
+      }
+    }
+
+    if (!libMatch) {
       const hfUsername = document.getElementById("ssHyperfollowUsername")?.value.trim().replace(/^@/, "");
       if (hfUsername) {
         try {
@@ -337,6 +371,47 @@ const ShortsStudio = {
     if (statusEl) statusEl.textContent = foundAny
       ? "✅ Намерени линкове са попълнени по-горе — провери ги преди да продължиш."
       : "⚪ Нищо не се намери автоматично (нормално, ако песента още не е пусната) — можеш да въведеш ръчно.";
+  },
+
+  // Всички платформи, които DistroKid може да вгради в HyperFollow страница
+  // (не само Spotify/Apple) — по домейн, за общо извличане с regex.
+  _PLATFORM_PATTERNS: {
+    spotify: /href="(https:\/\/open\.spotify\.com\/[^"]+)"/i,
+    apple: /href="(https:\/\/music\.apple\.com\/[^"]+)"/i,
+    youtube: /href="(https:\/\/(?:www\.)?youtube\.com\/[^"]+|https:\/\/youtu\.be\/[^"]+)"/i,
+    youtubeMusic: /href="(https:\/\/music\.youtube\.com\/[^"]+)"/i,
+    deezer: /href="(https:\/\/www\.deezer\.com\/[^"]+)"/i,
+    tidal: /href="(https:\/\/(?:listen\.)?tidal\.com\/[^"]+)"/i,
+    amazonMusic: /href="(https:\/\/(?:music|www)\.amazon\.[a-z.]+\/[^"]*(?:albums|dp)[^"]*)"/i,
+    iheartradio: /href="(https:\/\/(?:www\.)?iheart\.com\/[^"]+)"/i,
+    pandora: /href="(https:\/\/(?:www\.)?pandora\.com\/[^"]+)"/i,
+    napster: /href="(https:\/\/(?:app|www)\.napster\.com\/[^"]+)"/i,
+    soundcloud: /href="(https:\/\/(?:www\.)?soundcloud\.com\/[^"]+)"/i
+  },
+  _PLATFORM_LABELS: {
+    spotify: "Spotify", apple: "Apple Music", youtube: "YouTube", youtubeMusic: "YouTube Music",
+    deezer: "Deezer", tidal: "Tidal", amazonMusic: "Amazon Music", iheartradio: "iHeartRadio",
+    pandora: "Pandora", napster: "Napster", soundcloud: "SoundCloud"
+  },
+  _platformLabel(key) { return this._PLATFORM_LABELS[key] || key; },
+
+  // Чете реалната HyperFollow страница на песента и извлича ВСИЧКИ
+  // платформени линкове, вградени в HTML-я ѝ (DistroKid ги слага директно
+  // в страницата, за да работят Facebook/Instagram/Twitter preview-ите —
+  // затова ги има без нужда от JS рендиране). Връща {spotify: "...", ...}
+  // само с намерените платформи (празен обект, ако страницата не се зареди).
+  async _fetchPlatformLinksFromPage(url) {
+    const found = {};
+    try {
+      const res = await fetchTimeout(proxied(url), {}, 15000);
+      if (!res.ok) return found;
+      const html = await res.text();
+      for (const [key, re] of Object.entries(this._PLATFORM_PATTERNS)) {
+        const m = html.match(re);
+        if (m) found[key] = m[1];
+      }
+    } catch (e) { this.log("⚠️ Четене на HyperFollow страницата: " + e.message); }
+    return found;
   },
 
   log(msg) {

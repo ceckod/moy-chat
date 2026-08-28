@@ -189,20 +189,22 @@ YouTube публикуване (unlisted).
   `cdb-quick-audio` съобщение + `clipStart`/`clipEnd`/`aspect:"9:16"`),
   `_renderResults` (преглед/редакция), `uploadAll` (цикъл през
   `Step4.uploadVideo` за всеки готов клип).
-- **Линкове за стрийминг:** `findLinks()` търси Spotify (официален
-  Spotify Web API search, през `NicheToolkit._getSpotifyToken()`) +
-  Apple Music (публичен iTunes Search API) за ТЕКУЩАТА песен; DistroKid/
-  HyperFollow — през импортирана библиотека (`importDistrokidLibrary()`
-  парсва пейстнат списък от DistroKid "My Music", `_findDistrokidLink()`
-  прави fuzzy match по заглавие) или fallback генеричен
-  `hyperfollow.com/{юзърнейм}` (проверен реално дали резолвва).
-  `enrichLibrary()` — bulk версия, минава през ЦЯЛАТА импортирана
-  библиотека наведнъж и допълва Spotify+Apple+**YouTube** (YouTube Data
-  API `search.list`, ползва `Keys.load().ytApiKey` от Настройки) за
-  всяка песен, пази резултата обратно в `cdb_distrokid_library_v1`. AI-ят
-  НИКОГА не измисля линкове — описанието се генерира с `{{SPOTIFY_LINK}}`
-  токени, `_injectLinks()` ги замества детерминирано (или трие реда,
-  ако е празно).
+- **Линкове за стрийминг:** `findLinks()` — приоритет 1: чете директно
+  реалната HyperFollow страница на песента (намерена през импортираната
+  DistroKid библиотека, `_fetchPlatformLinksFromPage()`) и извлича
+  ВСИЧКИ вградени платформени линкове наведнъж (Spotify/Apple/Deezer/
+  Tidal/Amazon Music/iHeartRadio/Pandora/Napster/SoundCloud/YouTube/
+  YouTube Music — виж `_PLATFORM_PATTERNS`); DistroKid вгражда тези
+  линкове директно в HTML-я на страницата (за Facebook/Instagram/Twitter
+  preview), затова не изисква JS рендиране от наша страна — гарантирано
+  точна песен, без риск от грешно съвпадение. Приоритет 2 (fallback,
+  само за платформи, които страницата НЕ съдържа): Spotify Web API
+  search / iTunes Search API / YouTube Data API search по име.
+  `enrichLibrary()` — bulk версия на същата логика за ЦЯЛАТА импортирана
+  библиотека наведнъж, пази резултата в `entry.platforms{}` обратно в
+  `cdb_distrokid_library_v1`. AI-ят НИКОГА не измисля линкове — описанието
+  се генерира с `{{SPOTIFY_LINK}}` токени, `_injectLinks()` ги замества
+  детерминирано (или трие реда, ако е празно).
 - **Зависимости:** `fileToBase64()`, `callGeminiMultimodal()`,
   `callAI()`, `extractJson()`, `toast()`, `Step4.uploadVideo()`,
   `Step4.accessToken`/`Step4.initGoogleAuth()` (споделен Google вход

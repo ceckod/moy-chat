@@ -1,9 +1,8 @@
 CDB UPDATE REPORT
-Timestamp: 20260828-090405
+Timestamp: 20260828-091430
 
 Changed:
   sw.js
-  index.html
   ARCHITECTURE.md
   shorts-studio.js
   js/shorts-studio.js
