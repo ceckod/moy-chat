@@ -1,8 +1,11 @@
 CDB UPDATE REPORT
-Timestamp: 20260828-085331
+Timestamp: 20260828-090405
 
 Changed:
+  sw.js
   index.html
+  ARCHITECTURE.md
+  shorts-studio.js
   js/shorts-studio.js
 
 Added:
@@ -49,6 +52,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   step2.js
   update_report.txt
   model-pref.js
+  visualizer.html
   gemini-validator.js
   track-record.js
   ai-provider-order.js

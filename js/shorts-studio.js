@@ -82,6 +82,83 @@ const ShortsStudio = {
     catch (e) { return []; }
   },
 
+  // Минава през ЦЯЛАТА импортирана DistroKid библиотека (не само текущата
+  // песен) и за всеки запис търси реален Spotify + Apple Music + YouTube
+  // линк, през същите официални API-та като findLinks() (никога не измисля
+  // URL). Резултатите се записват обратно в библиотеката (localStorage),
+  // за да не се търсят повторно следващия път.
+  async enrichLibrary() {
+    const lib = this._loadDistrokidLibrary();
+    if (!lib.length) return toast("Първо импортирай DistroKid библиотеката по-горе");
+    const statusEl = document.getElementById("ssLibEnrichStatus");
+    const resultsEl = document.getElementById("ssLibEnrichResults");
+    resultsEl.innerHTML = "";
+    const total = lib.length;
+
+    let spotifyToken = null;
+    try { spotifyToken = await NicheToolkit._getSpotifyToken(); }
+    catch (e) { this.log("⚠️ Spotify token: " + e.message + " — пропускам Spotify колоната."); }
+    const ytKey = Keys.load().ytApiKey;
+    if (!ytKey) this.log("⚪ Няма YouTube API Key в Настройки — пропускам YouTube колоната (Spotify/Apple продължават).");
+
+    for (let i = 0; i < total; i++) {
+      const e = lib[i];
+      if (statusEl) statusEl.textContent = `⏳ ${i + 1}/${total}: ${e.song}...`;
+
+      if (!e.spotifyUrl && spotifyToken) {
+        try {
+          const q = `track:${e.song} artist:${e.artist}`;
+          const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+            headers: { "Authorization": `Bearer ${spotifyToken}` }
+          }, 15000);
+          if (res.ok) { const d = await res.json(); e.spotifyUrl = d.tracks?.items?.[0]?.external_urls?.spotify || ""; }
+        } catch (err) { /* тихо — просто оставаме без Spotify за тази песен */ }
+      }
+
+      if (!e.appleUrl) {
+        try {
+          const term = `${e.artist} ${e.song}`;
+          const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+          if (res.ok) { const d = await res.json(); e.appleUrl = d.results?.[0]?.trackViewUrl || ""; }
+        } catch (err) { /* тихо */ }
+      }
+
+      if (!e.youtubeUrl && ytKey) {
+        try {
+          const q = `${e.artist} ${e.song}`;
+          const res = await fetchTimeout(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(q)}&key=${ytKey}`, {}, 15000);
+          if (res.ok) {
+            const d = await res.json();
+            const vid = d.items?.[0]?.id?.videoId;
+            e.youtubeUrl = vid ? `https://www.youtube.com/watch?v=${vid}` : "";
+          }
+        } catch (err) { /* тихо */ }
+      }
+
+      resultsEl.innerHTML += this._enrichRowHtml(e);
+      resultsEl.scrollTop = resultsEl.scrollHeight;
+      // Кратка пауза между песните — по-щадящо към Spotify/YouTube квотата.
+      await new Promise(r => setTimeout(r, 350));
+    }
+
+    try { localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(lib)); } catch (err) { /* не е фатално */ }
+    const foundSpotify = lib.filter(e => e.spotifyUrl).length;
+    const foundApple = lib.filter(e => e.appleUrl).length;
+    const foundYoutube = lib.filter(e => e.youtubeUrl).length;
+    if (statusEl) statusEl.textContent = `✅ Готово: Spotify ${foundSpotify}/${total} · Apple Music ${foundApple}/${total} · YouTube ${foundYoutube}/${total}.`;
+    this.log(`🔍 Обогатяване на библиотеката готово — Spotify ${foundSpotify}/${total}, Apple ${foundApple}/${total}, YouTube ${foundYoutube}/${total}.`);
+  },
+
+  _enrichRowHtml(e) {
+    const link = (url, label) => url
+      ? `<a href="${this._escAttr(url)}" target="_blank" rel="noopener">${label} ✅</a>`
+      : `<span class="muted">${label} —</span>`;
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <strong>${this._esc(e.song)}</strong><br>
+      ${link(e.spotifyUrl, "Spotify")} · ${link(e.appleUrl, "Apple")} · ${link(e.youtubeUrl, "YouTube")}
+    </div>`;
+  },
+
   _parseDistrokidLibrary(text) {
     const NOISE = /^(©|English|Help|Support Center|Company|DistroKid Blog|Nail Clippers|Artists For Change|Careers|Influencer|Product|Plans|Bandzoogle|Instant Share|Mixea|DistroVid|HyperFollow|Direct|Mobile App|DistroKid for|Privacy policy|Cookie|Terms of use|Sitemap|Distribution agreement|Upload|My Music|Stats|Splits|Upgrade|Bank|HyperFollow is the easiest)/i;
     const lines = text.split(/\r?\n/).map(l => l.trim());

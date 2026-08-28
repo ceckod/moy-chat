@@ -189,6 +189,20 @@ YouTube публикуване (unlisted).
   `cdb-quick-audio` съобщение + `clipStart`/`clipEnd`/`aspect:"9:16"`),
   `_renderResults` (преглед/редакция), `uploadAll` (цикъл през
   `Step4.uploadVideo` за всеки готов клип).
+- **Линкове за стрийминг:** `findLinks()` търси Spotify (официален
+  Spotify Web API search, през `NicheToolkit._getSpotifyToken()`) +
+  Apple Music (публичен iTunes Search API) за ТЕКУЩАТА песен; DistroKid/
+  HyperFollow — през импортирана библиотека (`importDistrokidLibrary()`
+  парсва пейстнат списък от DistroKid "My Music", `_findDistrokidLink()`
+  прави fuzzy match по заглавие) или fallback генеричен
+  `hyperfollow.com/{юзърнейм}` (проверен реално дали резолвва).
+  `enrichLibrary()` — bulk версия, минава през ЦЯЛАТА импортирана
+  библиотека наведнъж и допълва Spotify+Apple+**YouTube** (YouTube Data
+  API `search.list`, ползва `Keys.load().ytApiKey` от Настройки) за
+  всяка песен, пази резултата обратно в `cdb_distrokid_library_v1`. AI-ят
+  НИКОГА не измисля линкове — описанието се генерира с `{{SPOTIFY_LINK}}`
+  токени, `_injectLinks()` ги замества детерминирано (или трие реда,
+  ако е празно).
 - **Зависимости:** `fileToBase64()`, `callGeminiMultimodal()`,
   `callAI()`, `extractJson()`, `toast()`, `Step4.uploadVideo()`,
   `Step4.accessToken`/`Step4.initGoogleAuth()` (споделен Google вход

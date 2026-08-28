@@ -944,6 +944,10 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <textarea id="ssDistrokidLibraryPaste" placeholder="Пейстни целия списък от My Music тук (заглавия + hyperfollow линкове, точно както е копирано)" style="min-height:90px;"></textarea>
           <button class="btn" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.importDistrokidLibrary())">📥 Импортирай списъка</button>
           <div id="ssDistrokidLibStatus" class="muted" style="margin-top:6px;"></div>
+          <button class="btn" style="margin-top:10px;" onclick="guardClick(this, () => ShortsStudio.enrichLibrary())">🔍 Намери Spotify + Apple Music + YouTube за ЦЯЛАТА библиотека</button>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Минава последователно през всяка песен от импортираната библиотека и търси реални линкове (не измисля) — за YouTube трябва YouTube API Key в Настройки, иначе пропуска само тази колона.</div>
+          <div id="ssLibEnrichStatus" class="muted" style="margin-top:6px;"></div>
+          <div id="ssLibEnrichResults" style="margin-top:8px;font-size:12.5px;max-height:280px;overflow-y:auto;"></div>
         </details>
         <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music + HyperFollow автоматично</button>
         <div id="ssLinksStatus" class="muted" style="margin-top:6px;"></div>
