@@ -935,8 +935,17 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div class="muted" style="font-size:12px;margin-bottom:4px;">Ако ги оставиш празни, съответният ред просто няма да се появи в описанието — AI-ят НЕ си измисля линкове.</div>
         <input type="text" id="ssLinkSpotify" placeholder="Spotify линк (https://open.spotify.com/track/...)">
         <input type="text" id="ssLinkApple" placeholder="Apple Music линк" style="margin-top:6px;">
-        <input type="text" id="ssLinkDistrokid" placeholder="DistroKid / друг линк (ръчно — няма публично търсене)" style="margin-top:6px;">
-        <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music автоматично</button>
+        <input type="text" id="ssLinkDistrokid" placeholder="DistroKid / HyperFollow линк (или използвай библиотеката/юзърнейма долу)" style="margin-top:6px;">
+        <input type="text" id="ssHyperfollowUsername" placeholder="HyperFollow юзърнейм (напр. tsetskoboyanov → hyperfollow.com/tsetskoboyanov)" style="margin-top:6px;">
+
+        <details style="margin-top:8px;">
+          <summary style="cursor:pointer;">📋 Библиотека с DistroKid песни (по избор, но по-точно от юзърнейма)</summary>
+          <p class="muted" style="font-size:12px;margin-top:6px;">DistroKid прави ОТДЕЛНА HyperFollow страница за всяка песен. Отвори "My Music" в DistroKid → маркирай/копирай целия списък с песни (заглавия + линкове) → пейстни го тук. Приложението сам ще намери правилния линк за ТАЗИ конкретна песен всеки път — не общ линк към артиста.</p>
+          <textarea id="ssDistrokidLibraryPaste" placeholder="Пейстни целия списък от My Music тук (заглавия + hyperfollow линкове, точно както е копирано)" style="min-height:90px;"></textarea>
+          <button class="btn" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.importDistrokidLibrary())">📥 Импортирай списъка</button>
+          <div id="ssDistrokidLibStatus" class="muted" style="margin-top:6px;"></div>
+        </details>
+        <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music + HyperFollow автоматично</button>
         <div id="ssLinksStatus" class="muted" style="margin-top:6px;"></div>
 
         <label style="margin-top:12px;">Колко Shorts да направи?</label>

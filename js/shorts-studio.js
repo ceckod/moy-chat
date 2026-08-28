@@ -54,6 +54,82 @@ const ShortsStudio = {
 
   saveArtistName(v) { if (v && v.trim()) localStorage.setItem("cdb_artist_name_v1", v.trim()); },
 
+  // --- DistroKid библиотека (пейстнат списък от "My Music") -------------
+  // Всяка песен в DistroKid си има СОБСТВЕНА HyperFollow страница (различна
+  // от общата hyperfollow.com/{юзърнейм}) — затова пазим целия списък
+  // {artist, song, url}, вместо да гадаем 1 общ линк за всички клипове.
+  importDistrokidLibrary() {
+    const raw = document.getElementById("ssDistrokidLibraryPaste")?.value || "";
+    const entries = this._parseDistrokidLibrary(raw);
+    const statusEl = document.getElementById("ssDistrokidLibStatus");
+    if (!entries.length) {
+      if (statusEl) statusEl.textContent = "⚠️ Не намерих нито един разпознаваем ред (заглавие + hyperfollow линк). Провери формата на пейстнатия текст.";
+      return;
+    }
+    try { localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(entries)); } catch (e) { /* тихо, не е фатално */ }
+    // Ако юзърнеймът все още е празен, вземаме го от библиотеката (удобство).
+    const hfEl = document.getElementById("ssHyperfollowUsername");
+    if (hfEl && !hfEl.value.trim() && entries[0].username) {
+      hfEl.value = entries[0].username;
+      localStorage.setItem("cdb_hyperfollow_username_v1", entries[0].username);
+    }
+    if (statusEl) statusEl.textContent = `✅ Импортирани ${entries.length} песни. При "Опитай да намеря..." ще пасва точния линк по име на песента.`;
+    this.log(`📥 Импортирана DistroKid библиотека: ${entries.length} песни.`);
+  },
+
+  _loadDistrokidLibrary() {
+    try { return JSON.parse(localStorage.getItem("cdb_distrokid_library_v1") || "[]"); }
+    catch (e) { return []; }
+  },
+
+  _parseDistrokidLibrary(text) {
+    const NOISE = /^(©|English|Help|Support Center|Company|DistroKid Blog|Nail Clippers|Artists For Change|Careers|Influencer|Product|Plans|Bandzoogle|Instant Share|Mixea|DistroVid|HyperFollow|Direct|Mobile App|DistroKid for|Privacy policy|Cookie|Terms of use|Sitemap|Distribution agreement|Upload|My Music|Stats|Splits|Upgrade|Bank|HyperFollow is the easiest)/i;
+    const lines = text.split(/\r?\n/).map(l => l.trim());
+    const entries = [];
+    let lastTitleLine = null;
+    for (const line of lines) {
+      if (!line) continue;
+      const urlMatch = line.match(/^https?:\/\/distrokid\.com\/hyperfollow\/([^/\s]+)\/(\S+)$/i);
+      if (urlMatch) {
+        if (lastTitleLine) {
+          const dashIdx = lastTitleLine.indexOf(" - ");
+          const artist = dashIdx >= 0 ? lastTitleLine.slice(0, dashIdx).trim() : "";
+          const song = dashIdx >= 0 ? lastTitleLine.slice(dashIdx + 3).trim() : lastTitleLine;
+          entries.push({ artist, song, username: urlMatch[1], url: line });
+        }
+        lastTitleLine = null;
+        continue;
+      }
+      if (/\d+\s*views?|presave/i.test(line)) continue; // статистика реда - прескачаме
+      if (NOISE.test(line)) continue; // навигация/футър шум от копирания текст
+      lastTitleLine = line; // кандидат за "Артист - Заглавие" реда
+    }
+    return entries;
+  },
+
+  // Нормализира заглавие за сравнение: маха (feat. ...), пунктуация, регистър.
+  _normalizeSongTitle(s) {
+    return (s || "").toString().toLowerCase()
+      .replace(/\(feat\.[^)]*\)/gi, "")
+      .replace(/feat\.[^-]*$/gi, "")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  },
+
+  // Намира най-доброто съвпадение в библиотеката по име на текущата песен.
+  // Връща {artist, song, username, url} или null.
+  _findDistrokidLink(songName) {
+    const lib = this._loadDistrokidLibrary();
+    const target = this._normalizeSongTitle(songName);
+    if (!target || !lib.length) return null;
+    for (const e of lib) { if (this._normalizeSongTitle(e.song) === target) return e; } // точно съвпадение
+    for (const e of lib) { // частично съвпадение като резервен вариант
+      const norm = this._normalizeSongTitle(e.song);
+      if (norm && (norm.includes(target) || target.includes(norm))) return e;
+    }
+    return null;
+  },
+
   // Линковете се пазят локално по (артист + песен), за да не търсиш наново
   // всеки път — веднъж намерени/въведени, автоматично се презареждат.
   _linksKey() {
@@ -70,6 +146,9 @@ const ShortsStudio = {
         if (saved.apple) document.getElementById("ssLinkApple").value = saved.apple;
         if (saved.distrokid) document.getElementById("ssLinkDistrokid").value = saved.distrokid;
       }
+      const hfEl = document.getElementById("ssHyperfollowUsername");
+      const savedHf = localStorage.getItem("cdb_hyperfollow_username_v1");
+      if (hfEl && !hfEl.value.trim() && savedHf) hfEl.value = savedHf;
     } catch (e) { /* без localStorage — просто не предпълваме, не е фатално */ }
   },
   _saveLinks() {
@@ -81,6 +160,8 @@ const ShortsStudio = {
         distrokid: document.getElementById("ssLinkDistrokid").value.trim()
       };
       localStorage.setItem("cdb_song_links_v1", JSON.stringify(all));
+      const hf = document.getElementById("ssHyperfollowUsername")?.value.trim();
+      if (hf) localStorage.setItem("cdb_hyperfollow_username_v1", hf);
     } catch (e) { /* тихо — само удобство, не пречи на основния pipeline */ }
   },
 
@@ -142,6 +223,37 @@ const ShortsStudio = {
       }
     } catch (e) {
       this.log("⚠️ Apple Music: " + e.message);
+    }
+
+    // DistroKid/HyperFollow — приоритет 1: точен линк от импортираната
+    // библиотека с песни (всяка песен си има СОБСТВЕНА HyperFollow страница,
+    // само общ юзърнейм не стига). Приоритет 2 (fallback, ако няма съвпадение
+    // в библиотеката): генеричната artist-страница hyperfollow.com/{юзърнейм},
+    // проверена реално дали резолвва, преди да я сложим.
+    const libMatch = this._findDistrokidLink(song);
+    if (libMatch) {
+      document.getElementById("ssLinkDistrokid").value = libMatch.url;
+      foundAny = true;
+      this.log(`✅ Намерен точен DistroKid линк от библиотеката: "${libMatch.song}" → ${libMatch.url}`);
+    } else {
+      const hfUsername = document.getElementById("ssHyperfollowUsername")?.value.trim().replace(/^@/, "");
+      if (hfUsername) {
+        try {
+          const hfUrl = `https://hyperfollow.com/${encodeURIComponent(hfUsername)}`;
+          const res = await fetchTimeout(proxied(hfUrl), {}, 15000);
+          if (res.ok) {
+            document.getElementById("ssLinkDistrokid").value = hfUrl;
+            foundAny = true;
+            this.log(`✅ Намерена обща HyperFollow страница (не по конкретна песен): ${hfUrl}`);
+          } else {
+            this.log(`⚪ HyperFollow: страница "${hfUsername}" не е намерена (${res.status}) — провери юзърнейма или го попълни ръчно.`);
+          }
+        } catch (e) {
+          this.log("⚠️ HyperFollow проверка: " + e.message);
+        }
+      } else {
+        this.log("⚪ DistroKid: няма съвпадение в библиотеката и няма зададен юзърнейм — попълни ръчно или импортирай списъка.");
+      }
     }
 
     this._saveLinks();
