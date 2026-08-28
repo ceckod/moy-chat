@@ -529,7 +529,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:51.948407+00:00"
+      "last_search_at": "2026-08-28T21:17:18.044439+00:00"
     },
     "rap": {
       "candidates": [
@@ -1221,7 +1221,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:53.641683+00:00"
+      "last_search_at": "2026-08-28T21:17:19.095331+00:00"
     },
     "pop": {
       "candidates": [
@@ -4245,9 +4245,57 @@
           "discovered_at": "2026-08-22T11:13:38.289514+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "PPq8Ym5ixok",
+          "title": "България-я-я",
+          "channel": "Dim4ou - Topic",
+          "published_at": "2026-06-03T10:00:01Z",
+          "views": 563,
+          "duration_seconds": 275,
+          "discovered_at": "2026-08-28T21:17:20.655684+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "kTCO6_ppMbE",
+          "title": "Sarafa - S.O.F.I.A. D.E. J.A.N.E.I.R.O.",
+          "channel": "SarafaVEVO",
+          "published_at": "2026-05-25T05:18:41Z",
+          "views": 2254,
+          "duration_seconds": 175,
+          "discovered_at": "2026-08-28T21:17:20.655704+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "fud1F0Zvwtw",
+          "title": "ПОД КУПОЛА 2 | UNDER DOME 2 | Bulgarian hip-hop/ rap song",
+          "channel": "Urantia",
+          "published_at": "2026-06-26T08:29:04Z",
+          "views": 14,
+          "duration_seconds": 269,
+          "discovered_at": "2026-08-28T21:17:20.655709+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "DGujWjCGJ4o",
+          "title": "Сенките на София – Bulgarian Pop Rap 2026 | SongAiX Bulgaria",
+          "channel": "SongAiX Bulgaria",
+          "published_at": "2026-07-29T17:00:15Z",
+          "views": 117,
+          "duration_seconds": 193,
+          "discovered_at": "2026-08-28T21:17:20.655714+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-22T11:13:38.289598+00:00"
+      "last_search_at": "2026-08-28T21:17:20.655796+00:00"
     },
     "bulgarian-folk": {
       "candidates": [

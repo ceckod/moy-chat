@@ -3,24 +3,6 @@
   "notes": "Append-only лог на всеки run на youtube_discovery_engine.py (и dry runs). Пази се само последните 60 записа. Всеки run запис съдържа: run_id, started_at, dry_run, status (ok/partial_failure/error/paused), new_own_tracks, clusters_changed, playlists_created, tracks_added, tracks_removed, tracks_reordered, candidate_searches, no_changes (bool), quota_spent_units, quota_calls, errors[] (с playlist/op/video_id/error/at), warnings[] (напр. от verification несъответствия). Dashboard-ът чете това за 'API calls днес', 'нови песни намерени', 'добавени/премахнати/пренаредени' и т.н.",
   "runs": [
     {
-      "run_id": "f450355b",
-      "started_at": "2026-08-14T07:20:41.451981+00:00",
-      "dry_run": true,
-      "status": "ok",
-      "new_own_tracks": 29,
-      "clusters_changed": [],
-      "playlists_created": 0,
-      "tracks_added": 0,
-      "tracks_removed": 0,
-      "tracks_reordered": 0,
-      "candidate_searches": 0,
-      "no_changes": true,
-      "errors": [],
-      "warnings": [],
-      "quota_spent_units": 0,
-      "quota_calls": []
-    },
-    {
       "run_id": "6f7cb201",
       "started_at": "2026-08-14T07:26:48.451010+00:00",
       "dry_run": false,
@@ -2752,6 +2734,59 @@
         "videos.list",
         "playlistItems.list",
         "playlistItems.list"
+      ]
+    },
+    {
+      "run_id": "0fe1d114",
+      "started_at": "2026-08-28T21:17:16.819760+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "r-b",
+        "bulgarian-pop",
+        "bulgarian-hip-hop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 3,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "search неуспешен за 'AI Music' ('AI Music music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    ",
+        "search неуспешен за 'Pop' ('Pop music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    ",
+        "search неуспешен за 'Reggaeton' ('Reggaeton music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    ",
+        "search неуспешен за 'Dance' ('Dance music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    ",
+        "search неуспешен за 'Bulgarian Folk' ('Bulgarian Folk music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    "
+      ],
+      "quota_spent_units": 816,
+      "quota_calls": [
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "search.list",
+        "playlistItems.list",
+        "search.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list"
       ]
     }
   ]
