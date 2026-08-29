@@ -527,9 +527,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "Jv55Yj6C43s",
+          "title": "I SWEAR | All-4-One (Soulful R&B cover) #REINEMUSIC",
+          "channel": "REINE MUSIC Official",
+          "published_at": "2026-06-10T09:00:07Z",
+          "views": 737069,
+          "duration_seconds": 275,
+          "discovered_at": "2026-08-29T15:23:47.800061+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-28T21:17:18.044439+00:00"
+      "last_search_at": "2026-08-29T15:23:47.800171+00:00"
     },
     "rap": {
       "candidates": [
@@ -1221,7 +1234,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-28T21:17:19.095331+00:00"
+      "last_search_at": "2026-08-29T15:23:49.500259+00:00"
     },
     "pop": {
       "candidates": [
@@ -1703,7 +1716,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:54.331495+00:00"
+      "last_search_at": "2026-08-29T15:23:50.328926+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2177,9 +2190,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "FboTyBsFZQs",
+          "title": "Anuel AA | Donde Hubo Fuego Cenizas Quedan (Video Oficial)",
+          "channel": "Anuel AA",
+          "published_at": "2026-08-14T22:44:06Z",
+          "views": 37084438,
+          "duration_seconds": 212,
+          "discovered_at": "2026-08-29T15:23:51.271416+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:55.330091+00:00"
+      "last_search_at": "2026-08-29T15:23:51.271509+00:00"
     },
     "dance": {
       "candidates": [
@@ -2781,7 +2807,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:56.082248+00:00"
+      "last_search_at": "2026-08-29T15:23:51.987357+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3786,9 +3812,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "gOVUhbvvaNk",
+          "title": "I Made an AI Music Video From a Suno Studio 2.0 Song",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-08-24T23:00:09Z",
+          "views": 4555,
+          "duration_seconds": 500,
+          "discovered_at": "2026-08-29T15:23:48.691866+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-08-27T20:51:52.770560+00:00"
+      "last_search_at": "2026-08-29T15:23:48.692030+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4562,9 +4601,70 @@
           "discovered_at": "2026-08-22T11:13:39.118285+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "8PuBCOZyNkg",
+          "title": "Blood Of The Balkans - Bulgarian Folk Metal Instrumental",
+          "channel": "VAndC Music",
+          "published_at": "2026-04-17T21:00:16Z",
+          "views": 179,
+          "duration_seconds": 195,
+          "discovered_at": "2026-08-29T15:23:52.870432+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "hB-g4q63MFA",
+          "title": "SAINT GEORGE — DJ SLAV | Bulgarian Folk Ethno House | Epic Balkan Music",
+          "channel": "DJ Slav",
+          "published_at": "2026-08-25T14:02:41Z",
+          "views": 751,
+          "duration_seconds": 332,
+          "discovered_at": "2026-08-29T15:23:52.870456+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "ykNUxumIQRo",
+          "title": "Край чешмата - Kray cheshmata | New Bulgarian Folk Song | Народна песен 2026 UZi",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-06-04T05:11:45Z",
+          "views": 1935,
+          "duration_seconds": 240,
+          "discovered_at": "2026-08-29T15:23:52.870461+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "6j_C-vcm7O0",
+          "title": "The Bells of Tarnovo 🖤(Bulgarian Folk Metal Version)",
+          "channel": "Ethnic Metal",
+          "published_at": "2026-06-28T18:51:15Z",
+          "views": 50,
+          "duration_seconds": 262,
+          "discovered_at": "2026-08-29T15:23:52.870466+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "jc68af4wHaE",
+          "title": "Child in Time - Deep Purple | Bulgarian Folk Instruments Cover (Instrumental)",
+          "channel": "NaskoArt",
+          "published_at": "2026-03-11T16:34:46Z",
+          "views": 3066,
+          "duration_seconds": 312,
+          "discovered_at": "2026-08-29T15:23:52.870471+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         }
       ],
-      "last_search_at": "2026-08-22T11:13:39.118420+00:00"
+      "last_search_at": "2026-08-29T15:23:52.870573+00:00"
     }
   }
 }

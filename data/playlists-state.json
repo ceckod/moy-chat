@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-08-28T21:17:16.819760+00:00",
+  "last_run": "2026-08-29T15:23:24.475102+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -11,7 +11,7 @@
       "name": "R&B — Discover",
       "description": "🎧 R&B Discovery — a curated mix blending fresh R&B picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:27.122509+00:00",
-      "last_updated": "2026-08-28T21:17:18.044616+00:00",
+      "last_updated": "2026-08-29T15:23:47.800336+00:00",
       "tracks": [
         {
           "youtube_video_id": "46p-IxAVJ74",
@@ -44,7 +44,7 @@
         {
           "youtube_video_id": "LzNhIQoP5Zw",
           "is_mine": false,
-          "title": "SOMETIMES BY BRITNEY SPEARS - R&B COVER",
+          "title": "Deleted video",
           "added_at": "2026-08-14T19:45:50.281985+00:00",
           "playlist_item_id": "UExHT0JrckNMUEhLUS45ODRDNTg0QjA4NkFBNkQy"
         },
@@ -1232,7 +1232,7 @@
       "name": "Reggaeton — Discover",
       "description": "🎧 Reggaeton Discovery — a curated mix blending fresh Reggaeton picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:40.454059+00:00",
-      "last_updated": "2026-08-25T11:19:24.857485+00:00",
+      "last_updated": "2026-08-29T15:23:51.271636+00:00",
       "tracks": [
         {
           "youtube_video_id": "2djj_KnGwjk",
@@ -2384,7 +2384,7 @@
       "name": "AI Music — Discover",
       "description": "🎧 AI Music Discovery — a curated mix blending fresh AI Music picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:50.961665+00:00",
-      "last_updated": "2026-08-26T11:21:47.250282+00:00",
+      "last_updated": "2026-08-29T15:23:48.692166+00:00",
       "tracks": [
         {
           "youtube_video_id": "9Txb15fKgjY",
@@ -2733,7 +2733,7 @@
       "name": "Bulgarian Pop — Discover",
       "description": "🎧 Bulgarian Pop Discovery — a curated mix blending fresh Bulgarian Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:57.105921+00:00",
-      "last_updated": "2026-08-28T21:17:19.470040+00:00",
+      "last_updated": "2026-08-29T15:23:50.434435+00:00",
       "tracks": [
         {
           "youtube_video_id": "PybjeAvIfck",
@@ -2879,7 +2879,7 @@
       "name": "Bulgarian Hip-Hop — Discover",
       "description": "🎧 Bulgarian Hip-Hop Discovery — a curated mix blending fresh Bulgarian Hip-Hop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:58:19.215922+00:00",
-      "last_updated": "2026-08-28T21:17:20.656020+00:00",
+      "last_updated": "2026-08-29T15:23:52.088843+00:00",
       "tracks": [
         {
           "youtube_video_id": "VInwR3nq_Uw",
@@ -2992,7 +2992,7 @@
       "name": "Bulgarian Folk — Discover",
       "description": "🎧 Bulgarian Folk Discovery — a curated mix blending fresh Bulgarian Folk picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:58:21.958822+00:00",
-      "last_updated": "2026-08-22T11:13:39.118530+00:00",
+      "last_updated": "2026-08-29T15:23:52.870747+00:00",
       "tracks": [
         {
           "youtube_video_id": "r-DJKOhYoYs",
