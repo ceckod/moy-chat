@@ -26,8 +26,16 @@ async function fetchTimeout(url, options = {}, ms = 15000) {
 // Ако е зададен Proxy URL в Настройки, минаваме заявките през него (полезно
 // при CORS грешки, напр. с някои Imagen endpoint-и). Прокси-то се очаква да
 // приема ?target=ORIGINAL_URL и да препраща метод/хедъри/тяло 1:1 към него.
+//
+// Ако НЕ е зададен собствен Proxy URL, автоматично падаме към безплатна
+// публична CORS прокси услуга (CodeTabs, https://codetabs.com/cors-proxy/),
+// без нужда потребителят да си вдига и поддържа собствен Cloudflare Worker.
+// Ограничения на CodeTabs: само GET заявки, ~5 заявки/сек, до 5MB отговор —
+// напълно достатъчно за случайно четене на HyperFollow/DistroKid страници.
+const PUBLIC_CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
 function proxied(url) {
   const k = Keys.load();
-  if (!k.proxyUrl) return url;
-  return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
+  if (k.proxyUrl) return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
+  return `${PUBLIC_CORS_PROXY}${encodeURIComponent(url)}`;
 }
