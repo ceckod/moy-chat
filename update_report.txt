@@ -1,5 +1,5 @@
 CDB UPDATE REPORT
-Timestamp: 20260830-085256
+Timestamp: 20260830-090632
 
 Changed:
   index.html
@@ -9,6 +9,7 @@ Changed:
 Added:
   system-check.js
   ╨ó╨╡╤à╨╜╨╕╤ç╨╡╤ü╨║╨╕-╨╛╨┤╨╕╤é-CDB-Dashboard.md
+  cdb-proxy-worker.js
   distrokid-bridge/bridge.js
   distrokid-bridge/README.md
   distrokid-bridge/background.js
