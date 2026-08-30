@@ -1,16 +1,20 @@
 CDB UPDATE REPORT
-Timestamp: 20260830-084236
+Timestamp: 20260830-085256
 
 Changed:
   index.html
+  update_report.txt
   js/shorts-studio.js
 
 Added:
+  system-check.js
   ╨ó╨╡╤à╨╜╨╕╤ç╨╡╤ü╨║╨╕-╨╛╨┤╨╕╤é-CDB-Dashboard.md
   distrokid-bridge/bridge.js
   distrokid-bridge/README.md
   distrokid-bridge/background.js
   distrokid-bridge/manifest.json
+  js/code-check.js
+  data/system-check-manifest.json
   drafts/╨Æ╨á╨ò╨£╨ò╨¥╨¥╨É ╨ƒ╨É╨ƒ╨Ü╨É.txt
 
 Removed:
