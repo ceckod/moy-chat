@@ -540,9 +540,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "H4qTtLyivcM",
+          "title": "Pakisabi Na Lang | The Company (Soulful R&B cover) #REINEMUSIC",
+          "channel": "REINE MUSIC Official",
+          "published_at": "2026-07-01T22:00:02Z",
+          "views": 281258,
+          "duration_seconds": 260,
+          "discovered_at": "2026-08-30T15:07:47.723511+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:47.800171+00:00"
+      "last_search_at": "2026-08-30T15:07:47.723647+00:00"
     },
     "rap": {
       "candidates": [
@@ -1234,7 +1247,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:49.500259+00:00"
+      "last_search_at": "2026-08-30T15:07:49.539455+00:00"
     },
     "pop": {
       "candidates": [
@@ -1716,7 +1729,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:50.328926+00:00"
+      "last_search_at": "2026-08-30T15:07:50.472239+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2205,7 +2218,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:51.271509+00:00"
+      "last_search_at": "2026-08-30T15:07:52.064451+00:00"
     },
     "dance": {
       "candidates": [
@@ -2807,7 +2820,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:51.987357+00:00"
+      "last_search_at": "2026-08-30T15:07:52.901464+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3827,7 +3840,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:48.692030+00:00"
+      "last_search_at": "2026-08-30T15:07:48.625284+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4056,9 +4069,22 @@
           "used_in": [
             "Bulgarian Pop"
           ]
+        },
+        {
+          "video_id": "bRGd182ye0M",
+          "title": "CenLis - DELIORMAN / Делиорман ♫ █▬█ █ ▀█▀ ♫ (Official Music Video)",
+          "channel": "CenLis",
+          "published_at": "2026-07-22T15:00:03Z",
+          "views": 380206,
+          "duration_seconds": 213,
+          "discovered_at": "2026-08-30T15:07:51.247658+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-23T15:52:17.437623+00:00"
+      "last_search_at": "2026-08-30T15:07:51.247796+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [
