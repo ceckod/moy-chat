@@ -1,100 +1,46 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-24T08:49:59.119853+00:00",
+  "generated_at": "2026-08-31T15:54:59.161629+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "sam smith",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "pooh shiesty",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "kanye west",
+      "term": "ice spice",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "evel knievel",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "rap battles",
+      "term": "rod wave",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "belly gang",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "epic rap",
+      "term": "lil yachty",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "pink blush",
+      "term": "love you",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "constant companion",
+      "term": "leo rosiori",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "deep house",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "dolly babe",
-      "confirmed_by": [
-        "wikipedia"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "elvis presley",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "can help",
+      "term": "lil durk",
       "confirmed_by": [
         "musicbrainz"
       ],
