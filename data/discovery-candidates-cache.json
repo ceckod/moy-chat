@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:15.482835+00:00"
+      "last_search_at": "2026-09-02T14:50:39.088619+00:00"
     },
     "rap": {
       "candidates": [
@@ -1247,7 +1247,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:17.388855+00:00"
+      "last_search_at": "2026-09-02T14:50:41.023236+00:00"
     },
     "pop": {
       "candidates": [
@@ -1729,7 +1729,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:18.219659+00:00"
+      "last_search_at": "2026-09-02T14:50:41.795649+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2218,7 +2218,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:19.256183+00:00"
+      "last_search_at": "2026-09-02T14:50:42.799991+00:00"
     },
     "dance": {
       "candidates": [
@@ -2820,7 +2820,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:20.041189+00:00"
+      "last_search_at": "2026-09-02T14:50:43.601504+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3838,9 +3838,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "Peyji40gNpI",
+          "title": "David Guetta ft Rita Ora - Love Me Always(AI Music Video)",
+          "channel": "LOVE ROMANCE MUSIC 🎶 ",
+          "published_at": "2026-08-29T13:03:21Z",
+          "views": 15680,
+          "duration_seconds": 521,
+          "discovered_at": "2026-09-02T14:50:40.020400+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-01T15:20:16.423745+00:00"
+      "last_search_at": "2026-09-02T14:50:40.020499+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
