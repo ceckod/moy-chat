@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:39.088619+00:00"
+      "last_search_at": "2026-09-03T14:50:05.255365+00:00"
     },
     "rap": {
       "candidates": [
@@ -1247,7 +1247,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:41.023236+00:00"
+      "last_search_at": "2026-09-03T14:50:07.066197+00:00"
     },
     "pop": {
       "candidates": [
@@ -1727,9 +1727,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "aFgRSNs7PB0",
+          "title": "Jessie J - Bang Bang (Lyrics) ft. Ariana Grande & Nicki Minaj",
+          "channel": "FirePlay",
+          "published_at": "2026-03-22T14:26:42Z",
+          "views": 846989,
+          "duration_seconds": 198,
+          "discovered_at": "2026-09-03T14:50:07.696668+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:41.795649+00:00"
+      "last_search_at": "2026-09-03T14:50:07.696780+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2218,7 +2231,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:42.799991+00:00"
+      "last_search_at": "2026-09-03T14:50:08.492476+00:00"
     },
     "dance": {
       "candidates": [
@@ -2820,7 +2833,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:43.601504+00:00"
+      "last_search_at": "2026-09-03T14:50:09.201810+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3851,9 +3864,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "qQy45Ip_lMQ",
+          "title": "David Guetta feat Rita Ora  - When I’m With You(AI Music Video)",
+          "channel": "LOVE ROMANCE MUSIC 🎶 ",
+          "published_at": "2026-04-17T13:24:26Z",
+          "views": 1254763,
+          "duration_seconds": 445,
+          "discovered_at": "2026-09-03T14:50:06.180023+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-02T14:50:40.020499+00:00"
+      "last_search_at": "2026-09-03T14:50:06.180127+00:00"
     },
     "bulgarian-pop": {
       "candidates": [

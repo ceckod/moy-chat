@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-09-02T14:50:09.663336+00:00",
+  "last_run": "2026-09-03T14:50:03.806326+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -11,7 +11,7 @@
       "name": "R&B — Discover",
       "description": "🎧 R&B Discovery — a curated mix blending fresh R&B picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:27.122509+00:00",
-      "last_updated": "2026-09-02T14:50:39.088765+00:00",
+      "last_updated": "2026-09-03T14:50:05.255524+00:00",
       "tracks": [
         {
           "youtube_video_id": "46p-IxAVJ74",
@@ -877,7 +877,7 @@
       "name": "Pop — Discover",
       "description": "🎧 Pop Discovery — a curated mix blending fresh Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:35.674863+00:00",
-      "last_updated": "2026-08-24T11:19:29.140639+00:00",
+      "last_updated": "2026-09-03T14:50:07.696892+00:00",
       "tracks": [
         {
           "youtube_video_id": "o3FYn6Hsdyw",
@@ -2384,7 +2384,7 @@
       "name": "AI Music — Discover",
       "description": "🎧 AI Music Discovery — a curated mix blending fresh AI Music picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:50.961665+00:00",
-      "last_updated": "2026-09-02T14:50:40.020615+00:00",
+      "last_updated": "2026-09-03T14:50:06.180262+00:00",
       "tracks": [
         {
           "youtube_video_id": "9Txb15fKgjY",
@@ -2733,7 +2733,7 @@
       "name": "Bulgarian Pop — Discover",
       "description": "🎧 Bulgarian Pop Discovery — a curated mix blending fresh Bulgarian Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:57.105921+00:00",
-      "last_updated": "2026-09-02T14:50:42.005048+00:00",
+      "last_updated": "2026-09-03T14:50:07.841901+00:00",
       "tracks": [
         {
           "youtube_video_id": "PybjeAvIfck",
@@ -2879,7 +2879,7 @@
       "name": "Bulgarian Hip-Hop — Discover",
       "description": "🎧 Bulgarian Hip-Hop Discovery — a curated mix blending fresh Bulgarian Hip-Hop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:58:19.215922+00:00",
-      "last_updated": "2026-09-02T14:50:43.752983+00:00",
+      "last_updated": "2026-09-03T14:50:09.339422+00:00",
       "tracks": [
         {
           "youtube_video_id": "VInwR3nq_Uw",
