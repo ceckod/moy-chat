@@ -1,20 +1,177 @@
 CDB UPDATE REPORT
-Timestamp: 20260904-075224
+Timestamp: 20260904-085329
 
 Changed:
-  update_report.txt
   index.html
-  README.md
+  shorts-studio.js
 
 Added:
-  none
+  gemini.js
 
 Removed:
   none
 
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
+  ai-helpers.js
+  update_engine.py
+  sw.js
+  ai.html
+  app-state.js
+  CDB-Dashboard.md
+  step4.js
+  REMOVE_MISSING
+  app-state.test.mjs
+  ai-cache.js
+  manifest.json
+  quota-tracker.js
+  vault-keys.test.mjs
+  site-ai-agent.html
+  config.json
+  ai-provider-order.js
+  viz.html
+  #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
+  aichat.html
+  load-app.mjs
+  ╨ó╨╡╤à╨╜╨╕╤ç╨╡╤ü╨║╨╕-╨╛╨┤╨╕╤é-CDB-Dashboard.md
+  track-record.js
+  ARCHITECTURE.md
+  ui-bootstrap.js
+  settings.js
+  update_report.txt
+  ai-call-log.js
+  stats.js
+  step2.js
+  package.json
+  AUDIT_PROGRESS.md
+  step1.js
+  site-ai.html
+  app.js
+  project-archive.js
+  .gitignore
+  MODULE-MAP.md
+  viral-lab.js
+  quick-upload.js
+  update.zip
+  nav.js
+  PROJECT_STATE.md
+  gemini-validator.js
+  model-pref.js
+  README.md
+  storage.js
+  system-update.js
+  step3.js
+  lyrics-history.js
+  PHASE_0.5_STATUS_SongIntelligence.md
+  visualizer.html
   Технически-одит-CDB-Dashboard.md
+  prefs.js
+  data/niche-scores-history.json
+  data/discovery-log.json
+  data/playlists-state.json
+  data/track-performance.json
+  data/trends-history.json
+  data/discovery-config.json
+  data/releases-catalog-cache.json
+  data/discovery-dry-run-preview.json
+  data/metadata-suggestions.json
+  data/discovered-niches.json
+  data/stats-history.json
+  data/catalog.json
+  data/discovery-candidates-cache.json
+  drafts/#U0412#U0420#U0415#U041c#U0415#U041d#U041d#U0410 #U041f#U0410#U041f#U041a#U0410.txt
   drafts/ВРЕМЕННА ПАПКА.txt
+  drafts/╨Æ╨á╨ò╨£╨ò╨¥╨¥╨É ╨ƒ╨É╨ƒ╨Ü╨É.txt
+  helpers/load-app.mjs
+  ai-model-finder/check-keys.mjs
+  ai-model-finder/index.html
+  ai-model-finder/app.js
+  ai-model-finder/worker.js
+  ai-model-finder/README.md
+  ai-model-finder/ai-models.json
+  ai-model-finder/keys.json
+  ai-model-finder/scraper.mjs
+  incoming/.gitkeep
+  incoming/README.md
+  scripts/_secret_scan.py
+  scripts/youtube_discovery_engine.py
+  scripts/track_niche_scores.py
+  scripts/_youtube_common.py
+  scripts/catalog_bootstrap.py
+  scripts/cleanup_dead_files.py
+  scripts/youtube_oauth_bootstrap.py
+  scripts/discover_niches.py
+  scripts/track_trends.py
+  scripts/track_stats.py
+  scripts/clock-and-keys.js
+  scripts/metadata_optimizer.py
+  js/ai-helpers.js
+  js/network.js
+  js/agent-roster.js
+  js/app-state.js
+  js/youtube.js
+  js/niche-scoring.js
+  js/auth-gate.js
+  js/step4.js
+  js/ai-cache.js
+  js/quota-tracker.js
+  js/suno-preview.js
+  js/niche-toolkit.js
+  js/ai-provider-order.js
+  js/idea-vault.js
+  js/app-log.js
+  js/ai-chat.js
+  js/track-record.js
+  js/ui-bootstrap.js
+  js/system-test.js
+  js/metadata-optimizer.js
+  js/release-roadmap.js
+  js/settings.js
+  js/song-lab.js
+  js/niche-data-sources.js
+  js/ai-call-log.js
+  js/stats.js
+  js/step2.js
+  js/lyrics-humanizer.js
+  js/learning-loop.js
+  js/cost-tracker.js
+  js/agent-registry.js
+  js/step1.js
+  js/project-archive.js
+  js/shorts-studio.js
+  js/viral-lab.js
+  js/quick-upload.js
+  js/nav.js
+  js/system-log.js
+  js/gemini-validator.js
+  js/model-pref.js
+  js/dashboard.js
+  js/storage.js
+  js/system-update.js
+  js/step3.js
+  js/lyrics-history.js
+  js/youtube-discovery.js
+  js/prefs.js
+  test/load-niche-scoring.mjs
+  test/app-state.test.mjs
+  test/providers-fallback.test.mjs
+  test/niche-scoring.test.mjs
+  test/load-lyrics-humanizer.mjs
+  test/load-provider.mjs
+  test/load-network.mjs
+  test/lyrics-humanizer.test.mjs
+  test/network.test.mjs
+  js/providers/model-finder.js
+  js/providers/pollinations-image.js
+  js/providers/fallback-loop.js
+  js/providers/gemini.js
+  js/providers/cloudflare-image.js
+  js/providers/code-logo.js
+  js/providers/musicgen.js
+  js/providers/subtitles.js
+  js/providers/openrouter.js
+  js/providers/claude.js
+  js/ui/guard-click.js
+  js/ui/toast.js
 
 Critical files check:
   PASS

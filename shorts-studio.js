@@ -35,6 +35,23 @@ const ShortsStudio = {
   _msgBound: false,
   _renderQueueBusy: false,
 
+  // Локален GET-only CORS прокси fallback — САМО за findLinks()/enrichLibrary()
+  // в този файл (четене на HyperFollow страница + Spotify/iTunes search, и
+  // трите винаги GET). Общото proxied() в js/network.js нарочно вече НЕ прави
+  // автоматичен fallback (виж коментара там) — премахнато на 2026-09-04, защото
+  // старата публична CodeTabs прокси поддържа само GET, а AI provider-ите
+  // (Gemini/Claude/OpenRouter) викат POST през същата функция, което висеше
+  // безкрайно ("чакам отговор, няма такъв" в AI Чат/Системен тест). Тук obаче
+  // ВСИЧКИ извиквания са GET, затова е безопасно да ползваме CodeTabs локално,
+  // без да пипаме споделения proxied() и без риск да върнем AI бъга.
+  // Ако потребителят е задал собствен Proxy URL в Настройки, той си остава
+  // с приоритет (същото поведение като преди).
+  _getProxied(url) {
+    const k = Keys.load();
+    if (k.proxyUrl) return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
+    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+  },
+
   onAudioSelected(input) {
     const f = input.files[0];
     const infoEl = document.getElementById("ssAudioInfo");
@@ -82,6 +99,92 @@ const ShortsStudio = {
     catch (e) { return []; }
   },
 
+  // Слива МАСИВ от {url, platforms} записи в текущата библиотека (по url) —
+  // споделена логика между importEnrichedLinks() (ръчно пейстнат JSON) и
+  // enrichLibraryViaGemini() (автоматично, през Gemini url_context). Не
+  // трие вече намерени полета, само допълва/презаписва подадените ключове.
+  _mergePlatformsIntoLibrary(items) {
+    const lib = this._loadDistrokidLibrary();
+    let matched = 0, skipped = 0;
+    for (const item of (items || [])) {
+      if (!item || !item.url || !item.platforms) { skipped++; continue; }
+      const entry = lib.find(e => e.url === item.url);
+      if (!entry) { skipped++; continue; }
+      entry.platforms = { ...entry.platforms, ...item.platforms };
+      entry.spotifyUrl = entry.platforms.spotify || entry.spotifyUrl || "";
+      entry.appleUrl = entry.platforms.apple || entry.appleUrl || "";
+      entry.youtubeUrl = entry.platforms.youtube || entry.youtubeUrl || "";
+      matched++;
+    }
+    try { localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(lib)); } catch (err) { /* не е фатално */ }
+    return { matched, skipped };
+  },
+
+  // Импортира РЪЧНО намерени платформени линкове (напр. изтеглени от Claude
+  // директно, докато HyperFollow четенето през Worker-a е блокирано от
+  // DistroKid's Cloudflare защита — виж бележката в _fetchPlatformLinksFromPage).
+  // Очакван формат в textarea #ssEnrichedLinksPaste: JSON масив
+  //   [{ "url": "<същия HyperFollow url, както е в библиотеката>",
+  //      "platforms": { "spotify": "...", "tidal": "...", ... } }, ...]
+  importEnrichedLinks() {
+    const el = document.getElementById("ssEnrichedLinksPaste");
+    const statusEl = document.getElementById("ssEnrichedLinksStatus");
+    if (!el) return;
+    let parsed;
+    try { parsed = JSON.parse(el.value); }
+    catch (e) { if (statusEl) statusEl.textContent = "❌ Невалиден JSON: " + e.message; return; }
+    if (!Array.isArray(parsed)) { if (statusEl) statusEl.textContent = "❌ Очаквам JSON масив от {url, platforms}"; return; }
+
+    const { matched, skipped } = this._mergePlatformsIntoLibrary(parsed);
+    if (statusEl) statusEl.textContent = `✅ Обновени ${matched} песни${skipped ? ` (${skipped} пропуснати — url не съвпадна с библиотеката)` : ""}.`;
+    toast(`✅ Импортирани линкове за ${matched} песни`);
+    el.value = "";
+  },
+
+  // Автоматично обогатяване през Gemini url_context tool (виж
+  // callGeminiUrlContext в providers/gemini.js) — Google's собствена
+  // инфраструктура чете HyperFollow страниците вместо нашия Worker,
+  // заобикаляйки WAF блокировката на distrokid.com (403 "Sorry, you have
+  // been blocked"). Групира библиотеката на пачове по 15 URL-а наведнъж
+  // (лимитът на url_context е 20, оставяме си margin), праща всеки пач с
+  // изричен JSON-only prompt, парсва отговора с extractJson() и слива
+  // резултата в библиотеката. Пропуска записи без url. НЕ хвърля при
+  // грешка на отделен пач — логва я и продължава със следващия.
+  async enrichLibraryViaGemini() {
+    const k = Keys.load();
+    if (!k.gemini) return toast("⚠️ Липсва Gemini API ключ (виж Настройки)");
+    const lib = this._loadDistrokidLibrary().filter(e => e.url);
+    if (!lib.length) return toast("Няма записи с url в библиотеката — импортирай я първо");
+
+    const statusEl = document.getElementById("ssLibEnrichStatus");
+    const BATCH = 15;
+    let totalMatched = 0;
+
+    const platformKeys = Object.keys(this._PLATFORM_PATTERNS).concat(["apple"]).filter((v, i, a) => a.indexOf(v) === i);
+    const prompt = `Ти анализираш DistroKid HyperFollow страници (музикални landing страници с бутони за различни стрийминг платформи).
+За ВСЕКИ от подадените по-долу URL-и, посети страницата и извлечи РЕАЛНИТЕ линкове (href атрибути) към следните платформи, ако присъстват: ${platformKeys.join(", ")}.
+НЕ измисляй линкове — само точно каквото реално намериш на всяка страница. Ако платформа липсва за дадена песен, просто пропусни ключа ѝ.
+Върни САМО валиден JSON масив, БЕЗ никакъв друг текст, коментари или markdown ограждане, точно в този формат:
+[{"url": "<точно същия URL, както е подаден>", "platforms": {"spotify": "https://...", "apple": "https://...", "deezer": "https://..."}}]`;
+
+    for (let i = 0; i < lib.length; i += BATCH) {
+      const batch = lib.slice(i, i + BATCH);
+      if (statusEl) statusEl.textContent = `⏳ Gemini чете страници ${i + 1}–${Math.min(i + BATCH, lib.length)} от ${lib.length}...`;
+      try {
+        const raw = await callGeminiUrlContext(prompt, batch.map(e => e.url));
+        const parsed = extractJson(raw);
+        if (!Array.isArray(parsed)) throw new Error("Отговорът не е JSON масив");
+        const { matched } = this._mergePlatformsIntoLibrary(parsed);
+        totalMatched += matched;
+      } catch (e) {
+        this.log(`⚠️ Gemini url_context пач ${i + 1}–${Math.min(i + BATCH, lib.length)}: ${e.message}`);
+      }
+    }
+
+    if (statusEl) statusEl.textContent = `✅ Gemini обогати ${totalMatched} песни (от ${lib.length} с url).`;
+    toast(`✅ Готово — Gemini намери линкове за ${totalMatched} песни`);
+  },
+
   // Минава през ЦЯЛАТА импортирана DistroKid библиотека (не само текущата
   // песен). Приоритет 1: чете директно HyperFollow страницата на всяка
   // песен (entry.url) и извлича ВСИЧКИ вградени платформени линкове наведнъж
@@ -121,7 +224,7 @@ const ShortsStudio = {
       if (!e.platforms.spotify && spotifyToken) {
         try {
           const q = `track:${e.song} artist:${e.artist}`;
-          const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+          const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
             headers: { "Authorization": `Bearer ${spotifyToken}` }
           }, 15000);
           if (res.ok) { const d = await res.json(); const u = d.tracks?.items?.[0]?.external_urls?.spotify; if (u) e.platforms.spotify = u; }
@@ -130,8 +233,19 @@ const ShortsStudio = {
       if (!e.platforms.apple) {
         try {
           const term = `${e.artist} ${e.song}`;
-          const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+          const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
           if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
+        } catch (err) { /* тихо */ }
+      }
+      // Deezer public search API — не изисква ключ и (за разлика от
+      // distrokid.com) не е зад WAF, който блокира Worker-а ни, затова е
+      // надежден резерв, ако страницата не се прочете (виж бележката горе
+      // за 403 "Sorry, you have been blocked" от distrokid.com).
+      if (!e.platforms.deezer) {
+        try {
+          const q = `${e.artist} ${e.song}`;
+          const res = await fetchTimeout(this._getProxied(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=1`), {}, 15000);
+          if (res.ok) { const d = await res.json(); const u = d.data?.[0]?.link; if (u) e.platforms.deezer = u; }
         } catch (err) { /* тихо */ }
       }
       if (!e.platforms.youtube && ytKey) {
@@ -301,7 +415,7 @@ const ShortsStudio = {
       try {
         const token = await NicheToolkit._getSpotifyToken();
         const q = artist ? `track:${song} artist:${artist}` : song;
-        const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+        const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
           headers: { "Authorization": `Bearer ${token}` }
         }, 15000);
         if (res.ok) {
@@ -326,7 +440,7 @@ const ShortsStudio = {
     if (!pageLinks || !pageLinks.apple) {
       try {
         const term = artist ? `${artist} ${song}` : song;
-        const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+        const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
         if (res.ok) {
           const data = await res.json();
           const track = data.results?.[0];
@@ -351,7 +465,7 @@ const ShortsStudio = {
       if (hfUsername) {
         try {
           const hfUrl = `https://hyperfollow.com/${encodeURIComponent(hfUsername)}`;
-          const res = await fetchTimeout(proxied(hfUrl), {}, 15000);
+          const res = await fetchTimeout(this._getProxied(hfUrl), {}, 15000);
           if (res.ok) {
             document.getElementById("ssLinkDistrokid").value = hfUrl;
             foundAny = true;
@@ -375,9 +489,13 @@ const ShortsStudio = {
 
   // Всички платформи, които DistroKid може да вгради в HyperFollow страница
   // (не само Spotify/Apple) — по домейн, за общо извличане с regex.
+  // ЗАБЕЛЕЖКА: apple покрива И двата домейна, които DistroKid реално ползва —
+  // music.apple.com (по-новите страници) И itunes.apple.com (все още срещан
+  // формат, вкл. отделния "iTunes" бутон до "Apple Music") — преди се
+  // хващаше само music.apple.com и itunes.apple.com линкове се губеха.
   _PLATFORM_PATTERNS: {
     spotify: /href="(https:\/\/open\.spotify\.com\/[^"]+)"/i,
-    apple: /href="(https:\/\/music\.apple\.com\/[^"]+)"/i,
+    apple: /href="(https:\/\/(?:music|itunes)\.apple\.com\/[^"]+)"/i,
     youtube: /href="(https:\/\/(?:www\.)?youtube\.com\/[^"]+|https:\/\/youtu\.be\/[^"]+)"/i,
     youtubeMusic: /href="(https:\/\/music\.youtube\.com\/[^"]+)"/i,
     deezer: /href="(https:\/\/www\.deezer\.com\/[^"]+)"/i,
@@ -395,20 +513,63 @@ const ShortsStudio = {
   },
   _platformLabel(key) { return this._PLATFORM_LABELS[key] || key; },
 
+  // Декодира HTML entities (&#47; &#61; &#58; и т.н.) в нормален текст.
+  // Някои HyperFollow страници сервират href стойностите entity-encoded
+  // (напр. https:&#47;&#47;open.spotify.com&#47;...), които regex-ите по-долу
+  // няма да хванат, ако не се декодират първо.
+  _decodeHtml(str) {
+    const el = document.createElement("textarea");
+    el.innerHTML = str;
+    return el.value;
+  },
+
   // Чете реалната HyperFollow страница на песента и извлича ВСИЧКИ
   // платформени линкове, вградени в HTML-я ѝ (DistroKid ги слага директно
   // в страницата, за да работят Facebook/Instagram/Twitter preview-ите —
   // затова ги има без нужда от JS рендиране). Връща {spotify: "...", ...}
   // само с намерените платформи (празен обект, ако страницата не се зареди).
+  // Първо декодира HTML entities (виж _decodeHtml), после пробва найдо-
+  // надеждния източник (data-hyperfollow-store атрибута на всеки бутон —
+  // разграничава apple/itunes изрично), и накрая — само за платформи, все
+  // още ненамерени — общите regex-и по домейн като резерва.
   async _fetchPlatformLinksFromPage(url) {
     const found = {};
     try {
-      const res = await fetchTimeout(proxied(url), {}, 15000);
-      if (!res.ok) return found;
-      const html = await res.text();
+      const res = await fetchTimeout(this._getProxied(url), {}, 15000);
+      // ВАЖНО: логваме дори при "тих" HTTP провал (прокси 502/522/403 и
+      // т.н.) — преди това тук просто се връщаше празен обект без следа
+      // в лога, и изглеждаше все едно страницата няма линкове, докато
+      // реално проксито изобщо не е доставило съдържанието.
+      if (!res.ok) {
+        this.log(`⚠️ HyperFollow страницата отговори с ${res.status} (през ${this._getProxied(url).split("?")[0]}) — минавам само на fallback търсене по име.`);
+        return found;
+      }
+      const html = this._decodeHtml(await res.text());
+
+      // Първичен източник: data-hyperfollow-store атрибут (най-надежден,
+      // разграничава Apple Music от iTunes изрично).
+      const storeRe = /data-testid="hyperfollow-store-link"[^>]*data-hyperfollow-store="([^"]+)"[^>]*href="([^"]+)"/g;
+      let m;
+      while ((m = storeRe.exec(html)) !== null) {
+        const key = m[1] === "applemusic" ? "apple" : m[1];
+        found[key] = m[2];
+      }
+
+      // Резервен източник: regex по домейн — само за платформи, които
+      // горният атрибут не покри (по-стари страници без този атрибут).
       for (const [key, re] of Object.entries(this._PLATFORM_PATTERNS)) {
-        const m = html.match(re);
-        if (m) found[key] = m[1];
+        if (found[key]) continue;
+        const mm = html.match(re);
+        if (mm) found[key] = mm[1];
+      }
+
+      // Диагностика: ако страницата се прочете успешно, но НИЩО не се
+      // намери (нито по атрибут, нито по regex) — почти сигурно DistroKid
+      // е сменил HTML структурата си, или проксито връща error/placeholder
+      // страница вместо реалния HyperFollow HTML. Логваме дължина + откъс,
+      // за да е ясно кое от двете е.
+      if (!Object.keys(found).length) {
+        this.log(`⚪ HyperFollow страницата се прочете (${html.length} символа), но не намерих нито един линк в нея — откъс: "${html.replace(/\s+/g, " ").slice(0, 160)}..."`);
       }
     } catch (e) { this.log("⚠️ Четене на HyperFollow страницата: " + e.message); }
     return found;
