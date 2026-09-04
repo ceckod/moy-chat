@@ -1,10 +1,9 @@
 CDB UPDATE REPORT
-Timestamp: 20260904-074345
+Timestamp: 20260904-074710
 
 Changed:
-  index.html
   update_report.txt
-  ai-model-finder/ai-models.json
+  index.html
 
 Added:
   none
