@@ -158,6 +158,19 @@ function _classifyGeminiError(e, model, retries) {
       switchMsg: (next) => `⚠️ Gemini "${model}" вече не съществува — превключвам на "${next}"...`
     };
   }
+  // 400 "Url Context as tool is not enabled for this model" (и подобни
+  // "tool not enabled/supported" грешки) — моделът просто не поддържа
+  // конкретния tool (url_context/google_search и т.н.), а не че ключът/
+  // промптът са невалидни. Не махаме модела от ростъра завинаги (важи
+  // само за ТОЗИ tool), само превключваме на следващия за тази заявка.
+  if (e.status === 400 && /tool.*(not enabled|not supported|is not enabled)/i.test(e.message)) {
+    return {
+      action: "next",
+      note: "400 — tool не се поддържа от този модел",
+      removeFromRoster: false,
+      switchMsg: (next) => `⚠️ Gemini "${model}" не поддържа този tool — превключвам на "${next}"...`
+    };
+  }
   return { action: "abort" };
 }
 
