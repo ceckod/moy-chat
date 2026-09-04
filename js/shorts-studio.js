@@ -439,7 +439,14 @@ const ShortsStudio = {
     const found = {};
     try {
       const res = await fetchTimeout(this._getProxied(url), {}, 15000);
-      if (!res.ok) return found;
+      // ВАЖНО: логваме дори при "тих" HTTP провал (прокси 502/522/403 и
+      // т.н.) — преди това тук просто се връщаше празен обект без следа
+      // в лога, и изглеждаше все едно страницата няма линкове, докато
+      // реално проксито изобщо не е доставило съдържанието.
+      if (!res.ok) {
+        this.log(`⚠️ HyperFollow страницата отговори с ${res.status} (през ${this._getProxied(url).split("?")[0]}) — минавам само на fallback търсене по име.`);
+        return found;
+      }
       const html = this._decodeHtml(await res.text());
 
       // Първичен източник: data-hyperfollow-store атрибут (най-надежден,
@@ -457,6 +464,15 @@ const ShortsStudio = {
         if (found[key]) continue;
         const mm = html.match(re);
         if (mm) found[key] = mm[1];
+      }
+
+      // Диагностика: ако страницата се прочете успешно, но НИЩО не се
+      // намери (нито по атрибут, нито по regex) — почти сигурно DistroKid
+      // е сменил HTML структурата си, или проксито връща error/placeholder
+      // страница вместо реалния HyperFollow HTML. Логваме дължина + откъс,
+      // за да е ясно кое от двете е.
+      if (!Object.keys(found).length) {
+        this.log(`⚪ HyperFollow страницата се прочете (${html.length} символа), но не намерих нито един линк в нея — откъс: "${html.replace(/\s+/g, " ").slice(0, 160)}..."`);
       }
     } catch (e) { this.log("⚠️ Четене на HyperFollow страницата: " + e.message); }
     return found;
