@@ -392,9 +392,13 @@ const ShortsStudio = {
 
   // Всички платформи, които DistroKid може да вгради в HyperFollow страница
   // (не само Spotify/Apple) — по домейн, за общо извличане с regex.
+  // ЗАБЕЛЕЖКА: apple покрива И двата домейна, които DistroKid реално ползва —
+  // music.apple.com (по-новите страници) И itunes.apple.com (все още срещан
+  // формат, вкл. отделния "iTunes" бутон до "Apple Music") — преди се
+  // хващаше само music.apple.com и itunes.apple.com линкове се губеха.
   _PLATFORM_PATTERNS: {
     spotify: /href="(https:\/\/open\.spotify\.com\/[^"]+)"/i,
-    apple: /href="(https:\/\/music\.apple\.com\/[^"]+)"/i,
+    apple: /href="(https:\/\/(?:music|itunes)\.apple\.com\/[^"]+)"/i,
     youtube: /href="(https:\/\/(?:www\.)?youtube\.com\/[^"]+|https:\/\/youtu\.be\/[^"]+)"/i,
     youtubeMusic: /href="(https:\/\/music\.youtube\.com\/[^"]+)"/i,
     deezer: /href="(https:\/\/www\.deezer\.com\/[^"]+)"/i,
@@ -412,20 +416,47 @@ const ShortsStudio = {
   },
   _platformLabel(key) { return this._PLATFORM_LABELS[key] || key; },
 
+  // Декодира HTML entities (&#47; &#61; &#58; и т.н.) в нормален текст.
+  // Някои HyperFollow страници сервират href стойностите entity-encoded
+  // (напр. https:&#47;&#47;open.spotify.com&#47;...), които regex-ите по-долу
+  // няма да хванат, ако не се декодират първо.
+  _decodeHtml(str) {
+    const el = document.createElement("textarea");
+    el.innerHTML = str;
+    return el.value;
+  },
+
   // Чете реалната HyperFollow страница на песента и извлича ВСИЧКИ
   // платформени линкове, вградени в HTML-я ѝ (DistroKid ги слага директно
   // в страницата, за да работят Facebook/Instagram/Twitter preview-ите —
   // затова ги има без нужда от JS рендиране). Връща {spotify: "...", ...}
   // само с намерените платформи (празен обект, ако страницата не се зареди).
+  // Първо декодира HTML entities (виж _decodeHtml), после пробва найдо-
+  // надеждния източник (data-hyperfollow-store атрибута на всеки бутон —
+  // разграничава apple/itunes изрично), и накрая — само за платформи, все
+  // още ненамерени — общите regex-и по домейн като резерва.
   async _fetchPlatformLinksFromPage(url) {
     const found = {};
     try {
       const res = await fetchTimeout(this._getProxied(url), {}, 15000);
       if (!res.ok) return found;
-      const html = await res.text();
+      const html = this._decodeHtml(await res.text());
+
+      // Първичен източник: data-hyperfollow-store атрибут (най-надежден,
+      // разграничава Apple Music от iTunes изрично).
+      const storeRe = /data-testid="hyperfollow-store-link"[^>]*data-hyperfollow-store="([^"]+)"[^>]*href="([^"]+)"/g;
+      let m;
+      while ((m = storeRe.exec(html)) !== null) {
+        const key = m[1] === "applemusic" ? "apple" : m[1];
+        found[key] = m[2];
+      }
+
+      // Резервен източник: regex по домейн — само за платформи, които
+      // горният атрибут не покри (по-стари страници без този атрибут).
       for (const [key, re] of Object.entries(this._PLATFORM_PATTERNS)) {
-        const m = html.match(re);
-        if (m) found[key] = m[1];
+        if (found[key]) continue;
+        const mm = html.match(re);
+        if (mm) found[key] = mm[1];
       }
     } catch (e) { this.log("⚠️ Четене на HyperFollow страницата: " + e.message); }
     return found;
