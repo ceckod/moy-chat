@@ -151,17 +151,6 @@ const ShortsStudio = {
           if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
         } catch (err) { /* тихо */ }
       }
-      // Deezer public search API — не изисква ключ и (за разлика от
-      // distrokid.com) не е зад WAF, който блокира Worker-а ни, затова е
-      // надежден резерв, ако страницата не се прочете (виж бележката горе
-      // за 403 "Sorry, you have been blocked" от distrokid.com).
-      if (!e.platforms.deezer) {
-        try {
-          const q = `${e.artist} ${e.song}`;
-          const res = await fetchTimeout(this._getProxied(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=1`), {}, 15000);
-          if (res.ok) { const d = await res.json(); const u = d.data?.[0]?.link; if (u) e.platforms.deezer = u; }
-        } catch (err) { /* тихо */ }
-      }
       if (!e.platforms.youtube && ytKey) {
         try {
           const q = `${e.artist} ${e.song}`;
