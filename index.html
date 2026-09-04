@@ -453,6 +453,176 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,texta
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 </style>
+<style id="modern-ai-saas-refresh">
+/* =========================================================
+   MODERN AI SAAS / SPOTIFY × SUNO VISUAL REFRESH — v2
+   Visual-only layer. Existing IDs, handlers and JS contracts remain intact.
+   ========================================================= */
+:root{
+  --bg:#07070b;
+  --bg-sidebar:#09090e;
+  --panel:#101015;
+  --panel-solid:#111116;
+  --panel-2:#17171e;
+  --border:#24242d;
+  --border-soft:#19191f;
+  --text:#f7f7f8;
+  --muted:#96969f;
+  --muted-2:#62626c;
+  --p1:#a855f7;
+  --p2:#ec4899;
+  --cyan:#7dd3fc;
+  --green:#4ade80;
+  --amber:#fbbf24;
+  --red:#fb7185;
+  --grad:linear-gradient(135deg,#a855f7 0%,#ec4899 55%,#fb7185 100%);
+  --radius:16px;
+  --radius-sm:11px;
+  --shadow:0 18px 60px rgba(0,0,0,.32);
+}
+html{background:var(--bg);}
+body{
+  background:
+    radial-gradient(900px 500px at 72% -10%,rgba(168,85,247,.10),transparent 60%),
+    radial-gradient(700px 420px at 12% 100%,rgba(236,72,153,.06),transparent 62%),
+    var(--bg);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.32;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.7),transparent 75%);
+}
+.shell{gap:0;}
+.sidebar{
+  width:270px;padding:18px 13px 14px;
+  background:linear-gradient(180deg,rgba(12,12,17,.98),rgba(8,8,12,.98));
+  border-right:1px solid #1e1e25;
+  box-shadow:18px 0 60px rgba(0,0,0,.18);
+}
+.brand{padding:5px 9px 22px;gap:11px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:12px;font-size:17px;
+  box-shadow:0 8px 26px rgba(168,85,247,.28);
+}
+.brand-name{font-size:15px;letter-spacing:-.02em;}
+.brand-sub{font-size:10px;color:#777781;margin-top:2px;}
+.nav-group{margin-top:19px;}
+.nav-label{font-size:9px;letter-spacing:.13em;padding:0 11px;margin-bottom:7px;color:#565660;}
+.nav-btn{
+  color:#8d8d97;padding:10px 11px;border-radius:10px;font-size:12.5px;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.nav-btn:hover{background:#15151b;color:#f4f4f6;transform:translateX(2px);}
+.nav-btn.active{
+  background:linear-gradient(90deg,rgba(168,85,247,.18),rgba(236,72,153,.06));
+  color:#fff;box-shadow:inset 0 0 0 1px rgba(168,85,247,.16);
+}
+.nav-btn.active::before{left:-13px;top:6px;bottom:6px;width:3px;box-shadow:0 0 14px rgba(168,85,247,.75);}
+.nav-btn .ic{font-size:14px;width:18px;}
+.sidebar-footer{border-top:1px solid #1d1d24;padding-top:12px;}
+.theme-row{color:#777781;}
+.user-card{background:#111116;border:1px solid #1f1f27;padding:9px;border-radius:12px;}
+.user-avatar{box-shadow:0 0 0 3px rgba(168,85,247,.10);}
+.main{padding:25px 34px 72px;max-width:1700px;}
+.topbar{margin-bottom:26px;}
+.topbar h1{font-size:25px;letter-spacing:-.035em;}
+.topbar .sub{font-size:12.5px;color:#85858e;}
+.topbar-actions{gap:8px;}
+.topbar-actions select{height:38px!important;background:#101015!important;border-color:#26262e!important;border-radius:11px!important;}
+.pill{background:#101015;border-color:#26262e;padding:7px 12px;border-radius:999px;}
+.icon-btn{background:#101015;border-color:#26262e;border-radius:11px;transition:.18s ease;}
+.icon-btn:hover{background:#19191f;border-color:#393944;transform:translateY(-1px);}
+.btn{border-radius:10px;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;}
+.btn.grad{background:var(--grad);box-shadow:0 8px 24px rgba(168,85,247,.18);}
+.btn.grad:hover{opacity:1;transform:translateY(-1px);box-shadow:0 12px 30px rgba(168,85,247,.26);}
+.btn.ghost{background:#15151b;border-color:#282831;}
+.btn.ghost:hover{background:#1c1c24;border-color:#393944;transform:translateY(-1px);}
+.card{
+  background:linear-gradient(180deg,rgba(18,18,24,.98),rgba(14,14,19,.98));
+  border-color:#25252d;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);
+  transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+.card:hover{border-color:#34343e;box-shadow:0 14px 42px rgba(0,0,0,.20);}
+.section-title{font-size:10px;letter-spacing:.14em;color:#666670;margin:30px 0 13px;}
+.num-card{overflow:hidden;}
+.num-card::after{
+  content:"";position:absolute;width:120px;height:120px;right:-62px;bottom:-72px;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,.13),transparent 65%);pointer-events:none;
+}
+.num-card .ic-badge{background:#191920;border:1px solid #292932;border-radius:11px;}
+.num-card h4{font-size:13px;letter-spacing:-.01em;}
+.num-card p{color:#777781;}
+.n{opacity:.75;}
+input[type=text],input[type=number],input[type=password],textarea,select{
+  background:#0b0b10;border-color:#292932;border-radius:10px;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.12);}
+.hashtags span,.chip{background:#17171e;border-color:#292932;}
+
+/* Dashboard hero / quick action */
+#view-dashboard > .card[style*="background:var(--grad)"]{
+  position:relative;overflow:hidden;min-height:138px;padding:26px 28px!important;
+  background:linear-gradient(120deg,#17111e 0%,#211227 45%,#171016 100%)!important;
+  border:1px solid rgba(168,85,247,.28)!important;border-radius:20px!important;
+  box-shadow:0 20px 70px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+#view-dashboard > .card[style*="background:var(--grad)"]::before{
+  content:"";position:absolute;inset:auto -4% -44px 36%;height:130px;opacity:.72;
+  background:repeating-linear-gradient(90deg,transparent 0 8px,rgba(236,72,153,.18) 9px 11px,transparent 12px 19px);
+  transform:skewY(-4deg);mask-image:linear-gradient(to right,transparent,black 35%,transparent);
+}
+#view-dashboard > .card[style*="background:var(--grad)"]::after{
+  content:"AI MUSIC / CREATE • ANALYZE • RELEASE";position:absolute;right:24px;top:20px;
+  font:600 9px var(--font-mono);letter-spacing:.16em;color:rgba(255,255,255,.34);
+}
+#view-dashboard > .card[style*="background:var(--grad)"] strong{font-size:18px!important;letter-spacing:-.02em;}
+#view-dashboard > .card[style*="background:var(--grad)"] p{max-width:760px;line-height:1.55!important;color:rgba(255,255,255,.62)!important;}
+#view-dashboard > .card[style*="background:var(--grad)"] .btn{position:relative;z-index:2;border-radius:999px!important;padding:10px 18px!important;}
+
+/* Step cards become more like a creator workspace */
+#dashStep1Cards .card,#view-dashboard .grid.cols-5 .card{min-height:190px;display:flex;flex-direction:column;}
+#dashStep1Cards .card p,#view-dashboard .grid.cols-5 .card p{flex:1;}
+#dashStep1Cards .btn,#view-dashboard .grid.cols-5 .btn{margin-top:auto;}
+
+/* Niche / status areas */
+#dashNicheQuick .card{background:#0e0e13;}
+.transition-badge{padding:18px;border-radius:16px;background:linear-gradient(135deg,#111117,#19131e);border:1px solid #29222f;}
+.tb-box{box-shadow:0 0 30px rgba(168,85,247,.18);}
+
+/* Tables, lists and setting rows across all views */
+table{border-color:#27272f!important;}
+th{color:#777781!important;background:#111116!important;}
+td{border-color:#22222a!important;}
+.set-row{border-color:#23232b!important;transition:background .15s ease;}
+.set-row:hover{background:#111117;}
+
+/* AI chat gets the strongest SaaS treatment */
+#view-ai-chat .card{background:#0f0f14;}
+#view-ai-chat textarea{min-height:130px;}
+#aiChatFab{
+  width:50px!important;height:50px!important;border-radius:16px!important;
+  background:var(--grad)!important;box-shadow:0 12px 36px rgba(168,85,247,.35)!important;
+}
+
+/* Light mode remains supported, but cleaner */
+body.theme-light{--bg:#f5f5f7;--bg-sidebar:#fff;--panel:#fff;--panel-solid:#fff;--panel-2:#f0f0f3;--border:#dedee5;--border-soft:#e8e8ed;--text:#18181b;--muted:#686870;--muted-2:#9a9aa3;}
+body.theme-light::before{opacity:.18;}
+body.theme-light .sidebar{background:#fff;box-shadow:none;}
+body.theme-light .card{background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.05);}
+body.theme-light #view-dashboard > .card[style*="background:var(--grad)"]{background:linear-gradient(120deg,#24152f,#431b3d)!important;color:#fff;}
+
+@media (max-width:1100px){.main{padding-left:24px;padding-right:24px;}.sidebar{width:245px;}}
+@media (max-width:760px){
+  .main{padding:16px 14px 54px;}
+  .topbar h1{font-size:20px;}
+  .topbar-actions{width:100%;overflow:auto;padding-bottom:2px;}
+  .topbar-actions .pill{display:none;}
+  #view-dashboard > .card[style*="background:var(--grad)"]{padding:22px!important;min-height:0;}
+  #view-dashboard > .card[style*="background:var(--grad)"]::after{display:none;}
+  #view-dashboard > .card[style*="background:var(--grad)"] strong{font-size:16px!important;}
+}
+</style>
 </head>
    
 <body>
@@ -1771,3 +1941,4 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,texta
    </script>
 </body>
 </html>
+
