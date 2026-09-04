@@ -35,6 +35,23 @@ const ShortsStudio = {
   _msgBound: false,
   _renderQueueBusy: false,
 
+  // Локален GET-only CORS прокси fallback — САМО за findLinks()/enrichLibrary()
+  // в този файл (четене на HyperFollow страница + Spotify/iTunes search, и
+  // трите винаги GET). Общото proxied() в js/network.js нарочно вече НЕ прави
+  // автоматичен fallback (виж коментара там) — премахнато на 2026-09-04, защото
+  // старата публична CodeTabs прокси поддържа само GET, а AI provider-ите
+  // (Gemini/Claude/OpenRouter) викат POST през същата функция, което висеше
+  // безкрайно ("чакам отговор, няма такъв" в AI Чат/Системен тест). Тук obаче
+  // ВСИЧКИ извиквания са GET, затова е безопасно да ползваме CodeTabs локално,
+  // без да пипаме споделения proxied() и без риск да върнем AI бъга.
+  // Ако потребителят е задал собствен Proxy URL в Настройки, той си остава
+  // с приоритет (същото поведение като преди).
+  _getProxied(url) {
+    const k = Keys.load();
+    if (k.proxyUrl) return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
+    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+  },
+
   onAudioSelected(input) {
     const f = input.files[0];
     const infoEl = document.getElementById("ssAudioInfo");
@@ -121,7 +138,7 @@ const ShortsStudio = {
       if (!e.platforms.spotify && spotifyToken) {
         try {
           const q = `track:${e.song} artist:${e.artist}`;
-          const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+          const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
             headers: { "Authorization": `Bearer ${spotifyToken}` }
           }, 15000);
           if (res.ok) { const d = await res.json(); const u = d.tracks?.items?.[0]?.external_urls?.spotify; if (u) e.platforms.spotify = u; }
@@ -130,7 +147,7 @@ const ShortsStudio = {
       if (!e.platforms.apple) {
         try {
           const term = `${e.artist} ${e.song}`;
-          const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+          const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
           if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
         } catch (err) { /* тихо */ }
       }
@@ -301,7 +318,7 @@ const ShortsStudio = {
       try {
         const token = await NicheToolkit._getSpotifyToken();
         const q = artist ? `track:${song} artist:${artist}` : song;
-        const res = await fetchTimeout(proxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+        const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
           headers: { "Authorization": `Bearer ${token}` }
         }, 15000);
         if (res.ok) {
@@ -326,7 +343,7 @@ const ShortsStudio = {
     if (!pageLinks || !pageLinks.apple) {
       try {
         const term = artist ? `${artist} ${song}` : song;
-        const res = await fetchTimeout(proxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+        const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
         if (res.ok) {
           const data = await res.json();
           const track = data.results?.[0];
@@ -351,7 +368,7 @@ const ShortsStudio = {
       if (hfUsername) {
         try {
           const hfUrl = `https://hyperfollow.com/${encodeURIComponent(hfUsername)}`;
-          const res = await fetchTimeout(proxied(hfUrl), {}, 15000);
+          const res = await fetchTimeout(this._getProxied(hfUrl), {}, 15000);
           if (res.ok) {
             document.getElementById("ssLinkDistrokid").value = hfUrl;
             foundAny = true;
@@ -403,7 +420,7 @@ const ShortsStudio = {
   async _fetchPlatformLinksFromPage(url) {
     const found = {};
     try {
-      const res = await fetchTimeout(proxied(url), {}, 15000);
+      const res = await fetchTimeout(this._getProxied(url), {}, 15000);
       if (!res.ok) return found;
       const html = await res.text();
       for (const [key, re] of Object.entries(this._PLATFORM_PATTERNS)) {
