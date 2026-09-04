@@ -238,3 +238,32 @@ async function callGeminiChat(prompt, attachments, useSearch = false) {
 
   return await callGeminiWithFallback(body, k.gemini, 60000);
 }
+
+/* ---------- URL CONTEXT (Gemini чете страници директно от Google's инфраструктура) ----------
+   За разлика от callGemini*() по-горе, тук подаваме `tools: [{ url_context: {} }]`
+   (официален, GA Gemini API tool — https://ai.google.dev/gemini-api/docs/url-context).
+   Google сам изтегля съдържанието на подадените URL-и (до 20 наведнъж) от
+   СВОЯТА собствена мрежова инфраструктура — не от браузъра на потребителя и
+   не през нашия CORS прокси. Полезно точно когато целевата страница блокира
+   Worker/browser трафик с WAF (виж ShortsStudio._fetchPlatformLinksFromPage
+   и бележката там за 403 "Sorry, you have been blocked" от distrokid.com) —
+   Google's fetcher минава по различен мрежов път и често не е засегнат от
+   същата защита.
+   ЗАБЕЛЕЖКА: не всеки Gemini модел поддържа url_context — ако избраният
+   модел го игнорира мълчаливо (връща отговор само от собствените си знания,
+   без реално да е посетил URL-ите), резултатът просто ще е неточен/празен,
+   не хвърля грешка — затова извикващият код (viж ShortsStudio) винаги
+   проверява/валидира резултата, не му вярва сляпо. */
+async function callGeminiUrlContext(prompt, urls) {
+  const k = Keys.load();
+  if (!k.gemini) { toast("⚠️ Липсва Gemini API ключ (виж Настройки)"); throw new Error("no key"); }
+  if (!urls || !urls.length) throw new Error("Няма подадени URL-и за url_context");
+  if (urls.length > 20) throw new Error("url_context поддържа максимум 20 URL-а наведнъж (виж Google документацията)");
+
+  const fullPrompt = `${prompt}\n\nURL-и за анализ:\n${urls.join("\n")}`;
+  const body = {
+    contents: [{ parts: [{ text: fullPrompt }] }],
+    tools: [{ url_context: {} }]
+  };
+  return await callGeminiWithFallback(body, k.gemini, 60000);
+}
