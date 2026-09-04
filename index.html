@@ -355,6 +355,103 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
 ::-webkit-scrollbar{width:8px;height:8px;}
 
+
+/* =========================================================
+   VISUAL REFRESH — premium studio dashboard
+   Purely visual overrides; app logic and IDs remain untouched.
+   ========================================================= */
+:root{
+  --bg:#080914;
+  --bg-sidebar:#0b0c18;
+  --panel-solid:#111326;
+  --panel-2:#171a32;
+  --border:#252946;
+  --border-soft:#1a1d35;
+  --text:#f5f7ff;
+  --muted:#9aa0bd;
+  --muted-2:#656b8d;
+  --p1:#7c5cff;
+  --p2:#ff4fa3;
+  --cyan:#36d9ff;
+  --grad:linear-gradient(135deg,#7657ff 0%,#c653e9 48%,#ff4f9e 100%);
+  --radius:16px;
+  --radius-sm:11px;
+}
+body{
+  background:
+    radial-gradient(900px 520px at 72% -8%,rgba(124,92,255,.15),transparent 62%),
+    radial-gradient(720px 460px at 100% 80%,rgba(255,79,163,.08),transparent 62%),
+    var(--bg);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.32;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:36px 36px;
+  mask-image:linear-gradient(to bottom,black,transparent 88%);
+}
+.sidebar{
+  width:264px;padding:22px 15px;background:rgba(10,11,23,.82);
+  border-right:1px solid rgba(125,132,190,.13);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:18px 0 50px rgba(0,0,0,.12);
+}
+.brand{padding:0 8px 22px;gap:11px}
+.brand-mark{
+  width:38px;height:38px;border-radius:12px;font-size:17px;
+  box-shadow:0 10px 30px rgba(124,92,255,.25),inset 0 1px rgba(255,255,255,.28);
+}
+.brand-name{font-size:15.5px;letter-spacing:-.02em}.brand-sub{margin-top:2px}
+.nav-group{margin-top:19px}.nav-label{padding-left:11px;margin-bottom:7px;letter-spacing:.11em}
+.nav-btn{
+  min-height:39px;padding:9px 11px;border:1px solid transparent;transition:all .16s ease;
+}
+.nav-btn:hover{background:rgba(124,92,255,.08);border-color:rgba(124,92,255,.12);transform:translateX(2px)}
+.nav-btn.active{
+  background:linear-gradient(90deg,rgba(124,92,255,.16),rgba(255,79,163,.07));
+  border-color:rgba(124,92,255,.18);box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+.nav-btn.active::before{left:-15px;width:3px;box-shadow:0 0 12px rgba(124,92,255,.75)}
+.nav-btn .ic{font-size:15px}
+.sidebar-footer{padding-top:16px}
+.user-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.05);padding:11px}
+.main{padding:28px 34px 70px;max-width:1600px;width:100%;margin:0 auto}
+.topbar{margin-bottom:26px}.topbar h1{font-size:25px;letter-spacing:-.035em}.topbar .sub{font-size:13.5px}
+.pill{background:rgba(17,19,38,.76);border-color:rgba(125,132,190,.16);box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.icon-btn{background:rgba(17,19,38,.76);border-color:rgba(125,132,190,.16);transition:.16s ease}
+.icon-btn:hover{transform:translateY(-1px);border-color:rgba(124,92,255,.45);box-shadow:0 8px 22px rgba(0,0,0,.2)}
+.card{
+  background:linear-gradient(145deg,rgba(20,22,43,.94),rgba(14,16,31,.94));
+  border-color:rgba(125,132,190,.14);box-shadow:0 12px 35px rgba(0,0,0,.12),inset 0 1px rgba(255,255,255,.025);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.card:hover{border-color:rgba(124,92,255,.25);box-shadow:0 16px 42px rgba(0,0,0,.17),0 0 0 1px rgba(124,92,255,.035);}
+.num-card{overflow:hidden}.num-card::after{
+  content:"";position:absolute;width:120px;height:120px;right:-55px;bottom:-65px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,92,255,.13),transparent 68%);pointer-events:none;
+}
+.num-card .ic-badge{background:linear-gradient(145deg,rgba(124,92,255,.16),rgba(255,79,163,.08));border:1px solid rgba(124,92,255,.14)}
+.btn{min-height:38px;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}.btn.grad{box-shadow:0 8px 24px rgba(124,92,255,.22)}
+.btn.grad:hover{opacity:1;filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 11px 30px rgba(124,92,255,.3)}
+.btn.ghost:hover{background:#1d2140;border-color:rgba(124,92,255,.22)}
+input[type=text],input[type=number],input[type=password],textarea,select{
+  background:rgba(7,9,20,.72);border-color:rgba(125,132,190,.17);min-height:40px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s;
+}
+input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,textarea:focus,select:focus{
+  border-color:rgba(124,92,255,.68);box-shadow:0 0 0 3px rgba(124,92,255,.11);background:rgba(8,10,23,.92)
+}
+.section-title{margin-top:31px;color:#aeb3cf;letter-spacing:.1em}
+.flow-divider{color:#777d9f}
+.hashtags span,.optional-tag{background:rgba(255,255,255,.025)}
+.gate-card{
+  background:linear-gradient(145deg,rgba(19,21,40,.97),rgba(12,14,27,.97));border-color:rgba(125,132,190,.18);
+  box-shadow:0 30px 100px rgba(0,0,0,.5),0 0 80px rgba(124,92,255,.08);backdrop-filter:blur(20px)
+}
+@media (max-width:1100px){.main{padding-left:24px;padding-right:24px}}
+@media (max-width:760px){
+  .main{padding:18px 15px 48px}.topbar{gap:12px;margin-bottom:19px}.topbar h1{font-size:21px}
+  .sidebar{width:82vw;max-width:310px;background:rgba(10,11,23,.97)}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
 </style>
 </head>
    
