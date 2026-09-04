@@ -27,15 +27,19 @@ async function fetchTimeout(url, options = {}, ms = 15000) {
 // при CORS грешки, напр. с някои Imagen endpoint-и). Прокси-то се очаква да
 // приема ?target=ORIGINAL_URL и да препраща метод/хедъри/тяло 1:1 към него.
 //
-// Ако НЕ е зададен собствен Proxy URL, автоматично падаме към безплатна
-// публична CORS прокси услуга (CodeTabs, https://codetabs.com/cors-proxy/),
-// без нужда потребителят да си вдига и поддържа собствен Cloudflare Worker.
-// Ограничения на CodeTabs: само GET заявки, ~5 заявки/сек, до 5MB отговор —
-// напълно достатъчно за случайно четене на HyperFollow/DistroKid страници.
-const PUBLIC_CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
-
+// Ако НЕ е зададен собствен Proxy URL, връщаме оригиналния адрес НЕПРОМЕНЕН —
+// директна заявка. (Преди тук имаше автоматичен fallback към безплатната
+// публична CORS прокси услуга CodeTabs — премахнат на 2026-09-04, защото
+// CodeTabs поддържа САМО GET заявки, а Gemini/Claude/OpenRouter извикванията
+// през тази функция са POST. Резултатът: всяка AI заявка без ръчно зададен
+// Proxy URL мълчаливо увисваше/пропадаше — засегнат бъг "чакам отговор и
+// няма такъв" в AI Чат/Gemini и "🤖 Питай AI екипа" в Системния тест.
+// Директните POST извиквания към Gemini/Claude/OpenRouter си работят и без
+// прокси — Google/Anthropic/OpenRouter поддържат CORS директно от браузъра
+// за нормални заявки. Proxy URL остава наличен за случаите, в които
+// потребителят РЕАЛНО има нужда от прокси — виж коментара по-горе.)
 function proxied(url) {
   const k = Keys.load();
   if (k.proxyUrl) return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
-  return `${PUBLIC_CORS_PROXY}${encodeURIComponent(url)}`;
+  return url;
 }
