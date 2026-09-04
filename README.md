@@ -1272,3 +1272,7 @@ README на живо (offline PWA кеш + различни среди биха 
   вече се пази и тества (`GET /user`).
 - 🧹 Нов `Storage` wrapper (`Storage.get/set/remove/has`) — премахнати всички
   35 разпръснати директни `localStorage.*` извиквания в полза на едно място.
+
+
+## Pro visual layer
+The dashboard includes a premium Music Control Center visual layer inspired by modern music products and AI SaaS: command bar, studio status, recommendation rail, refined hierarchy, glass surfaces, responsive behavior, and ambient grid. Functional IDs/handlers are preserved.

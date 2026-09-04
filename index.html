@@ -634,6 +634,44 @@ body.theme-light #view-dashboard > .card[style*="background:var(--grad)"]{backgr
   #view-dashboard > .card[style*="background:var(--grad)"]::after{display:none;}
   #view-dashboard > .card[style*="background:var(--grad)"] strong{font-size:16px!important;}
 }
+
+
+/* =========================================================
+   PRO EXPERIENCE — Spotify / Suno / AI SaaS refinement
+   ========================================================= */
+:root{
+  --pro-surface:rgba(255,255,255,.045);
+  --pro-line:rgba(255,255,255,.085);
+  --pro-shadow:0 24px 80px rgba(0,0,0,.30);
+}
+body:not(.theme-light){
+  background:
+    radial-gradient(900px 500px at 72% -10%,rgba(139,92,246,.09),transparent 60%),
+    radial-gradient(700px 500px at 10% 30%,rgba(34,211,238,.035),transparent 60%),
+    #08080f;
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+ background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+ background-size:64px 64px;mask-image:linear-gradient(to bottom,black,transparent 78%);opacity:.45}
+.pro-commandbar{height:58px;margin:0 0 14px;display:flex;align-items:center;gap:18px;padding:8px 10px 8px 14px;border:1px solid var(--pro-line);border-radius:16px;background:rgba(12,12,20,.72);backdrop-filter:blur(22px);box-shadow:0 12px 40px rgba(0,0,0,.16)}
+.pro-status{display:flex;align-items:center;gap:10px;min-width:150px}.pro-status-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 14px #34d399;animation:proPulse 2s infinite}.pro-status b,.pro-context b{display:block;font-size:11px}.pro-status small,.pro-context span{display:block;color:var(--muted);font-size:8px;letter-spacing:.12em;text-transform:uppercase}.pro-context{border-left:1px solid var(--pro-line);padding-left:18px;display:flex;align-items:center;gap:8px;min-width:190px}.pro-context span{position:absolute;margin-top:-25px}.pro-context i{font-style:normal;color:var(--muted)}
+.pro-actions{margin-left:auto;display:flex;gap:6px}.pro-actions button{border:1px solid var(--pro-line);background:rgba(255,255,255,.035);color:var(--text);border-radius:10px;padding:8px 11px;font-size:10px;font-weight:700;cursor:pointer;transition:.2s}.pro-actions button:hover{transform:translateY(-1px);border-color:rgba(236,72,153,.45);background:rgba(236,72,153,.09)}
+.studio-hero{min-height:300px!important;border-radius:26px!important;padding:42px!important;box-shadow:var(--pro-shadow)!important;border-color:rgba(255,255,255,.11)!important}
+.studio-hero .hero-copy{max-width:690px;position:relative;z-index:3}.studio-hero h2{font-size:clamp(34px,4vw,58px)!important;line-height:.98!important;letter-spacing:-.055em!important;margin:14px 0 16px!important}.studio-hero h2 span{background:linear-gradient(90deg,#fff 5%,#f0abfc 45%,#c4b5fd 90%);-webkit-background-clip:text;background-clip:text;color:transparent}.studio-hero p{font-size:13px!important;max-width:610px!important;color:rgba(255,255,255,.62)!important}.hero-primary{box-shadow:0 12px 35px rgba(168,85,247,.25)!important}
+.hero-orb{transform:scale(1.15);opacity:.9}.orb-core{box-shadow:0 0 70px rgba(236,72,153,.35),inset 0 0 30px rgba(255,255,255,.08)!important}
+.studio-grid{gap:14px!important;margin-top:14px!important}.now-playing-card,.ai-insight-card,.recent-panel,.release-panel{border-radius:20px!important;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;box-shadow:0 18px 55px rgba(0,0,0,.16);backdrop-filter:blur(16px)}
+.cover-art{box-shadow:0 16px 35px rgba(0,0,0,.3)!important}.waveform i{transition:height .25s ease,opacity .25s ease}.waveform:hover i{opacity:.8}.play-btn{box-shadow:0 8px 25px rgba(168,85,247,.35)!important}
+.metric-strip{margin:14px 0!important;border:1px solid var(--pro-line);border-radius:18px!important;background:rgba(255,255,255,.025)!important;box-shadow:none!important;overflow:hidden}.metric-strip>div{padding:17px 20px!important;position:relative}.metric-strip>div:not(:last-child):after{content:"";position:absolute;right:0;top:20%;height:60%;width:1px;background:var(--pro-line)}
+.metric-strip strong{font-family:var(--font-head)!important;font-size:25px!important;letter-spacing:-.04em}
+.dashboard-columns{gap:14px!important}.panel-heading h3{font-size:16px!important;letter-spacing:-.02em}.track-row{border:1px solid transparent!important;border-radius:13px!important;margin:3px 0;padding:10px!important;transition:.18s!important}.track-row:hover{background:rgba(255,255,255,.045)!important;border-color:var(--pro-line)!important;transform:translateX(2px)}
+.score-pill{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.pro-insight-rail{display:grid;grid-template-columns:minmax(0,1.6fr) 1px minmax(180px,1fr) 1px minmax(150px,.8fr);align-items:center;gap:16px;margin:18px 0 2px;padding:13px 16px;border:1px solid var(--pro-line);border-radius:16px;background:linear-gradient(90deg,rgba(139,92,246,.07),rgba(255,255,255,.025),rgba(236,72,153,.04));box-shadow:0 14px 45px rgba(0,0,0,.12)}
+.rail-item{display:flex;align-items:center;gap:11px;min-width:0}.rail-item.compact{display:block}.rail-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(168,85,247,.12);color:#d8b4fe;font-weight:800;flex:none}.rail-item small{display:block;font:700 8px var(--font-mono);letter-spacing:.12em;color:var(--muted)}.rail-item b{display:block;font-size:11px;margin-top:3px}.rail-item em{display:block;font-style:normal;color:var(--muted);font-size:9px;margin-top:2px}.rail-item button{margin-left:auto;border:0;background:rgba(255,255,255,.07);color:var(--text);border-radius:9px;padding:8px 10px;font-size:9px;font-weight:800;cursor:pointer}.rail-divider{height:38px;width:1px;background:var(--pro-line)}
+@keyframes proPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
+body.theme-light:before{opacity:.12}.theme-light .pro-commandbar{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.08)}.theme-light .pro-insight-rail{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.08)}.theme-light .pro-actions button{background:#fff;border-color:#e6e6eb}
+@media(max-width:900px){.pro-commandbar{height:auto;flex-wrap:wrap}.pro-context{display:none}.pro-actions{margin-left:auto}.pro-insight-rail{grid-template-columns:1fr;gap:12px}.rail-divider{display:none}.rail-item.compact{display:flex}.rail-item button{margin-left:auto}}
+@media(max-width:600px){.pro-commandbar{padding:8px}.pro-status{min-width:auto}.pro-status small{display:none}.pro-actions button{font-size:9px;padding:7px 8px}.pro-actions button:first-child{display:none}.studio-hero{padding:26px 22px!important;min-height:330px!important}.studio-hero h2{font-size:35px!important}.hero-orb{opacity:.42;right:-40px!important}.metric-strip{grid-template-columns:1fr 1fr!important}.metric-strip>div{padding:13px!important}.metric-strip>div:after{display:none}}
+
 </style>
 </head>
    
@@ -806,7 +844,16 @@ body.theme-light #view-dashboard > .card[style*="background:var(--grad)"]{backgr
     <div class="view active" id="view-dashboard">
 
       <!-- ================= MUSIC CONTROL CENTER ================= -->
-      <section class="music-control-center">
+      <section class="pro-commandbar">
+  <div class="pro-status"><span class="pro-status-dot"></span><div><b>Studio online</b><small>All systems operational</small></div></div>
+  <div class="pro-context"><span>WORKSPACE</span><b>Music Production</b><i>⌄</i></div>
+  <div class="pro-actions">
+    <button onclick="Nav.showView('step1')" title="Market Intelligence">⌘ Market</button>
+    <button onclick="Nav.showView('ai-chat')" title="AI Producer">✦ AI Copilot</button>
+    <button onclick="Nav.showView('quick')" title="Upload audio">↑ Import</button>
+  </div>
+</section>
+<section class="music-control-center">
         <div class="studio-hero">
           <div class="hero-copy">
             <div class="eyebrow"><span class="pulse-dot"></span> AI MUSIC STUDIO <span>•</span> READY</div>
@@ -872,6 +919,13 @@ body.theme-light #view-dashboard > .card[style*="background:var(--grad)"]{backgr
         </div>
       </section>
 
+      <div class="pro-insight-rail">
+        <div class="rail-item"><span class="rail-icon">◈</span><div><small>AI RECOMMENDATION</small><b>Завърши visual identity</b><em>Най-висок impact за следващите 30 мин.</em></div><button onclick="Nav.showView('step3')">Continue →</button></div>
+        <div class="rail-divider"></div>
+        <div class="rail-item compact"><span class="rail-icon">↗</span><div><small>TREND SIGNAL</small><b>Dark R&amp;B + late-night</b><em>Rising · +24% momentum</em></div></div>
+        <div class="rail-divider"></div>
+        <div class="rail-item compact"><span class="rail-icon">◉</span><div><small>CREATOR STREAK</small><b>7 days</b><em>Keep the momentum</em></div></div>
+      </div>
       <div class="section-title" style="margin-top:26px;">🧭 Текущ проект</div>
       <div id="projectNextAction"></div>
 
