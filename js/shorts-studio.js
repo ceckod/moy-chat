@@ -157,6 +157,8 @@ const ShortsStudio = {
     if (!lib.length) return toast("Няма записи с url в библиотеката — импортирай я първо");
 
     const statusEl = document.getElementById("ssLibEnrichStatus");
+    const resultsEl = document.getElementById("ssLibEnrichResults");
+    if (resultsEl) resultsEl.innerHTML = "";
     const BATCH = 15;
     let totalMatched = 0;
 
@@ -181,7 +183,20 @@ const ShortsStudio = {
       }
     }
 
-    if (statusEl) statusEl.textContent = `✅ Gemini обогати ${totalMatched} песни (от ${lib.length} с url).`;
+    // Пресвежда от localStorage (мержнатите платформи от _mergePlatformsIntoLibrary
+    // по-горе не пипат локалната `lib` променлива тук, само записа) и рендира
+    // ред за ВСЯКА песен, обработена в тази заявка — вкл. тези без нищо намерено,
+    // за да е ясно кои са пропуснати, не само кои са успешни (виж _enrichRowHtml).
+    const freshLib = this._loadDistrokidLibrary();
+    const processedUrls = new Set(lib.map(e => e.url));
+    const processedRows = freshLib.filter(e => processedUrls.has(e.url));
+    if (resultsEl) resultsEl.innerHTML = processedRows.map(e => this._enrichRowHtml(e)).join("");
+    const counts = {};
+    for (const key of Object.keys(this._PLATFORM_LABELS)) counts[key] = processedRows.filter(e => e.platforms?.[key]).length;
+    const summary = Object.entries(counts).filter(([, n]) => n > 0).map(([k, n]) => `${this._platformLabel(k)} ${n}/${lib.length}`).join(" · ");
+
+    if (statusEl) statusEl.textContent = `✅ Gemini обогати ${totalMatched} песни (от ${lib.length} с url)${summary ? " — " + summary : ""}.`;
+    this.log(`🔵 Gemini url_context обогатяване готово — ${summary || "нищо не се намери"}.`);
     toast(`✅ Готово — Gemini намери линкове за ${totalMatched} песни`);
   },
 
