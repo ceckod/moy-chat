@@ -1639,6 +1639,29 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         </div>
       </div>
 
+      <div class="card" id="masteringStatsWrap" style="display:none;margin-bottom:14px;">
+        <strong>📊 Числов анализ</strong>
+        <p class="muted" style="font-size:11.5px;margin:4px 0 10px;">LUFS тук е ориентировъчна (K-weighted, без официалния relative gating) — точна за сравнение преди/след, не е сертифицирано число за платформа.</p>
+        <div class="grid cols-2">
+          <div>
+            <label style="margin:0 0 4px;">Преди (оригинал)</label>
+            <div id="masteringBeforeStats"></div>
+          </div>
+          <div>
+            <label style="margin:0 0 4px;">След мастеринг</label>
+            <div id="masteringAfterStats"><span class="muted" style="font-size:12px;">Обработи файла, за да видиш числата.</span></div>
+          </div>
+        </div>
+        <div id="masteringStatsDelta" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>🤖 AI предложение за мастеринг</strong>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 10px;">Gemini "чува" файла директно (мултимодален вход) и предлага конкретни числа за разширения панел по-долу — прегледай ги, коригирай при нужда и после натисни "Обработи".</p>
+        <button class="btn grad sm" id="masteringAiSuggestBtn" onclick="Mastering.aiSuggest()">🤖 Gemini: предложи мастеринг</button>
+        <div id="masteringAiReasoning" class="muted" style="display:none;font-size:12.5px;margin-top:8px;white-space:pre-wrap;"></div>
+      </div>
+
       <div class="card" style="margin-bottom:14px;">
         <div class="row" style="align-items:center;justify-content:space-between;">
           <strong>Настройки</strong>
@@ -1712,6 +1735,16 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <div><label>Изпълнител</label><input type="text" id="metaArtist" placeholder="напр. CD-B"></div>
           <div><label>Лейбъл / Студио</label><input type="text" id="metaLabel" placeholder="напр. CD-B Records"></div>
         </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>WAV формат при износ</label>
+        <select id="masterBitDepth">
+          <option value="16" selected>16-bit PCM (стандарт, с TPDF dithering)</option>
+          <option value="24">24-bit PCM (повече хедрум, предпочитано от дистрибутори)</option>
+          <option value="32f">32-bit float (без загуба, максимален хедрум)</option>
+        </select>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 0;">16-bit е достатъчен за краен слушател (Spotify/YouTube транскодират и без това) и е с най-малък размер. 24-bit/32-bit float са полезни, ако файлът ще мине през допълнителна обработка другаде.</p>
       </div>
 
       <div class="card">
