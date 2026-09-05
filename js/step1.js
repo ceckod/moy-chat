@@ -272,12 +272,17 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
     try {
       const raw = await callAI(prompt, 400);
       const c = extractJson(raw);
+      // formatSunoStyleTags() (js/song-lab.js) — гаранция ≤190 символа
+      // ДОРИ ако AI-ят игнорира "максимум 200 символа" инструкцията по-горе
+      // (случва се особено на безплатни fallback модели) — виж коментара
+      // на функцията за защо точно тук е правилното място за прилагане.
+      const styleTags = formatSunoStyleTags(c.style_prompt);
       document.getElementById("songTitle").value = c.title;
-      document.getElementById("stylePrompt").value = c.style_prompt;
+      document.getElementById("stylePrompt").value = styleTags;
       document.getElementById("hashtagsOut").innerHTML = c.hashtags.map(h => `<span>${h}</span>`).join("");
 
       AppState.data.project.title = c.title;
-      AppState.data.project.stylePrompt = c.style_prompt;
+      AppState.data.project.stylePrompt = styleTags;
       AppState.data.project.hashtags = c.hashtags;
       AppState.save();
 
@@ -285,6 +290,31 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
     } catch (e) {
       toast("Грешка при генериране на концепция: " + e.message);
     }
+  },
+
+  // Поп-фолк/чалга иска ДРУГА структура от западния pop/hyperpop шаблон
+  // по-долу (Chorus-first) — балканската чалга традиционно строи
+  // напрежение постепенно (Куплет → Бридж → Припев), плюс задължителен
+  // инструментален Kyuchek/Solo брейк, който няма аналог в западния поп.
+  // Детекция по избраната ниша (chosenNiche) — покрива и кирилица, и
+  // латиница, с/без интервал/тире между "поп" и "фолк".
+  _CHALGA_NICHE_RE: /чалга|кючек|балкан|balkan|поп[\s-]?фолк|pop[\s-]?folk/i,
+
+  _lyricsStructureBlock(niche, winningHook) {
+    if (this._CHALGA_NICHE_RE.test(niche)) {
+      return `ЗАДЪЛЖИТЕЛНА структура за поп-фолк/чалга (стриктен ред, точно тези мета-тагове, не разменяй последователността):
+[Verse] → [Bridge] → [Chorus] → [Kyuchek/Solo] → [Outro]
+- [Verse]: разгръща историята/темата, спокойно темпо
+- [Bridge]: покачва напрежението, води директно към припева
+- [Chorus]: най-запомнящата се, хук-ориентирана част — "мотото" на песента${winningHook ? `\n  (използвай ТОЧНО този ред като основен hook/първи ред: "${winningHook}")` : ""}
+- [Kyuchek/Solo]: инструментален брейк с кючек ритъм — само кратки ад-либи тук, НЕ пълни вокални редове
+- [Outro]: кратък финал, затваря темата
+- Текстът да е готов за качване в Suno AI`;
+    }
+    return `ЗАДЪЛЖИТЕЛНО за структурата:
+- [Chorus] секцията да е НАЙ-ОТПРЕД (преди първия куплет)
+- Използвай ясни мета-тагове: [Chorus], [Verse], [Drop] (ако жанрът позволява drop)
+- Текстът да е готов за качване в Suno AI${winningHook ? `\n- Използвай ТОЧНО този ред като основен hook/първи ред на [Chorus] (дошъл е от Hook Evolution Arena, тестван и избран): "${winningHook}"` : ""}`;
   },
 
   async generateLyrics() {
@@ -295,11 +325,7 @@ ${list.map((c, i) => `${i + 1}. "${c.title}" — "${c.hook}" (${c.mood})`).join(
 който наистина е преживял темата, не като модел, който обобщава клишета.
 Напиши текст на песен със заглавие "${title}".
 
-ЗАДЪЛЖИТЕЛНО за структурата:
-- [Chorus] секцията да е НАЙ-ОТПРЕД (преди първия куплет)
-- Използвай ясни мета-тагове: [Chorus], [Verse], [Drop] (ако жанрът позволява drop)
-- Текстът да е готов за качване в Suno AI
-${winningHook ? `- Използвай ТОЧНО този ред като основен hook/първи ред на [Chorus] (дошъл е от Hook Evolution Arena, тестван и избран): "${winningHook}"` : ""}
+${this._lyricsStructureBlock(niche, winningHook)}
 
 ЗАДЪЛЖИТЕЛНО за стила (за да звучи човешки, не AI-генерирано):
 - Конкретни, специфични образи и детайли (напр. "неотворено съобщение в 3 сутринта"),

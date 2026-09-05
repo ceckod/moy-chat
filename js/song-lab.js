@@ -42,6 +42,37 @@
 const SONGLAB_STORAGE_KEY = "songlab_projects_v1";
 const SONGLAB_SEQ_KEY = "songlab_seq_v1";
 
+/* ---------- SUNO STYLE TAG TRUNCATOR ----------
+   Suno AI's "Style of Music" полето има твърд лимит (~200 символа) —
+   ако го надхвърлиш, Suno или отрязва произволно по средата на дума,
+   или направо отказва генерацията. Досега това разчиташе изцяло на
+   инструкция в AI промпта ("максимум 200 символа" — виж Step1.
+   generateConcept()) — AI-ят НЕ винаги се съобразява точно, особено на
+   безплатните fallback модели.
+   formatSunoStyleTags() е детерминистична, клиентска гаранция: винаги
+   ≤ maxLen (190 по подразбиране — 10 символа margin под реалния лимит на
+   Suno, за разлики в broweser/API encoding и т.н.), НИКОГА не разцепва
+   дума по средата — отрязва до последната пълна дума/запетая преди
+   границата, после чисти увиснала запетая/интервал накрая.
+   Ползва се от Step1.generateConcept() (js/step1.js) веднага след като
+   AI-ят върне style_prompt, преди да влезе в UI полето/AppState — така
+   ВСИЧКО надолу по веригата (copy бутон, DistroKid export и т.н.) вече
+   работи с гарантирано валидна стойност, не се налага truncation на
+   няколко различни места. */
+function formatSunoStyleTags(text, maxLen = 190) {
+  if (typeof text !== "string") return "";
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLen) return trimmed;
+
+  let cut = trimmed.slice(0, maxLen);
+  const lastBoundary = Math.max(cut.lastIndexOf(" "), cut.lastIndexOf(","));
+  // Само ако границата не е подозрително близо до началото (напр. едно
+  // огромно "изречение" без интервали, крайно рядко на практика) — иначе
+  // по-добре твърд символен срез, отколкото да върнем почти празен низ.
+  if (lastBoundary > maxLen * 0.5) cut = cut.slice(0, lastBoundary);
+  return cut.replace(/[,\s]+$/, "").trim();
+}
+
 const SongLab = {
   // ---------- вътрешен сурово storage слой (собствен, не Storage от storage.js) ----------
   _readAll() {
