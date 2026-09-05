@@ -42,14 +42,50 @@ const ShortsStudio = {
   // старата публична CodeTabs прокси поддържа само GET, а AI provider-ите
   // (Gemini/Claude/OpenRouter) викат POST през същата функция, което висеше
   // безкрайно ("чакам отговор, няма такъв" в AI Чат/Системен тест). Тук obаче
-  // ВСИЧКИ извиквания са GET, затова е безопасно да ползваме CodeTabs локално,
-  // без да пипаме споделения proxied() и без риск да върнем AI бъга.
+  // ВСИЧКИ извиквания са GET, затова е безопасно да ползваме публични прокси
+  // локално, без да пипаме споделения proxied() и без риск да върнем AI бъга.
   // Ако потребителят е задал собствен Proxy URL в Настройки, той си остава
   // с приоритет (същото поведение като преди).
-  _getProxied(url) {
+  //
+  // Fix (2026-09-05): CodeTabs се оказа ненадежден при 30+ последователни
+  // заявки в enrichLibrary() — виси до timeout (15с) на ВСЯКА песен, вместо
+  // да върне грешка веднага, което правеше цялата библиотека непроходима
+  // (37 песни × 15с = >9 минути и нищо намерено). Затова вместо един-
+  // единствен прокси, пробваме списък поредно и връщаме първия успешен —
+  // виж _proxyCandidates()/_fetchViaProxies() по-долу (замести старото
+  // еднократно _getProxied(), премахнато като станало неизползвано).
+  //
+  // Списък прокси кандидати, пробвани ПОРЕДНО, докато един не отговори
+  // успешно. Собственият Proxy URL от Настройки (ако е зададен) винаги е
+  // пръв. CodeTabs е втори (както досега), allorigins.win — резервен трети,
+  // за случаите в които CodeTabs виси/е претоварен.
+  _proxyCandidates(url) {
     const k = Keys.load();
-    if (k.proxyUrl) return `${k.proxyUrl}?target=${encodeURIComponent(url)}`;
-    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+    const list = [];
+    if (k.proxyUrl) list.push(`${k.proxyUrl}?target=${encodeURIComponent(url)}`);
+    list.push(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
+    list.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+    return list;
+  },
+
+  // Пробва прокситата от _proxyCandidates() едно по едно, с по-КРАТЪК
+  // timeout за всеки опит (по подразбиране 9с, не 15с) — за да не се чака
+  // 15с × 3 прокситата (45с) за всяка от 37-те песни, ако първото откаже
+  // бързо. Връща първия успешен (res.ok) отговор. Ако всички откажат,
+  // хвърля грешката от ПОСЛЕДНИЯ опит нагоре — извикващият код я логва.
+  async _fetchViaProxies(url, options = {}, msPerTry = 9000) {
+    const candidates = this._proxyCandidates(url);
+    let lastErr = null;
+    for (const proxyUrl of candidates) {
+      try {
+        const res = await fetchTimeout(proxyUrl, options, msPerTry);
+        if (res.ok) return res;
+        lastErr = new Error(`HTTP ${res.status}`);
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error("Всички прокситата отказаха");
   },
 
   onAudioSelected(input) {
@@ -138,16 +174,16 @@ const ShortsStudio = {
       if (!e.platforms.spotify && spotifyToken) {
         try {
           const q = `track:${e.song} artist:${e.artist}`;
-          const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+          const res = await this._fetchViaProxies(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
             headers: { "Authorization": `Bearer ${spotifyToken}` }
-          }, 15000);
+          }, 9000);
           if (res.ok) { const d = await res.json(); const u = d.tracks?.items?.[0]?.external_urls?.spotify; if (u) e.platforms.spotify = u; }
         } catch (err) { /* тихо — просто оставаме без Spotify за тази песен */ }
       }
       if (!e.platforms.apple) {
         try {
           const term = `${e.artist} ${e.song}`;
-          const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+          const res = await this._fetchViaProxies(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`, {}, 9000);
           if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
         } catch (err) { /* тихо */ }
       }
@@ -318,9 +354,9 @@ const ShortsStudio = {
       try {
         const token = await NicheToolkit._getSpotifyToken();
         const q = artist ? `track:${song} artist:${artist}` : song;
-        const res = await fetchTimeout(this._getProxied(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`), {
+        const res = await this._fetchViaProxies(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
           headers: { "Authorization": `Bearer ${token}` }
-        }, 15000);
+        }, 9000);
         if (res.ok) {
           const data = await res.json();
           const track = data.tracks?.items?.[0];
@@ -343,7 +379,7 @@ const ShortsStudio = {
     if (!pageLinks || !pageLinks.apple) {
       try {
         const term = artist ? `${artist} ${song}` : song;
-        const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
+        const res = await this._fetchViaProxies(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`, {}, 9000);
         if (res.ok) {
           const data = await res.json();
           const track = data.results?.[0];
@@ -368,7 +404,7 @@ const ShortsStudio = {
       if (hfUsername) {
         try {
           const hfUrl = `https://hyperfollow.com/${encodeURIComponent(hfUsername)}`;
-          const res = await fetchTimeout(this._getProxied(hfUrl), {}, 15000);
+          const res = await this._fetchViaProxies(hfUrl, {}, 9000);
           if (res.ok) {
             document.getElementById("ssLinkDistrokid").value = hfUrl;
             foundAny = true;
@@ -438,15 +474,11 @@ const ShortsStudio = {
   async _fetchPlatformLinksFromPage(url) {
     const found = {};
     try {
-      const res = await fetchTimeout(this._getProxied(url), {}, 15000);
-      // ВАЖНО: логваме дори при "тих" HTTP провал (прокси 502/522/403 и
-      // т.н.) — преди това тук просто се връщаше празен обект без следа
-      // в лога, и изглеждаше все едно страницата няма линкове, докато
-      // реално проксито изобщо не е доставило съдържанието.
-      if (!res.ok) {
-        this.log(`⚠️ HyperFollow страницата отговори с ${res.status} (през ${this._getProxied(url).split("?")[0]}) — минавам само на fallback търсене по име.`);
-        return found;
-      }
+      // Пробва всички прокси кандидати поредно (виж _proxyCandidates) —
+      // при провал/timeout на един минава директно на следващия, вместо да
+      // спре цялото обогатяване на тази песен само защото първото прокси
+      // виси/е претоварено (виж fix коментара при _getProxied по-горе).
+      const res = await this._fetchViaProxies(url, {}, 9000);
       const html = this._decodeHtml(await res.text());
 
       // Първичен източник: data-hyperfollow-store атрибут (най-надежден,
@@ -474,7 +506,7 @@ const ShortsStudio = {
       if (!Object.keys(found).length) {
         this.log(`⚪ HyperFollow страницата се прочете (${html.length} символа), но не намерих нито един линк в нея — откъс: "${html.replace(/\s+/g, " ").slice(0, 160)}..."`);
       }
-    } catch (e) { this.log("⚠️ Четене на HyperFollow страницата: " + e.message); }
+    } catch (e) { this.log(`⚠️ Четене на HyperFollow страницата (${url}) — и трите прокси опита отказаха: ${e.message}`); }
     return found;
   },
 
