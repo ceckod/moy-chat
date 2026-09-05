@@ -7,7 +7,8 @@
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=701496221947&entity=song&callback=iTunesCallback",
       "spotify": "https://open.spotify.com/album/6s5m6jbYCy2DblpRL35y7p",
-      "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_116630777_AE5503216543FF30C24F52E44F015CAA.mp3"
+      "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_116630777_AE5503216543FF30C24F52E44F015CAA.mp3",
+      "amazonMusic": "http://www.amazon.com/gp/product/B0HH556VSJ"
     },
     "appleUrl": "https://itunes.apple.com/lookup?upc=701496221947&entity=song&callback=iTunesCallback",
     "previewAudio": "https://s3.amazonaws.com/audio.distrokid.com/preview_116630777_AE5503216543FF30C24F52E44F015CAA.mp3",
@@ -21,7 +22,8 @@
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=701496226959&entity=song&callback=iTunesCallback",
       "spotify": "https://open.spotify.com/album/1Cll9HdeUrDhllh71HW5Pr",
-      "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_116629363_28432DA25AD9017473857EAC6669ED04.mp3"
+      "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_116629363_28432DA25AD9017473857EAC6669ED04.mp3",
+      "amazonMusic": "http://www.amazon.com/gp/product/B0HH56B883"
     },
     "appleUrl": "https://itunes.apple.com/lookup?upc=701496226959&entity=song&callback=iTunesCallback",
     "previewAudio": "https://s3.amazonaws.com/audio.distrokid.com/preview_116629363_28432DA25AD9017473857EAC6669ED04.mp3",
@@ -35,7 +37,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/horas-robadas-single/6787702004",
       "deezer": "https://www.deezer.com/album/1021471741",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-414370562",
       "spotify": "https://open.spotify.com/album/2NXZbgZqQRpwCs8EmpXq6E",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_110696196_183E005990CDADA3D29EBA4CDEA1684C.mp3"
     },
@@ -50,7 +51,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--10",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=882652117738&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413835196",
       "spotify": "https://open.spotify.com/album/5qfy9vHRJ081VnGRhIZ6pR",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_110437704_06784261E044D4A19705AAB1A6713D8D.mp3"
     },
@@ -65,7 +65,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/do-it-right-feat-fina--rex",
     "platforms": {
       "apple": "https://music.apple.com/us/album/do-it-right-feat-fina-rex-single/6786815854",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413676432",
       "spotify": "https://open.spotify.com/album/4dH3TA5Zwa8dNUyXxhFPTE",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_110361106_937EB7FB2C6CCD941BBE2A7D2FD3BB6A.mp3"
     },
@@ -81,7 +80,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/gira-gira-feat-cd-b-single/6786507611",
       "deezer": "https://www.deezer.com/album/1019278931",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413671154",
       "spotify": "https://open.spotify.com/album/0svZfJ2cHTbdkVYlGZwP5b",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_110356252_0BF087BF4B81249B5437B1533B59D348.mp3"
     },
@@ -97,7 +95,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/drop-it-low-single/6782044690",
       "deezer": "https://www.deezer.com/album/1008517771",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-410188820",
       "spotify": "https://open.spotify.com/album/7ad5PmcBEdMCmgEAzxlh0Q",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_108815358_74E2A842F3A4BAF1FA105E852A66FD90.mp3"
     },
@@ -113,7 +110,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/he-chose-me-feat-cd-b-single/6782006364",
       "deezer": "https://www.deezer.com/album/1008456841",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-410164155",
       "spotify": "https://open.spotify.com/album/2A3mbkQNUNMcwRQV2RXnvP",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_108797555_41E1BCC5DE041EE7E214A7BBEF19B68D.mp3"
     },
@@ -128,7 +124,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b-3",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=825259341519&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-400713585",
       "spotify": "https://open.spotify.com/album/5zNmUkGAOTtxH8Gd25jJJY",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_104322079_B9C069A1ADA83B789C910EBE82D9A5E9.mp3"
     },
@@ -143,7 +138,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--2-2",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=825393862468&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-395317870",
       "spotify": "https://open.spotify.com/album/3XUV6hBBSKNv0ah9WEUk3A",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_102067961_5E7849621793661234E13A847D08D34F.mp3"
     },
@@ -158,7 +152,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--9",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=825393865827&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-395308447",
       "spotify": "https://open.spotify.com/album/7a8ApCbCleosHrALg6iHpn",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_102067186_0A9F4F54F9CDA3925C12F5B3613C373E.mp3"
     },
@@ -174,7 +167,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/mr-magnetic-feat-cd-b-single/1879574248",
       "deezer": "https://www.deezer.com/album/923912661",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-381994223",
       "spotify": "https://open.spotify.com/album/3OZrZ9BxJLxuxe805S7nU3",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_96237615_CDEEB9387CA65F0CF1FD7948493C6965.mp3"
     },
@@ -189,7 +181,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--8",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821438476331&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-379608598",
       "youtube": "https://youtube.com/@mrceckod",
       "spotify": "https://open.spotify.com/album/4wNz6btCQQs2twmK6klIbR",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_95197811_50FA2D57C4B6EC8177DE2E646CE79A9C.mp3"
@@ -206,7 +197,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---6",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821451646032&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-378444571",
       "spotify": "https://open.spotify.com/album/3WGlfK0KntA7QrKzdQZmAX",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_94331120_6E84B0BFCE4E1B666247B981A8337877.mp3"
     },
@@ -222,7 +212,6 @@
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821473451874&entity=song&callback=iTunesCallback",
       "deezer": "https://www.deezer.com/album/907140322",
-      "iheartradio": "https://www.iheart.com/artist/id-49440494/albums/id-376634259",
       "spotify": "https://open.spotify.com/album/1qGzlI1x9N2EZuINVTtngW",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_93601486_D4133FA7A285354321DD625E23B03F5F.mp3"
     },
@@ -237,7 +226,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/7SIXZ8katic",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821500484677&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-375638718",
       "spotify": "https://open.spotify.com/album/4ikphi82XFgrtwc7ia4sz9",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_93313159_72DC9F52AA4869CA185CEEBE786D23C2.mp3"
     },
@@ -252,9 +240,11 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---5",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821500488514&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-375630719"
+      "spotify": "https://open.spotify.com/album/4Y1NlCkmuTas7NyJwuoJsk"
     },
-    "appleUrl": "https://itunes.apple.com/lookup?upc=821500488514&entity=song&callback=iTunesCallback"
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821500488514&entity=song&callback=iTunesCallback",
+    "previewAudio": "https://s3.amazonaws.com/audio.distrokid.com/preview_93311916_DC58DB9D297168FC55AFC1550B512DD9.mp3",
+    "spotifyUrl": "https://open.spotify.com/album/4Y1NlCkmuTas7NyJwuoJsk"
   },
   {
     "artist": "Tsetsko Boyanov",
@@ -263,7 +253,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--7",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821513703758&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-374687712",
       "spotify": "https://open.spotify.com/album/4AzchbzqdqW7ropyzPCpN7",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_92971179_DC4C234F6F1BD163E87953257DF3ED8B.mp3"
     },
@@ -278,7 +267,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--cover--",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821526395346&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-374149598",
       "spotify": "https://open.spotify.com/album/5v1DNaHutG1I1RVCmL5KpL",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_92512180_C636FD5D8B914F2620AC7D525F30A0E5.mp3"
     },
@@ -293,7 +281,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---4",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821451997585&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-372102239",
       "spotify": "https://open.spotify.com/album/27p44To7fLFMb10k1dIAdS",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_91705808_49C780F5E7284C4C8CFC4A61976E23A3.mp3"
     },
@@ -308,7 +295,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/STMTNhfrGW2",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=821300993577&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-372016508",
       "spotify": "https://open.spotify.com/album/5OBxlacaljTTICbWcr2VPr",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_91676743_31F0AC9BDF831E4E7E5F8AE159F63A95.mp3"
     },
@@ -323,7 +309,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--6",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199936382530&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370976750",
       "spotify": "https://open.spotify.com/album/4hSEw704nynk02T4Y6m7ug",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_91179533_8DC56107A6676FFC6FA124C95A6D862D.mp3"
     },
@@ -338,7 +323,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b-2",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199937354895&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370634194",
       "spotify": "https://open.spotify.com/album/61klOeGzoc73By7WFfFhZv",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_90903304_43D77452DCF45655B17896CF1FDB7245.mp3"
     },
@@ -354,7 +338,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/the-godfather-feat-cd-b-single/1865645010",
       "deezer": "https://www.deezer.com/album/888359652",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370561898",
       "spotify": "https://open.spotify.com/album/54fZzmRfkWzmZ67oje41R3",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_90900479_53F238CD404C4EDCF453DD9EBF683FAD.mp3"
     },
@@ -370,7 +353,6 @@
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199937367031&entity=song&callback=iTunesCallback",
       "deezer": "https://www.deezer.com/album/888335572",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370555448",
       "spotify": "https://open.spotify.com/album/3S4oqumbmiCyS1V1FU40S4",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_90900034_1844533CB31E82F4661FF29D9D74AD27.mp3"
     },
@@ -385,7 +367,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199938429523&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370017409",
       "spotify": "https://open.spotify.com/album/4TvMsC3jeh0c7VwaHJO7rU",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_90605375_515D4B4241E0BF67A063935729D8E38B.mp3"
     },
@@ -401,7 +382,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/king-of-the-block-feat-cd-b-single/1862892515",
       "deezer": "https://www.deezer.com/album/881105322",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-368356869",
       "spotify": "https://open.spotify.com/album/1DKWWEMNlHtQjsmizZUPCD",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89732063_E344CD3ABC292962A796E9BF20D2347B.mp3"
     },
@@ -417,7 +397,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/being-a-blood-feat-cd-b-single/1862882113",
       "deezer": "https://www.deezer.com/album/881039132",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-368335585",
       "spotify": "https://open.spotify.com/album/68EHXX8L6X0WNDcMnVbkB3",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89730616_4C218671112B6C5D521EB1A28D08A948.mp3"
     },
@@ -432,7 +411,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--5",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199942087504&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367701922",
       "spotify": "https://open.spotify.com/album/2mcTo3sFWEXYssQwuE0DJp",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89595324_F82674D5F020E727BCC598631F81D28C.mp3"
     },
@@ -447,7 +425,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---3",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199942430645&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367421813",
       "spotify": "https://open.spotify.com/album/5Nkc3wvN1FKEz8pGk0PQag",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89500734_349FA45CD77D6D0C6028BC8B8668948B.mp3"
     },
@@ -462,7 +439,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/dua-bez-granica",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199942526997&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367350485",
       "spotify": "https://open.spotify.com/album/5x1927XS756sW51FUvQdFG",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89473349_C0827C3A0DE21E15AC39F66F52DAB3DB.mp3"
     },
@@ -477,7 +453,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--4",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199942616346&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367290283",
       "spotify": "https://open.spotify.com/album/6Y8EIxXBVlPyiTYzRi3rNQ",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89449935_AF50B83A36C20DE8FB10153F850DB29D.mp3"
     },
@@ -492,7 +467,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/LEP44v0oEfw",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199943109380&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366989353",
       "spotify": "https://open.spotify.com/album/3sYZzxaU9GvpmRKiKuspDD",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_89317595_628A2D1F8864059568BD4970BF0F4729.mp3"
     },
@@ -507,7 +481,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--3",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199944264927&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367222",
       "spotify": "https://open.spotify.com/album/6npvwFLgf0BFfYpHLjS4Rk",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_88985683_BE1ED8A0DE63CE650D1DBE607AB64DBF.mp3"
     },
@@ -523,7 +496,6 @@
     "platforms": {
       "apple": "https://music.apple.com/us/album/dale-todo-single/1860478408",
       "deezer": "https://www.deezer.com/album/874959662",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367129",
       "spotify": "https://open.spotify.com/album/50xNtpIhBMLj1YwGY8h8lf",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_88983849_7E517D281C55E9ACC4A0A85A92D82B94.mp3"
     },
@@ -538,7 +510,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--2",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199944264750&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367096",
       "spotify": "https://open.spotify.com/album/4D7fxYDo3cI5gpiNSkEOK0",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_88983400_0C887EAC809435C8BA96A935007F1578.mp3"
     },
@@ -553,7 +524,6 @@
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--",
     "platforms": {
       "apple": "https://itunes.apple.com/lookup?upc=199944430384&entity=song&callback=iTunesCallback",
-      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366222871",
       "spotify": "https://open.spotify.com/album/4Qw9t5k8t1xjvLuCr3DC7B",
       "audioPreview": "https://s3.amazonaws.com/audio.distrokid.com/preview_88953812_C0D633391F162A50E5EA028F265E941D.mp3"
     },
