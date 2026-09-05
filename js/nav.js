@@ -1,4 +1,3 @@
-
 /* ---------- NAVIGATION (sidebar multi-view router) ---------- */
 // Приложението е PWA (standalone display, виж manifest.json) — на телефон, ако
 // няма browser history entries между view-овете, бутонът "Назад" на телефона
@@ -36,6 +35,7 @@ const Nav = {
     if (id === "yt-discovery") { YouTubeDiscovery.render(); }
     if (id === "metadata-optimizer") { MetadataOptimizer.render(); }
     if (id === "app-logs") AppLog.render();
+    if (id === "shorts-studio") { ShortsStudio.renderSavedLibrary(); }
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();
     if (id === "system-test") { SystemTest.renderHistory(); }
     if (id === "ai-ideas") { SystemTest.renderIdeaBacklog(); }
