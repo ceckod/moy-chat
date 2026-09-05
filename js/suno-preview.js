@@ -67,11 +67,31 @@ const SunoPreview = {
     const wrap = document.getElementById("spPlayerWrap");
     const nowPlaying = document.getElementById("spNowPlaying");
     if (!audio || !wrap) return;
+    // Suno-линковете (особено от безплатния план) изтичат след време, а
+    // потребителят може да постави и невалиден/чужд линк — без error handler
+    // <audio> просто мълчи (нищо не свири, никакъв UI сигнал защо). onerror
+    // хваща точно това и показва ясно състояние вместо "тихо не работи".
+    audio.onerror = () => {
+      wrap.style.display = "block";
+      if (nowPlaying) {
+        nowPlaying.innerHTML = `<span style="color:#c55;">⚠️ Аудиото не може да се зареди — линкът вероятно е изтекъл или невалиден (${this._escAttr(label)})</span>`;
+      }
+      toast("⚠️ Suno линкът не може да се зареди — вероятно е изтекъл. Копирай нов от Suno страницата.");
+    };
+    audio.onloadedmetadata = () => {
+      // успешно зареждане след предишна грешка (потребителят е сменил src) —
+      // връщаме нормалния "Now playing" текст обратно
+      if (nowPlaying) nowPlaying.textContent = `🎵 ${label}`;
+    };
     audio.src = src;
     audio.play().catch(() => { /* автоплей може да е блокиран от браузъра — плейърът пак е готов за ръчен старт */ });
     wrap.style.display = "block";
     if (nowPlaying) nowPlaying.textContent = `🎵 ${label}`;
     this._addToHistory(label, isLocal ? null : src, isLocal);
+  },
+
+  _escAttr(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   },
 
   _addToHistory(label, url, isLocal) {
