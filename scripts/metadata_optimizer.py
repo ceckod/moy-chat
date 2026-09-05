@@ -156,10 +156,27 @@ Style tags: {', '.join(track.get('style_tags', [])) or '(няма)'}
     titles = [t[:MAX_TITLE_LEN] for t in result.get("titles", []) if t][:3]
     description = (result.get("description") or "")[:MAX_DESCRIPTION_LEN]
     tags = result.get("tags", [])
+    # Запетаята е ЗАБРАНЕН символ вътре в отделен tag: и YouTube Studio
+    # (comma-separated tags поле), и DistroKid keywords полето, и нашия
+    # собствен js/step4.js round-trip (join(", ") за показване → split(",")
+    # за парсване обратно) третират запетаята като разделител между
+    # отделни тагове. Ако AI-ят върне ЕДИН елемент от типа "pop, dance"
+    # вместо два отделни ("pop", "dance"), той после се разцепва на грешно
+    # място навсякъде надолу по веригата. Чистим я тук, при генерирането —
+    # веднъж поправено в източника, не се налага defensive код на 3+ места.
+    cleaned_tags = []
+    for t in tags:
+        if not t:
+            continue
+        clean = t.replace(",", " ").strip()
+        clean = " ".join(clean.split())  # схлупва двойни интервали от премахнатата запетая
+        if clean:
+            cleaned_tags.append(clean)
+
     # твърд limit по обща дължина, за да не гръмне videos.update на YouTube страна
     total = 0
     trimmed_tags = []
-    for t in tags:
+    for t in cleaned_tags:
         if total + len(t) + 1 > MAX_TAGS_TOTAL_LEN:
             break
         trimmed_tags.append(t)
