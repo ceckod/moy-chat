@@ -1,0 +1,125 @@
+name: Mastering Pro Engine
+
+# ============================================================
+# КАК СЕ ТРИГВА
+# ------------------------------------------------------------
+# workflow_dispatch, извикан от браузъра (js/mastering-pro.js →
+# POST /repos/{owner}/{repo}/actions/workflows/mastering-pro.yml/dispatches
+# с Keys.load().ghToken, същия pattern като js/metadata-optimizer.js).
+#
+# Файловете вход/изход НЕ минават през dispatch payload-а (64KB лимит —
+# недостатъчно за WAV), а през GitHub Contents API commit, направен от
+# браузъра ПРЕДИ dispatch-а:
+#   mastering-jobs/<job_id>/target.wav
+#   mastering-jobs/<job_id>/reference.wav
+#   mastering-jobs/<job_id>/job.json   (created_at, за cleanup workflow-а)
+#
+# `run-name` по-долу вгражда job_id в името на run-а, за да може
+# dashboard-ът да намери точно СВОЯ run (workflow_dispatch API-то не
+# връща run_id директно при dispatch-ване).
+# ============================================================
+
+run-name: "Mastering Pro: ${{ inputs.job_id }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "ID на job-а (mastering-jobs/<job_id>/) — генериран от браузъра"
+        required: true
+      target_peak_db:
+        description: "Целеви True Peak таван в dBTP (напр. -1.0)"
+        required: false
+        default: "-1.0"
+
+permissions:
+  contents: write
+
+# Само ЕДИН run на конкретен job_id наведнъж (различни job_id-та вървят
+# паралелно без проблем — виж repo конвенцията в auto-update.yml).
+concurrency:
+  group: mastering-pro-${{ inputs.job_id }}
+  cancel-in-progress: false
+
+jobs:
+  master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Провери дали job папката съществува с двата входни файла
+        id: findjob
+        run: |
+          JOB_DIR="mastering-jobs/${{ inputs.job_id }}"
+          if [ ! -f "$JOB_DIR/target.wav" ] || [ ! -f "$JOB_DIR/reference.wav" ]; then
+            echo "::error::Липсва $JOB_DIR/target.wav или reference.wav — браузърът трябва да ги commit-не ПРЕДИ да тригне този workflow."
+            exit 1
+          fi
+          echo "job_dir=$JOB_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Инсталирай Python зависимости (matchering, soundfile, numpy, scipy, soxr, pyloudnorm)
+        run: pip install -r scripts/requirements-mastering.txt
+
+      - name: Пусни master_engine.py
+        id: engine
+        run: |
+          python scripts/master_engine.py \
+            --job-dir "${{ steps.findjob.outputs.job_dir }}" \
+            --target-peak-db "${{ inputs.target_peak_db }}"
+        # НЕ спираме job-а тук при провал — искаме status.json (написан от
+        # engine-а дори при exception, виж master_engine.py main()) да стигне
+        # до repo-то, за да може dashboard-ът да покаже КАКВО се е счупило,
+        # вместо да чака безкрайно на "processing".
+        continue-on-error: true
+
+      - name: Изтрий входните WAV файлове (target/reference) — не ни трябват повече
+        if: always() && steps.findjob.outputs.job_dir != ''
+        run: |
+          rm -f "${{ steps.findjob.outputs.job_dir }}/target.wav" "${{ steps.findjob.outputs.job_dir }}/reference.wav"
+
+      - name: Stage само файловете на този job (result.wav + status.json, без входните WAV)
+        if: always() && steps.findjob.outputs.job_dir != ''
+        run: |
+          git add -f "${{ steps.findjob.outputs.job_dir }}" 2>/dev/null || true
+          echo "── staged diff stat ──"
+          git diff --cached --stat
+
+      - name: Assert — само файлове от този job_id са staged (защита срещу случайно commit-ване на нещо друго)
+        if: always() && steps.findjob.outputs.job_dir != ''
+        run: |
+          UNEXPECTED=$(git diff --cached --name-only | grep -v "^${{ steps.findjob.outputs.job_dir }}/" || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "🚫 Неочаквани staged файлове — абортирам commit:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+
+      - name: Secret scan (никога API ключове/токени в commit)
+        if: always() && steps.findjob.outputs.job_dir != ''
+        run: python scripts/_secret_scan.py
+
+      - name: Commit + push резултата
+        if: always() && steps.findjob.outputs.job_dir != ''
+        run: |
+          git config user.name "cdb-mastering-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet --cached; then
+            echo "Нищо за commit-ване."
+          else
+            git commit -m "🎚️ Mastering Pro: ${{ inputs.job_id }} (${{ steps.engine.outcome }})"
+            git push
+          fi
+
+      - name: Job статус спрямо реалния изход на engine-а
+        if: always()
+        run: |
+          if [ "${{ steps.engine.outcome }}" != "success" ]; then
+            echo "::error::Mastering engine се провали — виж status.json в mastering-jobs/${{ inputs.job_id }}/ (commit-нат по-горе) за причината."
+            exit 1
+          fi

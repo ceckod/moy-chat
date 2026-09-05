@@ -1,0 +1,40 @@
+name: Mastering Pro Cleanup
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"   # на всеки 12 часа (~30 мин закъснение при GitHub cron е нормално, без значение тук)
+  workflow_dispatch: {}       # позволява и ръчно пускане от Actions таба, за тест
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mastering-pro-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Изтрий job папки по-стари от 24ч
+        run: python3 scripts/cleanup_mastering_jobs.py
+
+      - name: Commit + push (само ако има реално триене)
+        run: |
+          git config user.name "cdb-mastering-cleanup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A mastering-jobs/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Нищо за commit-ване (вече чисто)."
+          else
+            git commit -m "🧹 Mastering Pro Cleanup: изтрити стари job папки (>24ч)"
+            git push
+          fi
