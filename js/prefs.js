@@ -54,6 +54,9 @@ const Prefs = {
     this.data.theme = this.data.theme === "light" ? "dark" : "light";
     this.save();
     this.applyTheme();
+    // Chart.js "изпича" цветовете при създаване — без изричен redraw
+    // графиките остават с цветовете на СТАРАТА тема (нечетими на новата).
+    if (typeof Stats !== "undefined" && Stats.redrawForThemeChange) Stats.redrawForThemeChange();
   },
   applyHealthSwitch() {
     document.querySelectorAll("#healthSwitch,#healthSwitch2").forEach(s => {
