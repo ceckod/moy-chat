@@ -1,0 +1,175 @@
+/* =========================================================
+   PROVIDER: OPENROUTER — трети AI "агент", специално заради РЕАЛНО
+   безплатния tier (OpenRouter предлага няколко модела с ":free" суфикс,
+   0 цена). За разлика от Claude/Gemini, OpenRouter е изрично проектиран
+   да се вика директно от браузър/клиентски приложения — няма нужда от
+   Proxy URL (но пак минаваме през proxied(), в случай че някой ден се
+   наложи — same as другите провайдъри, консистентно).
+
+   Зависи от: js/network.js (fetchTimeout, proxied) — зареден преди този
+   файл в index.html. Зависи и от Storage/Keys/toast/AICallLog/
+   QuotaTracker — дефинирани в app.js, но реално се ползват само ВЪТРЕ
+   във функциите по-долу (виж бележката в js/providers/claude.js).
+
+   Публичен интерфейс:
+     - getOpenRouterFreeModels(forceRefresh)
+     - callOpenRouter(prompt, maxTokens)
+   ========================================================= */
+
+const OPENROUTER_MODELS_CACHE_KEY = "cdb_openrouter_models_cache_v1";
+const OPENROUTER_MODELS_CACHE_HOURS = 24;
+
+// Статичен резервен списък — модели, за които OpenRouter исторически
+// предлага безплатен (":free") вариант. Имената могат да се сменят с
+// времето от тяхна страна, затова динамичното изтегляне по-долу е
+// предпочитаният път; това е само "за всеки случай".
+const OPENROUTER_FALLBACK_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-2.0-flash-exp:free",
+  "mistralai/mistral-7b-instruct:free"
+];
+
+// Изтегля РЕАЛНИЯ списък модели от OpenRouter (публичен endpoint, не
+// изисква ключ) и филтрира само тези с нулева цена (истински free tier,
+// не "евтин"). Кешира се за 24ч.
+async function getOpenRouterFreeModels(forceRefresh = false) {
+  if (!forceRefresh) {
+    const cached = Storage.get(OPENROUTER_MODELS_CACHE_KEY);
+    if (cached && Array.isArray(cached.models) && cached.models.length &&
+        (Date.now() - cached.ts) < OPENROUTER_MODELS_CACHE_HOURS * 3600 * 1000) {
+      return cached.models;
+    }
+  }
+  try {
+    const r = await fetchTimeout("https://openrouter.ai/api/v1/models", {}, 15000);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    const free = (data.data || [])
+      .filter(m => parseFloat(m.pricing?.prompt || "1") === 0 && parseFloat(m.pricing?.completion || "1") === 0)
+      .map(m => m.id);
+    if (!free.length) throw new Error("Няма изброени безплатни модели точно сега");
+    Storage.set(OPENROUTER_MODELS_CACHE_KEY, { ts: Date.now(), models: free });
+    return free;
+  } catch (e) {
+    console.warn("Неуспешно изтегляне на OpenRouter безплатните модели, ползвам резервен списък:", e.message);
+    return OPENROUTER_FALLBACK_MODELS;
+  }
+}
+
+// Единично извикване към КОНКРЕТЕН OpenRouter модел (със същия вграден
+// max_tokens retry за отрязани отговори, който има Claude — виж
+// js/providers/claude.js/_callClaudeSingle). Безплатните ("":free"")
+// модели режат по средата на изречение МНОГО по-често от Claude/Gemini,
+// защото реалният им output бюджет често е по-малък от заявения
+// max_tokens — затова "finish_reason === length" тук е важна проверка,
+// не само отсъствие на текст. Само 1 повторен опит, за да не увисне.
+// Прикачени снимки → OpenAI-съвместим "image_url" content блок (OpenRouter
+// говори този формат) — PDF НЕ се поддържа тук нарочно (виж capabilities.pdf
+// = false в js/agent-registry.js), защото не всички безплатни vision модели
+// на OpenRouter четат PDF надеждно; attachments, различни от снимка, просто
+// се прескачат тук, вместо да чупят заявката.
+function _buildOpenRouterContent(prompt, attachments) {
+  if (!attachments || !attachments.length) return prompt; // старо поведение — чист текст, непроменено
+  const images = attachments.filter(a => a.kind !== "pdf");
+  if (!images.length) return prompt;
+  return [
+    { type: "text", text: prompt },
+    ...images.map(a => ({ type: "image_url", image_url: { url: `data:${a.mimeType || "image/png"};base64,${a.base64}` } }))
+  ];
+}
+
+async function _callOpenRouterSingle(model, prompt, maxTokens, apiKey, attachments = [], _isRetry = false) {
+  const res = await fetchTimeout(proxied("https://openrouter.ai/api/v1/chat/completions"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      // Препоръчани от OpenRouter (не задължителни) — за статистика в техния dashboard.
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "AI Music Suite - CD-B Records Dashboard"
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: _buildOpenRouterContent(prompt, attachments) }] })
+  }, 60000);
+
+  if (!res.ok) {
+    const t = await res.text();
+    const err = new Error("OpenRouter API грешка: " + t);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const choice = data.choices?.[0];
+  const text = choice?.message?.content;
+  if (!text) throw new Error("OpenRouter не върна съдържание в отговора");
+
+  if (choice.finish_reason === "length" && !_isRetry) {
+    return _callOpenRouterSingle(model, prompt, Math.min(maxTokens * 2, 4000), apiKey, attachments, true);
+  }
+  if (choice.finish_reason === "length" && _isRetry) {
+    // Дори с двоен бюджет пак е отрязан — този безплатен модел реално не
+    // може да поеме тази заявка. По-добре да гръмне ясно и да падне на
+    // СЛЕДВАЩИЯ безплатен модел (виж callOpenRouter по-долу), отколкото
+    // да върнем недовършено изречение като че ли е готов резултат.
+    throw new Error(`OpenRouter "${model}" отряза отговора дори след двоен лимит — вероятно твърде малък context за тази заявка`);
+  }
+  return text.trim();
+}
+
+// Решава какво да прави общия fallback цикъл (js/providers/fallback-loop.js)
+// при грешка от _callOpenRouterSingle. 429/503 = претоварен безплатен модел;
+// без status = отрязан отговор дори след двоен лимит (виж
+// _callOpenRouterSingle); 400 = невалидна заявка КЪМ ТОЗИ КОНКРЕТЕН модел
+// (чест случай при безплатни модели, рутирани през Google AI Studio —
+// вътрешният "thinking" бюджет им трябва различни параметри) — не значи
+// проблем с ключа/квотата, само че този модел не приема заявката както е
+// подадена, затова има смисъл да пробваме следващия, вместо да спрем
+// цялото извикване.
+function _classifyOpenRouterError(e, model) {
+  const isRetryable = e.status === 429 || e.status === 503 || e.status === 400 || !e.status;
+  if (!isRetryable) return { action: "abort" };
+  return {
+    action: "next",
+    removeReason: e.status ? ("HTTP " + e.status) : "отрязан отговор дори след двоен лимит",
+    switchMsg: (next) => `⚠️ OpenRouter "${model}" не се справи — превключвам на "${next}"...`,
+    switchMsgDuration: 4000
+  };
+}
+
+// Fallback между безплатните модели (ако единият е временно
+// претоварен/недостъпен, или реже отговорите — виж _callOpenRouterSingle
+// по-горе — при безплатните модели това се случва по-често, тъй като
+// споделят обща опашка/по-малък бюджет между всички потребители).
+//
+// forcedModel (по избор) — потребителят изрично е избрал КОНКРЕТЕН модел
+// от падащото меню в AI Чат (виж js/ai-chat.js) вместо "Автоматично".
+// Тогава НЕ пробваме други модели при грешка — заявката отива само към
+// избрания, грешката излиза ясно като негова, а не тихо от друг модел.
+async function callOpenRouter(prompt, maxTokens = 900, attachments = [], forcedModel = null) {
+  const k = Keys.load();
+  if (!k.openrouterKey) { toast("⚠️ Липсва OpenRouter API ключ (виж Настройки)"); throw new Error("no key"); }
+
+  let models;
+  if (forcedModel) {
+    models = [forcedModel];
+  } else {
+    // OpenRouter може да върне ДЕСЕТКИ безплатни модели (виж бележката в
+    // js/agent-roster.js) — вместо да преравяме всички при всяка задача,
+    // ползваме първо малкия, вече проверен списък от днешния AgentRoster.
+    // Пълният списък остава резерва накрая, ако всичко от ростъра гръмне.
+    const roster = (typeof AgentRoster !== "undefined") ? AgentRoster.getWorking("openrouter") : null;
+    const fullList = await getOpenRouterFreeModels();
+    models = (roster && roster.length)
+      ? [...roster, ...fullList.filter(m => !roster.includes(m))]
+      : fullList;
+  }
+
+  return runModelFallbackLoop(
+    models,
+    (model) => _callOpenRouterSingle(model, prompt, maxTokens, k.openrouterKey, attachments),
+    {
+      provider: "openrouter",
+      classify: _classifyOpenRouterError,
+      exhaustedMsg: "OpenRouter API грешка: неуспешно след всички безплатни модели"
+    }
+  );
+}

@@ -1,70 +1,46 @@
 CDB UPDATE REPORT
-Timestamp: 20260904-085329
+Timestamp: 20260905-060645
 
 Changed:
+  gemini.js
   index.html
-  shorts-studio.js
 
 Added:
-  gemini.js
+  ai-helpers.js
+  pollinations-image.js
+  agent-registry.js
+  cloudflare-image.js
+  step3.js
+  openrouter.js
+  claude.js
 
 Removed:
   none
 
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
-  ai-helpers.js
   update_engine.py
   sw.js
-  ai.html
-  app-state.js
-  CDB-Dashboard.md
-  step4.js
   REMOVE_MISSING
-  app-state.test.mjs
-  ai-cache.js
   manifest.json
-  quota-tracker.js
   vault-keys.test.mjs
-  site-ai-agent.html
   config.json
-  ai-provider-order.js
   viz.html
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
-  aichat.html
-  load-app.mjs
   ╨ó╨╡╤à╨╜╨╕╤ç╨╡╤ü╨║╨╕-╨╛╨┤╨╕╤é-CDB-Dashboard.md
-  track-record.js
   ARCHITECTURE.md
-  ui-bootstrap.js
-  settings.js
   update_report.txt
-  ai-call-log.js
-  stats.js
-  step2.js
   package.json
   AUDIT_PROGRESS.md
-  step1.js
-  site-ai.html
   app.js
-  project-archive.js
+  shorts-studio.js
   .gitignore
   MODULE-MAP.md
-  viral-lab.js
-  quick-upload.js
   update.zip
-  nav.js
   PROJECT_STATE.md
-  gemini-validator.js
-  model-pref.js
   README.md
-  storage.js
-  system-update.js
-  step3.js
-  lyrics-history.js
   PHASE_0.5_STATUS_SongIntelligence.md
   visualizer.html
   Технически-одит-CDB-Dashboard.md
-  prefs.js
   data/niche-scores-history.json
   data/discovery-log.json
   data/playlists-state.json
@@ -164,9 +140,12 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/providers/pollinations-image.js
   js/providers/fallback-loop.js
   js/providers/gemini.js
+  js/providers/song-lab.js
+  js/providers/ai-gateway.js
   js/providers/cloudflare-image.js
   js/providers/code-logo.js
   js/providers/musicgen.js
+  js/providers/dashboard.js
   js/providers/subtitles.js
   js/providers/openrouter.js
   js/providers/claude.js

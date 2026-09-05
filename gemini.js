@@ -252,7 +252,7 @@ async function callGeminiChat(prompt, attachments, useSearch = false) {
    ЗАБЕЛЕЖКА: не всеки Gemini модел поддържа url_context — ако избраният
    модел го игнорира мълчаливо (връща отговор само от собствените си знания,
    без реално да е посетил URL-ите), резултатът просто ще е неточен/празен,
-   не хвърля грешка — затова извикващият код (viж ShortsStudio) винаги
+   не хвърля грешка — затова извикващият код (виж ShortsStudio) винаги
    проверява/валидира резултата, не му вярва сляпо. */
 async function callGeminiUrlContext(prompt, urls) {
   const k = Keys.load();
