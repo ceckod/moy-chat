@@ -1,46 +1,51 @@
 CDB UPDATE REPORT
-Timestamp: 20260905-060645
+Timestamp: 20260905-061819
 
 Changed:
-  gemini.js
-  index.html
+  none
 
 Added:
-  ai-helpers.js
-  pollinations-image.js
-  agent-registry.js
-  cloudflare-image.js
-  step3.js
-  openrouter.js
-  claude.js
+  app-state.js
+  app-log.js
+  settings.js
+  storage.js
 
 Removed:
   none
 
 Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
+  ai-helpers.js
   update_engine.py
   sw.js
   REMOVE_MISSING
   manifest.json
   vault-keys.test.mjs
+  pollinations-image.js
   config.json
   viz.html
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   ╨ó╨╡╤à╨╜╨╕╤ç╨╡╤ü╨║╨╕-╨╛╨┤╨╕╤é-CDB-Dashboard.md
   ARCHITECTURE.md
+  gemini.js
   update_report.txt
   package.json
+  index.html
   AUDIT_PROGRESS.md
+  agent-registry.js
   app.js
   shorts-studio.js
   .gitignore
   MODULE-MAP.md
+  cloudflare-image.js
   update.zip
   PROJECT_STATE.md
   README.md
+  step3.js
   PHASE_0.5_STATUS_SongIntelligence.md
   visualizer.html
+  openrouter.js
   Технически-одит-CDB-Dashboard.md
+  claude.js
   data/niche-scores-history.json
   data/discovery-log.json
   data/playlists-state.json
