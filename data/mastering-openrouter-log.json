@@ -1,0 +1,7 @@
+[
+  {
+    "ts": "2026-09-05T16:19:07.178Z",
+    "summary": "Главният проблем е лимитерът без true-peak oversampling + lookahead — ще дава интерсемплови клипове на реален DAC, плюс липсата на LUFS-таргетиране прави резултата непредвидим за стрийминг платформи.",
+    "full": "1) TRUE-PEAK LIMITER — задължително 4x OS с interpolated peak detection и 1–3 ms lookahead; без това всичко останало е професионално неработоспособно. 2) LUFS metering + levelling — integrated + short-term LUFS + true-peak dBFS таргет, за да отговаря на Spotify/YouTube норми. 3) MULTIBAND DYNAMICS — split low/mid/high (или 3–5 band) преди лимитера, за да контролираш басово пъмпане и сибилантност. 4) Лимитер атака/release — instant attack неизбежно дистортира; минимум 1–6 ms атака, адаптивен release с floor. 5) Noise-shaped dither за 16-bit (PSASH или TPDF + high-pass noise shaping). 6) Sample rate conversion — 44.1/48/96 kHz с добър SRC (/libsamplerate). 7) Stereo width контрол — multiband width + M/S gain. 8) De-esser — broadband или multiband едносечционен. 9) Saturation/exciter —软 clipper или harmonically tuned exciter за glue. 10) Reference-track matching — EBR + spectral balance correlation."
+  }
+]
