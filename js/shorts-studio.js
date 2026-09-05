@@ -128,6 +128,129 @@ const ShortsStudio = {
     }
     if (statusEl) statusEl.textContent = `✅ Импортирани ${entries.length} песни. При "Опитай да намеря..." ще пасва точния линк по име на песента.`;
     this.log(`📥 Импортирана DistroKid библиотека: ${entries.length} песни.`);
+    this.renderSavedLibrary();
+  },
+
+  // Показва ЗАПАЗЕНАТА библиотека (localStorage, cdb_distrokid_library_v1)
+  // веднага при отваряне на раздела — не само по време на активно
+  // enrichLibrary() изпълнение (виж Nav.showView(\"shorts-studio\") хук в
+  // js/nav.js). Данните вече се пазят автоматично в localStorage при всеки
+  // import/enrich; тази функция само ги ПОКАЗВА, без да прави нови мрежови
+  // заявки — затова е безопасно да се вика при всяко влизане в раздела.
+  renderSavedLibrary() {
+    const lib = this._loadDistrokidLibrary();
+    const resultsEl = document.getElementById("ssLibEnrichResults");
+    const statusEl = document.getElementById("ssLibEnrichStatus");
+    if (!resultsEl) return;
+    if (!lib.length) { resultsEl.innerHTML = ""; if (statusEl) statusEl.textContent = ""; return; }
+    const enrichedCount = lib.filter(e => e.platforms && Object.keys(e.platforms).length).length;
+    resultsEl.innerHTML = lib.map(e => this._enrichRowHtml(e)).join("");
+    if (statusEl) statusEl.textContent = `📚 Запазена библиотека: ${lib.length} песни (${enrichedCount} с намерени линкове). Записана е локално в този браузър — за архив/друго устройство ползвай "⬇️ Изтегли библиотеката (JSON)" по-долу.`;
+  },
+
+  // Сваля цялата запазена библиотека (заглавия + hyperfollow линкове +
+  // всички намерени платформени линкове) като .json файл. localStorage е
+  // ВРЪЗАН само с този конкретен браузър/устройство — ако потребителят
+  // изчисти кеша, смени браузър/устройство, или ползва приложението и от
+  // телефон, и от компютър, данните НЕ се пренасят автоматично. Файлът е
+  // за архив и за ръчно пренасяне (пейстни го обратно през "Импортирай
+  // ръчно намерени линкове (JSON)" по-горе, или направо в localStorage).
+  downloadLibraryJson() {
+    const lib = this._loadDistrokidLibrary();
+    if (!lib.length) return toast("Библиотеката е празна — първо импортирай списъка от DistroKid.");
+    const blob = new Blob([JSON.stringify(lib, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `distrokid-library-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    this.log(`⬇️ Изтеглена библиотека (${lib.length} песни) като distrokid-library-${stamp}.json`);
+  },
+
+  // --- Трайно запазване на библиотеката в GitHub repo-то -----------------
+  // localStorage е вързан само с този браузър/устройство — за да оцелее
+  // трайно между сесии/устройства (и да не се загуби при изчистен кеш),
+  // библиотеката се commit-ва в data/distrokid-library.json през СЪЩИЯ
+  // GitHub Contents API механизъм, който вече ползват SystemUpdate/
+  // YouTubeDiscovery/MetadataOptimizer (Keys.load().ghToken/ghOwner/ghRepo/
+  // ghBranch — вече съществуващи полета в Настройки, нищо ново за
+  // конфигуриране). Repo-то е публично, затова ЧЕТЕНЕТО минава през
+  // безплатния raw.githubusercontent.com (без token) — само ЗАПИСВАНЕТО
+  // минава през api.github.com с token (нужен е "Contents: Read and write").
+  _GH_LIBRARY_API_PATH(k) {
+    return `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/contents/data/distrokid-library.json`;
+  },
+
+  async saveLibraryToGitHub() {
+    const lib = this._loadDistrokidLibrary();
+    if (!lib.length) return toast("Библиотеката е празна — първо импортирай списъка от DistroKid.");
+    const k = Keys.load();
+    if (!k.ghToken) return toast("❌ Липсва GitHub Token — виж Настройки → API Ключове");
+    if (!k.ghOwner || !k.ghRepo) return toast("❌ Липсват GitHub потребител/организация или repo — виж Настройки → YouTube Тракер (същите полета)");
+    const branch = k.ghBranch || "main";
+    const path = this._GH_LIBRARY_API_PATH(k);
+    const statusEl = document.getElementById("ssLibGithubStatus");
+    if (statusEl) statusEl.textContent = "⏳ Запазвам в repo-то...";
+    try {
+      // sha е нужен само ако файлът вече съществува (update); при първия
+      // запис (404) просто продължаваме без sha — GitHub го създава направо.
+      let sha = null;
+      const shaRes = await fetchTimeout(`${path}?ref=${encodeURIComponent(branch)}`, {
+        headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json" }
+      }, 15000);
+      if (shaRes.ok) { sha = (await shaRes.json()).sha; }
+      else if (shaRes.status !== 404) { throw new Error(`Не мога да прочета текущия файл (${shaRes.status})`); }
+
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(lib, null, 2) + "\n")));
+      const body = { message: `🎞️ Shorts Studio: DistroKid библиотека — ${lib.length} песни`, content, branch };
+      if (sha) body.sha = sha;
+      const putRes = await fetchTimeout(path, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }, 20000);
+      if (!putRes.ok) throw new Error(`GitHub ${putRes.status}: ${(await putRes.text()).slice(0, 300)}`);
+
+      if (statusEl) statusEl.textContent = `✅ Запазено трайно в repo-то: data/distrokid-library.json (${lib.length} песни).`;
+      this.log(`💾 DistroKid библиотека (${lib.length} песни) записана трайно в GitHub repo-то (data/distrokid-library.json).`);
+      toast("✅ Запазено в repo-то");
+    } catch (e) {
+      if (statusEl) statusEl.textContent = `❌ ${e.message}`;
+      toast("❌ " + e.message);
+    }
+  },
+
+  // Зарежда последната запазена версия от repo-то (напр. на друго
+  // устройство/браузър, или след изчистен кеш/преинсталация) — през
+  // публичния raw.githubusercontent.com, без нужда от token за самото
+  // четене (repo-то е публично).
+  async loadLibraryFromGitHub() {
+    const k = Keys.load();
+    if (!k.ghOwner || !k.ghRepo) return toast("❌ Липсват GitHub потребител/организация или repo — виж Настройки → YouTube Тракер");
+    const branch = k.ghBranch || "main";
+    const statusEl = document.getElementById("ssLibGithubStatus");
+    if (statusEl) statusEl.textContent = "⏳ Зареждам от repo-то...";
+    try {
+      const url = `https://raw.githubusercontent.com/${k.ghOwner}/${k.ghRepo}/${branch}/data/distrokid-library.json?t=${Date.now()}`;
+      const res = await fetchTimeout(url, {}, 15000);
+      if (res.status === 404) {
+        if (statusEl) statusEl.textContent = "⚪ В repo-то още няма запазена библиотека (нормално, ако е първият запис).";
+        return;
+      }
+      if (!res.ok) throw new Error(`GitHub ${res.status}`);
+      const lib = await res.json();
+      localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(lib));
+      this.renderSavedLibrary();
+      if (statusEl) statusEl.textContent = `✅ Заредени ${lib.length} песни от repo-то.`;
+      this.log(`📥 DistroKid библиотека (${lib.length} песни) заредена от GitHub repo-то (data/distrokid-library.json).`);
+    } catch (e) {
+      if (statusEl) statusEl.textContent = `❌ ${e.message}`;
+      toast("❌ " + e.message);
+    }
   },
 
   _loadDistrokidLibrary() {
@@ -144,6 +267,16 @@ const ShortsStudio = {
   // API / iTunes Search API / YouTube Data API търсене по име. Резултатите
   // се записват обратно в библиотеката (localStorage), за да не се търсят
   // повторно следващия път.
+  //
+  // Fix (2026-09-05): песни, за които вече имаме и трите основни линка
+  // (Spotify + Apple Music + YouTube), се ПРОПУСКАТ изцяло на следващо
+  // изпълнение — нито страницата им се чете пак, нито се пращат нови
+  // Spotify/iTunes/YouTube заявки. Преди това всяко "🔍 Намери..." минаваше
+  // през ВСИЧКИ 37 песни отново дори за вече напълно готовите, което хабеше
+  // време и API квоти без причина. За песни, при които липсва само ЕДНА
+  // платформа (напр. има YouTube, няма Spotify), логиката по-долу и без това
+  // вече търсеше само липсващото (виж `if (!e.platforms.spotify ...)` и
+  // т.н.) — сега това е вярно и на ниво цяла песен, не само на ниво платформа.
   async enrichLibrary() {
     const lib = this._loadDistrokidLibrary();
     if (!lib.length) return toast("Първо импортирай DistroKid библиотеката по-горе");
@@ -151,6 +284,8 @@ const ShortsStudio = {
     const resultsEl = document.getElementById("ssLibEnrichResults");
     resultsEl.innerHTML = "";
     const total = lib.length;
+    const CORE_PLATFORMS = ["spotify", "apple", "youtube"];
+    let skipped = 0;
 
     let spotifyToken = null;
     try { spotifyToken = await NicheToolkit._getSpotifyToken(); }
@@ -160,8 +295,19 @@ const ShortsStudio = {
 
     for (let i = 0; i < total; i++) {
       const e = lib[i];
-      if (statusEl) statusEl.textContent = `⏳ ${i + 1}/${total}: ${e.song}...`;
       e.platforms = e.platforms || {};
+
+      // Вече имаме и трите основни линка за тази песен — нищо ново да се
+      // намери от повторно четене/търсене, пропускаме я директно.
+      if (CORE_PLATFORMS.every(key => e.platforms[key])) {
+        skipped++;
+        if (statusEl) statusEl.textContent = `⏭️ ${i + 1}/${total}: ${e.song} — вече готова (Spotify+Apple+YouTube), пропускам.`;
+        resultsEl.innerHTML += this._enrichRowHtml(e);
+        resultsEl.scrollTop = resultsEl.scrollHeight;
+        continue;
+      }
+
+      if (statusEl) statusEl.textContent = `⏳ ${i + 1}/${total}: ${e.song}...`;
 
       // Приоритет 1 — четем реалната HyperFollow страница на песента.
       if (e.url) {
@@ -215,8 +361,9 @@ const ShortsStudio = {
     const counts = {};
     for (const key of Object.keys(this._PLATFORM_LABELS)) counts[key] = lib.filter(e => e.platforms?.[key]).length;
     const summary = Object.entries(counts).filter(([, n]) => n > 0).map(([k, n]) => `${this._platformLabel(k)} ${n}/${total}`).join(" · ");
-    if (statusEl) statusEl.textContent = `✅ Готово: ${summary || "нищо не се намери"}.`;
-    this.log(`🔍 Обогатяване на библиотеката готово — ${summary || "нищо не се намери"}.`);
+    const skippedNote = skipped ? ` (${skipped} песни вече бяха готови и бяха пропуснати)` : "";
+    if (statusEl) statusEl.textContent = `✅ Готово: ${summary || "нищо не се намери"}${skippedNote}.`;
+    this.log(`🔍 Обогатяване на библиотеката готово — ${summary || "нищо не се намери"}${skippedNote}.`);
   },
 
   _enrichRowHtml(e) {
