@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-fetch_distrokid_links.py — точна версия с последване на пренасочванията
-========================================================================
-Използва Playwright, за да извлече КРАЙНИТЕ реални URL адреси на платформите,
-избягвайки счупените проследяващи линкове на DistroKid.
+fetch_distrokid_links.py — извличане на платформени линкове + аудио демо от HyperFollow
+==================================================================================
+Използва Playwright, за да извлече реалните URL адреси на стрийминг платформите
+и директния линк към аудио плейъра (preview audio) на DistroKid.
 """
 
 from __future__ import annotations
@@ -28,9 +28,31 @@ def clean_url(url: str) -> str:
     """Изчиства проследяващи параметри от линка."""
     if not url:
         return ""
-    # Премахваме DistroKid tracking параметри
     url = re.sub(r'([\?&])(uo|app|ls|at|ct|pt)=[^&]*', '', url)
     return url.rstrip('?&')
+
+
+async def extract_audio_preview(page) -> str | None:
+    """Извлича директния MP3/M4A линк за аудио демото от страницата."""
+    try:
+        # 1. Търсене в <audio> / <source> елементи
+        audio_src = await page.evaluate("""() => {
+            const audio = document.querySelector('audio source, audio');
+            if (audio && audio.src) return audio.src;
+            return null;
+        }""")
+        if audio_src and audio_src.startswith('http'):
+            return audio_src
+
+        # 2. Търсене в целия HTML за линкове към качени аудио превюта в CDN на DistroKid
+        html = await page.content()
+        audio_match = re.search(r'(https://[^\s"\'<>]+\.(?:mp3|m4a|aac)(?:\?[^\s"\'<>]*)?)', html, re.IGNORECASE)
+        if audio_match:
+            return audio_match.group(1)
+
+    except Exception:
+        pass
+    return None
 
 
 async def main_async() -> None:
@@ -58,11 +80,6 @@ async def main_async() -> None:
             platforms = entry.setdefault("platforms", {})
             title = entry.get("song") or "?"
 
-            if all(platforms.get(p) for p in CORE_PLATFORMS):
-                skipped += 1
-                print(f"[{i}/{total}] ⏭️  {title} — вече готова, пропускам.")
-                continue
-
             url = entry.get("url")
             if not url:
                 continue
@@ -72,49 +89,40 @@ async def main_async() -> None:
                 await page.goto(url, wait_until="networkidle", timeout=30000)
                 await page.wait_for_timeout(2000)
 
-                # Селектираме всички a елементи на страницата
+                # 1. Извличане на платформени линкове
                 anchors = await page.query_selector_all('a[href]')
                 found = {}
 
                 for a in anchors:
                     href = await a.get_attribute('href')
-                    text = (await a.inner_text()).lower()
-
                     if not href:
                         continue
 
-                    # Проверка за Spotify
                     if 'spotify.com' in href:
                         found['spotify'] = clean_url(href)
-
-                    # Проверка за Apple Music (филтрираме itunes.apple.com линкове, които свалят файл)
                     elif 'music.apple.com' in href:
                         found['apple'] = clean_url(href)
-
-                    # Проверка за YouTube
                     elif 'youtube.com' in href or 'youtu.be' in href:
                         found['youtube'] = clean_url(href)
-
-                    # Deezer
                     elif 'deezer.com' in href:
                         found['deezer'] = clean_url(href)
-
-                    # Tidal
                     elif 'tidal.com' in href:
                         found['tidal'] = clean_url(href)
 
+                # 2. Извличане на линк към демо аудиото (preview play бутона)
+                preview_audio = await extract_audio_preview(page)
+                if preview_audio:
+                    entry["previewAudio"] = preview_audio
+                    found['audioPreview'] = preview_audio
+
                 before = dict(platforms)
                 platforms.update(found)
-
-                # Премахваме iHeartRadio, ако е счупено
-                if 'iheartradio' in platforms and not found.get('iheartradio'):
-                    del platforms['iheartradio']
 
                 if platforms.get("spotify"): entry["spotifyUrl"] = platforms["spotify"]
                 if platforms.get("apple"): entry["appleUrl"] = platforms["apple"]
                 if platforms.get("youtube"): entry["youtubeUrl"] = platforms["youtube"]
 
-                if platforms != before:
+                if platforms != before or preview_audio:
                     changed += 1
                     print(f"    ✅ намерени: {', '.join(found.keys()) or '—'}")
                 else:
@@ -128,7 +136,7 @@ async def main_async() -> None:
         await browser.close()
 
     save_json(DATA_PATH, library)
-    print(f"\nГотово: {changed} обновени, {skipped} пропуснати от общо {total}.")
+    print(f"\nГотово: {changed} обновени от общо {total}.")
 
 
 def main() -> None:
