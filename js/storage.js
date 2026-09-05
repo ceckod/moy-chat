@@ -41,7 +41,26 @@ const Storage = {
   },
   set(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch (e) { console.warn(`Storage.set: неуспешен запис за "${key}" (диск пълен?).`, e); return false; }
+    catch (e) {
+      // QuotaExceededError (диск пълен) — вместо направо да се откажем,
+      // опитваме ЕДНОКРАТНО автоматично възстановяване: AppLog (js/app-log.js)
+      // е най-вероятният "тих" консуматор на място с течение на времето
+      // (виж бележката там за _MAX_LINES_PER_GROUP) — принудително го
+      // подрязваме и пробваме записа още веднъж. Ако AppLog не е зареден
+      // още (ред на <script> таговете) или пак не стигне, се предаваме
+      // както преди — просто с по-ясно съобщение защо точно.
+      const isQuota = e.name === "QuotaExceededError" || e.code === 22;
+      if (isQuota && typeof AppLog !== "undefined" && key !== AppLog._KEY) {
+        try {
+          AppLog._save({}); // спешно пълно изчистване, не само подрязване — приоритет е основният запис да мине
+          localStorage.setItem(key, JSON.stringify(value));
+          console.warn(`Storage.set: localStorage беше пълен — изчистих логовете (AppLog) и записът за "${key}" мина при повторен опит.`);
+          return true;
+        } catch (e2) { /* и след почистване пак не стигна — предай се долу */ }
+      }
+      console.warn(`Storage.set: неуспешен запис за "${key}" ${isQuota ? "(localStorage е ПЪЛЕН — почисти данни от Настройки)" : "(диск пълен?)"}.`, e);
+      return false;
+    }
   },
   remove(key) { localStorage.removeItem(key); },
   has(key) { return localStorage.getItem(key) !== null; },

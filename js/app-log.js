@@ -43,6 +43,15 @@ const AppLog = {
   _KEY: "cdb_app_log_v1",
   _RETENTION_KEY: "cdb_app_log_retention_days",
   _DEFAULT_RETENTION_DAYS: 3,
+  // Максимален брой редове, пазени в ЕДНА група (ден+модул) — виж write()
+  // по-долу. Пазенето по дни (_prune) не е достатъчно само по себе си: ако
+  // даден модул пише стотици редове В РАМКИТЕ на 1 ден (напр. дълъг
+  // автоматизиран run на YouTube Discovery Engine), lines масивът расте
+  // неограничено ПРЕДИ да остарее по дата — а ЦЕЛИЯТ обект се сериализира
+  // и записва в localStorage при ВСЕКИ write() (виж this._save(data) по-
+  // долу), значи расте и цената на всеки следващ запис. Ограничението пази
+  // последните MAX_LINES реда — най-новите, най-полезните за дебъгване.
+  _MAX_LINES_PER_GROUP: 500,
   _expanded: new Set(),
 
   _todayKey() {
@@ -106,6 +115,9 @@ const AppLog = {
     }
     const time = new Date().toLocaleTimeString("bg-BG");
     data[key].lines.push(`[${time}] ${line}`);
+    if (data[key].lines.length > this._MAX_LINES_PER_GROUP) {
+      data[key].lines = data[key].lines.slice(-this._MAX_LINES_PER_GROUP);
+    }
     data[key].updatedAt = Date.now();
     this._save(data);
     this.render();

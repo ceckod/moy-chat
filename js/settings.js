@@ -731,6 +731,11 @@ const Settings = {
     if (AppState.data.project.title || AppState.data.project.lyrics) {
       ProjectArchive.saveCurrent();
     }
+    // Отменя чакащ debounce-нат save() (виж AppState.save() в js/app-state.js) —
+    // без това е безобидно (this.data вече ще сочи към новите дефолти, когато
+    // старият таймер тикне), но е излишен допълнителен запис; по-чисто е
+    // просто да го спрем изрично тук.
+    if (AppState._saveTimer) { clearTimeout(AppState._saveTimer); AppState._saveTimer = null; }
     Storage.remove(STORAGE_KEY);
     AppState.load();
     GeminiValidator.render();
