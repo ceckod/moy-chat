@@ -36,6 +36,11 @@ const Mastering = (function () {
   let beforeStats = null;      // числов анализ на оригинала (виж analyzeAudio)
   let afterStats = null;       // числов анализ на резултата след обработка
 
+  // ---------- OPENROUTER ЛОГ ("какво може да се подобри") ----------
+  const OR_LOG_CACHE_KEY = 'cdb_mastering_openrouter_log_v1';
+  const OR_LOG_MAX_AGE_DAYS = 30;
+  let openrouterLog = []; // [{ts, summary, full}, ...] най-нови отпред
+
   // ---------- ЖИВО ПРЕСЛУШВАНЕ (реално време, докато оригиналът свири) ----------
   // За разлика от финалния offline рендер (renderMastered — mid/side EQ +
   // brickwall лимитер, точен резултат за износ), тук е опростена live версия
@@ -97,6 +102,9 @@ const Mastering = (function () {
       loadPresetsCacheLocal();
       renderCustomPresetList();
       refreshCustomPresets();
+      loadOpenrouterLogCacheLocal();
+      renderOpenrouterLog();
+      refreshOpenrouterLog();
     } catch (e) { console.error('Mastering.init грешка:', e); }
   }
 
@@ -685,6 +693,192 @@ const Mastering = (function () {
     if (box) { box.style.display = 'block'; box.textContent = '🤖 Gemini: ' + (s.reasoning || '(без допълнително обяснение)'); }
   }
 
+  /* ============================================================
+     OPENROUTER — "Как да подобрим САМАТА мастеринг система?"
+     За разлика от aiSuggest() (Gemini чуе КОНКРЕТНА песен и предлага
+     настройки за нея), тук питаме OpenRouter (текстов модел, без аудио)
+     да прегледа АРХИТЕКТУРАТА на целия мастеринг модул — какво точно е
+     изградено в кода — и да предложи какво липсва/може да се подобри,
+     за да стигне професионално ниво (напр. lookahead/true-peak лимитер,
+     multiband компресия, LUFS таргетиране по платформа, noise-shaping
+     dither и т.н.). Не зависи от качен файл — описва самата система.
+     Отговорите се пазят в GitHub (data/mastering-openrouter-log.json)
+     с дата/час + кратко резюме, пълният текст се вижда при клик, и
+     автоматично се самопочистват записи по-стари от 30 дни.
+     ============================================================ */
+  function buildMasteringSystemDescription() {
+    return [
+      'Клиентски (браузърен) мастеринг модул, изцяло Web Audio API, без сървър:',
+      '1) Разделяне на стереото на mid/side (mid=0.5L+0.5R, side=0.5L-0.5R) чрез createChannelSplitter/GainNode-ове; вокал dip (2x peaking BiquadFilter) се прилага САМО върху mid, side остава непипнат; после рекомбинация L\'=mid+side, R\'=mid-side чрез createChannelMerger.',
+      '2) Тонколор верига върху рекомбинирания сигнал: highpass (маха тресене) → lowshelf бас → peaking "пънч" пик (~100Hz) → peaking "mud" изрязване (~400Hz) → highshelf "air/presence".',
+      '3) Динамика: единствен нативен DynamicsCompressorNode (single-band, без multiband/multiband split по честоти).',
+      '4) Целият горен граф работи в OfflineAudioContext (офлайн рендер, не realtime).',
+      '5) Финален лимитер: СОБСТВЕНА JS имплементация върху рендернатия Float32Array (НЕ Web Audio нод) — линкован stereo (взима max(|L|,|R|) на семпъл), мигновена атака, експоненциално release (~60ms time constant), БЕЗ lookahead буфериране и БЕЗ oversampling за true-peak детекция (мери само sample peak, не inter-sample true peak).',
+      '6) Живо преслушване (докато потребителят слуша оригинала): опростена версия на СЪЩАТА верига (без mid/side split — вокал EQ директно върху стерео сигнала), с DynamicsCompressor като "safety" лимитер вместо реалния brickwall.',
+      '7) Износ: WAV 16-bit PCM (с TPDF dithering) / 24-bit PCM / 32-bit float, плюс MP3 320kbps (lamejs). Няма noise-shaping dither (само плосък TPDF), няма избор на sample rate конверсия.',
+      '8) Няма LUFS-базирано таргетиране (само true-peak dBFS таргет за лимитера) — потребителят сам избира targetPeakDb, няма пресети "за Spotify -14 LUFS" / "за YouTube -13 LUFS" и т.н.',
+      '9) Няма reference-track matching, няма saturation/harmonic exciter, няма stereo width контрол извън EQ-то на mid/side, няма de-esser.'
+    ].join('\n');
+  }
+
+  async function askOpenRouterImprove() {
+    if (typeof callOpenRouter !== 'function') { toast('⚠️ OpenRouter модулът не е зареден'); return; }
+    const btn = $('masteringOpenRouterBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '🧠 OpenRouter анализира системата...'; }
+    try {
+      const systemDesc = buildMasteringSystemDescription();
+      const prompt = 'Ти си опитен mastering/DSP инженер, който преглежда чужд код за автоматизиран мастеринг ' +
+        'инструмент (не конкретна песен — цялата СИСТЕМА). По-долу е точно описание какво е реално изградено:\n\n' +
+        systemDesc + '\n\n' +
+        'Прегледай архитектурата критично и предложи КОНКРЕТНИ, приоритизирани подобрения, за да достигне ' +
+        'резултатът професионално мастеринг ниво (сравнимо с платен онлайн мастеринг сервиз или ръчен мастеринг ' +
+        'инженер). За всяко предложение — какво точно липсва/куца сега, защо е важно, и накратко как технически ' +
+        'да се реализира (алгоритъм/подход, не пълен код). Подреди по приоритет (най-важното first).\n\n' +
+        'Върни САМО ЧИСТ JSON (без markdown):\n' +
+        '{"summary":"1-2 изречения общо резюме на най-важния проблем/подобрение","suggestions":"пълният приоритизиран списък с предложения, като свободен форматиран текст"}';
+
+      const raw = await callOpenRouter(prompt, 1600);
+      let parsed = null;
+      try { parsed = extractJson(raw); } catch (e) { /* моделът не върна чист JSON — падаме на суровия текст */ }
+      const summary = (parsed && parsed.summary) ? parsed.summary : (raw.slice(0, 180).trim() + (raw.length > 180 ? '…' : ''));
+      const full = (parsed && parsed.suggestions) ? parsed.suggestions : raw;
+
+      await _saveOpenRouterLogEntry(summary, full);
+      toast('✅ OpenRouter предложи подобрения за мастеринг системата');
+    } catch (e) {
+      console.error(e);
+      toast('❌ OpenRouter грешка: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🧠 OpenRouter: как да подобрим системата?'; }
+    }
+  }
+
+  /* ---------- лог помощни функции (localStorage кеш + GitHub, 30 дни авто-почистване) ---------- */
+  function loadOpenrouterLogCacheLocal() {
+    try { openrouterLog = (typeof Storage !== 'undefined' && Storage.get(OR_LOG_CACHE_KEY)) || []; }
+    catch (e) { openrouterLog = []; }
+    if (!Array.isArray(openrouterLog)) openrouterLog = [];
+  }
+
+  function pruneOldLogEntries(list) {
+    const cutoff = Date.now() - OR_LOG_MAX_AGE_DAYS * 24 * 3600 * 1000;
+    return (list || []).filter(function (e) {
+      const t = Date.parse(e && e.ts);
+      return isFinite(t) && t >= cutoff;
+    });
+  }
+
+  function renderOpenrouterLog() {
+    const el = $('masteringOpenRouterLog');
+    if (!el) return;
+    if (!openrouterLog.length) {
+      el.innerHTML = '<span class="muted" style="font-size:12px;">Все още няма отговори от OpenRouter.</span>';
+      return;
+    }
+    el.innerHTML = openrouterLog.map(function (entry, idx) {
+      const dt = new Date(entry.ts);
+      const dtStr = isNaN(dt.getTime()) ? '?' : (dt.toLocaleDateString('bg-BG') + ' ' + dt.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }));
+      return '<div class="card" style="margin-bottom:8px;padding:10px;cursor:pointer;" data-or-log-idx="' + idx + '">' +
+        '<div class="muted" style="font-size:11px;">' + dtStr + '</div>' +
+        '<div style="font-size:13px;margin-top:2px;">' + escapeHtml(entry.summary || '') + '</div>' +
+        '<div class="muted" style="font-size:11px;margin-top:4px;">▶️ Виж пълния отговор</div>' +
+        '<div class="or-log-full" style="display:none;white-space:pre-wrap;font-size:12.5px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px;"></div>' +
+        '</div>';
+    }).join('');
+    el.querySelectorAll('[data-or-log-idx]').forEach(function (card) {
+      card.addEventListener('click', function () {
+        const idx = +card.getAttribute('data-or-log-idx');
+        const fullBox = card.querySelector('.or-log-full');
+        if (!fullBox) return;
+        const isOpen = fullBox.style.display !== 'none';
+        if (isOpen) { fullBox.style.display = 'none'; }
+        else { fullBox.textContent = openrouterLog[idx].full || ''; fullBox.style.display = 'block'; }
+      });
+    });
+  }
+
+  async function _writeOpenrouterLogToGithub(list) {
+    const k = ghConfig();
+    if (!k.ghToken || !k.ghOwner || !k.ghRepo) return false;
+    const branch = k.ghBranch || 'main';
+    const path = 'https://api.github.com/repos/' + k.ghOwner + '/' + k.ghRepo + '/contents/data/mastering-openrouter-log.json';
+    const shaRes = await fetchTimeout(path + '?ref=' + branch, { headers: { Authorization: 'Bearer ' + k.ghToken, Accept: 'application/vnd.github+json' } });
+    let sha;
+    if (shaRes.ok) { const meta = await shaRes.json(); sha = meta.sha; }
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2) + '\n')));
+    const putRes = await fetchTimeout(path, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + k.ghToken, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '🧠 OpenRouter мастеринг лог (авто-почистване >' + OR_LOG_MAX_AGE_DAYS + 'дни)', content: content, sha: sha, branch: branch })
+    }, 20000);
+    if (!putRes.ok) throw new Error('GitHub ' + putRes.status + ': ' + (await putRes.text()).slice(0, 300));
+    return true;
+  }
+
+  async function _saveOpenRouterLogEntry(summary, full) {
+    const entry = { ts: new Date().toISOString(), summary: summary, full: full };
+    const k = ghConfig();
+    if (!k.ghToken || !k.ghOwner || !k.ghRepo) {
+      openrouterLog = pruneOldLogEntries([entry].concat(openrouterLog));
+      if (typeof Storage !== 'undefined') Storage.set(OR_LOG_CACHE_KEY, openrouterLog);
+      renderOpenrouterLog();
+      toast('💾 Запазено локално в браузъра (за да се пази в GitHub — задай Token/owner/repo в Настройки)');
+      return;
+    }
+    toast('⏳ Записвам отговора на OpenRouter в GitHub...');
+    try {
+      const url = 'https://raw.githubusercontent.com/' + k.ghOwner + '/' + k.ghRepo + '/' + (k.ghBranch || 'main') + '/data/mastering-openrouter-log.json?t=' + Date.now();
+      let existing = [];
+      try {
+        const r = await fetchTimeout(url);
+        if (r.ok) { const d = await r.json(); if (Array.isArray(d)) existing = d; }
+      } catch (e) { /* файлът вероятно още не съществува в repo-то — първи запис */ }
+      const merged = pruneOldLogEntries([entry].concat(existing));
+      await _writeOpenrouterLogToGithub(merged);
+      openrouterLog = merged;
+      if (typeof Storage !== 'undefined') Storage.set(OR_LOG_CACHE_KEY, openrouterLog);
+      renderOpenrouterLog();
+      toast('✅ Записано в GitHub — пази се ' + OR_LOG_MAX_AGE_DAYS + ' дни, после се самопочиства');
+    } catch (e) {
+      console.error(e);
+      // при грешка в GitHub записа — пак пазим локално, за да не се загуби отговорът
+      openrouterLog = pruneOldLogEntries([entry].concat(openrouterLog));
+      if (typeof Storage !== 'undefined') Storage.set(OR_LOG_CACHE_KEY, openrouterLog);
+      renderOpenrouterLog();
+      toast('❌ GitHub запис неуспешен (' + e.message + ') — запазено само локално');
+    }
+  }
+
+  // При зареждане: тегли лога от GitHub, чисти записи >30 дни; ако нещо е
+  // отрязано, пише почистения списък обратно в GitHub (истинско "самопочистване",
+  // не само локален филтър) — тихо, без toast, освен ако гръмне грешка.
+  async function refreshOpenrouterLog() {
+    const k = ghConfig();
+    if (!k.ghOwner || !k.ghRepo) {
+      openrouterLog = pruneOldLogEntries(openrouterLog);
+      if (typeof Storage !== 'undefined') Storage.set(OR_LOG_CACHE_KEY, openrouterLog);
+      renderOpenrouterLog();
+      return;
+    }
+    const branch = k.ghBranch || 'main';
+    const url = 'https://raw.githubusercontent.com/' + k.ghOwner + '/' + k.ghRepo + '/' + branch + '/data/mastering-openrouter-log.json?t=' + Date.now();
+    try {
+      const res = await fetchTimeout(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const pruned = pruneOldLogEntries(data);
+          openrouterLog = pruned;
+          if (typeof Storage !== 'undefined') Storage.set(OR_LOG_CACHE_KEY, openrouterLog);
+          if (pruned.length !== data.length && k.ghToken) {
+            _writeOpenrouterLogToGithub(pruned).catch(function (e) { console.warn('Самопочистване на OpenRouter лога неуспешно:', e.message); });
+          }
+        }
+      }
+    } catch (e) { /* тихо — оставаме на локалния кеш */ }
+    renderOpenrouterLog();
+  }
+
   /* ---------- основна обработка ---------- */
   async function process() {
     if (!originalBuffer) return;
@@ -1063,6 +1257,7 @@ const Mastering = (function () {
     promptSavePreset: promptSavePreset,
     applyCustomPreset: applyCustomPreset,
     deleteCustomPreset: deleteCustomPreset,
-    aiSuggest: aiSuggest
+    aiSuggest: aiSuggest,
+    askOpenRouterImprove: askOpenRouterImprove
   };
 })();
