@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-03T07:43:36.207Z",
-  "total": 64,
+  "generated_at": "2026-09-05T07:21:30.293Z",
+  "total": 65,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 21
+      "count": 22
     },
     "static": {
       "ok": true,
@@ -28,8 +28,28 @@
   "models": [
     {
       "source": "openrouter",
+      "id": "inclusionai/ling-3.0-flash-sante:free",
+      "name": "inclusionAI: Ling 3.0 Flash Sante (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/inclusionai/ling-3.0-flash-sante:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.0-flash-sante:free"
+    },
+    {
+      "source": "openrouter",
       "id": "inclusionai/ling-3.0-flash-fin:free",
-      "name": "Ling 3.0 Flash Fin (free)",
+      "name": "inclusionAI: Ling 3.0 Flash Fin (free)",
       "provider": "OpenRouter",
       "category": "text-generation",
       "type": "chat",
