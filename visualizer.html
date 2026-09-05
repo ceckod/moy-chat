@@ -941,25 +941,28 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     if(!audioEl.paused) rafId = requestAnimationFrame(loop);
   }
 
-  // ---- Background pause (CPU/GPU до 0% в скрит таб) ----
-  // Само за ЖИВИЯ preview loop() по-горе — НЕ пипа renderLoop() на
-  // експорта/записа по-долу в файла: спирането на кадри по време на
-  // активен MediaRecorder export би счупило/разкривило записаното видео
-  // (аудиото продължава да тече, но без нарисувани кадри), затова exportът
-  // умишлено остава недокоснат тук, дори с цената на GPU натоварване в
-  // фонов таб за времетраенето на самия export (кратко, приемливо).
-  // При скриване: cancelAnimationFrame — спира draw() напълно, но НЕ
-  // паузира самото аудио (потребителят вероятно иска музиката да продължи
-  // да свири, докато превключва табове — само визуализацията пести ресурс).
-  // При връщане: ако аудиото все още свири (не е паузирано/приключило
-  // междувременно от потребителя), веднага пресинхронизираме с 1 draw()
-  // (за да няма "замръзнал" кадър от преди скриването) и продължаваме loop().
+  // ---- Background Pause (Фаза 4 от рефакторинг спецификацията) ----
+  // Докато табът/прозорецът не се вижда (потребителят е превключил на
+  // друг таб, минимизирал е браузъра и т.н.), спираме напълно preview
+  // rAF цикъла (loop()) — canvas рисуването (waveform, видео слоеве,
+  // текст анимации) спира да троши CPU/GPU на 0%. Самото аудио НЕ спира
+  // (audioEl.pause() не се вика тук) — потребителят пак чува песента,
+  // просто визуалният preview временно замръзва, докато не се върне.
+  //
+  // ВАЖНО: НИКОГА не пипаме нищо, докато тече износ на видео
+  // (isRecording === true) — по време на export единственият rAF цикъл
+  // е renderLoop() (виж startExport() по-долу), който е СЪЗНАТЕЛНО
+  // отделен от rafId/loop() точно за да не бъде засегнат оттук. Ако го
+  // спрем при скрит таб, MediaRecorder-ът увисва по средата на записа
+  // (recorder.stop() никога не се извиква, защото зависи от рекурсията
+  // на renderLoop). Затова guard-ът е изричен: !isRecording.
   document.addEventListener('visibilitychange', () => {
-    if(document.hidden){
-      if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-    } else if(!audioEl.paused){
-      draw();
-      rafId = requestAnimationFrame(loop);
+    if (document.hidden) {
+      if (!isRecording && rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    } else {
+      if (isRecording) return; // renderLoop() никога не е бил спиран — няма какво да съживяваме
+      if (!audioEl.paused) loop(); // аудиото е продължило да свири в background — подхващаме отново seek/waveform синхронизацията
+      else draw(); // паузирано е — един кадър стига, "idle breathing" интервалът по-долу поема оттук нататък
     }
   });
 
@@ -1592,7 +1595,11 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     }
   }
 
-  setInterval(()=>{ if(audioEl.paused && !isRecording) draw(); }, 400);
+  // + !document.hidden — иначе този интервал продължава да рисува 2.5
+  // пъти в секунда БЕЗКРАЙНО, докато табът е отворен някъде във фонов
+  // режим (напр. потребителят е спрял на паузата и е превключил таба) —
+  // точно обратното на "0% CPU/GPU в background", което търсим тук.
+  setInterval(()=>{ if(audioEl.paused && !isRecording && !document.hidden) draw(); }, 400);
 
   // ---- export ----
   exportBtn.addEventListener('click', startExport);
