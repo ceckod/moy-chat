@@ -708,17 +708,43 @@ const Mastering = (function () {
      ============================================================ */
   function buildMasteringSystemDescription() {
     return [
-      'Клиентски (браузърен) мастеринг модул, изцяло Web Audio API, без сървър:',
+      '=== СИСТЕМА А — "Обикновен мастеринг" (js/mastering.js, изцяло клиентски, Web Audio API, мигновен резултат в браузъра) ===',
       '1) Разделяне на стереото на mid/side (mid=0.5L+0.5R, side=0.5L-0.5R) чрез createChannelSplitter/GainNode-ове; вокал dip (2x peaking BiquadFilter) се прилага САМО върху mid, side остава непипнат; после рекомбинация L\'=mid+side, R\'=mid-side чрез createChannelMerger.',
       '2) Тонколор верига върху рекомбинирания сигнал: highpass (маха тресене) → lowshelf бас → peaking "пънч" пик (~100Hz) → peaking "mud" изрязване (~400Hz) → highshelf "air/presence".',
-      '3) Динамика: единствен нативен DynamicsCompressorNode (single-band, без multiband/multiband split по честоти).',
+      '3) Динамика: единствен нативен DynamicsCompressorNode (single-band, БЕЗ multiband split по честоти).',
       '4) Целият горен граф работи в OfflineAudioContext (офлайн рендер, не realtime).',
-      '5) Финален лимитер: СОБСТВЕНА JS имплементация върху рендернатия Float32Array (НЕ Web Audio нод) — линкован stereo (взима max(|L|,|R|) на семпъл), мигновена атака, експоненциално release (~60ms time constant), БЕЗ lookahead буфериране и БЕЗ oversampling за true-peak детекция (мери само sample peak, не inter-sample true peak).',
-      '6) Живо преслушване (докато потребителят слуша оригинала): опростена версия на СЪЩАТА верига (без mid/side split — вокал EQ директно върху стерео сигнала), с DynamicsCompressor като "safety" лимитер вместо реалния brickwall.',
-      '7) Износ: WAV 16-bit PCM (с TPDF dithering) / 24-bit PCM / 32-bit float, плюс MP3 320kbps (lamejs). Няма noise-shaping dither (само плосък TPDF), няма избор на sample rate конверсия.',
-      '8) Няма LUFS-базирано таргетиране (само true-peak dBFS таргет за лимитера) — потребителят сам избира targetPeakDb, няма пресети "за Spotify -14 LUFS" / "за YouTube -13 LUFS" и т.н.',
-      '9) Няма reference-track matching, няма saturation/harmonic exciter, няма stereo width контрол извън EQ-то на mid/side, няма de-esser.'
+      '5) Финален лимитер: СОБСТВЕНА JS имплементация върху рендернатия Float32Array (НЕ Web Audio нод) — линкован stereo (max(|L|,|R|) на семпъл), мигновена атака, експоненциално release (~60ms), БЕЗ lookahead буфериране и БЕЗ oversampling за true-peak детекция (мери само sample peak, не inter-sample true peak).',
+      '6) Живо преслушване (докато потребителят слуша оригинала): опростена версия на СЪЩАТА верига (без mid/side split), с DynamicsCompressor като "safety" лимитер вместо реалния brickwall.',
+      '7) Износ: WAV 16-bit PCM (с плосък TPDF dithering, БЕЗ noise shaping) / 24-bit PCM / 32-bit float, плюс MP3 320kbps (lamejs). Няма избор на sample rate конверсия — винаги излиза на original sample rate-а на файла.',
+      '8) Няма LUFS-базирано таргетиране (само ръчен true-peak dBFS таргет за лимитера) — потребителят сам избира targetPeakDb, няма пресети "Spotify -14 LUFS"/"YouTube -14 LUFS" и т.н.',
+      '9) Няма reference-track matching, няма saturation/harmonic exciter, няма stereo width контрол извън EQ-то на mid/side, няма de-esser, няма multiband динамика.',
+      '10) Резултатът е мигновен (секунди), без сървър/GitHub Actions — но точно заради това е ограничен до неща, изпълними реалистично в браузъра.',
+      '',
+      '=== СИСТЕМА Б — "Pro мастеринг" (js/mastering-pro.js + scripts/master_engine.py, сървърна обработка през GitHub Actions, отнема 1-3 мин) ===',
+      '1) Потребителят качва TARGET + REFERENCE WAV (upload през GitHub Git Data API — blobs/trees/commits/refs, до 90MB на файл), workflow_dispatch тригва .github/workflows/mastering-pro.yml, dashboard-ът polls-ва status.json.',
+      '2) TARGET препроцес (Python, numpy/scipy): (а) суб-бас <90Hz принудително моно чрез M/S Butterworth филтри; (б) split-band де-есер 6-10kHz (envelope follower + динамична дъкинг само в тази лента); (в) 3-band (low/mid/high, Butterworth crossover ~200Hz/4000Hz) мултибанд компресор, анти-pumping преди match-ването.',
+      '3) Ядрото е Python библиотеката "matchering" (mg.process) — прави реален reference-track spectral/RMS/stereo-width match спрямо REFERENCE файла (не опростена band-energy апроксимация като в System A концепцията, а пълноценна библиотека за целта), плюс вграден "hyrax" true-peak-safe лимитер.',
+      '4) POST препроцес: лека сатурация/exciter (tanh soft-clip, mix 12%, + high-shelf "air" бустер над 11kHz).',
+      '5) Финален safety true-peak лимитер: 4x oversampling чрез РЕАЛЕН polyphase resampler (soxr, не линейна интерполация), lookahead buffer (2ms) с мигновена атака при нужда, експоненциален release (~60ms) в oversampled domain, плюс hard-clamp застраховка накрая.',
+      '6) Финален износ: 16-bit PCM с TPDF dither (все още БЕЗ noise shaping — същото ограничение като System A).',
+      '7) LUFS метиране преди/след през pyloudnorm (истинска ITU-R BS.1770 имплементация, не апроксимация), записано в status.json и показано на потребителя, НО няма опция потребителят да зададе LUFS ТАРГЕТ — само измерва, не нормализира спрямо конкретна платформа.',
+      '8) Sample rate: остава какъвто е REFERENCE/TARGET файлът (matchering + soxr resampling вътрешно за oversampling на лимитера, но няма избираем изходен sample rate за самия résultат — 44.1/48/96kHz избор).',
+      '9) Няма многократни/различни ratio/threshold настройки достъпни от UI-то на MasteringPro — параметрите на де-есера/мултибанда/сатурацията са fixed стойности в кода (hardcoded), не UI контроли.',
+      '10) Изисква REFERENCE файл ЗАДЪЛЖИТЕЛНО (не работи "самостоятелно" без референтен трак, за разлика от System A).'
     ].join('\n');
+  }
+
+  // История на ПРЕДИШНИ отговори — праща се на OpenRouter, за да НЕ повтаря
+  // едни и същи предложения при всяко следващо питане (последните до 12,
+  // резюме + начало на пълния текст, за да остане promt-ът разумен по размер).
+  function buildPastSuggestionsHistory() {
+    if (!openrouterLog.length) return '(няма предишни отговори — това е първото питане)';
+    return openrouterLog.slice(0, 12).map(function (entry, idx) {
+      const dt = new Date(entry.ts);
+      const dtStr = isNaN(dt.getTime()) ? '?' : dt.toLocaleDateString('bg-BG');
+      const snippet = (entry.full || '').slice(0, 400).trim();
+      return (idx + 1) + ') [' + dtStr + '] ' + (entry.summary || '') + '\n   ' + snippet + (entry.full && entry.full.length > 400 ? '…' : '');
+    }).join('\n\n');
   }
 
   async function askOpenRouterImprove() {
@@ -727,24 +753,40 @@ const Mastering = (function () {
     if (btn) { btn.disabled = true; btn.textContent = '🧠 OpenRouter анализира системата...'; }
     try {
       const systemDesc = buildMasteringSystemDescription();
+      const history = buildPastSuggestionsHistory();
       const prompt = 'Ти си опитен mastering/DSP инженер, който преглежда чужд код за автоматизиран мастеринг ' +
-        'инструмент (не конкретна песен — цялата СИСТЕМА). По-долу е точно описание какво е реално изградено:\n\n' +
+        'инструмент. Инструментът се състои от ДВЕ отделни системи (виж пълното, актуално описание по-долу — ' +
+        'основавай се САМО на реално описаното, не предполагай функции, които не са изрично споменати):\n\n' +
         systemDesc + '\n\n' +
-        'Прегледай архитектурата критично и предложи КОНКРЕТНИ, приоритизирани подобрения, за да достигне ' +
-        'резултатът професионално мастеринг ниво (сравнимо с платен онлайн мастеринг сервиз или ръчен мастеринг ' +
-        'инженер). За всяко предложение — какво точно липсва/куца сега, защо е важно, и накратко как технически ' +
-        'да се реализира (алгоритъм/подход, не пълен код). Подреди по приоритет (най-важното first).\n\n' +
+        '=== ПРЕДИШНИ ТВОИ ОТГОВОРИ (ХРОНОЛОГИЧНО, най-новият first) ===\n' +
+        history + '\n\n' +
+        'ЗАДАЧА: Прегледай архитектурата на ДВЕТЕ системи критично и предложи КОНКРЕТНИ, приоритизирани ' +
+        'подобрения, за да достигнат резултатите професионално мастеринг ниво. Дай ОТДЕЛНИ предложения за ' +
+        'Система А и ОТДЕЛНИ за Система Б (те са различни codebases с различни ограничения — клиентски JS ' +
+        'срещу Python/GitHub Actions).\n\n' +
+        'КРИТИЧНО ВАЖНО: НЕ повтаряй предложения, които вече си давал в "ПРЕДИШНИ ТВОИ ОТГОВОРИ" по-горе — ' +
+        'ако нещо вече е предложено там, приеми че или вече е обмислено, или все още не е приложено по причина; ' +
+        'дай НОВИ, РАЗЛИЧНИ ъгли/идеи, или задълбочи технически конкретно предложение отпреди с нови детайли, ' +
+        'но не просто го преповтаряй със същите думи. Ако наистина няма какво ново да добавиш за някоя от ' +
+        'двете системи, кажи го изрично вместо да измисляш дублиращо предложение.\n\n' +
+        'За всяко предложение — какво точно липсва/куца, защо е важно, и накратко как технически да се ' +
+        'реализира (алгоритъм/подход, не пълен код). Подреди по приоритет (най-важното first).\n\n' +
         'Върни САМО ЧИСТ JSON (без markdown):\n' +
-        '{"summary":"1-2 изречения общо резюме на най-важния проблем/подобрение","suggestions":"пълният приоритизиран списък с предложения, като свободен форматиран текст"}';
+        '{"summary":"1-2 изречения общо резюме на най-важното НОВО предложение измежду двете системи",' +
+        '"suggestionsSystemA":"приоритизиран списък НОВИ предложения за Система А (обикновен мастеринг)",' +
+        '"suggestionsSystemB":"приоритизиран списък НОВИ предложения за Система Б (Pro мастеринг)"}';
 
-      const raw = await callOpenRouter(prompt, 1600);
+      const raw = await callOpenRouter(prompt, 2000);
       let parsed = null;
       try { parsed = extractJson(raw); } catch (e) { /* моделът не върна чист JSON — падаме на суровия текст */ }
       const summary = (parsed && parsed.summary) ? parsed.summary : (raw.slice(0, 180).trim() + (raw.length > 180 ? '…' : ''));
-      const full = (parsed && parsed.suggestions) ? parsed.suggestions : raw;
+      const full = (parsed && (parsed.suggestionsSystemA || parsed.suggestionsSystemB))
+        ? ('=== Система А (обикновен мастеринг) ===\n' + (parsed.suggestionsSystemA || '(няма ново предложение)') +
+           '\n\n=== Система Б (Pro мастеринг) ===\n' + (parsed.suggestionsSystemB || '(няма ново предложение)'))
+        : raw;
 
       await _saveOpenRouterLogEntry(summary, full);
-      toast('✅ OpenRouter предложи подобрения за мастеринг системата');
+      toast('✅ OpenRouter предложи подобрения за двете мастеринг системи');
     } catch (e) {
       console.error(e);
       toast('❌ OpenRouter грешка: ' + e.message);
