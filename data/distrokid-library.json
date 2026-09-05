@@ -4,258 +4,415 @@
     "song": "КАЖИ МИ КАК",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---7",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=701496221947&entity=song&callback=iTunesCallback"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=701496221947&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "ЧУЖДО ИМЕ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--11",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=701496226959&entity=song&callback=iTunesCallback"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=701496226959&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Horas robadas",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/horas-robadas",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=882792112334&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/1021471741",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-414370562"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=882792112334&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "САМО ТИ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--10",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=882652117738&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413835196"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=882652117738&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "DO IT RIGHT (feat. FINA & REX)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/do-it-right-feat-fina--rex",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=882652413304&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413676432"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=882652413304&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Gira Gira (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/gira-gira-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=882652433883&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/1019278931",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-413671154"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=882652433883&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "dRoP iT LoW",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/drop-it-low",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=883500377458&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/1008517771",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-410188820"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=883500377458&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "HE CHOSE ME (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/he-chose-me-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=883500447045&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/1008456841",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-410164155"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=883500447045&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "ПРИЯТЕЛИ ПРЕДАТЕЛИ (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b-3",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=825259341519&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-400713585"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=825259341519&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "САМО МОЙ #2",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--2-2",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=825393862468&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-395317870"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=825393862468&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "МИЛА МОЯ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--9",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=825393865827&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-395308447"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=825393865827&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Mr. Magnetic (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/mr-magnetic-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821311659035&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/923912661",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-381994223"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821311659035&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "ЧЕСТИТ ВАЛЕНТИН",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--8",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821438476331&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-379608598"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821438476331&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "НЕ МЕ ОСТАВЯЙ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---6",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821451646032&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-378444571"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821451646032&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "RUF JOKER",
     "song": "CELTA (feat. Ko$ By)",
     "username": "rufjoker",
     "url": "https://distrokid.com/hyperfollow/rufjoker/celta-feat-ko-by",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821473451874&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/907140322",
+      "iheartradio": "https://www.iheart.com/artist/id-49440494/albums/id-376634259"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821473451874&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "БОМБА",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/7SIXZ8katic",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821500484677&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-375638718"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821500484677&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "ДА ТИ ДАМ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---5",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821500488514&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-375630719"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821500488514&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Очи зелени",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--7",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821513703758&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-374687712"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821513703758&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "САМО МОЙ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--cover--",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821526395346&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-374149598"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821526395346&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "НА ВЪЛК ПРИЛИЧАМ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---4",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821451997585&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-372102239"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821451997585&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "БРАТЯ",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/STMTNhfrGW2",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=821300993577&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-372016508"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=821300993577&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Бай Бай",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--6",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199936382530&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370976750"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199936382530&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "МЪРТВА ЗОНА (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b-2",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199937354895&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370634194"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199937354895&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "The Godfather (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/the-godfather-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199937365075&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/888359652",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370561898"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199937365075&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "THE CODE (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/the-code-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199937367031&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/888335572",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370555448"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199937367031&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "ТЕЖКА КАТЕГОРИЯ (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199938429523&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-370017409"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199938429523&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "King of the Block (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/king-of-the-block-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199941587586&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/881105322",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-368356869"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199941587586&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Being A Blood (feat. CD-B)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/being-a-blood-feat-cd-b",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199941590005&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/881039132",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-368335585"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199941590005&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Изгубена любов (feat. текст Мими Цветанов)",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--5",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199942087504&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367701922"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199942087504&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Плаче моето сърце",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/---3",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199942430645&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367421813"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199942430645&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Duša Bez Granica",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/dua-bez-granica",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199942526997&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367350485"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199942526997&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Официално забранена",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--4",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199942616346&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-367290283"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199942616346&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Проклятие",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/LEP44v0oEfw",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199943109380&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366989353"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199943109380&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Тъмна любов",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--3",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199944264927&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367222"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199944264927&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Dale Todo",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/dale-todo-2",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199944264941&entity=song&callback=iTunesCallback",
+      "deezer": "https://www.deezer.com/album/874959662",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367129"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199944264941&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Студен огън",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--2",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199944264750&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366367096"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199944264750&entity=song&callback=iTunesCallback"
   },
   {
     "artist": "Tsetsko Boyanov",
     "song": "Сърцето ми крещи",
     "username": "tsetskoboyanov",
     "url": "https://distrokid.com/hyperfollow/tsetskoboyanov/--",
-    "platforms": {}
+    "platforms": {
+      "apple": "https://itunes.apple.com/lookup?upc=199944430384&entity=song&callback=iTunesCallback",
+      "iheartradio": "https://www.iheart.com/artist/id-48912694/albums/id-366222871"
+    },
+    "appleUrl": "https://itunes.apple.com/lookup?upc=199944430384&entity=song&callback=iTunesCallback"
   }
 ]
