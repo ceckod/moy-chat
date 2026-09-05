@@ -44,10 +44,26 @@ const ReleaseRoadmap = {
     else toast("Няма активен проект със заглавие в Стъпка 1");
   },
 
+  // Строга ISO валидация (YYYY-MM-DD) — <input type="date"> обикновено
+  // гарантира този формат сам, но на по-стари/нестандартни браузъри
+  // полето пада обратно на обикновен текст вход, където потребителят
+  // може да въведе каквото си иска (напр. "12.05.2026" или непълна
+  // дата). Без тази проверка new Date(dateStr + "T00:00:00") връща
+  // Invalid Date по-надолу в render() → d.setDate()/toISOString() гърми
+  // с RangeError и чупи ЦЕЛИЯ roadmap, не само текущия запис.
+  _isValidIsoDate(s) {
+    if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    const d = new Date(s + "T00:00:00");
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+  },
+
   build() {
     const title = document.getElementById("rrTitle").value.trim();
     const dateStr = document.getElementById("rrDate").value;
     if (!dateStr) return toast("Избери дата на пускане");
+    if (!this._isValidIsoDate(dateStr)) {
+      return toast("Невалидна дата — очакван формат ГГГГ-ММ-ДД (напр. 2026-09-20).");
+    }
     const key = this._keyFor(title, dateStr);
     const all = this._all();
     if (!all[key]) all[key] = { title, dateStr, checked: {} };
@@ -71,6 +87,12 @@ const ReleaseRoadmap = {
     const all = this._all();
     const entry = all[this._currentKey];
     if (!entry) { out.innerHTML = ""; return; }
+    // Защита за вече записани преди фикса невалидни дати в localStorage —
+    // без нея render() ще гръмне с RangeError вместо да покаже ясна грешка.
+    if (!this._isValidIsoDate(entry.dateStr)) {
+      out.innerHTML = `<p class="muted">⚠️ Записаната дата (\"${entry.dateStr}\") е невалидна. Изчисти полето и построй roadmap-а наново.</p>`;
+      return;
+    }
 
     const release = new Date(entry.dateStr + "T00:00:00");
     const items = this.TEMPLATE.map((t, idx) => {
