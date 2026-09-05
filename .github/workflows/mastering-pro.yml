@@ -8,8 +8,10 @@ name: Mastering Pro Engine
 # с Keys.load().ghToken, същия pattern като js/metadata-optimizer.js).
 #
 # Файловете вход/изход НЕ минават през dispatch payload-а (64KB лимит —
-# недостатъчно за WAV), а през GitHub Contents API commit, направен от
-# браузъра ПРЕДИ dispatch-а:
+# недостатъчно за WAV), а през GitHub Git Data API (blobs → tree → commit
+# → ref), направен от браузъра ПРЕДИ dispatch-а (НЕ през Contents API —
+# то 422-ва над ~20-25MB base64 payload; Git Data API поддържа до 100MB
+# на blob, виж подробния коментар в js/mastering-pro.js):
 #   mastering-jobs/<job_id>/target.wav
 #   mastering-jobs/<job_id>/reference.wav
 #   mastering-jobs/<job_id>/job.json   (created_at, за cleanup workflow-а)
