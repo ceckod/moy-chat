@@ -2,8 +2,9 @@
 """
 fetch_distrokid_links.py — сървърно обхождане на HyperFollow страниците (Playwright)
 ========================================================================
-Използва headless Chromium с реален User-Agent, за да заобиколи Cloudflare 403 
-Forbidden грешките при заявки от GitHub Actions runner-а.
+Използва headless Chromium с реален User-Agent и изчакване за динамично заредени
+бутони, за да заобиколи Cloudflare 403 Forbidden грешките и да извлече всички
+платформени линкове (Spotify, Apple Music, YouTube и др.).
 """
 
 from __future__ import annotations
@@ -24,13 +25,14 @@ DATA_PATH = REPO_ROOT / "data" / "distrokid-library.json"
 
 CORE_PLATFORMS = ("spotify", "apple", "youtube")
 
+# Шаблони за домейни, които обхващат и вътрешните пренасочващи линкове на DistroKid
 PLATFORM_DOMAIN_PATTERNS = {
-    "spotify": r'(https://open\.spotify\.com/track/[^\s"\'<>]+)',
+    "spotify": r'(https://open\.spotify\.com/track/[^\s"\'<>]+|https://distrokid\.com/hyperfollow/spotify/[^\s"\'<>]+)',
     "apple": r'(https://(?:music|itunes)\.apple\.com/[^\s"\'<>]+)',
-    "youtube": r'(https://(?:www\.)?youtube\.com/watch\?v=[^\s"\'<>]+|https://youtu\.be/[^\s"\'<>]+)',
+    "youtube": r'(https://(?:www\.)?youtube\.com/watch\?v=[^\s"\'<>]+|https://music\.youtube\.com/[^\s"\'<>]+|https://youtu\.be/[^\s"\'<>]+)',
     "deezer": r'(https://www\.deezer\.com/[^\s"\'<>]+)',
     "tidal": r'(https://(?:www\.)?tidal\.com/[^\s"\'<>]+)',
-    "amazonMusic": r'(https://music\.amazon\.com/[^\s"\'<>]+)',
+    "amazonMusic": r'(https://music\.amazon\.[a-z.]+/[^\s"\'<>]+)',
     "iheartradio": r'(https://www\.iheart\.com/[^\s"\'<>]+)',
     "pandora": r'(https://www\.pandora\.com/[^\s"\'<>]+)',
     "napster": r'(https://(?:www\.)?napster\.com/[^\s"\'<>]+)',
@@ -76,7 +78,8 @@ async def main_async() -> None:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 800}
         )
         page = await context.new_page()
 
@@ -96,19 +99,20 @@ async def main_async() -> None:
 
             print(f"[{i}/{total}] 🔎 {title} ...")
             try:
-                response = await page.goto(url, wait_until="domcontentloaded", timeout=25000)
+                # Изчакване на networkidle за зареждане на всички JS бутони
+                response = await page.goto(url, wait_until="networkidle", timeout=30000)
                 if response and response.status >= 400:
                     print(f"    ⚠️ HTTP {response.status}")
                     continue
 
-                await page.wait_for_timeout(1500)
+                await page.wait_for_timeout(2500)
                 html = await page.content()
 
                 found = extract_links(html)
                 before = dict(platforms)
                 platforms.update(found)
 
-                # Синхронизация с директните полета (за обратна съвместимост)
+                # Синхронизация с директните полета за обратна съвместимост
                 if platforms.get("spotify"):
                     entry["spotifyUrl"] = platforms["spotify"]
                 if platforms.get("apple"):
