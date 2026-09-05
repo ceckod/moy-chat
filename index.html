@@ -1663,6 +1663,16 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
 
       <div class="card" style="margin-bottom:14px;">
+        <strong>🧠 Как да подобрим САМАТА мастеринг система?</strong>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 10px;">Праща на OpenRouter описание на цялата изградена мастеринг архитектура (mid/side EQ, компресор, собствен лимитер, WAV износ и т.н.) и пита какво липсва, за да стигне професионално ниво — не е за конкретна песен, а за самия инструмент. Не изисква качен файл.</p>
+        <button class="btn ghost sm" id="masteringOpenRouterBtn" onclick="Mastering.askOpenRouterImprove()">🧠 OpenRouter: как да подобрим системата?</button>
+        <div style="margin-top:12px;">
+          <span class="muted" style="display:block;margin-bottom:6px;">ОТГОВОРИ ОТ OPENROUTER: <span title="Пазят се в GitHub — data/mastering-openrouter-log.json, автоматично изтриване след 30 дни">(в GitHub, 30 дни)</span></span>
+          <div id="masteringOpenRouterLog"><span class="muted" style="font-size:12px;">Зареждане…</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
         <div class="row" style="align-items:center;justify-content:space-between;">
           <strong>Настройки</strong>
           <div style="display:flex;gap:8px;">
