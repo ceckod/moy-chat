@@ -1630,8 +1630,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <input type="file" id="masteringFileInput" accept="audio/*">
         <div class="muted" id="masteringStatus" style="margin-top:8px;">Все още няма избран файл.</div>
         <div id="masteringOriginalWrap" style="display:none;margin-top:10px;">
-          <label>Оригинал</label>
-          <audio id="masteringOriginalPlayer" controls style="width:100%;"></audio>
+          <div class="row" style="align-items:center;justify-content:space-between;">
+            <label style="margin:0;">Оригинал</label>
+            <button class="btn grad sm" id="masteringLiveToggleBtn" onclick="Mastering.toggleLive()">🎧 Живо преслушване: ВКЛ</button>
+          </div>
+          <audio id="masteringOriginalPlayer" controls style="width:100%;margin-top:6px;"></audio>
+          <p class="muted" style="font-size:11.5px;margin:6px 0 0;">Докато свириш този плейър, промяна на пресет/плъзгач се чува веднага. Финалният, по-прецизен запис (с лимитер) излиза само след "Обработи" по-долу.</p>
         </div>
       </div>
 
@@ -1650,6 +1654,16 @@ hr{border:none;border-top:1px solid var(--border-soft);}
             <button class="btn ghost sm" onclick="Mastering.applyPreset('car')">🚗 Кола / Субуфер</button>
             <button class="btn ghost sm" onclick="Mastering.applyPreset('stream')">📡 Стрийминг</button>
             <button class="btn ghost sm" onclick="Mastering.applyPreset('stage')">🎪 Голяма сцена / Клуб</button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="row" style="align-items:center;justify-content:space-between;">
+            <span class="muted">Твои пресети <span title="Пазят се в GitHub — data/mastering-presets.json">(в GitHub, завинаги)</span></span>
+            <button class="btn ghost sm" onclick="Mastering.promptSavePreset()">💾 Запази текущите настройки</button>
+          </div>
+          <div id="masteringCustomPresetList" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <span class="muted" style="font-size:12px;">Зареждане…</span>
           </div>
         </div>
 
