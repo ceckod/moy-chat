@@ -4,7 +4,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+  contents: write
 
 concurrency:
   group: distrokid-links
@@ -22,7 +22,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Fetch DistroKid platform links (сървър-до-сървър, без прокси)
+      - name: Install Playwright & Chromium
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Fetch DistroKid platform links (Playwright Headless Chromium)
         run: python scripts/fetch_distrokid_links.py
 
       - name: Stage only data/distrokid-library.json
