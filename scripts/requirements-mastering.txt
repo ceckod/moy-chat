@@ -1,0 +1,13 @@
+# Mastering Pro engine — зависимости (pip install -r scripts/requirements-mastering.txt)
+# matchering  — reference matching (RMS/FFT спектрален match, stereo width, вграден
+#               "hyrax" true-peak-safe лимитер) — https://github.com/sergree/matchering
+# soundfile   — WAV четене/писане (libsndfile)
+# numpy/scipy — DSP (филтри, envelope followers, oversampling)
+# soxr        — висок клас Sample Rate Conversion (SoX resampler bindings)
+# pyloudnorm  — LUFS metering (Integrated + Short-term, ITU-R BS.1770)
+matchering==2.0.6
+soundfile>=0.12
+numpy>=1.24
+scipy>=1.11
+soxr>=0.3
+pyloudnorm>=0.1.1

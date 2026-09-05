@@ -1770,6 +1770,47 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <button class="btn ghost" id="masteringDownloadMp3" onclick="Mastering.downloadMp3()">⬇️ MP3 (320kbps)</button>
         </div>
       </div>
+
+      <!-- ============ PRO МАСТЕРИНГ (reference matching, GitHub Actions) ============ -->
+      <div class="card" style="margin-top:14px;">
+        <strong>🎛️ Pro Мастеринг (Reference Matching)</strong>
+        <p class="muted" style="font-size:12.5px;margin-top:4px;">
+          Различно от бързия preview по-горе — тук качваш и REFERENCE песен
+          (звук, който харесваш), и Python engine (matchering + true-peak
+          лимитер + LUFS анализ) на GitHub Actions приравнява спектъра/RMS/
+          стерео ширината на твоята песен към референцията. Отнема 1-3 мин.
+        </p>
+
+        <div style="margin-top:12px;">
+          <label>🎯 TARGET (песента за мастеринг)</label>
+          <input type="file" id="masteringProTargetInput" accept="audio/wav,.wav">
+          <div class="muted" id="masteringProTargetName" style="font-size:12px;margin-top:4px;">Няма избран файл.</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>🔊 REFERENCE (звукът, който искаш да наподобиш)</label>
+          <input type="file" id="masteringProReferenceInput" accept="audio/wav,.wav">
+          <div class="muted" id="masteringProReferenceName" style="font-size:12px;margin-top:4px;">Няма избран файл.</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Таван True Peak (dBTP)</label>
+          <input type="number" id="masteringProTargetPeak" value="-1.0" step="0.1" style="width:100px;">
+        </div>
+
+        <button class="btn grad full" id="masteringProProcessBtn" style="margin-top:14px;" onclick="MasteringPro.process()" disabled>
+          🎛️ Обработи (Pro)
+        </button>
+
+        <div class="muted" id="masteringProProgress" style="display:none;margin-top:10px;font-size:12.5px;"></div>
+
+        <div id="masteringProResultWrap" style="display:none;margin-top:14px;">
+          <label>Резултат</label>
+          <audio id="masteringProPlayer" controls style="width:100%;"></audio>
+          <div id="masteringProStats" class="muted" style="font-size:12px;margin-top:8px;"></div>
+          <button class="btn ghost" id="masteringProDownloadBtn" style="margin-top:10px;">⬇️ Свали WAV (16-bit, dithered)</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1842,6 +1883,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
      само MP3 бутона — WAV експортът работи винаги, без тази зависимост. -->
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <script src="js/mastering.js"></script>
+<script src="js/mastering-pro.js"></script>
    <script src="scripts/clock-and-keys.js"></script>
    <script>
      // Регистрира Service Worker за offline достъп до дашборда (само
