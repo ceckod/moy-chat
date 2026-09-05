@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-03T14:50:05.255365+00:00"
+      "last_search_at": "2026-09-05T13:37:46.545893+00:00"
     },
     "rap": {
       "candidates": [
@@ -1245,9 +1245,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "RZ_P6SOvHBQ",
+          "title": "Shvfty x Kozar Kane - \"Good Day\" (Official Video)",
+          "channel": "Shvfty",
+          "published_at": "2026-08-16T21:09:21Z",
+          "views": 357687,
+          "duration_seconds": 184,
+          "discovered_at": "2026-09-05T13:37:48.113447+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-03T14:50:07.066197+00:00"
+      "last_search_at": "2026-09-05T13:37:48.113577+00:00"
     },
     "pop": {
       "candidates": [
@@ -1740,9 +1753,35 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "ahveWCUL5Q8",
+          "title": "Music Radio Today's Biggest Hits Live | Nonstop Pop Music Radio 24/7",
+          "channel": "Too Music",
+          "published_at": "2026-06-25T12:46:28Z",
+          "views": 127072,
+          "duration_seconds": null,
+          "discovered_at": "2026-09-05T13:37:48.851647+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "Sy_mlUAJ3AI",
+          "title": "Bella Kay - iloveitiloveitiloveit (Clean)",
+          "channel": "Clay Made Music",
+          "published_at": "2026-03-09T21:45:05Z",
+          "views": 818651,
+          "duration_seconds": 184,
+          "discovered_at": "2026-09-05T13:37:48.851698+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-04T14:38:53.404224+00:00"
+      "last_search_at": "2026-09-05T13:37:48.851828+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2231,7 +2270,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-03T14:50:08.492476+00:00"
+      "last_search_at": "2026-09-05T13:37:49.706286+00:00"
     },
     "dance": {
       "candidates": [
@@ -2831,9 +2870,35 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "FExsu7XHu7g",
+          "title": "SAVAGE-44 - Star of luck (Eurodance Remix 2026)",
+          "channel": "SAVAGE-44",
+          "published_at": "2026-09-04T13:00:06Z",
+          "views": 6918,
+          "duration_seconds": 283,
+          "discovered_at": "2026-09-05T13:37:50.424805+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "-BMLevLIfj8",
+          "title": "DJ TYNA – IN MY HEAD 🎧 | Dance Music Anthem 2026 🔥🎧",
+          "channel": "DJ TYNA ‎ ",
+          "published_at": "2026-09-04T13:00:06Z",
+          "views": 20158,
+          "duration_seconds": 239,
+          "discovered_at": "2026-09-05T13:37:50.424843+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-09-03T14:50:09.201810+00:00"
+      "last_search_at": "2026-09-05T13:37:50.424992+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3879,7 +3944,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-03T14:50:06.180127+00:00"
+      "last_search_at": "2026-09-05T13:37:47.293358+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4397,9 +4462,20 @@
           "discovered_at": "2026-08-28T21:17:20.655714+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "PGOmYKhU-AU",
+          "title": "Нощта гори (2026) | Bulgarian Pop Folk | Balkan Music [Copyright Free]",
+          "channel": "Universal Sound Lab",
+          "published_at": "2026-05-24T23:00:37Z",
+          "views": 228,
+          "duration_seconds": 203,
+          "discovered_at": "2026-09-05T13:37:51.115818+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-08-28T21:17:20.655796+00:00"
+      "last_search_at": "2026-09-05T13:37:51.115955+00:00"
     },
     "bulgarian-folk": {
       "candidates": [
@@ -4727,9 +4803,57 @@
           "used_in": [
             "Bulgarian Folk"
           ]
+        },
+        {
+          "video_id": "tSHNuKSKtg4",
+          "title": "Сън сънувала | San Sanuvala – Ангел Узунов | Нова шопска народна песен | Bulgarian Folk Music 2026",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-09-02T14:46:05Z",
+          "views": 379,
+          "duration_seconds": 287,
+          "discovered_at": "2026-09-05T13:37:51.770832+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "wN2-qOOlNFs",
+          "title": "Bulgarian Folklore | Ethnic Dance & Ritual Songs | Момиче - Girl",
+          "channel": "Bulgarian Ethno Sounds",
+          "published_at": "2026-03-27T15:40:23Z",
+          "views": 504,
+          "duration_seconds": 213,
+          "discovered_at": "2026-09-05T13:37:51.770858+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
+        },
+        {
+          "video_id": "VL2A_obcUX0",
+          "title": "Ой, девойко, моме мила | Oy, Devoyko, Mome Mila | Българска Народна Песен | Bulgarian Folk Song 2026",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-06-29T05:40:24Z",
+          "views": 319,
+          "duration_seconds": 190,
+          "discovered_at": "2026-09-05T13:37:51.770863+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "-s-b1ojMMNM",
+          "title": "Шекер садена | Sheker Sadena | Автентична Българска Народна Песен | Bulgarian Folk Song 2026",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-06-26T17:34:38Z",
+          "views": 658,
+          "duration_seconds": 200,
+          "discovered_at": "2026-09-05T13:37:51.770868+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         }
       ],
-      "last_search_at": "2026-08-29T15:23:52.870573+00:00"
+      "last_search_at": "2026-09-05T13:37:51.771019+00:00"
     }
   }
 }
