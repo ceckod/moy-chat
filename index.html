@@ -948,6 +948,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
           <div class="muted" style="font-size:12px;margin-top:4px;">Минава последователно през всяка песен от импортираната библиотека и търси реални линкове (не измисля) — за YouTube трябва YouTube API Key в Настройки, иначе пропуска само тази колона.</div>
           <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.enrichLibraryViaGemini())">🔵 Обогати през Gemini (заобикаля DistroKid блокировката)</button>
           <div class="muted" style="font-size:12px;margin-top:4px;">Ако горният бутон получава 403 от DistroKid — този праща URL-ите на Gemini (url_context tool), който ги чете от собствената инфраструктура на Google, не от нашия прокси. Изисква Gemini ключ, работи по 15 песни наведнъж.</div>
+          <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.downloadLibraryJson())">⬇️ Изтегли библиотеката (JSON)</button>
+          <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.saveLibraryToGitHub())">💾 Запази трайно в GitHub repo-то</button>
+          <button class="btn ghost" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.loadLibraryFromGitHub())">📥 Зареди последно запазеното от repo-то</button>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Библиотеката (песни + всички намерени линкове) вече се пази автоматично в този браузър, но САМО в него — не се синхронизира сама между устройства/браузъри и се губи при изчистен кеш. "💾 Запази трайно" я commit-ва в repo-то (data/distrokid-library.json, изисква GitHub Token от Настройки — същите полета като Auto Update системата). "📥 Зареди" я взима обратно оттам (напр. на друго устройство).</div>
+          <div id="ssLibGithubStatus" class="muted" style="margin-top:6px;"></div>
           <div id="ssLibEnrichStatus" class="muted" style="margin-top:6px;"></div>
           <div id="ssLibEnrichResults" style="margin-top:8px;font-size:12.5px;max-height:280px;overflow-y:auto;"></div>
 
