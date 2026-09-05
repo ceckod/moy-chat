@@ -28,6 +28,8 @@
    NicheToolkit._getSpotifyToken(), Apple през публичния iTunes Search
    API) — DistroKid няма публичен search, остава ръчно поле.
    ========================================================= */
+const DISTROKID_LINKS_WORKFLOW_FILE = "distrokid-links.yml";
+
 const ShortsStudio = {
   audioFile: null,
   items: [],          // [{ index, start, end, hookReason, hookText, title, description, tags, videoBlob, fileName, status }]
@@ -247,6 +249,47 @@ const ShortsStudio = {
       this.renderSavedLibrary();
       if (statusEl) statusEl.textContent = `✅ Заредени ${lib.length} песни от repo-то.`;
       this.log(`📥 DistroKid библиотека (${lib.length} песни) заредена от GitHub repo-то (data/distrokid-library.json).`);
+    } catch (e) {
+      if (statusEl) statusEl.textContent = `❌ ${e.message}`;
+      toast("❌ " + e.message);
+    }
+  },
+
+  // Тригва .github/workflows/distrokid-links.yml — сървърно (GitHub Actions
+  // runner) обхождане на ВСИЧКИ HyperFollow страници от библиотеката,
+  // директна HTTP заявка, БЕЗ браузър, БЕЗ CORS, БЕЗ прокси нужда изобщо
+  // (за разлика от enrichLibrary() тук в браузъра, който заради CORS
+  // задължително минава през публични прокси — виж _proxyCandidates()).
+  // ВАЖНО: workflow-ът чете data/distrokid-library.json ОТ repo-то, не от
+  // localStorage — затова изисква да си натиснал "💾 Запази трайно" ПОНЕ
+  // ВЕДНЪЖ преди първото сканиране, иначе скриптът не намира какво да
+  // обходи. Резултатът се commit-ва обратно автоматично; след ~1-2 мин
+  // (виж линка към Actions в статуса) натисни "📥 Зареди последно
+  // запазеното от repo-то", за да видиш новите линкове тук в dashboard-а.
+  async dispatchLibraryScan() {
+    const k = Keys.load();
+    if (!k.ghToken) return toast("❌ Липсва GitHub Token — виж Настройки → API Ключове");
+    if (!k.ghOwner || !k.ghRepo) return toast("❌ Липсват GitHub потребител/организация или repo — виж Настройки → YouTube Тракер");
+    const branch = k.ghBranch || "main";
+    const statusEl = document.getElementById("ssLibGithubStatus");
+    if (statusEl) statusEl.textContent = "⏳ Тригвам сканиране в GitHub Actions...";
+    try {
+      const res = await fetchTimeout(
+        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/actions/workflows/${DISTROKID_LINKS_WORKFLOW_FILE}/dispatches`,
+        {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+          body: JSON.stringify({ ref: branch })
+        }, 20000
+      );
+      if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      if (statusEl) {
+        statusEl.innerHTML = `▶️ Сканирането е стартирано в GitHub Actions — отнема обикновено 1-2 мин. ` +
+          `<a href="https://github.com/${k.ghOwner}/${k.ghRepo}/actions" target="_blank" rel="noopener">Виж прогреса →</a> ` +
+          `После натисни "📥 Зареди последно запазеното от repo-то".`;
+      }
+      toast("▶️ Сканирането стартирано в GitHub Actions");
+      this.log(`▶️ DistroKid library scan (${DISTROKID_LINKS_WORKFLOW_FILE}) тригнат в GitHub Actions.`);
     } catch (e) {
       if (statusEl) statusEl.textContent = `❌ ${e.message}`;
       toast("❌ " + e.message);
