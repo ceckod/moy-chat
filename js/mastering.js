@@ -27,11 +27,14 @@
 const Mastering = (function () {
   let audioCtx = null;
   let originalBuffer = null;   // decoded AudioBuffer (оригинал)
+  let originalFile = null;     // суровият File обект (за Gemini multimodal анализ)
   let renderedResult = null;   // {left, right, sampleRate} след обработка
   let wavBlob = null;
   let mp3Blob = null;
   let currentMode = 'simple';  // 'simple' | 'advanced'
   let baseFileName = 'mastered';
+  let beforeStats = null;      // числов анализ на оригинала (виж analyzeAudio)
+  let afterStats = null;       // числов анализ на резултата след обработка
 
   // ---------- ЖИВО ПРЕСЛУШВАНЕ (реално време, докато оригиналът свири) ----------
   // За разлика от финалния offline рендер (renderMastered — mid/side EQ +
@@ -463,10 +466,15 @@ const Mastering = (function () {
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+    originalFile = file;
     baseFileName = file.name.replace(/\.[^.]+$/, '') || 'mastered';
     $('masteringStatus').textContent = '⏳ Зареждане на аудио файла...';
     $('masteringProcessBtn').disabled = true;
     $('masteringDownloadWrap').style.display = 'none';
+    afterStats = null;
+    const afterBox = $('masteringAfterStats'); if (afterBox) afterBox.innerHTML = '';
+    const deltaBox = $('masteringStatsDelta'); if (deltaBox) deltaBox.innerHTML = '';
+    const reasonBox = $('masteringAiReasoning'); if (reasonBox) reasonBox.style.display = 'none';
     try {
       const arrayBuf = await file.arrayBuffer();
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -482,10 +490,199 @@ const Mastering = (function () {
       $('masteringProcessBtn').disabled = false;
       ensureLiveGraph();
       updateLiveParams(readParams());
+
+      // числов анализ на оригинала — за "преди/след" сравнение
+      const left = originalBuffer.getChannelData(0);
+      const right = originalBuffer.numberOfChannels >= 2 ? originalBuffer.getChannelData(1) : null;
+      beforeStats = analyzeAudio(left, right, originalBuffer.sampleRate);
+      renderStatsBlock('masteringBeforeStats', beforeStats);
+      const wrap = $('masteringStatsWrap'); if (wrap) wrap.style.display = 'block';
     } catch (err) {
       console.error(err);
       $('masteringStatus').textContent = '❌ Файлът не можа да се прочете (' + err.message + ')';
     }
+  }
+
+  /* ============================================================
+     ЧИСЛОВ АНАЛИЗ (Peak / RMS / приблизителен Integrated LUFS /
+     Crest factor / стерео корелация) — за да виждаш РЕАЛНИ числа
+     преди и след мастеринга, не само "на ухо".
+     LUFS тук е ОПРОСТЕНА версия на ITU-R BS.1770 (K-weighting +
+     400ms блокове, 75% overlap) БЕЗ relative/absolute gating от
+     пълния стандарт — достатъчно точна за сравнение преди/след,
+     не е "сертифицирано" число за конкретна стрийминг платформа.
+     ============================================================ */
+  function _biquadHighShelf1770(fs) {
+    const dbGain = 3.999843853973347484, f0 = 1681.9744509555319, Q = 0.7071752369554193;
+    const K = Math.tan(Math.PI * f0 / fs);
+    const Vh = Math.pow(10, dbGain / 20);
+    const Vb = Math.pow(Vh, 0.4996667741545416);
+    const a0 = 1 + K / Q + K * K;
+    return {
+      b0: (Vh + Vb * K / Q + K * K) / a0,
+      b1: 2 * (K * K - Vh) / a0,
+      b2: (Vh - Vb * K / Q + K * K) / a0,
+      a1: 2 * (K * K - 1) / a0,
+      a2: (1 - K / Q + K * K) / a0
+    };
+  }
+  function _biquadHighPass1770(fs) {
+    const f0 = 38.13547087602444, Q = 0.5003270373238773;
+    const K = Math.tan(Math.PI * f0 / fs);
+    const a0 = 1 + K / Q + K * K;
+    const b0 = 1 / a0;
+    return { b0: b0, b1: -2 * b0, b2: b0, a1: 2 * (K * K - 1) / a0, a2: (1 - K / Q + K * K) / a0 };
+  }
+  function _applyBiquadArr(data, c) {
+    const out = new Float32Array(data.length);
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < data.length; i++) {
+      const x0 = data[i];
+      const y0 = c.b0 * x0 + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
+      out[i] = y0; x2 = x1; x1 = x0; y2 = y1; y1 = y0;
+    }
+    return out;
+  }
+  function _kWeight(data, sampleRate) {
+    return _applyBiquadArr(_applyBiquadArr(data, _biquadHighShelf1770(sampleRate)), _biquadHighPass1770(sampleRate));
+  }
+
+  function analyzeAudio(left, right, sampleRate) {
+    const n = left.length;
+    let peak = 0, sumSq = 0;
+    for (let i = 0; i < n; i++) {
+      const la = Math.abs(left[i]); if (la > peak) peak = la;
+      sumSq += left[i] * left[i];
+      if (right) { const ra = Math.abs(right[i]); if (ra > peak) peak = ra; sumSq += right[i] * right[i]; }
+    }
+    const count = n * (right ? 2 : 1);
+    const rms = Math.sqrt(sumSq / count);
+    const peakDb = 20 * Math.log10(Math.max(peak, 1e-9));
+    const rmsDb = 20 * Math.log10(Math.max(rms, 1e-9));
+
+    const kl = _kWeight(left, sampleRate);
+    const kr = right ? _kWeight(right, sampleRate) : null;
+    const blockSize = Math.max(1, Math.round(sampleRate * 0.4)), hop = Math.max(1, Math.round(blockSize * 0.25));
+    let sumBlocks = 0, numBlocks = 0;
+    for (let start = 0; start + blockSize <= kl.length; start += hop) {
+      let s = 0;
+      for (let i = start; i < start + blockSize; i++) {
+        s += kl[i] * kl[i];
+        if (kr) s += kr[i] * kr[i];
+      }
+      const meanSq = s / (blockSize * (kr ? 2 : 1));
+      if (meanSq > 0) { sumBlocks += meanSq; numBlocks++; }
+    }
+    const lufs = numBlocks > 0 ? -0.691 + 10 * Math.log10(sumBlocks / numBlocks) : -Infinity;
+
+    let correlation = null;
+    if (right) {
+      let sumLR = 0, sumLL = 0, sumRR = 0;
+      for (let i = 0; i < n; i++) { sumLR += left[i] * right[i]; sumLL += left[i] * left[i]; sumRR += right[i] * right[i]; }
+      const denom = Math.sqrt(sumLL * sumRR);
+      correlation = denom > 0 ? (sumLR / denom) : 1;
+    }
+
+    return { peakDb: peakDb, rmsDb: rmsDb, lufs: lufs, crestDb: peakDb - rmsDb, correlation: correlation, durationSec: n / sampleRate };
+  }
+
+  function fmtDb(v) { return isFinite(v) ? (v >= 0 ? '+' : '') + v.toFixed(1) + ' dB' : '−∞ dB'; }
+  function fmtLufs(v) { return isFinite(v) ? v.toFixed(1) + ' LUFS' : '−∞ LUFS'; }
+  function fmtDelta(a, b) {
+    if (!isFinite(a) || !isFinite(b)) return '—';
+    const d = b - a;
+    return (d >= 0 ? '+' : '') + d.toFixed(1);
+  }
+
+  function renderStatsBlock(elId, stats) {
+    const el = $(elId);
+    if (!el || !stats) return;
+    el.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:12.5px;">' +
+      '<div>Peak (sample): <b>' + fmtDb(stats.peakDb) + '</b></div>' +
+      '<div>RMS: <b>' + fmtDb(stats.rmsDb) + '</b></div>' +
+      '<div>Integrated LUFS (прибл.): <b>' + fmtLufs(stats.lufs) + '</b></div>' +
+      '<div>Crest factor: <b>' + stats.crestDb.toFixed(1) + ' dB</b></div>' +
+      (stats.correlation !== null ? '<div>Стерео корелация: <b>' + stats.correlation.toFixed(2) + '</b></div>' : '<div></div>') +
+      '<div>Времетраене: <b>' + Math.floor(stats.durationSec / 60) + ':' + String(Math.round(stats.durationSec % 60)).padStart(2, '0') + '</b></div>' +
+      '</div>';
+  }
+
+  function renderStatsDelta() {
+    const el = $('masteringStatsDelta');
+    if (!el || !beforeStats || !afterStats) return;
+    el.innerHTML =
+      '<div style="font-size:12.5px;">' +
+      '<div>ΔPeak: <b>' + fmtDelta(beforeStats.peakDb, afterStats.peakDb) + ' dB</b></div>' +
+      '<div>ΔRMS: <b>' + fmtDelta(beforeStats.rmsDb, afterStats.rmsDb) + ' dB</b></div>' +
+      '<div>ΔLUFS (прибл.): <b>' + fmtDelta(beforeStats.lufs, afterStats.lufs) + '</b></div>' +
+      '<div>ΔCrest factor: <b>' + fmtDelta(beforeStats.crestDb, afterStats.crestDb) + ' dB</b></div>' +
+      '</div>';
+  }
+
+  /* ============================================================
+     AI ПРЕДЛОЖЕНИЕ ЗА МАСТЕРИНГ (Gemini "чуе" песента)
+     Праща оригиналния файл + текущите измерени числа на Gemini
+     (callGeminiMultimodal — вижте js/providers/gemini.js, същият
+     механизъм като "Бърз ъплоуд за стари песни") и очаква ЧИСТ
+     JSON с конкретни стойности за разширения панел + кратко
+     обяснение (reasoning) на български.
+     ============================================================ */
+  async function aiSuggest() {
+    if (!originalFile) { toast('⚠️ Първо качи аудио файл'); return; }
+    if (typeof callGeminiMultimodal !== 'function' || typeof fileToBase64 !== 'function' || typeof extractJson !== 'function') {
+      toast('⚠️ Gemini модулът не е зареден'); return;
+    }
+    const btn = $('masteringAiSuggestBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '🎧 Gemini слуша песента...'; }
+    try {
+      const base64 = await fileToBase64(originalFile);
+      const mimeType = originalFile.type || 'audio/mpeg';
+      const s = beforeStats || {};
+      const prompt = 'Ти си опитен mastering инженер. Изслушай приложения аудио файл и предложи КОНКРЕТНИ ' +
+        'настройки за следната верига за мастеринг (Web Audio API): mid/side EQ на вокала (само центъра), ' +
+        'high-pass, бас shelf, "пънч" пик, mud cut, air/presence highshelf, DynamicsCompressor, и финален ' +
+        'brickwall лимитер до целеви true peak.\n\n' +
+        'Локално измерени числа на оригинала (за контекст): Peak ' + fmtDb(s.peakDb) + ', RMS ' + fmtDb(s.rmsDb) +
+        ', Integrated LUFS (прибл.) ' + fmtLufs(s.lufs) + ', Crest factor ' + (isFinite(s.crestDb) ? s.crestDb.toFixed(1) : '?') + ' dB' +
+        (s.correlation != null ? (', стерео корелация ' + s.correlation.toFixed(2)) : '') + '.\n\n' +
+        'Върни САМО ЧИСТ JSON (без markdown, без коментари) с ТОЧНО тези полета (всички стойности — числа, без единици):\n' +
+        '{"highpassFreq":Hz,"bassFreq":Hz,"bassGain":dB,"punchFreq":Hz,"punchGain":dB,"mudFreq":Hz,"mudGain":dB,' +
+        '"vocalFreq1":Hz,"vocalGain1":dB,"vocalFreq2":Hz,"vocalGain2":dB,"airFreq":Hz,"airGain":dB,' +
+        '"compThreshold":dB,"compRatio":число,"compAttackMs":ms,"compReleaseMs":ms,"compKnee":dB,' +
+        '"targetPeakDb":dBFS,"reasoning":"кратко обяснение на български защо точно тези стойности, базирано на това, което чуваш"}';
+
+      const raw = await callGeminiMultimodal(prompt, base64, mimeType);
+      const sug = extractJson(raw);
+      _applyAiSuggestion(sug);
+      toast('✅ Gemini предложи настройки — приложени в разширен режим (провери и коригирай при нужда)');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Неуспешно AI предложение: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🤖 Gemini: предложи мастеринг'; }
+    }
+  }
+
+  function _applyAiSuggestion(s) {
+    setMode('advanced');
+    const setIf = function (id, val) { if (val !== undefined && val !== null && isFinite(val)) $(id).value = val; };
+    setIf('advHighpass', s.highpassFreq);
+    setIf('advBassFreq', s.bassFreq); setIf('advBassGain', s.bassGain);
+    setIf('advPunchFreq', s.punchFreq); setIf('advPunchGain', s.punchGain);
+    setIf('advMudFreq', s.mudFreq); setIf('advMudGain', s.mudGain);
+    setIf('advVocalFreq1', s.vocalFreq1); setIf('advVocalGain1', s.vocalGain1);
+    setIf('advVocalFreq2', s.vocalFreq2); setIf('advVocalGain2', s.vocalGain2);
+    setIf('advAirFreq', s.airFreq); setIf('advAirGain', s.airGain);
+    setIf('advCompThreshold', s.compThreshold);
+    setIf('advCompRatio', s.compRatio);
+    setIf('advCompAttack', s.compAttackMs);
+    setIf('advCompRelease', s.compReleaseMs);
+    setIf('advCompKnee', s.compKnee);
+    setIf('advTargetPeak', s.targetPeakDb);
+    updateLiveParams(readParams());
+    const box = $('masteringAiReasoning');
+    if (box) { box.style.display = 'block'; box.textContent = '🤖 Gemini: ' + (s.reasoning || '(без допълнително обяснение)'); }
   }
 
   /* ---------- основна обработка ---------- */
@@ -501,13 +698,19 @@ const Mastering = (function () {
       const params = readParams();
       renderedResult = await renderMastered(originalBuffer, params);
       const meta = getMetaTags();
+      const bitDepth = $('masterBitDepth') ? $('masterBitDepth').value : '16';
 
-      wavBlob = encodeWav(renderedResult, meta);
+      wavBlob = encodeWav(renderedResult, meta, bitDepth);
       $('masteringMasteredPlayer').src = URL.createObjectURL(wavBlob);
       $('masteringMasteredWrap').style.display = 'block';
       $('masteringDownloadWrap').style.display = 'flex';
       $('masteringDownloadWav').disabled = false;
       $('masteringStatus').textContent = '✅ Готово! Прослушай и свали резултата.';
+
+      // числов анализ на резултата — за "преди/след" сравнение
+      afterStats = analyzeAudio(renderedResult.left, renderedResult.right, renderedResult.sampleRate);
+      renderStatsBlock('masteringAfterStats', afterStats);
+      renderStatsDelta();
 
       if (typeof lamejs !== 'undefined') {
         const mp3Btn = $('masteringDownloadMp3');
@@ -638,8 +841,14 @@ const Mastering = (function () {
     }
   }
 
-  /* ---------- WAV износ (16-bit PCM + LIST/INFO мета) ---------- */
-  function encodeWav(rendered, meta) {
+  /* ---------- WAV износ (16-bit PCM с TPDF dither / 24-bit PCM / 32-bit float + LIST/INFO мета) ----------
+     bitDepth: '16' (по подразбиране, с TPDF dithering — правилният начин да смъкнеш
+     от вътрешния float32 до 16-bit без квантова изкривеност в тихите пасажи),
+     '24' (24-bit PCM, повече хедрум, предпочитано от много дистрибутори за качване),
+     '32f' (32-bit IEEE float, без никаква загуба/квантуване — максимален хедрум за
+     собствена допълнителна обработка/нормализация другаде). */
+  function encodeWav(rendered, meta, bitDepth) {
+    bitDepth = bitDepth || '16';
     const left = rendered.left, right = rendered.right, sampleRate = rendered.sampleRate;
     const numChannels = right ? 2 : 1;
     const numFrames = left.length;
@@ -650,7 +859,11 @@ const Mastering = (function () {
     } else {
       interleaved = left;
     }
-    const bytesPerSample = 2;
+    const isFloat32 = bitDepth === '32f';
+    const is24 = bitDepth === '24';
+    const bytesPerSample = isFloat32 ? 4 : (is24 ? 3 : 2);
+    const audioFormat = isFloat32 ? 3 : 1; // 1 = PCM цяло число, 3 = IEEE float
+    const bitsPerSampleHeader = isFloat32 ? 32 : (is24 ? 24 : 16);
     const dataSize = interleaved.length * bytesPerSample;
 
     function textChunk(id, text) {
@@ -696,21 +909,49 @@ const Mastering = (function () {
     writeStr(8, 'WAVE');
     writeStr(12, 'fmt ');
     view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
+    view.setUint16(20, audioFormat, true);
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
     view.setUint16(32, numChannels * bytesPerSample, true);
-    view.setUint16(34, 16, true);
+    view.setUint16(34, bitsPerSampleHeader, true);
     writeStr(36, 'data');
     view.setUint32(40, dataSize, true);
 
     let offset = 44;
-    for (let i = 0; i < interleaved.length; i++) {
-      let s = Math.max(-1, Math.min(1, interleaved[i]));
-      s = s < 0 ? s * 0x8000 : s * 0x7FFF;
-      view.setInt16(offset, s, true);
-      offset += 2;
+    if (isFloat32) {
+      // 32-bit float — директен запис, без квантуване/dithering (не е нужно)
+      for (let i = 0; i < interleaved.length; i++) {
+        view.setFloat32(offset, interleaved[i], true);
+        offset += 4;
+      }
+    } else if (is24) {
+      // 24-bit PCM (little-endian, two's complement) — 144dB динамичен обхват,
+      // квантовата грешка е практически нечуваема дори без dither
+      const maxVal = 8388607; // 2^23 - 1
+      for (let i = 0; i < interleaved.length; i++) {
+        const s = Math.max(-1, Math.min(1, interleaved[i]));
+        let v = Math.round(s * maxVal);
+        if (v < 0) v += 0x1000000;
+        view.setUint8(offset, v & 0xFF);
+        view.setUint8(offset + 1, (v >> 8) & 0xFF);
+        view.setUint8(offset + 2, (v >> 16) & 0xFF);
+        offset += 3;
+      }
+    } else {
+      // 16-bit PCM + TPDF dither (Triangular Probability Density Function):
+      // сума от два независими uniform [-0.5,0.5] LSB шума → триъгълно
+      // разпределение → маскира квантуването с гладък шум вместо стъпаловидна
+      // изкривеност в тихите пасажи/затихвания (стандартна практика при мастеринг).
+      const lsb = 1 / 32767;
+      for (let i = 0; i < interleaved.length; i++) {
+        let s = Math.max(-1, Math.min(1, interleaved[i]));
+        const dither = (Math.random() - Math.random()) * lsb;
+        s = Math.max(-1, Math.min(1, s + dither));
+        const q = Math.round(s < 0 ? s * 0x8000 : s * 0x7FFF);
+        view.setInt16(offset, q, true);
+        offset += 2;
+      }
     }
 
     const bytes = new Uint8Array(buf);
@@ -821,6 +1062,7 @@ const Mastering = (function () {
     toggleLive: toggleLive,
     promptSavePreset: promptSavePreset,
     applyCustomPreset: applyCustomPreset,
-    deleteCustomPreset: deleteCustomPreset
+    deleteCustomPreset: deleteCustomPreset,
+    aiSuggest: aiSuggest
   };
 })();
