@@ -101,9 +101,25 @@ function fileToBase64(file) {
 }
 
 // Извлича първия валиден JSON блок (масив или обект) от текст, дори ако
-// моделът е добавил коментари/цитати около него (случва се с grounded search).
+// моделът е добавил коментари/цитати около него (случва се с grounded search)
+// или го е обвил в ```json ... ``` markdown ограждане (или просто ``` без
+// език, или с главни букви ```JSON — и трите варианта се срещат на практика
+// в отговорите на различните провайдъри).
+//
+// ЕДИНЕН, СПОДЕЛЕН helper за ЦЕЛИЯ AI Gateway (Gemini/Claude/OpenRouter) —
+// нарочно НЕ е дублиран по 1 копие във всеки providers/*.js файл: providers/
+// слоят е чисто транспортен (връща суров текст от API-то), а парсването на
+// JSON е грижа на КОДА, КОЙТО ВИКА провайдъра (Song Lab, Shorts Studio,
+// url_context резултати и т.н.) — така поправка тук важи навсякъде наведнъж,
+// вместо да се синхронизират 3 копия ръчно при всеки бъдещ фикс.
 function extractJson(text) {
-  const cleaned = text.replace(/```json|```/g, "");
+  if (typeof text !== "string") throw new Error("extractJson: очаквах текст, получих " + typeof text);
+
+  // Бърз път: ако отговорът вече Е чист JSON (без markdown обвивка/коментари),
+  // директен parse е по-бърз и по-точен от търсене по скоби по-долу.
+  try { return JSON.parse(text.trim()); } catch (e) { /* продължи към по-толерантния път */ }
+
+  const cleaned = text.replace(/```[a-zA-Z]*/g, "").replace(/```/g, "");
   const startArr = cleaned.indexOf("[");
   const startObj = cleaned.indexOf("{");
   let start = -1, isArr = false;
@@ -112,5 +128,13 @@ function extractJson(text) {
   if (start === -1) throw new Error("Няма JSON в отговора на модела");
   const end = isArr ? cleaned.lastIndexOf("]") : cleaned.lastIndexOf("}");
   if (end === -1 || end < start) throw new Error("Непълен JSON в отговора на модела");
-  return JSON.parse(cleaned.slice(start, end + 1));
+
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (e) {
+    throw new Error("Невалиден JSON в отговора на модела: " + e.message);
+  }
 }
+// Alias — по-описателно име, ползвано в спецификацията за AI Gateway
+// рефакторинга; същата функция, за да няма 2 несинхронизирани версии.
+const extractCleanJSON = extractJson;

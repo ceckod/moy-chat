@@ -98,7 +98,15 @@ const Step3 = {
   // обърква/конкурира модела с точно това, което е поискал. Добавяме
   // САМО технически quality-суфикс накрая, който не променя СЪДЪРЖАНИЕТО.
   async _generateCoverImageCloudflare(prompt, cfApiToken, cfAccountId) {
-    return cloudflareImageAsync(`${prompt}, high quality, high resolution, sharp focus`, { width: 1024, height: 1024 }, cfApiToken, cfAccountId);
+    return generateCoverImage(
+      `${prompt}, high quality, high resolution, sharp focus`,
+      { width: 1024, height: 1024 },
+      cfApiToken, cfAccountId,
+      (stage) => {
+        if (stage === "cloudflare-failed") toast("⚠️ Cloudflare не се справи — пробвам безплатния Pollinations...", 3000);
+        if (stage === "pollinations-failed") toast("⚠️ И Pollinations е претоварен — показвам placeholder, пробвай пак след малко", 4000);
+      }
+    );
   },
 
   // Бутон "🆓 Безплатна обложка" — прескача Gemini директно, дори да има ключ

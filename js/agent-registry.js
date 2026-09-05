@@ -132,7 +132,8 @@ const AGENT_REGISTRY = [
     about: "Единственият агент тук, който РЕАЛНО генерира изображение по описание — безплатно (FLUX, 10 000 neuroni/ден на Cloudflare). Не е чат агент за разговор, пиши какво искаш да видиш.",
     async send(prompt) {
       const k = Keys.load();
-      const imageUrl = await cloudflareImageAsync(prompt, {}, k.cfApiToken, k.cfAccountId);
+      const imageUrl = await generateCoverImage(prompt, {}, k.cfApiToken, k.cfAccountId,
+        (stage) => { if (stage === "cloudflare-failed") toast("⚠️ Cloudflare не се справи — пробвам Pollinations...", 3000); });
       return { imageUrl, model: "cloudflare-flux" };
     }
   }
