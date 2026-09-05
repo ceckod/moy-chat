@@ -12,6 +12,13 @@
    ========================================================= */
 const Stats = {
   cache: null,
+  // Регистър на активните Chart.js инстанции, държан на САМИЯ Stats
+  // обект (не на canvas елемента) — renderDashboard()/renderAnalytics()
+  // пресъздават <canvas>-а всеки път през el.innerHTML, затова стар код
+  // от типа "canvas._chartInstance" никога не виждаше старата инстанция
+  // (тя си беше на ВЕЧЕ изхвърления DOM възел) → .destroy() никога не се
+  // викаше реално → изтичане на памет при всяко влизане в изгледа.
+  _charts: {},
 
   saveRepoConfig() {
     if (Vault.isEnabled() && !Vault.isUnlocked()) { toast("🔒 Отключи трезора първо в Настройки → API Ключове"); return; }
@@ -216,8 +223,15 @@ const Stats = {
   _drawChart(canvasId, snaps) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || typeof Chart === "undefined") return;
-    if (canvas._chartInstance) canvas._chartInstance.destroy();
-    canvas._chartInstance = new Chart(canvas, {
+    if (this._charts[canvasId]) { this._charts[canvasId].destroy(); delete this._charts[canvasId]; }
+    // Theme-aware цветове — четем текущата тема от Prefs (js/prefs.js),
+    // за да не остават тъмни ос/легенда цветове нечетими върху светла тема.
+    const isLight = typeof Prefs !== "undefined" && Prefs.data?.theme === "light";
+    const tickColor = isLight ? "#4b4f6b" : "#8b8fb0";
+    const gridColorY = isLight ? "#d8d9e8" : "#25263f";
+    const gridColorX = isLight ? "#e6e7f2" : "#1d1e35";
+    const legendColor = isLight ? "#1b1c2e" : "#eef0fb";
+    this._charts[canvasId] = new Chart(canvas, {
       type: "line",
       data: {
         labels: snaps.map(s => s.date),
@@ -230,12 +244,26 @@ const Stats = {
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
         scales: {
-          y: { ticks: { color: "#8b8fb0" }, grid: { color: "#25263f" } },
-          y1: { position: "right", ticks: { color: "#8b8fb0" }, grid: { display: false } },
-          x: { ticks: { color: "#8b8fb0" }, grid: { color: "#1d1e35" } }
+          y: { ticks: { color: tickColor }, grid: { color: gridColorY } },
+          y1: { position: "right", ticks: { color: tickColor }, grid: { display: false } },
+          x: { ticks: { color: tickColor }, grid: { color: gridColorX } }
         },
-        plugins: { legend: { labels: { color: "#eef0fb" } } }
+        plugins: { legend: { labels: { color: legendColor } } }
       }
     });
+  },
+
+  // Извиква се от Prefs.toggleTheme() (js/prefs.js). Унищожава активните
+  // графики (без това щяха да продължат да съществуват в паметта, но със
+  // стари, нечетими на новата тема цветове) и, ако Dashboard/Analytics
+  // изгледът е в момента отворен, ги прерисува веднага с новите цветове —
+  // вместо потребителят да трябва ръчно да излезе и да влезе пак в изгледа.
+  redrawForThemeChange() {
+    const hadDash = !!this._charts["dashGrowthChart"];
+    const hadAnalytics = !!this._charts["analyticsChart"];
+    Object.values(this._charts).forEach(c => c.destroy());
+    this._charts = {};
+    if (hadDash && document.getElementById("dashGrowthChart")) this.renderDashboard();
+    if (hadAnalytics && document.getElementById("analyticsChart")) this.renderAnalytics();
   }
 };
