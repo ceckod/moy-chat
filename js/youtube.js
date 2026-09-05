@@ -69,8 +69,12 @@ async function fetchRecentTrendingVideos(query, opts = {}) {
 
   if (!items.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
 
+  // YouTube понякога връща search резултати за вече изтрити/private видеа —
+  // такива items идват БЕЗ snippet (или без id.videoId). Филтрираме ги тук,
+  // за да не гърми целият Niche Discovery с TypeError по-надолу.
+  items = items.filter(i => i?.id?.videoId && i?.snippet);
   const videoIds = items.map(i => i.id.videoId).filter(Boolean);
-  const channelIds = [...new Set(items.map(i => i.snippet.channelId))];
+  const channelIds = [...new Set(items.map(i => i.snippet?.channelId).filter(Boolean))];
   if (!videoIds.length) return { videos: [], windowDays: usedWindow, insufficientData: true };
 
   const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${k.ytApiKey}`;
@@ -88,17 +92,19 @@ async function fetchRecentTrendingVideos(query, opts = {}) {
 
   const now = Date.now();
   const videos = items.map(i => {
-    const stat = statsById[i.id.videoId];
+    const stat = statsById[i.id?.videoId];
     const views = parseInt(stat?.statistics?.viewCount || "0", 10);
-    const publishedAt = stat?.snippet?.publishedAt || i.snippet.publishedAt;
+    const publishedAt = stat?.snippet?.publishedAt || i.snippet?.publishedAt || new Date().toISOString();
     // мин. 0.5 дни, за да не гърми velocity до безкрайност за видеа отпреди часове
     const ageDays = Math.max((now - new Date(publishedAt).getTime()) / 86400000, 0.5);
-    const subs = subsById[i.snippet.channelId] || 0;
+    const subs = subsById[i.snippet?.channelId] || 0;
     return {
-      videoId: i.id.videoId,
-      title: i.snippet.title,
-      channel: i.snippet.channelTitle,
-      channelId: i.snippet.channelId,
+      videoId: i.id?.videoId || null,
+      title: i.snippet?.title || "(без заглавие)",
+      channel: i.snippet?.channelTitle || "(неизвестен канал)",
+      channelId: i.snippet?.channelId || null,
+      // search.list НЕ връща tags в snippet-а — само videos.list (stat) ги дава.
+      tags: stat?.snippet?.tags || [],
       views, subs,
       publishedAt,
       ageDays: Math.round(ageDays * 10) / 10,
