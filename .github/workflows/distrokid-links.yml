@@ -1,0 +1,57 @@
+name: DistroKid Library — Fetch Links
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write  # нужно, за да може workflow-ът да прави commit обратно в repo-то
+
+concurrency:
+  group: distrokid-links
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch DistroKid platform links (сървър-до-сървър, без прокси)
+        run: python scripts/fetch_distrokid_links.py
+
+      - name: Stage only data/distrokid-library.json
+        run: |
+          git add -f data/distrokid-library.json 2>/dev/null || true
+          echo "── git status ──"
+          git status --short
+          echo "── staged diff stat ──"
+          git diff --cached --stat
+
+      - name: Assert only data/distrokid-library.json staged
+        run: |
+          UNEXPECTED=$(git diff --cached --name-only | grep -v '^data/distrokid-library\.json$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "🚫 Неочаквани staged файлове — абортирам commit:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+
+      - name: Secret scan (т.39 — никога API ключове/токени в commit)
+        run: python scripts/_secret_scan.py
+
+      - name: Commit
+        run: |
+          git config user.name "cdb-distrokid-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet --cached; then
+            echo "No changes — skip commit."
+          else
+            git commit -m "🎞️ DistroKid библиотека: обновени платформени линкове"
+            git push
+          fi
