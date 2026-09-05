@@ -82,6 +82,13 @@ const IdeaVault = {
   },
 
   remove(id) {
+    // Останалите "изтрий" действия в приложението (Song Lab, Metadata
+    // Optimizer, App Log) минават през confirm() — IdeaVault беше
+    // изключение и трие безвъзвратно на един клик. Подравнено с
+    // конвенцията на останалия код.
+    const it = this.load().find(i => i.id === id);
+    const label = it?.text ? `"${it.text}"` : "тази идея";
+    if (!confirm(`Изтрий ${label} от Idea Vault безвъзвратно? Това не може да се върне.`)) return;
     this.saveAll(this.load().filter(i => i.id !== id));
     this.render();
   },
