@@ -99,107 +99,6 @@ const ShortsStudio = {
     catch (e) { return []; }
   },
 
-  // Слива МАСИВ от {url, platforms} записи в текущата библиотека (по url) —
-  // споделена логика между importEnrichedLinks() (ръчно пейстнат JSON) и
-  // enrichLibraryViaGemini() (автоматично, през Gemini url_context). Не
-  // трие вече намерени полета, само допълва/презаписва подадените ключове.
-  _mergePlatformsIntoLibrary(items) {
-    const lib = this._loadDistrokidLibrary();
-    let matched = 0, skipped = 0;
-    for (const item of (items || [])) {
-      if (!item || !item.url || !item.platforms) { skipped++; continue; }
-      const entry = lib.find(e => e.url === item.url);
-      if (!entry) { skipped++; continue; }
-      entry.platforms = { ...entry.platforms, ...item.platforms };
-      entry.spotifyUrl = entry.platforms.spotify || entry.spotifyUrl || "";
-      entry.appleUrl = entry.platforms.apple || entry.appleUrl || "";
-      entry.youtubeUrl = entry.platforms.youtube || entry.youtubeUrl || "";
-      matched++;
-    }
-    try { localStorage.setItem("cdb_distrokid_library_v1", JSON.stringify(lib)); } catch (err) { /* не е фатално */ }
-    return { matched, skipped };
-  },
-
-  // Импортира РЪЧНО намерени платформени линкове (напр. изтеглени от Claude
-  // директно, докато HyperFollow четенето през Worker-a е блокирано от
-  // DistroKid's Cloudflare защита — виж бележката в _fetchPlatformLinksFromPage).
-  // Очакван формат в textarea #ssEnrichedLinksPaste: JSON масив
-  //   [{ "url": "<същия HyperFollow url, както е в библиотеката>",
-  //      "platforms": { "spotify": "...", "tidal": "...", ... } }, ...]
-  importEnrichedLinks() {
-    const el = document.getElementById("ssEnrichedLinksPaste");
-    const statusEl = document.getElementById("ssEnrichedLinksStatus");
-    if (!el) return;
-    let parsed;
-    try { parsed = JSON.parse(el.value); }
-    catch (e) { if (statusEl) statusEl.textContent = "❌ Невалиден JSON: " + e.message; return; }
-    if (!Array.isArray(parsed)) { if (statusEl) statusEl.textContent = "❌ Очаквам JSON масив от {url, platforms}"; return; }
-
-    const { matched, skipped } = this._mergePlatformsIntoLibrary(parsed);
-    if (statusEl) statusEl.textContent = `✅ Обновени ${matched} песни${skipped ? ` (${skipped} пропуснати — url не съвпадна с библиотеката)` : ""}.`;
-    toast(`✅ Импортирани линкове за ${matched} песни`);
-    el.value = "";
-  },
-
-  // Автоматично обогатяване през Gemini url_context tool (виж
-  // callGeminiUrlContext в providers/gemini.js) — Google's собствена
-  // инфраструктура чете HyperFollow страниците вместо нашия Worker,
-  // заобикаляйки WAF блокировката на distrokid.com (403 "Sorry, you have
-  // been blocked"). Групира библиотеката на пачове по 15 URL-а наведнъж
-  // (лимитът на url_context е 20, оставяме си margin), праща всеки пач с
-  // изричен JSON-only prompt, парсва отговора с extractJson() и слива
-  // резултата в библиотеката. Пропуска записи без url. НЕ хвърля при
-  // грешка на отделен пач — логва я и продължава със следващия.
-  async enrichLibraryViaGemini() {
-    const k = Keys.load();
-    if (!k.gemini) return toast("⚠️ Липсва Gemini API ключ (виж Настройки)");
-    const lib = this._loadDistrokidLibrary().filter(e => e.url);
-    if (!lib.length) return toast("Няма записи с url в библиотеката — импортирай я първо");
-
-    const statusEl = document.getElementById("ssLibEnrichStatus");
-    const resultsEl = document.getElementById("ssLibEnrichResults");
-    if (resultsEl) resultsEl.innerHTML = "";
-    const BATCH = 15;
-    let totalMatched = 0;
-
-    const platformKeys = Object.keys(this._PLATFORM_PATTERNS).concat(["apple"]).filter((v, i, a) => a.indexOf(v) === i);
-    const prompt = `Ти анализираш DistroKid HyperFollow страници (музикални landing страници с бутони за различни стрийминг платформи).
-За ВСЕКИ от подадените по-долу URL-и, посети страницата и извлечи РЕАЛНИТЕ линкове (href атрибути) към следните платформи, ако присъстват: ${platformKeys.join(", ")}.
-НЕ измисляй линкове — само точно каквото реално намериш на всяка страница. Ако платформа липсва за дадена песен, просто пропусни ключа ѝ.
-Върни САМО валиден JSON масив, БЕЗ никакъв друг текст, коментари или markdown ограждане, точно в този формат:
-[{"url": "<точно същия URL, както е подаден>", "platforms": {"spotify": "https://...", "apple": "https://...", "deezer": "https://..."}}]`;
-
-    for (let i = 0; i < lib.length; i += BATCH) {
-      const batch = lib.slice(i, i + BATCH);
-      if (statusEl) statusEl.textContent = `⏳ Gemini чете страници ${i + 1}–${Math.min(i + BATCH, lib.length)} от ${lib.length}...`;
-      try {
-        const raw = await callGeminiUrlContext(prompt, batch.map(e => e.url));
-        const parsed = extractJson(raw);
-        if (!Array.isArray(parsed)) throw new Error("Отговорът не е JSON масив");
-        const { matched } = this._mergePlatformsIntoLibrary(parsed);
-        totalMatched += matched;
-      } catch (e) {
-        this.log(`⚠️ Gemini url_context пач ${i + 1}–${Math.min(i + BATCH, lib.length)}: ${e.message}`);
-      }
-    }
-
-    // Пресвежда от localStorage (мержнатите платформи от _mergePlatformsIntoLibrary
-    // по-горе не пипат локалната `lib` променлива тук, само записа) и рендира
-    // ред за ВСЯКА песен, обработена в тази заявка — вкл. тези без нищо намерено,
-    // за да е ясно кои са пропуснати, не само кои са успешни (виж _enrichRowHtml).
-    const freshLib = this._loadDistrokidLibrary();
-    const processedUrls = new Set(lib.map(e => e.url));
-    const processedRows = freshLib.filter(e => processedUrls.has(e.url));
-    if (resultsEl) resultsEl.innerHTML = processedRows.map(e => this._enrichRowHtml(e)).join("");
-    const counts = {};
-    for (const key of Object.keys(this._PLATFORM_LABELS)) counts[key] = processedRows.filter(e => e.platforms?.[key]).length;
-    const summary = Object.entries(counts).filter(([, n]) => n > 0).map(([k, n]) => `${this._platformLabel(k)} ${n}/${lib.length}`).join(" · ");
-
-    if (statusEl) statusEl.textContent = `✅ Gemini обогати ${totalMatched} песни (от ${lib.length} с url)${summary ? " — " + summary : ""}.`;
-    this.log(`🔵 Gemini url_context обогатяване готово — ${summary || "нищо не се намери"}.`);
-    toast(`✅ Готово — Gemini намери линкове за ${totalMatched} песни`);
-  },
-
   // Минава през ЦЯЛАТА импортирана DistroKid библиотека (не само текущата
   // песен). Приоритет 1: чете директно HyperFollow страницата на всяка
   // песен (entry.url) и извлича ВСИЧКИ вградени платформени линкове наведнъж
@@ -250,17 +149,6 @@ const ShortsStudio = {
           const term = `${e.artist} ${e.song}`;
           const res = await fetchTimeout(this._getProxied(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`), {}, 15000);
           if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
-        } catch (err) { /* тихо */ }
-      }
-      // Deezer public search API — не изисква ключ и (за разлика от
-      // distrokid.com) не е зад WAF, който блокира Worker-а ни, затова е
-      // надежден резерв, ако страницата не се прочете (виж бележката горе
-      // за 403 "Sorry, you have been blocked" от distrokid.com).
-      if (!e.platforms.deezer) {
-        try {
-          const q = `${e.artist} ${e.song}`;
-          const res = await fetchTimeout(this._getProxied(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=1`), {}, 15000);
-          if (res.ok) { const d = await res.json(); const u = d.data?.[0]?.link; if (u) e.platforms.deezer = u; }
         } catch (err) { /* тихо */ }
       }
       if (!e.platforms.youtube && ytKey) {
@@ -633,6 +521,18 @@ const ShortsStudio = {
     return m + ":" + String(s).padStart(2, "0");
   },
 
+  // Тример за overlay текста ("кукичката") върху видеото — виж бележката
+  // при мястото на извикване (analyzeAndSelect по-долу) за пълния контекст
+  // защо точно 40 символа и защо word-boundary, не твърд символен срез.
+  _trimHookText(text, maxLen = 40) {
+    const trimmed = (text || "").toString().trim();
+    if (trimmed.length <= maxLen) return trimmed;
+    let cut = trimmed.slice(0, maxLen);
+    const lastSpace = cut.lastIndexOf(" ");
+    if (lastSpace > maxLen * 0.5) cut = cut.slice(0, lastSpace);
+    return cut.replace(/[,\s]+$/, "").trim();
+  },
+
   // Основен вход — целият pipeline: анализ+избор на моменти → метаданни → видео за всеки → преглед.
   async runFull() {
     if (!this.audioFile) return toast("Първо избери аудио файл");
@@ -698,12 +598,20 @@ ${pasted ? `Текст, пейстнат от потребителя:\n---\n${pa
     // Гаранция на кода (не само на промпта): изрязваме/поправяме диапазони извън
     // реалната продължителност на файла и подсигуряваме точен брой елементи,
     // за да не се счупи рендерирането по-долу дори ако AI-я върне грешен формат.
+    // hook_text: промптът по-горе иска "до 40 символа", НО кодът досега режеше
+    // на 60 — несъответствие, което позволяваше по-дълъг текст да мине. Важно е
+    // точно тук, защото visualizer.html рисува hook_text като overlay в canvas
+    // с АВТОМАТИЧНО смаляващ се шрифт (виж drawTitle() в visualizer.html), но
+    // с долен праг на размера (H*0.02) — прекалено дълъг текст просто ПРЕЛИВА
+    // извън зоната вместо да продължи да се смалява. _trimHookText() е твърдата
+    // гаранция, аналогична на formatSunoStyleTags() (js/song-lab.js) — никога
+    // не разцепва дума по средата.
     segments = segments
       .map(s => ({
         start: Math.max(0, Math.floor(Number(s.start) || 0)),
         end: Math.min(Math.floor(totalDur), Math.ceil(Number(s.end) || 0)),
         hook_reason: s.hook_reason || "",
-        hook_text: (s.hook_text || songName).toString().slice(0, 60)
+        hook_text: this._trimHookText(s.hook_text || songName)
       }))
       .filter(s => s.end - s.start >= 10)
       .slice(0, count);
