@@ -941,6 +941,28 @@ window.__LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAUAAAGiCAYAAACf2H+FAAEAAElEQVR42sT
     if(!audioEl.paused) rafId = requestAnimationFrame(loop);
   }
 
+  // ---- Background pause (CPU/GPU до 0% в скрит таб) ----
+  // Само за ЖИВИЯ preview loop() по-горе — НЕ пипа renderLoop() на
+  // експорта/записа по-долу в файла: спирането на кадри по време на
+  // активен MediaRecorder export би счупило/разкривило записаното видео
+  // (аудиото продължава да тече, но без нарисувани кадри), затова exportът
+  // умишлено остава недокоснат тук, дори с цената на GPU натоварване в
+  // фонов таб за времетраенето на самия export (кратко, приемливо).
+  // При скриване: cancelAnimationFrame — спира draw() напълно, но НЕ
+  // паузира самото аудио (потребителят вероятно иска музиката да продължи
+  // да свири, докато превключва табове — само визуализацията пести ресурс).
+  // При връщане: ако аудиото все още свири (не е паузирано/приключило
+  // междувременно от потребителя), веднага пресинхронизираме с 1 draw()
+  // (за да няма "замръзнал" кадър от преди скриването) и продължаваме loop().
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){
+      if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+    } else if(!audioEl.paused){
+      draw();
+      rafId = requestAnimationFrame(loop);
+    }
+  });
+
   // ---- video layer switching (dual smoke buffers for seamless crossfade loop) ----
   // FIX (video1->video2 stutter): the old code seeked smokeVideoA/B to their
   // start position exactly at the moment of the cut. A currentTime seek is not
