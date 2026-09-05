@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-fetch_distrokid_links.py — сървърно обхождане на HyperFollow страниците (Playwright)
+fetch_distrokid_links.py — точна версия с последване на пренасочванията
 ========================================================================
-Използва headless Chromium с реален User-Agent и изчакване за динамично заредени
-бутони, за да заобиколи Cloudflare 403 Forbidden грешките и да извлече всички
-платформени линкове (Spotify, Apple Music, YouTube и др.).
+Използва Playwright, за да извлече КРАЙНИТЕ реални URL адреси на платформите,
+избягвайки счупените проследяващи линкове на DistroKid.
 """
 
 from __future__ import annotations
@@ -13,7 +12,6 @@ import asyncio
 import os
 import re
 import sys
-import time
 from pathlib import Path
 from playwright.async_api import async_playwright
 
@@ -25,45 +23,19 @@ DATA_PATH = REPO_ROOT / "data" / "distrokid-library.json"
 
 CORE_PLATFORMS = ("spotify", "apple", "youtube")
 
-# Шаблони за домейни, които обхващат и вътрешните пренасочващи линкове на DistroKid
-PLATFORM_DOMAIN_PATTERNS = {
-    "spotify": r'(https://open\.spotify\.com/track/[^\s"\'<>]+|https://distrokid\.com/hyperfollow/spotify/[^\s"\'<>]+)',
-    "apple": r'(https://(?:music|itunes)\.apple\.com/[^\s"\'<>]+)',
-    "youtube": r'(https://(?:www\.)?youtube\.com/watch\?v=[^\s"\'<>]+|https://music\.youtube\.com/[^\s"\'<>]+|https://youtu\.be/[^\s"\'<>]+)',
-    "deezer": r'(https://www\.deezer\.com/[^\s"\'<>]+)',
-    "tidal": r'(https://(?:www\.)?tidal\.com/[^\s"\'<>]+)',
-    "amazonMusic": r'(https://music\.amazon\.[a-z.]+/[^\s"\'<>]+)',
-    "iheartradio": r'(https://www\.iheart\.com/[^\s"\'<>]+)',
-    "pandora": r'(https://www\.pandora\.com/[^\s"\'<>]+)',
-    "napster": r'(https://(?:www\.)?napster\.com/[^\s"\'<>]+)',
-    "soundcloud": r'(https://soundcloud\.com/[^\s"\'<>]+)',
-}
 
-STORE_ATTR_RE = re.compile(
-    r'data-testid="hyperfollow-store-link"[^>]*data-hyperfollow-store="([^"]+)"[^>]*href="([^"]+)"'
-)
-
-
-def extract_links(html: str) -> dict:
-    found = {}
-    for store_key, href in STORE_ATTR_RE.findall(html):
-        found["apple" if store_key == "applemusic" else store_key] = href
-    for key, pattern in PLATFORM_DOMAIN_PATTERNS.items():
-        if key in found:
-            continue
-        m = re.search(pattern, html)
-        if m:
-            found[key] = m.group(1)
-    return found
+def clean_url(url: str) -> str:
+    """Изчиства проследяващи параметри от линка."""
+    if not url:
+        return ""
+    # Премахваме DistroKid tracking параметри
+    url = re.sub(r'([\?&])(uo|app|ls|at|ct|pt)=[^&]*', '', url)
+    return url.rstrip('?&')
 
 
 async def main_async() -> None:
     if not DATA_PATH.exists():
-        print(
-            "⚪ data/distrokid-library.json липсва — първо натисни "
-            "\"💾 Запази трайно в GitHub repo-то\" от dashboard-а поне "
-            "веднъж. Нищо за правене този път."
-        )
+        print("⚪ data/distrokid-library.json липсва — първо запази библиотеката от dashboard-а.")
         return
 
     library = load_json(DATA_PATH, [])
@@ -78,8 +50,7 @@ async def main_async() -> None:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800}
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
 
@@ -89,52 +60,75 @@ async def main_async() -> None:
 
             if all(platforms.get(p) for p in CORE_PLATFORMS):
                 skipped += 1
-                print(f"[{i}/{total}] ⏭️  {title} — вече готова (Spotify+Apple+YouTube), пропускам.")
+                print(f"[{i}/{total}] ⏭️  {title} — вече готова, пропускам.")
                 continue
 
             url = entry.get("url")
             if not url:
-                print(f"[{i}/{total}] ⚪ {title} — няма hyperfollow url в записа, пропускам.")
                 continue
 
             print(f"[{i}/{total}] 🔎 {title} ...")
             try:
-                # Изчакване на networkidle за зареждане на всички JS бутони
-                response = await page.goto(url, wait_until="networkidle", timeout=30000)
-                if response and response.status >= 400:
-                    print(f"    ⚠️ HTTP {response.status}")
-                    continue
+                await page.goto(url, wait_until="networkidle", timeout=30000)
+                await page.wait_for_timeout(2000)
 
-                await page.wait_for_timeout(2500)
-                html = await page.content()
+                # Селектираме всички a елементи на страницата
+                anchors = await page.query_selector_all('a[href]')
+                found = {}
 
-                found = extract_links(html)
+                for a in anchors:
+                    href = await a.get_attribute('href')
+                    text = (await a.inner_text()).lower()
+
+                    if not href:
+                        continue
+
+                    # Проверка за Spotify
+                    if 'spotify.com' in href:
+                        found['spotify'] = clean_url(href)
+
+                    # Проверка за Apple Music (филтрираме itunes.apple.com линкове, които свалят файл)
+                    elif 'music.apple.com' in href:
+                        found['apple'] = clean_url(href)
+
+                    # Проверка за YouTube
+                    elif 'youtube.com' in href or 'youtu.be' in href:
+                        found['youtube'] = clean_url(href)
+
+                    # Deezer
+                    elif 'deezer.com' in href:
+                        found['deezer'] = clean_url(href)
+
+                    # Tidal
+                    elif 'tidal.com' in href:
+                        found['tidal'] = clean_url(href)
+
                 before = dict(platforms)
                 platforms.update(found)
 
-                # Синхронизация с директните полета за обратна съвместимост
-                if platforms.get("spotify"):
-                    entry["spotifyUrl"] = platforms["spotify"]
-                if platforms.get("apple"):
-                    entry["appleUrl"] = platforms["apple"]
-                if platforms.get("youtube"):
-                    entry["youtubeUrl"] = platforms["youtube"]
+                # Премахваме iHeartRadio, ако е счупено
+                if 'iheartradio' in platforms and not found.get('iheartradio'):
+                    del platforms['iheartradio']
+
+                if platforms.get("spotify"): entry["spotifyUrl"] = platforms["spotify"]
+                if platforms.get("apple"): entry["appleUrl"] = platforms["apple"]
+                if platforms.get("youtube"): entry["youtubeUrl"] = platforms["youtube"]
 
                 if platforms != before:
                     changed += 1
                     print(f"    ✅ намерени: {', '.join(found.keys()) or '—'}")
                 else:
-                    print(f"    ⚪ нищо ново намерено ({len(html)} символа прочетени).")
+                    print(f"    ⚪ нищо ново намерено.")
 
             except Exception as e:
-                print(f"    ❌ грешка при четене: {e}")
+                print(f"    ❌ грешка: {e}")
 
             await asyncio.sleep(1)
 
         await browser.close()
 
     save_json(DATA_PATH, library)
-    print(f"\nГотово: {changed} песни обновени, {skipped} вече бяха готови, от общо {total}.")
+    print(f"\nГотово: {changed} обновени, {skipped} пропуснати от общо {total}.")
 
 
 def main() -> None:
