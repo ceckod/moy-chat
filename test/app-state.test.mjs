@@ -40,7 +40,9 @@ describe("AppState", () => {
     AppState.load();
     AppState.data.currentStep = 3;
     AppState.data.project.title = "Тестова песен";
-    AppState.save();
+    // saveNow() пише синхронно (без 300ms debounce) — точно каквото ни трябва
+    // тук, за да проверим localStorage веднага след извикването.
+    AppState.saveNow();
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
     assert.equal(raw.currentStep, 3);
     assert.equal(raw.project.title, "Тестова песен");
@@ -52,7 +54,7 @@ describe("AppState", () => {
     AppState.data.currentStep = 4;
     AppState.data.status[2] = "green";
     AppState.data.project.hashtags = ["#test", "#roundtrip"];
-    AppState.save();
+    AppState.saveNow();
 
     // ново, отделно извикване на load() — трябва да прочете точно каквото е записано
     AppState.load();
@@ -70,7 +72,7 @@ describe("AppState", () => {
     const { AppState, Storage, STORAGE_KEY } = loadAppModule();
     AppState.load();
     AppState.data.project.title = "Ще бъде изтрито";
-    AppState.save();
+    AppState.saveNow();
 
     Storage.remove(STORAGE_KEY);
     AppState.load();
@@ -81,7 +83,7 @@ describe("AppState", () => {
     const first = loadAppModule();
     first.AppState.load();
     first.AppState.data.project.title = "Проект А";
-    first.AppState.save();
+    first.AppState.saveNow();
 
     const second = loadAppModule();
     second.AppState.load();
