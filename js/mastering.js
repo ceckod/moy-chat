@@ -850,33 +850,90 @@ const Mastering = (function () {
     return [
       '=== СИСТЕМА А — "Обикновен мастеринг" (js/mastering.js, изцяло клиентски, Web Audio API, мигновен резултат в браузъра) ===',
       '1) Разделяне на стереото на mid/side (mid=0.5L+0.5R, side=0.5L-0.5R) чрез createChannelSplitter/GainNode-ове; вокал dip (2x peaking BiquadFilter) се прилага САМО върху mid, side остава непипнат; после рекомбинация L\'=mid+side, R\'=mid-side чрез createChannelMerger.',
-      '2) Тонколор верига върху рекомбинирания сигнал: highpass (маха тресене) → lowshelf бас → peaking "пънч" пик (~100Hz) → peaking "mud" изрязване (~400Hz) → highshelf "air/presence".',
-      '3) Динамика: единствен нативен DynamicsCompressorNode (single-band, БЕЗ multiband split по честоти).',
-      '4) Целият горен граф работи в OfflineAudioContext (офлайн рендер, не realtime).',
-      '5) Финален лимитер: СОБСТВЕНА JS имплементация върху рендернатия Float32Array (НЕ Web Audio нод) — линкован stereo (max(|L|,|R|) на семпъл), мигновена атака, експоненциално release (~60ms), БЕЗ lookahead буфериране и БЕЗ oversampling за true-peak детекция (мери само sample peak, не inter-sample true peak).',
-      '6) Живо преслушване (докато потребителят слуша оригинала): опростена версия на СЪЩАТА верига (без mid/side split), с DynamicsCompressor като "safety" лимитер вместо реалния brickwall.',
-      '7) Износ: WAV 16-bit PCM (с плосък TPDF dithering, БЕЗ noise shaping) / 24-bit PCM / 32-bit float, плюс MP3 320kbps (lamejs). Няма избор на sample rate конверсия — винаги излиза на original sample rate-а на файла.',
-      '8) Няма LUFS-базирано таргетиране (само ръчен true-peak dBFS таргет за лимитера) — потребителят сам избира targetPeakDb, няма пресети "Spotify -14 LUFS"/"YouTube -14 LUFS" и т.н.',
-      '9) Няма reference-track matching, няма saturation/harmonic exciter, няма stereo width контрол извън EQ-то на mid/side, няма de-esser, няма multiband динамика.',
-      '10) Резултатът е мигновен (секунди), без сървър/GitHub Actions — но точно заради това е ограничен до неща, изпълними реалистично в браузъра.',
+      '2) Тонколор верига върху рекомбинирания сигнал: highpass → lowshelf бас → peaking "пънч" пик → peaking "mud" изрязване → highshelf "air/presence" → waveshaper saturation (tanh, drive настройваем, 0%=bypass) → DynamicsCompressorNode.',
+      '3) MULTIBAND ДИНАМИКА (по избор, checkbox): 4 ленти (sub<80Hz/low-mid/high-mid/air) чрез верижно LPF-и-остатък разделяне (гарантирана точна реконструкция, не класически фазово-чувствителен crossover); независим feed-forward компресор (envelope follower) на всяка лента.',
+      '4) TRUE-PEAK ЛИМИТЕР (винаги активен, offline масив-базиран): 4x/8x oversampling чрез линейна интерполация (proxy за inter-sample true peak — НЕ пълен sinc/bandlimited интерполатор като сертифицирани broadcast метри), lookahead (1-5ms, O(n) плъзгащ минимум чрез монотонна опашка), soft knee (квадратична интерполация в knee зоната, настройваем 0-6dB), адаптивен release с "под" (по-дълбоко намаление → по-бавен release, но никога по-бавно от releaseFloorMs).',
+      '5) DE-ESSER (по избор, checkbox): split-band (5-8kHz по подразбиране, настройваемо) чрез верижно разделяне, envelope follower + динамично намаление с таван, вместо статичен EQ cut.',
+      '6) M/S СТЕРЕО ШИРИНА (по избор): gain контрол на side канала СЛЕД crossover (150Hz по подразбиране) — отделно за бас (обикновено се стеснява, "mono bass" практика) и високи (обикновено се разширяват), 50-200% диапазон, без да пипа mid/вокала.',
+      '7) HARMONIC EXCITER (по избор, отделно от saturation-а в т.2): изважда съдържание над зададена честота, наситява по-агресивно, mix обратно с контролируем %, за "блясък" без да прегрява целия спектър.',
+      '8) REFERENCE-TRACK MATCHING (по избор, изисква качен референтен файл): band-energy подход — 8 честотни ленти (RMS сравнение master vs референция), корекция ±6dB таван на лента, приложена еднакво на L/R. НЕ е пълен FFT spectral-centroid EQ match — по-груба апроксимация на тоналния баланс, честно ограничение.',
+      '9) LUFS NORMALIZATION (по избор): пресети Spotify/YouTube (-14), Apple Music (-16), "Силно" (-9), или ръчен таргет — gain-ът преди лимитера се смята спрямо измерения (приблизителен K-weighted) integrated LUFS вместо чист peak-базиран.',
+      '10) SAMPLE RATE CONVERSION (по избор): изходна честота 44.1/48/88.2/96kHz чрез вградения browser resampler на OfflineAudioContext (не libsamplerate-класа, но коректен).',
+      '11) NOISE-SHAPED DITHER (винаги активен за 16-bit износ): TPDF dither + 1st-order error-feedback noise shaping (изминалата квантова грешка се изважда от следващия семпъл) — бута остатъчния шум към високите честоти. Опростено спрямо истински психоакустични криви (POW-r/Shibata тежат по ухо-чувствителност по честота, тук е само линеен high-pass наклон) — честно ограничение. 24-bit/32-bit float износ без дитър (не е нужен).',
+      '12) AUTO GAIN STAGING (по избор): input trim ПРЕДИ EQ/компресора към зададено RMS ниво (по подразбиране -18dB) — прагове в компресора/мултибанда реагират консистентно независимо от изходната громкост на файла.',
+      '13) МЕТАДАННИ: WAV LIST/INFO чънк (INAM/IART/IPRD/ICMT) + MP3 ръчно построен ID3v2.3 таг (UTF-16, поддържа кирилица/turkish "ı") — вече готово преди всичко по-горе.',
+      '14) ЖИВО ПРЕСЛУШВАНЕ: от неотдавна използва РЕАЛЕН AudioWorkletNode (js/mastering-limiter-worklet.js) със СЪЩИЯ lookahead+soft-knee+adaptive-release алгоритъм като офлайн износа (само sample-peak детекция, без oversampling — по-евтино в реално време), с 2dB допълнителен safety headroom спрямо износния таван. Fallback към старата DynamicsCompressorNode апроксимация, ако AudioWorklet не се зареди (стар браузър).',
+      '15) Всичко по-горе (3,5,6,7,8,9,10,12) е ИЗКЛЮЧЕНО по подразбиране (checkbox/select) — старото поведение е непроменено, докато потребителят изрично не включи нещо. Точки 4,11,14 са винаги активни (чисто подобрение, без компромис).',
       '',
       '=== СИСТЕМА Б — "Pro мастеринг" (js/mastering-pro.js + scripts/master_engine.py, сървърна обработка през GitHub Actions, отнема 1-3 мин) ===',
-      '1) Потребителят качва TARGET + REFERENCE WAV (upload през GitHub Git Data API — blobs/trees/commits/refs, до 90MB на файл), workflow_dispatch тригва .github/workflows/mastering-pro.yml, dashboard-ът polls-ва status.json.',
+      '1) Потребителят качва TARGET + REFERENCE WAV; upload механизмът В МОМЕНТА Е В ПРОЦЕС НА ПРОМЯНА (мигрира от GitHub Git Data API blobs към GitHub Releases API assets — виж следваща бележка), workflow_dispatch тригва .github/workflows/mastering-pro.yml, dashboard-ът polls-ва status.json.',
       '2) TARGET препроцес (Python, numpy/scipy): (а) суб-бас <90Hz принудително моно чрез M/S Butterworth филтри; (б) split-band де-есер 6-10kHz (envelope follower + динамична дъкинг само в тази лента); (в) 3-band (low/mid/high, Butterworth crossover ~200Hz/4000Hz) мултибанд компресор, анти-pumping преди match-ването.',
-      '3) Ядрото е Python библиотеката "matchering" (mg.process) — прави реален reference-track spectral/RMS/stereo-width match спрямо REFERENCE файла (не опростена band-energy апроксимация като в System A концепцията, а пълноценна библиотека за целта), плюс вграден "hyrax" true-peak-safe лимитер.',
+      '3) Ядрото е Python библиотеката "matchering" (mg.process) — прави реален reference-track spectral/RMS/stereo-width match спрямо REFERENCE файла (пълноценна библиотека, не band-energy апроксимация като в System A), плюс вграден "hyrax" true-peak-safe лимитер.',
       '4) POST препроцес: лека сатурация/exciter (tanh soft-clip, mix 12%, + high-shelf "air" бустер над 11kHz).',
-      '5) Финален safety true-peak лимитер: 4x oversampling чрез РЕАЛЕН polyphase resampler (soxr, не линейна интерполация), lookahead buffer (2ms) с мигновена атака при нужда, експоненциален release (~60ms) в oversampled domain, плюс hard-clamp застраховка накрая.',
-      '6) Финален износ: 16-bit PCM с TPDF dither (все още БЕЗ noise shaping — същото ограничение като System A).',
-      '7) LUFS метиране преди/след през pyloudnorm (истинска ITU-R BS.1770 имплементация, не апроксимация), записано в status.json и показано на потребителя, НО няма опция потребителят да зададе LUFS ТАРГЕТ — само измерва, не нормализира спрямо конкретна платформа.',
-      '8) Sample rate: остава какъвто е REFERENCE/TARGET файлът (matchering + soxr resampling вътрешно за oversampling на лимитера, но няма избираем изходен sample rate за самия résultат — 44.1/48/96kHz избор).',
-      '9) Няма многократни/различни ratio/threshold настройки достъпни от UI-то на MasteringPro — параметрите на де-есера/мултибанда/сатурацията са fixed стойности в кода (hardcoded), не UI контроли.',
-      '10) Изисква REFERENCE файл ЗАДЪЛЖИТЕЛНО (не работи "самостоятелно" без референтен трак, за разлика от System A).'
+      '5) Финален safety true-peak лимитер: 4x oversampling чрез РЕАЛЕН polyphase resampler (soxr, не линейна интерполация като System A) — по-точна true-peak детекция от System A тук, lookahead buffer (2ms), експоненциален release (~60ms), hard-clamp застраховка накрая. Няма soft knee и няма адаптивен release с "под" (за разлика от новия System A лимитер).',
+      '6) Финален износ: 16-bit PCM с плосък TPDF dither (БЕЗ noise shaping — за разлика от System A, която вече го има).',
+      '7) LUFS метиране преди/след през pyloudnorm (истинска ITU-R BS.1770 имплементация), записано в status.json, НО няма опция потребителят да зададе LUFS ТАРГЕТ (за разлика от System A, която вече има пресети) — само измерва, не нормализира.',
+      '8) Sample rate: остава какъвто е REFERENCE/TARGET файлът — няма избираем изходен sample rate (за разлика от System A).',
+      '9) Няма UI контроли за де-есер/мултибанд/сатурация прагове — fixed стойности в кода.',
+      '10) Изисква REFERENCE файл ЗАДЪЛЖИТЕЛНО (за разлика от System A, където е по избор).'
     ].join('\n');
   }
 
-  // История на ПРЕДИШНИ отговори — праща се на OpenRouter, за да НЕ повтаря
-  // едни и същи предложения при всяко следващо питане (последните до 12,
-  // резюме + начало на пълния текст, за да остане promt-ът разумен по размер).
+  /* ============================================================
+     ЖИВО ЧЕТЕНЕ НА АКТУАЛНИЯ КОД ОТ GITHUB (не ръчно поддържан текст) —
+     при всяко питане теглим СУРОВИЯ текст на реалните файлове от repo-то
+     (raw.githubusercontent.com, същия механизъм като refreshOpenrouterLog),
+     после извличаме само документиращите коментари (главния коментарен
+     блок в началото на файла + всички редове, съдържащи маркери "точка N" /
+     "TRUE-PEAK" / "LUFS" и т.н.) — за да остане prompt-ът разумен по размер
+     (пращаме коментари, не хиляди редове код), но описанието вече отразява
+     РЕАЛНОТО текущо съдържание на repo-то, включително промени, направени
+     извън този разговор. При неуспех (няма token/offline/файлът е преместен)
+     — тих fallback към ръчно поддържания buildMasteringSystemDescription().
+     ============================================================ */
+  const LIVE_DOC_SOURCES = [
+    { label: 'Система А — js/mastering.js', path: 'js/mastering.js' },
+    { label: 'Система А — js/mastering-limiter-worklet.js', path: 'js/mastering-limiter-worklet.js' },
+    { label: 'Система Б — js/mastering-pro.js', path: 'js/mastering-pro.js' },
+    { label: 'Система Б — scripts/master_engine.py', path: 'scripts/master_engine.py' },
+    { label: 'Система Б — .github/workflows/mastering-pro.yml', path: '.github/workflows/mastering-pro.yml' }
+  ];
+  const LIVE_DOC_MAX_CHARS_PER_FILE = 4000; // header коментар + "точка N" редове, не целия файл
+
+  function _extractHeaderComment(text) {
+    const m = text.match(/^\s*(\/\*[\s\S]*?\*\/|#[^\n]*(\n#[^\n]*)*)/);
+    return m ? m[0] : '';
+  }
+  function _extractMarkerLines(text) {
+    return text.split('\n').filter(function (line) {
+      return /точка\s*\d|TRUE-PEAK|LUFS|MULTIBAND|LOOKAHEAD|DE-ESSER|SATURATION|EXCITER|REFERENCE|DITHER|GAIN STAGING|WIDTH/i.test(line);
+    }).join('\n');
+  }
+
+  async function fetchLiveArchitectureDocs() {
+    const k = ghConfig();
+    if (!k.ghOwner || !k.ghRepo) return null; // без repo конфигурация — няма откъде да теглим
+    const branch = k.ghBranch || 'main';
+    const results = [];
+    for (let i = 0; i < LIVE_DOC_SOURCES.length; i++) {
+      const src = LIVE_DOC_SOURCES[i];
+      try {
+        const url = 'https://raw.githubusercontent.com/' + k.ghOwner + '/' + k.ghRepo + '/' + branch + '/' + src.path + '?t=' + Date.now();
+        const res = await fetchTimeout(url, {}, 15000);
+        if (!res.ok) { results.push('[' + src.label + ': файлът не е намерен в repo-то в момента, статус ' + res.status + ']'); continue; }
+        const text = await res.text();
+        const header = _extractHeaderComment(text);
+        const markers = _extractMarkerLines(text);
+        let digest = (header + '\n' + markers).trim();
+        if (digest.length > LIVE_DOC_MAX_CHARS_PER_FILE) digest = digest.slice(0, LIVE_DOC_MAX_CHARS_PER_FILE) + '\n… (отрязано)';
+        results.push('--- ' + src.label + ' (' + text.length + ' символа общо в реалния файл, показани само коментарите) ---\n' + digest);
+      } catch (e) {
+        results.push('[' + src.label + ': грешка при теглене — ' + e.message + ']');
+      }
+    }
+    return results.join('\n\n');
+  }
+
   function buildPastSuggestionsHistory() {
     if (!openrouterLog.length) return '(няма предишни отговори — това е първото питане)';
     return openrouterLog.slice(0, 12).map(function (entry, idx) {
@@ -890,20 +947,33 @@ const Mastering = (function () {
   async function askOpenRouterImprove() {
     if (typeof callOpenRouter !== 'function') { toast('⚠️ OpenRouter модулът не е зареден'); return; }
     const btn = $('masteringOpenRouterBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '🧠 OpenRouter анализира системата...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '🧠 Тегля актуалния код от GitHub...'; }
     try {
-      const systemDesc = buildMasteringSystemDescription();
+      const liveDocs = await fetchLiveArchitectureDocs();
+      let systemDesc, sourceNote;
+      if (liveDocs) {
+        systemDesc = liveDocs;
+        sourceNote = 'По-долу е ЖИВО изтеглен текст (точно СЕГА, от GitHub) от документиращите коментари в ' +
+          'реалните файлове на двете системи — не ръчно писано резюме. Ако даден файл липсва/не е намерен, ' +
+          'пропусни го, не си измисляй съдържание за него.';
+      } else {
+        systemDesc = buildMasteringSystemDescription();
+        sourceNote = 'GitHub repo конфигурация липсва в момента (или файловете не бяха достъпни), затова по-долу ' +
+          'е РЪЧНО поддържано описание на архитектурата (може да изостава леко от най-новите промени в кода).';
+      }
+      if (btn) btn.textContent = '🧠 OpenRouter анализира системата...';
+
       const history = buildPastSuggestionsHistory();
       const prompt = 'Ти си опитен mastering/DSP инженер, който преглежда чужд код за автоматизиран мастеринг ' +
-        'инструмент. Инструментът се състои от ДВЕ отделни системи (виж пълното, актуално описание по-долу — ' +
-        'основавай се САМО на реално описаното, не предполагай функции, които не са изрично споменати):\n\n' +
+        'инструмент. Инструментът се състои от ДВЕ отделни системи. ' + sourceNote + '\n\n' +
         systemDesc + '\n\n' +
         '=== ПРЕДИШНИ ТВОИ ОТГОВОРИ (ХРОНОЛОГИЧНО, най-новият first) ===\n' +
         history + '\n\n' +
         'ЗАДАЧА: Прегледай архитектурата на ДВЕТЕ системи критично и предложи КОНКРЕТНИ, приоритизирани ' +
         'подобрения, за да достигнат резултатите професионално мастеринг ниво. Дай ОТДЕЛНИ предложения за ' +
         'Система А и ОТДЕЛНИ за Система Б (те са различни codebases с различни ограничения — клиентски JS ' +
-        'срещу Python/GitHub Actions).\n\n' +
+        'срещу Python/GitHub Actions). Основавай се САМО на реално описаното по-горе, не предполагай функции, ' +
+        'които не са изрично видими в текста.\n\n' +
         'КРИТИЧНО ВАЖНО: НЕ повтаряй предложения, които вече си давал в "ПРЕДИШНИ ТВОИ ОТГОВОРИ" по-горе — ' +
         'ако нещо вече е предложено там, приеми че или вече е обмислено, или все още не е приложено по причина; ' +
         'дай НОВИ, РАЗЛИЧНИ ъгли/идеи, или задълбочи технически конкретно предложение отпреди с нови детайли, ' +
@@ -926,7 +996,7 @@ const Mastering = (function () {
         : raw;
 
       await _saveOpenRouterLogEntry(summary, full);
-      toast('✅ OpenRouter предложи подобрения за двете мастеринг системи');
+      toast(liveDocs ? '✅ OpenRouter анализира ЖИВИЯ код от GitHub' : '✅ OpenRouter предложи подобрения (по ръчно описание)');
     } catch (e) {
       console.error(e);
       toast('❌ OpenRouter грешка: ' + e.message);
