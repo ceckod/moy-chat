@@ -1,0 +1,175 @@
+name: AI Shorts Pro Renderer
+
+# ============================================================
+# КАК СЕ ТРИГВА (два начина, виж и js/shorts-pro-render.js)
+# ------------------------------------------------------------
+# 1) workflow_dispatch — РЪЧНО от уеб таблото. JS-ът праща
+#    audio_url/cover_url/song_title/artist_name директно като inputs
+#    (POST /repos/{owner}/{repo}/actions/workflows/render-pro-short.yml/dispatches,
+#    същия Keys.load().ghToken pattern като js/mastering-pro.js). Тук НЕ ни
+#    трябва Releases API за входа (за разлика от mastering-pro.yml) —
+#    audio_url/cover_url са вече публични URL-и (DistroKid preview /
+#    iTunes/Spotify), runner-ът просто ги сваля директно с `requests`.
+#
+# 2) schedule (cron) — АВТОМАТИЧНО, без inputs. scripts/_pick_next_song.py
+#    избира следващата песен от data/distrokid-library.json, която още
+#    няма "shorts" запис, и извлича обложка през iTunes Lookup API. Ако
+#    няма подходяща песен, workflow-ът приключва тихо (без грешка) —
+#    виж стъпката "Прескочи, ако няма какво да се рендира".
+#
+# ИЗХОД: готовото .mp4 се качва като GitHub Artifact (изрично поискано —
+# видеото е потенциално по-голямо от Git-friendly лимитите, и за разлика
+# от result.wav в mastering-pro.yml тук няма нужда browser-ът да го чете
+# inline през raw.githubusercontent.com/CORS, затова НЕ го commit-ваме).
+# Единственото, което се commit-ва обратно, е data/distrokid-library.json
+# (обновен с новия "shorts" запис) — малък JSON, същия commit pattern
+# като mastering-pro.yml (secret scan → stage само очаквания файл →
+# assert няма нищо друго staged → commit).
+# ============================================================
+
+run-name: "AI Short: ${{ inputs.song_title || 'auto (cron)' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      audio_url:
+        description: "Публичен URL до аудиото (DistroKid preview MP3)"
+        required: true
+      cover_url:
+        description: "Публичен URL до обложката (JPG/PNG)"
+        required: true
+      song_title:
+        description: "Заглавие на песента"
+        required: true
+      artist_name:
+        description: "Име на изпълнителя"
+        required: true
+  schedule:
+    # Всеки ден в 09:00 UTC — коригирай по желание. За да СПРЕШ автоматичния
+    # режим без да пипаш кода, просто изтрий/закоментирай тези 2 реда.
+    - cron: "0 9 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shorts-pro-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Увери се, че ffmpeg е с libass (Ubuntu runner-ите го имат по подразбиране, но опресняваме версията)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -1
+
+      - name: Инсталирай Python зависимости (requests, numpy, scipy, pillow, openai-whisper, torch CPU)
+        run: pip install -r scripts/requirements-shorts.txt
+
+      - name: Определи входните данни (ръчно от таблото ИЛИ автоматично по cron)
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            {
+              echo "found=true"
+              echo "audio_url=${{ inputs.audio_url }}"
+              echo "cover_url=${{ inputs.cover_url }}"
+              echo "song_title=${{ inputs.song_title }}"
+              echo "artist_name=${{ inputs.artist_name }}"
+            } >> "$GITHUB_OUTPUT"
+          else
+            python scripts/_pick_next_song.py
+          fi
+
+      - name: Прескочи, ако няма какво да се рендира (само cron режим може да стигне дотук с found=false)
+        if: steps.pick.outputs.found == 'false'
+        run: echo "ℹ Няма песен за рендиране в момента — приключвам без грешка."
+
+      - name: Рендирай Short-а (Gemini анализ + Whisper субтитри + FFmpeg композит)
+        id: engine
+        if: steps.pick.outputs.found != 'false'
+        run: |
+          mkdir -p outputs
+          python scripts/render_short_ffmpeg.py \
+            --audio-url "${{ steps.pick.outputs.audio_url }}" \
+            --cover-url "${{ steps.pick.outputs.cover_url }}" \
+            --song-title "${{ steps.pick.outputs.song_title }}" \
+            --artist-name "${{ steps.pick.outputs.artist_name }}" \
+            --output "outputs/short-${{ github.run_id }}.mp4" \
+            --update-library \
+            --report-json "outputs/report-${{ github.run_id }}.json"
+        # НЕ спираме job-а тук — искаме следващите стъпки (upload на каквото
+        # е успяло, commit на library.json ако е обновен) да се изпълнят
+        # дори при частичен провал; финалният job статус се определя explicit
+        # накрая по steps.engine.outcome (виж последната стъпка).
+        continue-on-error: true
+
+      - name: Качи видеото като GitHub Artifact
+        if: steps.pick.outputs.found != 'false' && steps.engine.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-short-${{ github.run_id }}
+          path: outputs/short-${{ github.run_id }}.mp4
+          retention-days: 30
+
+      - name: Качи отчета (title/description/hashtags/theme) като Artifact
+        if: steps.pick.outputs.found != 'false' && steps.engine.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-short-report-${{ github.run_id }}
+          path: outputs/report-${{ github.run_id }}.json
+          retention-days: 30
+
+      - name: Stage САМО data/distrokid-library.json (никакви други промени)
+        if: steps.pick.outputs.found != 'false'
+        run: |
+          git add -f data/distrokid-library.json 2>/dev/null || true
+          echo "── staged diff stat ──"
+          git diff --cached --stat
+
+      - name: Assert — само library.json е staged (защита срещу случаен commit на друго)
+        if: steps.pick.outputs.found != 'false'
+        run: |
+          UNEXPECTED=$(git diff --cached --name-only | grep -v "^data/distrokid-library.json$" || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "🚫 Неочаквани staged файлове — абортирам commit:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+
+      - name: Secret scan (никога API ключове/токени в commit)
+        if: steps.pick.outputs.found != 'false'
+        run: python scripts/_secret_scan.py
+
+      - name: Commit + push обновената библиотека
+        if: steps.pick.outputs.found != 'false'
+        run: |
+          git config user.name "cdb-shorts-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet --cached; then
+            echo "Нищо за commit-ване (library.json непроменен — вероятно engine-ът се е провалил преди update_library)."
+          else
+            git commit -m "🎬 AI Short: ${{ steps.pick.outputs.artist_name }} — ${{ steps.pick.outputs.song_title }}"
+            git push
+          fi
+
+      - name: Job статус спрямо реалния изход на engine-а
+        if: steps.pick.outputs.found != 'false'
+        run: |
+          if [ "${{ steps.engine.outcome }}" != "success" ]; then
+            echo "::error::Рендирането се провали — виж лога на стъпка 'Рендирай Short-а' по-горе."
+            exit 1
+          fi
