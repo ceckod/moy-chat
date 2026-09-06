@@ -7,14 +7,31 @@ name: Mastering Pro Engine
 # POST /repos/{owner}/{repo}/actions/workflows/mastering-pro.yml/dispatches
 # с Keys.load().ghToken, същия pattern като js/metadata-optimizer.js).
 #
-# Файловете вход/изход НЕ минават през dispatch payload-а (64KB лимит —
-# недостатъчно за WAV), а през GitHub Git Data API (blobs → tree → commit
-# → ref), направен от браузъра ПРЕДИ dispatch-а (НЕ през Contents API —
-# то 422-ва над ~20-25MB base64 payload; Git Data API поддържа до 100MB
-# на blob, виж подробния коментар в js/mastering-pro.js):
-#   mastering-jobs/<job_id>/target.wav
-#   mastering-jobs/<job_id>/reference.wav
-#   mastering-jobs/<job_id>/job.json   (created_at, за cleanup workflow-а)
+# ВХОДНИТЕ файлове (target.wav + reference.wav) идват през GitHub
+# RELEASES API, НЕ през Git Data API blobs както преди:
+#   1) браузърът създава GitHub Release с таг "mastering-job-<job_id>"
+#   2) upload-ва target.wav + reference.wav като release ASSETS (POST
+#      към uploads.github.com/repos/.../releases/{id}/assets — приема
+#      суров бинарен body, до 2GB на asset — виж подробния коментар
+#      "ЗАЩО RELEASES API ЗА ВХОДА" в js/mastering-pro.js)
+#   3) тригва СЕ workflow_dispatch с job_id (тагът се извежда тук долу
+#      от job_id, не се предава отделно)
+# Тук долу сваляме тези 2 asset-а с `gh release download` (нужен е само
+# GH_TOKEN, работи "server-side" в Actions — няма browser CORS проблем).
+#
+# ИЗХОДНИЯТ файл (result.wav) + status.json продължават да минават през
+# git commit (КАКТО ПРЕДИ), НЕ през Releases API — причината е чисто
+# техническа: release asset-ите (release-assets.githubusercontent.com)
+# НЕ връщат Access-Control-Allow-Origin хедър, т.е. браузърът НЕ може
+# да ги свали през fetch() (CORS блокира дори публични repo-та — само
+# обикновена <a href> навигация би минала, но тогава няма как да пуснем
+# резултата в <audio> плейъра inline). raw.githubusercontent.com (пътят
+# зад Contents API, използван от ghGetFileBinary в js/mastering-pro.js)
+# е единственият CORS-friendly вариант за browser fetch, затова
+# result.wav продължава да се commit-ва в git (лимит ~100MB на файл,
+# виж бележката в js/mastering-pro.js) — практически достатъчно за
+# нормален по дължина мастеринг мастъртрак (16-bit 44.1kHz стерео
+# ~90MB ≈ ~8-9 минути).
 #
 # `run-name` по-долу вгражда job_id в името на run-а, за да може
 # dashboard-ът да намери точно СВОЯ run (workflow_dispatch API-то не
@@ -27,7 +44,7 @@ on:
   workflow_dispatch:
     inputs:
       job_id:
-        description: "ID на job-а (mastering-jobs/<job_id>/) — генериран от браузъра"
+        description: "ID на job-а — генериран от браузъра; release тагът е mastering-job-<job_id>"
         required: true
       target_peak_db:
         description: "Целеви True Peak таван в dBTP (напр. -1.0)"
@@ -46,6 +63,9 @@ concurrency:
 jobs:
   master:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: mastering-job-${{ inputs.job_id }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -55,12 +75,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Провери дали job папката съществува с двата входни файла
+      - name: Свали target.wav + reference.wav от release asset-ите (Releases API, не Git Data API)
         id: findjob
         run: |
           JOB_DIR="mastering-jobs/${{ inputs.job_id }}"
+          mkdir -p "$JOB_DIR"
+          if ! gh release download "$TAG" \
+              --repo "${{ github.repository }}" \
+              --dir "$JOB_DIR" \
+              --pattern "target.wav" --pattern "reference.wav" --clobber; then
+            echo "::error::Не успях да сваля target.wav/reference.wav от release '$TAG' — браузърът трябва да ги upload-не ПРЕДИ да тригне този workflow."
+            exit 1
+          fi
           if [ ! -f "$JOB_DIR/target.wav" ] || [ ! -f "$JOB_DIR/reference.wav" ]; then
-            echo "::error::Липсва $JOB_DIR/target.wav или reference.wav — браузърът трябва да ги commit-не ПРЕДИ да тригне този workflow."
+            echo "::error::Release '$TAG' не съдържа и двата очаквани asset-а (target.wav, reference.wav)."
             exit 1
           fi
           echo "job_dir=$JOB_DIR" >> "$GITHUB_OUTPUT"
@@ -80,10 +108,16 @@ jobs:
         # вместо да чака безкрайно на "processing".
         continue-on-error: true
 
-      - name: Изтрий входните WAV файлове (target/reference) — не ни трябват повече
+      - name: Изтрий локалните входни WAV файлове (target/reference) — не ни трябват повече
         if: always() && steps.findjob.outputs.job_dir != ''
         run: |
           rm -f "${{ steps.findjob.outputs.job_dir }}/target.wav" "${{ steps.findjob.outputs.job_dir }}/reference.wav"
+
+      - name: Изтрий входните asset-и от release-а (спестява storage — резултатите чакат в git до cleanup-а)
+        if: always()
+        run: |
+          gh release delete-asset "$TAG" target.wav --repo "${{ github.repository }}" --yes || true
+          gh release delete-asset "$TAG" reference.wav --repo "${{ github.repository }}" --yes || true
 
       - name: Stage само файловете на този job (result.wav + status.json, без входните WAV)
         if: always() && steps.findjob.outputs.job_dir != ''
