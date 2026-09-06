@@ -15,6 +15,8 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,7 +26,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Изтрий job папки по-стари от 24ч
+      # Трие 2 неща (виж коментара в началото на скрипта):
+      #  1) стари "mastering-job-<id>" releases/tags (входните WAV asset-и,
+      #     ако workflow-ът е гръмнал преди да ги изтрие сам)
+      #  2) стари mastering-jobs/<id>/ git папки (result.wav + status.json)
+      - name: Изтрий стари releases + job папки (>24ч)
         run: python3 scripts/cleanup_mastering_jobs.py
 
       - name: Commit + push (само ако има реално триене)
