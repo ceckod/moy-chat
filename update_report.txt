@@ -1,16 +1,13 @@
 CDB UPDATE REPORT
-Timestamp: 20260905-170837
+Timestamp: 20260906-071213
 
 Changed:
-  index.html
+  MASTERING_PRO_INSTALL_NOTES.md
+  scripts/cleanup_mastering_jobs.py
+  js/mastering-pro.js
 
 Added:
-  MASTERING_PRO_INSTALL_NOTES.md
-  mastering-jobs/.gitkeep
-  scripts/requirements-mastering.txt
-  scripts/cleanup_mastering_jobs.py
-  scripts/master_engine.py
-  js/mastering-pro.js
+  none
 
 Removed:
   none
@@ -31,6 +28,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   gemini.js
   update_report.txt
   package.json
+  index.html
   AUDIT_PROGRESS.md
   agent-registry.js
   app.js
@@ -73,12 +71,15 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   ai-model-finder/ai-models.json
   ai-model-finder/keys.json
   ai-model-finder/scraper.mjs
+  mastering-jobs/.gitkeep
   incoming/.gitkeep
   incoming/README.md
   scripts/_secret_scan.py
   scripts/youtube_discovery_engine.py
+  scripts/requirements-mastering.txt
   scripts/track_niche_scores.py
   scripts/_youtube_common.py
+  scripts/master_engine.py
   scripts/catalog_bootstrap.py
   scripts/cleanup_dead_files.py
   scripts/youtube_oauth_bootstrap.py
@@ -129,6 +130,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/system-log.js
   js/gemini-validator.js
   js/model-pref.js
+  js/mastering-limiter-worklet.js
   js/dashboard.js
   js/storage.js
   js/system-update.js

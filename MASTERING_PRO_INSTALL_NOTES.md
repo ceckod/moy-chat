@@ -38,11 +38,18 @@ files"), commit-ваш директно в main, и workflow-ът сам:
 
 ## Известни ограничения
 
-- Лимит на файловете: **~45MB на файл** (виж `MASTERING_PRO_MAX_FILE_MB`
-  в `js/mastering-pro.js`) — GitHub Contents API base64 overhead + browser
-  upload надеждност.
-- `mastering-jobs/` папката се чисти видимо на всеки 12ч (workflow), но
-  байтовете остават в git ИСТОРИЯТА за постоянно (обсъдено вече — приемливо
-  за сега според теб).
+- **Входни файлове** (target.wav/reference.wav): лимит **~1800MB на файл**
+  (виж `MASTERING_PRO_MAX_FILE_MB` в `js/mastering-pro.js`) — качват се
+  като GitHub Release assets (Releases API, до 2GB твърд таван), а НЕ
+  като git blob-ове, така че НЕ се трупат в git историята за постоянно —
+  трият се автоматично (виж `scripts/cleanup_mastering_jobs.py`).
+- **Изходен файл** (result.wav): продължава да се commit-ва в git
+  (~100MB практически таван на файл) — единствената причина е, че
+  release asset-ите НЕ поддържат CORS за browser fetch (виж подробния
+  коментар в `.github/workflows/mastering-pro.yml` и в `js/mastering-pro.js`),
+  а git/Contents API (`raw.githubusercontent.com`) поддържа. 100MB ≈ ~8-9
+  минути 16-bit/44.1kHz стерео — напълно достатъчно за единичен трак.
+- `mastering-jobs/` git папката (result.wav + status.json) и осиротелите
+  `mastering-job-*` release-и се чистят на всеки 12ч.
 - Никакви GitHub Secrets не са нужни — `matchering` е чисто локална
   Python библиотека, никакви външни API извиквания.

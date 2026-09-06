@@ -11,32 +11,49 @@
 
    Flow:
      1) потребителят пуска TARGET + REFERENCE WAV файлове
-     2) upload-ваме и двата (+ job.json мета) в GitHub — ВСИЧКИ В ЕДИН
-        commit, през Git Data API (blobs → tree → commit → ref), а НЕ
-        през Contents API (виж бележката "ЗАЩО GIT DATA API" по-долу)
-     3) тригваме .github/workflows/mastering-pro.yml (workflow_dispatch)
+     2) създаваме GitHub Release с таг "mastering-job-<job_id>" и
+        upload-ваме target.wav + reference.wav като RELEASE ASSETS
+        (Releases API — виж "ЗАЩО RELEASES API ЗА ВХОДА" по-долу), а НЕ
+        през Git Data API blobs както преди
+     3) тригваме .github/workflows/mastering-pro.yml (workflow_dispatch),
+        което сваля 2-та asset-а server-side (`gh release download`)
      4) polls-ваме mastering-jobs/<job_id>/status.json (Contents API —
-        status.json е малък, KB-та, тук няма проблем) на всеки
-        MASTERING_PRO_POLL_MS, докато state стане "done"/"error"
-     5) при "done" — сваляме result.wav (виж ghGetFileBinary — за файлове
+        status.json е малък, KB-та, тук няма проблем; ТОВА Е НЕПРОМЕНЕНО
+        спрямо старата версия) на всеки MASTERING_PRO_POLL_MS, докато
+        state стане "done"/"error"
+     5) при "done" — сваляме result.wav (ghGetFileBinary — за файлове
         >1MB Contents API не връща 'content', теглим суровия файл през
-        'download_url'), показваме плейър + download бутон + LUFS/True-Peak
-        метрики до/след
+        'download_url'; ТОВА Е СЪЩО НЕПРОМЕНЕНО), показваме плейър +
+        download бутон + LUFS/True-Peak метрики до/след
 
-   ЗАЩО GIT DATA API (blobs/trees/commits/refs), А НЕ CONTENTS API:
+   ЗАЩО RELEASES API ЗА ВХОДА (target.wav/reference.wav), А НЕ GIT DATA API:
    -----------------------------------------------------------------
-   PUT /repos/{owner}/{repo}/contents/{path} (Contents API) приема base64
-   съдържание директно в JSON тялото на заявката — GitHub го отхвърля с
-   422 "file is too large" някъде над ~20-25MB base64 payload (недокументиран
-   точен праг, но многократно наблюдаван на практика). POST /git/blobs
-   (Git Data API) е проектиран точно за големи бинарни файлове и поддържа
-   до 100MB суров файл на blob. Затова: правим 1 blob на файл (target.wav,
-   reference.wav, job.json), после 1 tree, после 1 commit, после branch
-   ref-ът се мести напред към новия commit — ВСИЧКИ ТРИ ФАЙЛА влизат в
-   ЕДИН commit (по-бързо и атомарно от 3 отделни Contents API PUT-а).
+   Git Data API (git/blobs) поддържа само до 100MB суров файл на blob —
+   недостатъчно за 24-bit/96kHz WAV-ове или по-дълги трекове. GitHub
+   Releases API (POST към uploads.github.com/repos/.../releases/{id}/assets)
+   приема СУРОВ бинарен body (не base64 — без 33% overhead) и поддържа до
+   2GB на asset, затова се използва тук за ВХОДА.
 
-   Зависимости (runtime): Keys, fetchTimeout, toast(), AppLog,
-   fileToBase64() (js/ai-helpers.js) — заредени ПРЕДИ този файл в index.html.
+   ЗАЩО ИЗХОДЪТ (result.wav) ПРОДЪЛЖАВА ДА МИНАВА ПРЕЗ GIT (Contents API),
+   А НЕ ПРЕЗ RELEASES API:
+   -----------------------------------------------------------------
+   Release asset-ите се сервират от release-assets.githubusercontent.com,
+   който НЕ връща Access-Control-Allow-Origin хедър — браузърът блокира
+   fetch() към тях с CORS грешка, дори при публично repo (проверено:
+   само обикновена <a href> навигация/сваляне минава, а не JS fetch, а на
+   нас ни трябват суровите байтове в паметта, за да ги пуснем в <audio>
+   плейъра inline и да покажем LUFS/True-Peak метриките). raw.githubusercontent.com
+   (пътят зад Contents API 'download_url', вижте ghGetFileBinary по-долу)
+   Е CORS-friendly (връща Access-Control-Allow-Origin: *) — затова
+   result.wav продължава да се commit-ва в git от workflow-а, както преди
+   промяната. Практическо ограничение от това: изходният файл е все още
+   ограничен до ~100MB (git push лимит), т.е. ~8-9 мин при 16-bit/44.1kHz
+   стерео — напълно достатъчно за единичен мастъртрак, но не и за цял
+   албум като един файл.
+
+   Зависимости (runtime): Keys, fetchTimeout, toast(), AppLog —
+   заредени ПРЕДИ този файл в index.html. (fileToBase64() вече НЕ се
+   ползва тук — release asset upload-ът праща сурови байтове, не base64.)
 
    GitHub изисквания за да работи: Keys.load() трябва да съдържа ghToken
    (нужни права: repo contents read/write + Actions read/write) + ghOwner
@@ -46,11 +63,10 @@
 const MASTERING_PRO_WORKFLOW_FILE = "mastering-pro.yml";
 const MASTERING_PRO_POLL_MS = 15000;
 const MASTERING_PRO_TIMEOUT_MS = 15 * 60 * 1000; // 15 мин — над това спираме polling-а и показваме грешка
-// Git Data API (git/blobs) поддържа до 100MB суров файл на blob — пазим
-// разумен марж (browser upload на ~100MB base64 текст, ~137MB stringified
-// в паметта, все още е практически поносимо, но с растящ риск от timeout/
-// памет при по-бавна връзка, затова спираме на 90MB, не на честите 100MB).
-const MASTERING_PRO_MAX_FILE_MB = 90;
+// GitHub Releases API лимит е 2GB (2048MB) на asset — пазим разумен
+// марж (по-бавни връзки/browser паметта при много голям файл), затова
+// спираме на 1800MB, не на твърдия таван.
+const MASTERING_PRO_MAX_FILE_MB = 1800;
 
 const MasteringPro = (function () {
   let targetFile = null;
@@ -78,7 +94,7 @@ const MasteringPro = (function () {
   function setFile(kind, file) {
     if (!file) return;
     if (file.size > MASTERING_PRO_MAX_FILE_MB * 1024 * 1024) {
-      toast(`❌ Файлът е ${(file.size / 1024 / 1024).toFixed(1)}MB — максимумът е ~${MASTERING_PRO_MAX_FILE_MB}MB (GitHub Git Data API лимит за един blob). Пробвай по-къс/по-нискокачествен WAV.`, 6000);
+      toast(`❌ Файлът е ${(file.size / 1024 / 1024).toFixed(1)}MB — максимумът е ~${MASTERING_PRO_MAX_FILE_MB}MB (GitHub Releases API лимит от 2GB на asset, с марж). Пробвай по-къс/по-нискокачествен WAV.`, 6000);
       return;
     }
     if (kind === "target") {
@@ -158,94 +174,50 @@ const MasteringPro = (function () {
     throw new Error("Файлът е върнат без 'content' и без 'download_url' — неочакван GitHub API отговор.");
   }
 
-  // ---- Git Data API (blobs/trees/commits/refs) — за ГОЛЕМИ файлове (WAV) ----
+  // ---- Releases API — за ГОЛЕМИ входни файлове (target.wav/reference.wav) ----
 
-  async function ghGetRef(k, branch) {
+  // Създава нов GitHub Release с даден таг (draft:false, prerelease:true —
+  // маркираме го ясно като временен/автоматичен, не истинско издание).
+  // Връща release обекта, вкл. 'id' и 'upload_url' (templated, виж по-долу).
+  async function ghCreateRelease(k, tagName) {
     return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/ref/heads/${branch}`,
-      { headers: authHeaders(k, false) }
-    );
-  }
-
-  async function ghGetCommit(k, sha) {
-    return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/commits/${sha}`,
-      { headers: authHeaders(k, false) }
-    );
-  }
-
-  async function ghCreateBlob(k, base64Content) {
-    // до 100MB суров файл на blob — голям timeout, защото base64 текстът
-    // на десетки MB отнема повече от обичайните 20сек за upload+обработка.
-    return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/blobs`,
-      { method: "POST", headers: authHeaders(k, true), body: JSON.stringify({ content: base64Content, encoding: "base64" }) },
-      120000
-    );
-  }
-
-  async function ghCreateTree(k, baseTreeSha, entries) {
-    // entries: [{ path, mode: "100644", type: "blob", sha }, ...]
-    return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/trees`,
-      { method: "POST", headers: authHeaders(k, true), body: JSON.stringify({ base_tree: baseTreeSha, tree: entries }) },
-      30000
-    );
-  }
-
-  async function ghCreateCommit(k, message, treeSha, parentSha) {
-    return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/commits`,
-      { method: "POST", headers: authHeaders(k, true), body: JSON.stringify({ message, tree: treeSha, parents: [parentSha] }) },
-      30000
-    );
-  }
-
-  async function ghUpdateRef(k, branch, commitSha) {
-    return ghJson(
-      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/refs/heads/${branch}`,
-      { method: "PATCH", headers: authHeaders(k, true), body: JSON.stringify({ sha: commitSha, force: false }) },
+      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/releases`,
+      {
+        method: "POST",
+        headers: authHeaders(k, true),
+        body: JSON.stringify({
+          tag_name: tagName,
+          target_commitish: k.ghBranch || "main",
+          name: `🎚️ Mastering Pro job ${tagName}`,
+          body: "Автоматично създаден от Mastering Pro за пренос на входни WAV файлове към GitHub Actions. Трие се автоматично до 24ч (виж .github/workflows/mastering-pro-cleanup.yml).",
+          draft: false,
+          prerelease: true,
+        }),
+      },
       20000
     );
   }
 
-  // Качва множество файлове (base64) в ЕДИН commit чрез Git Data API.
-  // files: [{ path, base64 }, ...]
-  // С 3 опита при "ref конфликт" (друг commit е минал междувременно между
-  // прочитането на HEAD и местенето на branch-а — рядко, но възможно при
-  // паралелни job-ове), всеки път пресъздава tree/commit върху свежия HEAD.
-  async function ghCommitFilesViaBlobs(k, files, message, onStep) {
-    const branch = k.ghBranch || "main";
-    let lastErr;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        if (onStep) onStep(`⏳ Чета текущото състояние на ${branch}...`);
-        const refData = await ghGetRef(k, branch);
-        const latestCommitSha = refData.object.sha;
-        const commitData = await ghGetCommit(k, latestCommitSha);
-        const baseTreeSha = commitData.tree.sha;
-
-        const entries = [];
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i];
-          if (onStep) onStep(`⏳ Качвам ${f.path} (${i + 1}/${files.length})...`);
-          const blob = await ghCreateBlob(k, f.base64);
-          entries.push({ path: f.path, mode: "100644", type: "blob", sha: blob.sha });
-        }
-
-        if (onStep) onStep("⏳ Създавам git tree/commit...");
-        const tree = await ghCreateTree(k, baseTreeSha, entries);
-        const commit = await ghCreateCommit(k, message, tree.sha, latestCommitSha);
-
-        if (onStep) onStep("⏳ Местя " + branch + " към новия commit...");
-        await ghUpdateRef(k, branch, commit.sha);
-        return commit;
-      } catch (e) {
-        lastErr = e;
-        if (attempt < 3) continue; // вероятно ref конфликт — пробвай пак върху свеж HEAD
-      }
-    }
-    throw lastErr;
+  // Качва raw бинарен файл като release asset (Releases API, до 2GB) —
+  // за разлика от Git Data API blobs, ТУК НЕ base64-ираме файла преди
+  // upload (по-малко памет, по-малко overhead, по-бърз upload на голям WAV).
+  // uploadUrlTemplate идва от release.upload_url, напр.
+  // "https://uploads.github.com/repos/OWNER/REPO/releases/123/assets{?name,label}"
+  // — трябва да отрежем "{?name,label}" частта и да сложим ?name= сами.
+  async function ghUploadReleaseAsset(k, uploadUrlTemplate, filename, file, contentType) {
+    const base = uploadUrlTemplate.replace(/\{.*\}$/, "");
+    const url = `${base}?name=${encodeURIComponent(filename)}`;
+    const res = await fetchTimeout(url, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + k.ghToken,
+        Accept: "application/vnd.github+json",
+        "Content-Type": contentType || "application/octet-stream",
+      },
+      body: file, // File/Blob — fetch праща суровите байтове директно
+    }, 10 * 60 * 1000); // до 10 мин за upload на голям WAV на бавна връзка
+    if (!res.ok) throw new Error(`GitHub upload asset ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return res.json();
   }
 
   // ---------- Главен flow ----------
@@ -261,31 +233,24 @@ const MasteringPro = (function () {
     const jobId = uuid();
     currentJobId = jobId;
     const jobDir = `mastering-jobs/${jobId}`;
+    const tagName = `mastering-job-${jobId}`;
     const targetPeakDb = parseFloat($("masteringProTargetPeak")?.value) || -1.0;
 
     $("masteringProResultWrap") && ($("masteringProResultWrap").style.display = "none");
     $("masteringProProcessBtn").disabled = true;
 
     try {
-      setProgress("⏳ Подготвям файловете за качване (base64)...");
-      const targetB64 = await fileToBase64(targetFile);
-      const refB64 = await fileToBase64(referenceFile);
-      const jobMeta = { created_at: new Date().toISOString(), target_name: targetFile.name, reference_name: referenceFile.name };
-      const jobMetaB64 = btoa(unescape(encodeURIComponent(JSON.stringify(jobMeta, null, 2) + "\n")));
+      // Входните файлове минават през Releases API (виж "ЗАЩО RELEASES API
+      // ЗА ВХОДА" в началото на файла) — суров бинарен upload, без base64,
+      // до 2GB на файл.
+      setProgress("⏳ Създавам GitHub Release за job-а...");
+      const release = await ghCreateRelease(k, tagName);
 
-      // И трите файла (target.wav + reference.wav + job.json) в ЕДИН commit,
-      // през Git Data API — виж бележката "ЗАЩО GIT DATA API" в началото
-      // на файла (Contents API 422-ва над ~20-25MB base64 payload).
-      await ghCommitFilesViaBlobs(
-        k,
-        [
-          { path: `${jobDir}/target.wav`, base64: targetB64 },
-          { path: `${jobDir}/reference.wav`, base64: refB64 },
-          { path: `${jobDir}/job.json`, base64: jobMetaB64 }
-        ],
-        `🎚️ Mastering Pro: upload job ${jobId}`,
-        setProgress
-      );
+      setProgress(`⏳ Качвам ${targetFile.name} (${(targetFile.size / 1024 / 1024).toFixed(1)}MB)...`);
+      await ghUploadReleaseAsset(k, release.upload_url, "target.wav", targetFile, "audio/wav");
+
+      setProgress(`⏳ Качвам ${referenceFile.name} (${(referenceFile.size / 1024 / 1024).toFixed(1)}MB)...`);
+      await ghUploadReleaseAsset(k, release.upload_url, "reference.wav", referenceFile, "audio/wav");
 
       setProgress("▶️ Тригвам GitHub Actions (Mastering Pro Engine)...");
       const branch = k.ghBranch || "main";
