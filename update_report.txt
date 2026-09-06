@@ -1,13 +1,16 @@
 CDB UPDATE REPORT
-Timestamp: 20260906-071213
+Timestamp: 20260906-132712
 
 Changed:
-  MASTERING_PRO_INSTALL_NOTES.md
-  scripts/cleanup_mastering_jobs.py
-  js/mastering-pro.js
+  none
 
 Added:
-  none
+  scripts/requirements-shorts.txt
+  scripts/ai_visualizer_director.py
+  scripts/whisper_subtitles.py
+  scripts/render_short_ffmpeg.py
+  scripts/_pick_next_song.py
+  js/shorts-pro-render.js
 
 Removed:
   none
@@ -40,6 +43,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   PROJECT_STATE.md
   README.md
   PHASE_0.5_STATUS_SongIntelligence.md
+  MASTERING_PRO_INSTALL_NOTES.md
   visualizer.html
   openrouter.js
   Технически-одит-CDB-Dashboard.md
@@ -78,6 +82,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/youtube_discovery_engine.py
   scripts/requirements-mastering.txt
   scripts/track_niche_scores.py
+  scripts/cleanup_mastering_jobs.py
   scripts/_youtube_common.py
   scripts/master_engine.py
   scripts/catalog_bootstrap.py
@@ -115,6 +120,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/song-lab.js
   js/niche-data-sources.js
   js/ai-call-log.js
+  js/mastering-pro.js
   js/stats.js
   js/step2.js
   js/lyrics-humanizer.js
