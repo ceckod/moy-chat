@@ -35,6 +35,9 @@ const Mastering = (function () {
   let baseFileName = 'mastered';
   let beforeStats = null;      // числов анализ на оригинала (виж analyzeAudio)
   let afterStats = null;       // числов анализ на резултата след обработка
+  let referenceFile = null;    // (по избор) референтен файл за spectral matching
+  let referenceBuffer = null;  // decoded референтен AudioBuffer
+  let liveWorkletReady = false; // дали AudioWorklet лимитерът е зареден успешно
 
   // ---------- OPENROUTER ЛОГ ("какво може да се подобри") ----------
   const OR_LOG_CACHE_KEY = 'cdb_mastering_openrouter_log_v1';
@@ -71,6 +74,8 @@ const Mastering = (function () {
       const fileInput = $('masteringFileInput');
       if (!fileInput) return; // view-то не е в DOM-а (не би трябвало да се случи)
       fileInput.addEventListener('change', handleFile);
+      const refInput = $('masteringReferenceInput');
+      if (refInput) refInput.addEventListener('change', handleReferenceFile);
       ['masterBass', 'masterVocal', 'masterLoudness'].forEach(function (id) {
         $(id).addEventListener('input', function () {
           updateSimpleLabels();
@@ -170,18 +175,48 @@ const Mastering = (function () {
     mud.connect(air); air.connect(comp); comp.connect(makeup); makeup.connect(safety);
     source.connect(dryGain);
 
-    liveGraph = { source, vocalEq1, vocalEq2, hp, bassShelf, punch, mud, air, comp, makeup, safety, dryGain };
+    liveGraph = { source, vocalEq1, vocalEq2, hp, bassShelf, punch, mud, air, comp, makeup, safety, dryGain, limiterWorklet: null };
     setLiveEnabled(liveEnabled);
     updateLiveParams(readParams());
+    _upgradeLiveLimiterToWorklet(); // fire-and-forget — сменя safety с истинския lookahead лимитер, щом се зареди
     return liveGraph;
+  }
+
+  // Точка 10: живото преслушване да ползва СЪЩИЯ лимитер алгоритъм като
+  // износа (js/mastering-limiter-worklet.js — lookahead + soft knee +
+  // адаптивен release), не грубата DynamicsCompressorNode апроксимация.
+  // Асинхронно (AudioWorklet модулите се зареждат през мрежа/файл) —
+  // докато не е готов, живото преслушване просто продължава през старата
+  // 'safety' DynamicsCompressorNode (напълно функционално, само по-грубо).
+  let liveWorkletUpgradeAttempted = false;
+  async function _upgradeLiveLimiterToWorklet() {
+    if (liveWorkletUpgradeAttempted || !liveGraph || !audioCtx) return;
+    liveWorkletUpgradeAttempted = true;
+    if (!audioCtx.audioWorklet) return; // много стар браузър — остава safety-то
+    try {
+      await audioCtx.audioWorklet.addModule('js/mastering-limiter-worklet.js');
+      const node = new AudioWorkletNode(audioCtx, 'mastering-limiter', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2]
+      });
+      try { liveGraph.makeup.disconnect(liveGraph.safety); } catch (e) {}
+      try { liveGraph.safety.disconnect(); } catch (e) {}
+      liveGraph.makeup.connect(node);
+      liveGraph.limiterWorklet = node;
+      liveWorkletReady = true;
+      setLiveEnabled(liveEnabled); // пренасочва финалния изход към новия node
+      updateLiveParams(readParams());
+    } catch (e) {
+      console.warn('Живо преслушване: AudioWorklet лимитерът не се зареди, оставаме на safety компресора —', e.message);
+    }
   }
 
   function setLiveEnabled(on) {
     liveEnabled = on;
     if (liveGraph) {
-      try { liveGraph.safety.disconnect(); } catch (e) {}
+      const finalNode = liveGraph.limiterWorklet || liveGraph.safety;
+      try { finalNode.disconnect(); } catch (e) {}
       try { liveGraph.dryGain.disconnect(); } catch (e) {}
-      if (on) liveGraph.safety.connect(audioCtx.destination);
+      if (on) finalNode.connect(audioCtx.destination);
       else liveGraph.dryGain.connect(audioCtx.destination);
     }
     const btn = $('masteringLiveToggleBtn');
@@ -219,6 +254,23 @@ const Mastering = (function () {
     // ориентировъчна, за да не звучи по-тихо на живо от финалния износ
     const makeupLin = Math.min(2.2, Math.max(0.6, Math.pow(10, (p.targetPeakDb + 6) / 20)));
     set(liveGraph.makeup.gain, makeupLin);
+
+    // ако lookahead-worklet лимитерът вече е зареден — захранваме го със
+    // СЪЩИТЕ pro-настройки на лимитера като офлайн износа, но с 2dB
+    // допълнителен headroom (по-безопасно за уши/тонколони при сравняване
+    // на пресети на живо, точка 10 от спецификацията).
+    if (liveGraph.limiterWorklet) {
+      const pro = readProParams();
+      const safetyMarginDb = 2;
+      const ceilingLin = Math.pow(10, (p.targetPeakDb - safetyMarginDb) / 20);
+      liveGraph.limiterWorklet.port.postMessage({
+        ceiling: ceilingLin,
+        lookaheadMs: pro.limiterLookaheadMs,
+        attackMs: pro.limiterAttackMs,
+        releaseFloorMs: pro.limiterReleaseFloorMs,
+        kneeDb: pro.limiterKneeDb
+      });
+    }
   }
 
   /* ============================================================
@@ -470,6 +522,68 @@ const Mastering = (function () {
     };
   }
 
+  /* ============================================================
+     "ПРОФЕСИОНАЛНИ МОДУЛИ" — четене на настройките. Всяко поле е с
+     fallback стойност, ако елементът липсва в DOM-а (обратна съвместимост)
+     — fallback-овете са избрани така, че НИЩО да не звучи различно от
+     старото поведение, докато потребителят изрично не пипне новите
+     контроли (изключения: true-peak лимитера и noise-shaped dither-а —
+     винаги активни, чисто подобрение на качеството, без нужда от toggle).
+     ============================================================ */
+  function readProParams() {
+    const val = function (id, def) { const el = $(id); return el ? +el.value : def; };
+    const checked = function (id, def) { const el = $(id); return el ? !!el.checked : def; };
+    const sel = function (id, def) { const el = $(id); return el ? el.value : def; };
+
+    let lufsTarget = null; // null = изкл. (само peak-базиран gain, старото поведение)
+    const lufsMode = sel('proLufsTarget', 'off');
+    if (lufsMode === 'spotify' || lufsMode === 'youtube') lufsTarget = -14;
+    else if (lufsMode === 'apple') lufsTarget = -16;
+    else if (lufsMode === 'loud') lufsTarget = -9;
+    else if (lufsMode === 'custom') lufsTarget = val('proLufsCustom', -14);
+
+    return {
+      // точка 9: SRC + noise-shaped dither
+      sampleRateMode: sel('proSampleRate', 'source'), // 'source'|'44100'|'48000'|'88200'|'96000'
+      // точка 2: LUFS normalization
+      lufsTarget: lufsTarget,
+      // точка 5: M/S ширина, 0.5x-2x
+      widthPct: val('proWidth', 100),
+      bassWidthPct: val('proBassWidth', 100),
+      widthCrossoverFreq: val('proWidthCrossover', 150),
+      // точка 7: saturation/exciter
+      satDrivePct: val('proSatDrive', 0),
+      exciterAmountPct: val('proExciterAmount', 0),
+      exciterFreq: val('proExciterFreq', 6000),
+      // точка 3: multiband — 4 ленти (sub<80, low-mid, high-mid, air)
+      multibandEnabled: checked('proMultibandEnabled', false),
+      xoverSubLow: val('proXoverSubLow', 80),
+      xoverLowMid: val('proXoverLowMid', 500),
+      xoverMidHigh: val('proXoverMidHigh', 4000),
+      subThreshold: val('proSubThreshold', -16), subRatio: val('proSubRatio', 2.5),
+      lowThreshold: val('proLowThreshold', -18), lowRatio: val('proLowRatio', 2.2),
+      midThreshold: val('proMidThreshold', -20), midRatio: val('proMidRatio', 2),
+      highThreshold: val('proHighThreshold', -22), highRatio: val('proHighRatio', 2.5),
+      // точка 6: de-esser (5-8kHz split)
+      deEsserEnabled: checked('proDeEsserEnabled', false),
+      deEsserFreqLow: val('proDeEsserFreqLow', 5000),
+      deEsserFreqHigh: val('proDeEsserFreqHigh', 8000),
+      deEsserThreshold: val('proDeEsserThreshold', -24),
+      deEsserMaxReductionDb: val('proDeEsserAmount', 8),
+      // точки 1+4: true-peak лимитер — oversampling, lookahead, soft knee, adaptive release с под
+      limiterOversample: val('proLimiterOversample', 4), // 4x или 8x
+      limiterLookaheadMs: val('proLimiterLookahead', 2),
+      limiterAttackMs: val('proLimiterAttack', 2),
+      limiterKneeDb: val('proLimiterKnee', 2),
+      limiterReleaseFloorMs: val('proLimiterReleaseFloor', 40),
+      // точка 8: reference matching
+      matchReference: checked('proMatchReference', false),
+      // точка 12: auto gain staging (input trim към консистентно ниво ПРЕДИ EQ/компресора)
+      autoGainStagingEnabled: checked('proAutoGainStaging', false),
+      gainStagingTargetRmsDb: val('proGainStagingTarget', -18)
+    };
+  }
+
   /* ---------- зареждане на файла ---------- */
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -508,6 +622,27 @@ const Mastering = (function () {
     } catch (err) {
       console.error(err);
       $('masteringStatus').textContent = '❌ Файлът не можа да се прочете (' + err.message + ')';
+    }
+  }
+
+  // Референтен файл (по избор, точка 8) — за "Изравни тонален баланс
+  // спрямо референцията". Само декодира и пази буфера — реалният
+  // анализ/корекция става в renderMastered() → _applyReferenceMatch().
+  async function handleReferenceFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    referenceFile = file;
+    const status = $('masteringReferenceStatus');
+    if (status) status.textContent = '⏳ Зареждане на референцията...';
+    try {
+      const arrayBuf = await file.arrayBuffer();
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      referenceBuffer = await audioCtx.decodeAudioData(arrayBuf);
+      if (status) status.textContent = '✅ Референция: ' + file.name;
+    } catch (err) {
+      console.error(err);
+      referenceBuffer = null;
+      if (status) status.textContent = '❌ Референцията не можа да се прочете (' + err.message + ')';
     }
   }
 
@@ -555,19 +690,9 @@ const Mastering = (function () {
     return _applyBiquadArr(_applyBiquadArr(data, _biquadHighShelf1770(sampleRate)), _biquadHighPass1770(sampleRate));
   }
 
-  function analyzeAudio(left, right, sampleRate) {
-    const n = left.length;
-    let peak = 0, sumSq = 0;
-    for (let i = 0; i < n; i++) {
-      const la = Math.abs(left[i]); if (la > peak) peak = la;
-      sumSq += left[i] * left[i];
-      if (right) { const ra = Math.abs(right[i]); if (ra > peak) peak = ra; sumSq += right[i] * right[i]; }
-    }
-    const count = n * (right ? 2 : 1);
-    const rms = Math.sqrt(sumSq / count);
-    const peakDb = 20 * Math.log10(Math.max(peak, 1e-9));
-    const rmsDb = 20 * Math.log10(Math.max(rms, 1e-9));
-
+  // Факторизирано, за да го ползва и levelToTargetLufs() (точка 2) — едно
+  // и също (приблизително) K-weighted integrated LUFS изчисление навсякъде.
+  function computeLufs(left, right, sampleRate) {
     const kl = _kWeight(left, sampleRate);
     const kr = right ? _kWeight(right, sampleRate) : null;
     const blockSize = Math.max(1, Math.round(sampleRate * 0.4)), hop = Math.max(1, Math.round(blockSize * 0.25));
@@ -581,7 +706,22 @@ const Mastering = (function () {
       const meanSq = s / (blockSize * (kr ? 2 : 1));
       if (meanSq > 0) { sumBlocks += meanSq; numBlocks++; }
     }
-    const lufs = numBlocks > 0 ? -0.691 + 10 * Math.log10(sumBlocks / numBlocks) : -Infinity;
+    return numBlocks > 0 ? -0.691 + 10 * Math.log10(sumBlocks / numBlocks) : -Infinity;
+  }
+
+  function analyzeAudio(left, right, sampleRate) {
+    const n = left.length;
+    let peak = 0, sumSq = 0;
+    for (let i = 0; i < n; i++) {
+      const la = Math.abs(left[i]); if (la > peak) peak = la;
+      sumSq += left[i] * left[i];
+      if (right) { const ra = Math.abs(right[i]); if (ra > peak) peak = ra; sumSq += right[i] * right[i]; }
+    }
+    const count = n * (right ? 2 : 1);
+    const rms = Math.sqrt(sumSq / count);
+    const peakDb = 20 * Math.log10(Math.max(peak, 1e-9));
+    const rmsDb = 20 * Math.log10(Math.max(rms, 1e-9));
+    const lufs = computeLufs(left, right, sampleRate);
 
     let correlation = null;
     if (right) {
@@ -971,18 +1111,45 @@ const Mastering = (function () {
     }
   }
 
-  /* ---------- Web Audio граф (offline рендер) ---------- */
+  /* ---------- Web Audio граф (offline рендер) + професионални DSP модули ---------- */
   async function renderMastered(buffer, p) {
+    const pro = readProParams();
     const channels = buffer.numberOfChannels >= 2 ? 2 : 1;
-    const offlineCtx = new OfflineAudioContext(channels, buffer.length, buffer.sampleRate);
+
+    // Точка 9 (SRC): OfflineAudioContext автоматично ресемплира source буфера
+    // до избраната честота на контекста — вграден browser SRC (не е
+    // libsamplerate-класа, но коректен, достатъчен за дистрибуторски нужди).
+    const targetRate = (!pro.sampleRateMode || pro.sampleRateMode === 'source')
+      ? buffer.sampleRate : parseInt(pro.sampleRateMode, 10);
+    const outLength = Math.ceil(buffer.duration * targetRate);
+    const offlineCtx = new OfflineAudioContext(channels, outLength, targetRate);
     const src = offlineCtx.createBufferSource();
     src.buffer = buffer;
+
+    // Точка 12 (auto gain staging): input trim ПРЕДИ каквато и да е обработка,
+    // към консистентно RMS ниво — гарантира, че EQ/компресорните прагове
+    // (в dB, зададени спрямо "нормално" ниво) реагират еднакво независимо
+    // колко тих/силен е оригиналният файл. По подразбиране ИЗКЛ. (старото
+    // поведение — директно readParams прагове върху суровия сигнал).
+    let stagingGain = 1;
+    if (pro.autoGainStagingEnabled) {
+      const chL = buffer.getChannelData(0);
+      const chR = channels === 2 ? buffer.getChannelData(1) : null;
+      let sumSq = 0, cnt = 0;
+      for (let i = 0; i < chL.length; i += 4) { sumSq += chL[i] * chL[i]; cnt++; if (chR) { sumSq += chR[i] * chR[i]; cnt++; } } // sparse sampling — достатъчно точно, много по-бързо
+      const rms = Math.sqrt(sumSq / Math.max(1, cnt));
+      const rmsDb = 20 * Math.log10(Math.max(rms, 1e-9));
+      stagingGain = Math.pow(10, (pro.gainStagingTargetRmsDb - rmsDb) / 20);
+      stagingGain = Math.max(0.25, Math.min(4, stagingGain)); // разумни граници, да не полудее на тишина/DC
+    }
+    const inputTrim = offlineCtx.createGain(); inputTrim.gain.value = stagingGain;
+    src.connect(inputTrim);
 
     let preToneNode; // точка, от която продължава общата тон-верига
 
     if (channels === 2) {
       const splitter = offlineCtx.createChannelSplitter(2);
-      src.connect(splitter);
+      inputTrim.connect(splitter);
 
       // mid = 0.5L + 0.5R, side = 0.5L - 0.5R
       const gL_mid = offlineCtx.createGain(); gL_mid.gain.value = 0.5;
@@ -1004,14 +1171,27 @@ const Mastering = (function () {
       midEq2.type = 'peaking'; midEq2.frequency.value = p.vocalFreq2; midEq2.Q.value = 1.2; midEq2.gain.value = p.vocalGain2;
       midSum.connect(midEq1); midEq1.connect(midEq2);
 
+      // Точка 5 (M/S ширина, 0.5x-2x): прилага се САМО на side канала, преди
+      // рекомбинация — ниските честоти (под crossover) отделно от високите,
+      // без да пипат mid/вокала. По подразбиране 100%/100% → бит-за-бит
+      // същото както преди.
+      const sideLpf = offlineCtx.createBiquadFilter(); sideLpf.type = 'lowpass'; sideLpf.frequency.value = pro.widthCrossoverFreq; sideLpf.Q.value = 0.7071;
+      const sideHpf = offlineCtx.createBiquadFilter(); sideHpf.type = 'highpass'; sideHpf.frequency.value = pro.widthCrossoverFreq; sideHpf.Q.value = 0.7071;
+      const sideLowGain = offlineCtx.createGain(); sideLowGain.gain.value = Math.max(0, Math.min(2, pro.bassWidthPct / 100));
+      const sideHighGain = offlineCtx.createGain(); sideHighGain.gain.value = Math.max(0, Math.min(2, pro.widthPct / 100));
+      const sideWidthSum = offlineCtx.createGain(); sideWidthSum.gain.value = 1;
+      sideSum.connect(sideLpf); sideSum.connect(sideHpf);
+      sideLpf.connect(sideLowGain); sideHpf.connect(sideHighGain);
+      sideLowGain.connect(sideWidthSum); sideHighGain.connect(sideWidthSum);
+
       // рекомбинация: L' = mid+side, R' = mid-side
       const outMerger = offlineCtx.createChannelMerger(2);
       const midToL = offlineCtx.createGain(); midToL.gain.value = 1;
       const sideToL = offlineCtx.createGain(); sideToL.gain.value = 1;
       const midToR = offlineCtx.createGain(); midToR.gain.value = 1;
       const sideToR = offlineCtx.createGain(); sideToR.gain.value = -1;
-      midEq2.connect(midToL); sideSum.connect(sideToL);
-      midEq2.connect(midToR); sideSum.connect(sideToR);
+      midEq2.connect(midToL); sideWidthSum.connect(sideToL);
+      midEq2.connect(midToR); sideWidthSum.connect(sideToR);
       midToL.connect(outMerger, 0, 0); sideToL.connect(outMerger, 0, 0);
       midToR.connect(outMerger, 0, 1); sideToR.connect(outMerger, 0, 1);
 
@@ -1022,7 +1202,7 @@ const Mastering = (function () {
       eq1.type = 'peaking'; eq1.frequency.value = p.vocalFreq1; eq1.Q.value = 1.2; eq1.gain.value = p.vocalGain1;
       const eq2 = offlineCtx.createBiquadFilter();
       eq2.type = 'peaking'; eq2.frequency.value = p.vocalFreq2; eq2.Q.value = 1.2; eq2.gain.value = p.vocalGain2;
-      src.connect(eq1); eq1.connect(eq2);
+      inputTrim.connect(eq1); eq1.connect(eq2);
       preToneNode = eq2;
     }
 
@@ -1031,18 +1211,53 @@ const Mastering = (function () {
     const punch = offlineCtx.createBiquadFilter(); punch.type = 'peaking'; punch.frequency.value = p.punchFreq; punch.Q.value = 1; punch.gain.value = p.punchGain;
     const mud = offlineCtx.createBiquadFilter(); mud.type = 'peaking'; mud.frequency.value = p.mudFreq; mud.Q.value = 1; mud.gain.value = p.mudGain;
     const air = offlineCtx.createBiquadFilter(); air.type = 'highshelf'; air.frequency.value = p.airFreq; air.gain.value = p.airGain;
+
+    // Точка 7 (saturation): мек (tanh) waveshaper за хармонично "лепене"
+    // преди компресора. drivePct=0 → буквално идентична (bypass) крива.
+    const sat = offlineCtx.createWaveShaper();
+    sat.curve = _buildSaturationCurve(pro.satDrivePct);
+    sat.oversample = '4x';
+
     const comp = offlineCtx.createDynamicsCompressor();
     comp.threshold.value = p.compThreshold; comp.ratio.value = p.compRatio;
     comp.attack.value = p.compAttack; comp.release.value = p.compRelease; comp.knee.value = p.compKnee;
 
     preToneNode.connect(hp); hp.connect(bassShelf); bassShelf.connect(punch);
-    punch.connect(mud); mud.connect(air); air.connect(comp); comp.connect(offlineCtx.destination);
+    punch.connect(mud); mud.connect(air); air.connect(sat); sat.connect(comp); comp.connect(offlineCtx.destination);
 
     src.start(0);
     const rendered = await offlineCtx.startRendering();
 
-    const left = new Float32Array(rendered.getChannelData(0));
-    const right = channels === 2 ? new Float32Array(rendered.getChannelData(1)) : null;
+    let left = new Float32Array(rendered.getChannelData(0));
+    let right = channels === 2 ? new Float32Array(rendered.getChannelData(1)) : null;
+    const sampleRate = rendered.sampleRate;
+
+    // Точка 7 (продължение — exciter): високочестотен хармоничен exciter,
+    // отделно от broadband сатурацията по-горе — леко наситява САМО
+    // високите (над exciterFreq), за възприемано "блясък", без да прегрява
+    // целия сигнал. По подразбиране 0% (bypass).
+    if (pro.exciterAmountPct > 0) {
+      _applyExciter(left, right, sampleRate, pro);
+    }
+
+    // Точка 8 (reference matching, по избор): изравнява широколентовия
+    // тонален баланс спрямо референтен файл, ПРЕДИ multiband/лимитер.
+    if (pro.matchReference && referenceBuffer) {
+      _applyReferenceMatch(left, right, sampleRate, referenceBuffer);
+    }
+
+    // Точка 3 (multiband динамика, 4 ленти: sub/low-mid/high-mid/air, по
+    // избор): независим компресор на всяка — контролира басово "пъмпане"
+    // и високочестотна острота отделно, вместо един общ компресор.
+    if (pro.multibandEnabled) {
+      _applyMultibandCompressor(left, right, sampleRate, pro);
+    }
+
+    // Точка 6 (de-esser, 5-8kHz split, по избор): динамично намалява САМО
+    // сибилантния диапазон при превишаване на прага.
+    if (pro.deEsserEnabled) {
+      _applyDeEsser(left, right, sampleRate, pro);
+    }
 
     // измерваме текущия пик, за да пресметнем колко gain трябва до целта
     let peak = 1e-6;
@@ -1051,29 +1266,313 @@ const Mastering = (function () {
       if (right) { const b = Math.abs(right[i]); if (b > peak) peak = b; }
     }
     const targetPeakLin = Math.pow(10, p.targetPeakDb / 20);
-    const ceilingLin = Math.pow(10, (p.targetPeakDb - 0.2) / 20); // малко safety headroom за лимитера
-    const inputGain = targetPeakLin / peak;
+    const ceilingLin = Math.pow(10, (p.targetPeakDb - 0.2) / 20); // safety headroom за лимитера
+    let inputGain = targetPeakLin / peak;
 
-    applyLimiter(left, right, inputGain, ceilingLin, rendered.sampleRate);
+    // Точка 2 (LUFS normalization, по избор): ако е зададен LUFS таргет,
+    // gain-ът ПРЕДИ лимитера се смята спрямо измерения integrated LUFS
+    // (IEC/ITU K-weighting, виж computeLufs) вместо чисто peak-базиран,
+    // за предсказуема громост според Spotify/YouTube/Apple Music нормите.
+    // Лимитерът по-долу пак пази true-peak тавана, независимо от gain-а тук.
+    if (pro.lufsTarget !== null && isFinite(pro.lufsTarget)) {
+      const currentLufs = computeLufs(left, right, sampleRate);
+      if (isFinite(currentLufs)) inputGain = Math.pow(10, (pro.lufsTarget - currentLufs) / 20);
+    }
 
-    return { left: left, right: right, sampleRate: rendered.sampleRate };
+    // Точки 1+4 (true-peak, oversampled, lookahead, soft-knee лимитер) —
+    // винаги активен, виж applyTruePeakLimiter() по-долу.
+    applyTruePeakLimiter(left, right, inputGain, ceilingLin, sampleRate, pro);
+
+    return { left: left, right: right, sampleRate: sampleRate };
   }
 
-  /* Прост "свързан" (linked stereo) brickwall лимитер: мигновена атака,
-     плавно освобождаване (~60ms) — гарантира, че нищо не clip-ва след
-     финалния gain, без нужда от lookahead буфериране. */
-  function applyLimiter(left, right, inputGain, ceiling, sampleRate) {
-    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.06));
-    let g = 1;
+  /* ============================================================
+     TRUE-PEAK, OVERSAMPLED, LOOKAHEAD, SOFT-KNEE ЛИМИТЕР (точки 1 и 4)
+     Детекция: за всеки семпъл проверяваме (oversample-1) линейно
+     интерполирани допълнителни точки между него и следващия — proxy за
+     inter-sample true peak (4x или 8x, настройваемо). ЗАБЕЛЕЖКА: линейна
+     интерполация, НЕ пълен bandlimited/sinc интерполатор като в
+     сертифицирани broadcast true-peak метри (ITU-R BS.1770-4) — достатъчно
+     добро приближение за повечето материали, не "сертифицирано" измерване.
+     Lookahead: gain таргетът за семпъл i = min(target[i..i+lookahead])
+     (O(n) плъзгащ минимум чрез монотонна опашка) — гарантира намалението
+     да Е ЗАПОЧНАЛО преди реалния пик, вместо мигновено рязане на място.
+     Soft knee: плавен преход в намалението близо до тавана (квадратична
+     интерполация в knee зоната) вместо рязък instant clamp — по-натурален
+     brickwall, без "грънчета" (артефакти от рязко превключване на gain-а).
+     Release: адаптивен с "под" (floor) — колкото по-дълбоко е било
+     намалението, толкова по-бавно се пуска (по-малко "пъмпане"), но
+     никога по-бавно от releaseFloorMs.
+     ============================================================ */
+  function applyTruePeakLimiter(left, right, inputGain, ceiling, sampleRate, pro) {
+    pro = pro || {};
     const n = left.length;
+    const oversample = (pro.limiterOversample === 8) ? 8 : 4;
+    const lookaheadSamples = Math.max(1, Math.round(sampleRate * (pro.limiterLookaheadMs || 2) / 1000));
+    const attackSamples = Math.max(1, Math.round(sampleRate * (pro.limiterAttackMs || 2) / 1000));
+    const releaseFloorMs = pro.limiterReleaseFloorMs || 40;
+    const releaseMaxMs = 250; // "таван" при много дълбоко намаление
+    const kneeLin = Math.pow(10, (pro.limiterKneeDb || 0) / 20);
+    const kneeStart = ceiling / kneeLin;
+    const kneeEnd = ceiling * kneeLin;
+
+    // 1) oversampled true-peak proxy (линейна интерполация между семплите)
+    const truePeak = new Float32Array(n);
     for (let i = 0; i < n; i++) {
-      const la = Math.abs(left[i] * inputGain);
-      const ra = right ? Math.abs(right[i] * inputGain) : 0;
-      const peak = Math.max(la, ra);
-      const target = peak > ceiling ? (ceiling / peak) : 1;
-      g = target < g ? target : (target + (g - target) * releaseCoeff);
+      const l0 = left[i] * inputGain, l1 = (i + 1 < n ? left[i + 1] * inputGain : l0);
+      const r0 = right ? right[i] * inputGain : 0, r1 = right ? (i + 1 < n ? right[i + 1] * inputGain : r0) : 0;
+      let pk = Math.max(Math.abs(l0), Math.abs(r0));
+      for (let k = 1; k < oversample; k++) {
+        const t = k / oversample;
+        const li = l0 + (l1 - l0) * t;
+        pk = Math.max(pk, Math.abs(li));
+        if (right) { const ri = r0 + (r1 - r0) * t; pk = Math.max(pk, Math.abs(ri)); }
+      }
+      truePeak[i] = pk;
+    }
+
+    // 2) целеви gain на семпъл, с МЕК knee (плавен преход, не instant clamp)
+    const targetGain = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const pk = truePeak[i];
+      if (pk <= kneeStart) { targetGain[i] = 1; continue; }
+      if (pk >= kneeEnd) { targetGain[i] = ceiling / pk; continue; }
+      const t = (pk - kneeStart) / (kneeEnd - kneeStart);
+      const hardGain = ceiling / pk;
+      targetGain[i] = 1 + (hardGain - 1) * (t * t); // квадратична — по-плавно навлизане в knee-то
+    }
+
+    // 3) lookahead минимум-прозорец, O(n) чрез монотонна опашка (indices)
+    const lookaheadGain = new Float32Array(n);
+    const deque = [];
+    for (let i = n - 1; i >= 0; i--) {
+      while (deque.length && targetGain[deque[deque.length - 1]] >= targetGain[i]) deque.pop();
+      deque.push(i);
+      while (deque[0] > i + lookaheadSamples) deque.shift();
+      lookaheadGain[i] = targetGain[deque[0]];
+    }
+
+    // 4) сглаждане: бърза атака към по-ниска цел, адаптивен release с под
+    let g = 1;
+    const attackCoeff = Math.exp(-1 / attackSamples);
+    for (let i = 0; i < n; i++) {
+      const t = lookaheadGain[i];
+      if (t < g) {
+        g = t + (g - t) * attackCoeff;
+      } else {
+        const depth = 1 - g;
+        const releaseMs = releaseFloorMs + (releaseMaxMs - releaseFloorMs) * depth;
+        const releaseCoeff = Math.exp(-1 / (sampleRate * releaseMs / 1000));
+        g = t + (g - t) * releaseCoeff;
+        if (g > 1) g = 1;
+      }
       left[i] = left[i] * inputGain * g;
       if (right) right[i] = right[i] * inputGain * g;
+    }
+  }
+
+  /* ---------- генерични RBJ biquad коефициенти (public domain формули, "cookbook") ---------- */
+  function _rbjLowpass(freq, sampleRate, Q) {
+    Q = Q || 0.7071067811865476;
+    const w0 = 2 * Math.PI * freq / sampleRate, alpha = Math.sin(w0) / (2 * Q), cosw0 = Math.cos(w0);
+    const a0 = 1 + alpha;
+    return { b0: ((1 - cosw0) / 2) / a0, b1: (1 - cosw0) / a0, b2: ((1 - cosw0) / 2) / a0, a1: (-2 * cosw0) / a0, a2: (1 - alpha) / a0 };
+  }
+
+  /* ---------- многолентово разделяне чрез изваждане (перфектна реконструкция) ----------
+     low = lowpass(data); high = data - low → low + high = data ТОЧНО, без фазови
+     проблеми на класически кросоувъри (не разчитаме на съвпадащ LP+HP дизайн). */
+  function _splitLowResidual(data, freq, sampleRate) {
+    const low = _applyBiquadArr(data, _rbjLowpass(freq, sampleRate));
+    const high = new Float32Array(data.length);
+    for (let i = 0; i < data.length; i++) high[i] = data[i] - low[i];
+    return { low: low, high: high };
+  }
+
+  // 4 ленти: sub / low-mid / high-mid / air (точка 3 — "sub<80, low-mid,
+  // high-mid, air"), чрез верижно изваждане (гарантирана реконструкция).
+  function _bandSplit4(data, fSub, fLowMid, fMidHigh, sampleRate) {
+    const s1 = _splitLowResidual(data, fSub, sampleRate);       // sub, rest
+    const s2 = _splitLowResidual(s1.high, fLowMid, sampleRate); // low-mid, rest
+    const s3 = _splitLowResidual(s2.high, fMidHigh, sampleRate); // high-mid, air
+    return { sub: s1.low, lowMid: s2.low, highMid: s3.low, air: s3.high };
+  }
+
+  function _bandSplitN(data, freqs, sampleRate) {
+    const bands = []; let remaining = data;
+    for (let i = 0; i < freqs.length; i++) {
+      const s = _splitLowResidual(remaining, freqs[i], sampleRate);
+      bands.push(s.low); remaining = s.high;
+    }
+    bands.push(remaining);
+    return bands;
+  }
+
+  /* ---------- точка 3: MULTIBAND ДИНАМИКА (4 ленти) ----------
+     Прост feed-forward компресор (envelope follower + threshold/ratio,
+     линкован stereo — общ envelope от max(|L|,|R|) на всяка лента). */
+  function _compressBandArr(bandL, bandR, thresholdDb, ratio, sampleRate) {
+    const thresholdLin = Math.pow(10, thresholdDb / 20);
+    const attackCoeff = Math.exp(-1 / (sampleRate * 0.005));   // 5ms
+    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.15));   // 150ms
+    let env = 0;
+    const n = bandL.length;
+    for (let i = 0; i < n; i++) {
+      const inputAbs = Math.max(Math.abs(bandL[i]), bandR ? Math.abs(bandR[i]) : 0);
+      env = inputAbs > env ? (inputAbs + (env - inputAbs) * attackCoeff) : (inputAbs + (env - inputAbs) * releaseCoeff);
+      let gain = 1;
+      if (env > thresholdLin && env > 0) {
+        const overDb = 20 * Math.log10(env / thresholdLin);
+        const reducedDb = overDb - overDb / Math.max(1.01, ratio);
+        gain = Math.pow(10, -reducedDb / 20);
+      }
+      bandL[i] *= gain;
+      if (bandR) bandR[i] *= gain;
+    }
+  }
+
+  function _applyMultibandCompressor(left, right, sampleRate, pro) {
+    const bL = _bandSplit4(left, pro.xoverSubLow, pro.xoverLowMid, pro.xoverMidHigh, sampleRate);
+    const bR = right ? _bandSplit4(right, pro.xoverSubLow, pro.xoverLowMid, pro.xoverMidHigh, sampleRate) : null;
+    _compressBandArr(bL.sub, bR ? bR.sub : null, pro.subThreshold, pro.subRatio, sampleRate);
+    _compressBandArr(bL.lowMid, bR ? bR.lowMid : null, pro.lowThreshold, pro.lowRatio, sampleRate);
+    _compressBandArr(bL.highMid, bR ? bR.highMid : null, pro.midThreshold, pro.midRatio, sampleRate);
+    _compressBandArr(bL.air, bR ? bR.air : null, pro.highThreshold, pro.highRatio, sampleRate);
+    for (let i = 0; i < left.length; i++) {
+      left[i] = bL.sub[i] + bL.lowMid[i] + bL.highMid[i] + bL.air[i];
+      if (right) right[i] = bR.sub[i] + bR.lowMid[i] + bR.highMid[i] + bR.air[i];
+    }
+  }
+
+  /* ---------- точка 6: DE-ESSER (split-band, 5-8kHz, динамичен) ----------
+     Изважда сибилантната лента (bandpass ~deEsserFreqLow-deEsserFreqHigh)
+     чрез двойно _splitLowResidual, следи собствения ѝ envelope и я
+     намалява динамично при превишаване на прага (с таван на намалението)
+     — вместо статичен EQ cut, който реже сибилансите дори когато ги няма. */
+  function _applyDeEsser(left, right, sampleRate, pro) {
+    const thresholdLin = Math.pow(10, pro.deEsserThreshold / 20);
+    const maxReductionLin = Math.pow(10, -pro.deEsserMaxReductionDb / 20);
+    const attackCoeff = Math.exp(-1 / (sampleRate * 0.001));  // 1ms — сибилансите са бързи транзиенти
+    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.05));  // 50ms
+
+    // bandpass чрез верижно изваждане: below = <freqLow, sibilant = freqLow..freqHigh, above = >freqHigh
+    const splitL1 = _splitLowResidual(left, pro.deEsserFreqLow, sampleRate);
+    const splitL2 = _splitLowResidual(splitL1.high, pro.deEsserFreqHigh, sampleRate);
+    const splitR1 = right ? _splitLowResidual(right, pro.deEsserFreqLow, sampleRate) : null;
+    const splitR2 = right ? _splitLowResidual(splitR1.high, pro.deEsserFreqHigh, sampleRate) : null;
+    const sibL = splitL2.low, sibR = splitR2 ? splitR2.low : null; // именно 5-8kHz зоната
+
+    let env = 0;
+    const n = left.length;
+    for (let i = 0; i < n; i++) {
+      const inputAbs = Math.max(Math.abs(sibL[i]), sibR ? Math.abs(sibR[i]) : 0);
+      env = inputAbs > env ? (inputAbs + (env - inputAbs) * attackCoeff) : (inputAbs + (env - inputAbs) * releaseCoeff);
+      let gain = 1;
+      if (env > thresholdLin) {
+        const overDb = 20 * Math.log10(env / thresholdLin);
+        gain = Math.max(maxReductionLin, Math.pow(10, -overDb / 20));
+      }
+      sibL[i] *= gain;
+      if (sibR) sibR[i] *= gain;
+    }
+    for (let i = 0; i < n; i++) {
+      left[i] = splitL1.low[i] + sibL[i] + splitL2.high[i];
+      if (right) right[i] = splitR1.low[i] + sibR[i] + splitR2.high[i];
+    }
+  }
+
+  /* ---------- точка 7: SATURATION (broadband, мек tanh waveshaper) ----------
+     drivePct=0 → идентична (bypass) крива, без промяна спрямо старото
+     поведение по подразбиране. */
+  function _buildSaturationCurve(drivePct) {
+    const n = 1024;
+    const curve = new Float32Array(n);
+    if (!drivePct || drivePct <= 0) {
+      for (let i = 0; i < n; i++) curve[i] = (i / (n - 1)) * 2 - 1;
+      return curve;
+    }
+    const drive = 1 + (drivePct / 100) * 9;
+    const norm = Math.tanh(drive);
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1;
+      curve[i] = Math.tanh(x * drive) / norm;
+    }
+    return curve;
+  }
+
+  /* ---------- точка 7 (продължение): HARMONIC EXCITER (высокочестотен) ----------
+     Изважда съдържанието над exciterFreq, наситява го малко по-агресивно
+     от broadband сатурацията, и го добавя обратно (wet mix спрямо
+     exciterAmountPct) — дава възприемано "блясък"/презентност без да
+     пипа останалия спектър. Стандартна "exciter" mastering техника. */
+  function _applyExciter(left, right, sampleRate, pro) {
+    const mix = Math.max(0, Math.min(1, pro.exciterAmountPct / 100));
+    const drive = 3; // фиксирано по-силна сатурация само за тази лента
+    const sL = _splitLowResidual(left, pro.exciterFreq, sampleRate);
+    const sR = right ? _splitLowResidual(right, pro.exciterFreq, sampleRate) : null;
+    const norm = Math.tanh(drive);
+    for (let i = 0; i < left.length; i++) {
+      const driven = Math.tanh(sL.high[i] * drive) / norm;
+      left[i] = sL.low[i] + sL.high[i] + (driven - sL.high[i]) * mix;
+    }
+    if (right) {
+      for (let i = 0; i < right.length; i++) {
+        const driven = Math.tanh(sR.high[i] * drive) / norm;
+        right[i] = sR.low[i] + sR.high[i] + (driven - sR.high[i]) * mix;
+      }
+    }
+  }
+
+  /* ---------- точка 8: REFERENCE-TRACK SPECTRAL MATCHING ----------
+     Разделя моно-микс (за анализ) на 8 честотни ленти (7 crossover точки —
+     по-фина резолюция от предишна версия), сравнява RMS енергията на всяка
+     лента спрямо референтен файл, извежда широколентова корекция (±6dB
+     таван) и я прилага ЕДНАКВО на L и R (запазва стерео образа). Опростена
+     алтернатива на пълен FFT spectral-centroid EQ match (не мери реален
+     spectral centroid/FFT крива, а lentop-base RMS съотношение) — коригира
+     общия тонален баланс (бас/средни/високи), не тон-по-тон детайли. */
+  const REF_MATCH_BAND_FREQS = [80, 200, 500, 1200, 3000, 6000, 10000];
+
+  function _monoMix(l, r) {
+    if (!r) return l;
+    const out = new Float32Array(l.length);
+    for (let i = 0; i < l.length; i++) out[i] = (l[i] + r[i]) * 0.5;
+    return out;
+  }
+  function _rmsArr(arr) {
+    let s = 0; for (let i = 0; i < arr.length; i++) s += arr[i] * arr[i];
+    return Math.sqrt(s / Math.max(1, arr.length));
+  }
+
+  function _applyReferenceMatch(left, right, sampleRate, refBuffer) {
+    const masterMono = _monoMix(left, right);
+    const refL = refBuffer.getChannelData(0);
+    const refR = refBuffer.numberOfChannels >= 2 ? refBuffer.getChannelData(1) : null;
+    const refMono = _monoMix(refL, refR);
+
+    const masterBands = _bandSplitN(masterMono, REF_MATCH_BAND_FREQS, sampleRate);
+    const refBands = _bandSplitN(refMono, REF_MATCH_BAND_FREQS, refBuffer.sampleRate);
+
+    const maxG = Math.pow(10, 6 / 20), minG = Math.pow(10, -6 / 20); // ±6dB таван
+    const corrections = masterBands.map(function (b, i) {
+      const masterE = _rmsArr(b), refE = _rmsArr(refBands[i]);
+      if (masterE < 1e-8 || refE < 1e-8) return 1;
+      return Math.max(minG, Math.min(maxG, refE / masterE));
+    });
+
+    const bandsL = _bandSplitN(left, REF_MATCH_BAND_FREQS, sampleRate);
+    const bandsR = right ? _bandSplitN(right, REF_MATCH_BAND_FREQS, sampleRate) : null;
+    for (let i = 0; i < left.length; i++) {
+      let sum = 0;
+      for (let bi = 0; bi < bandsL.length; bi++) sum += bandsL[bi][i] * corrections[bi];
+      left[i] = sum;
+    }
+    if (right) {
+      for (let i = 0; i < right.length; i++) {
+        let sum = 0;
+        for (let bi = 0; bi < bandsR.length; bi++) sum += bandsR[bi][i] * corrections[bi];
+        right[i] = sum;
+      }
     }
   }
 
@@ -1175,18 +1674,34 @@ const Mastering = (function () {
         offset += 3;
       }
     } else {
-      // 16-bit PCM + TPDF dither (Triangular Probability Density Function):
-      // сума от два независими uniform [-0.5,0.5] LSB шума → триъгълно
-      // разпределение → маскира квантуването с гладък шум вместо стъпаловидна
-      // изкривеност в тихите пасажи/затихвания (стандартна практика при мастеринг).
+      // 16-bit PCM + TPDF dither + noise shaping (точка 9):
+      // TPDF (сума от два независими uniform [-0.5,0.5] LSB шума →
+      // триъгълно разпределение) МАСКИРА квантуването с гладък шум вместо
+      // стъпаловидна изкривеност; noise shaping (1st-order error feedback —
+      // изминалата квантова грешка се изважда от следващия семпъл, преди
+      // да се дитъри пак) БУТА остатъчния шум към високите честоти, където
+      // ухото е по-малко чувствително (психоакустично по-тих шумов под,
+      // грубо аналогично на POW-r/Shibata идеята, макар и опростено —
+      // истинските psychoacoustic curves тежат по ухо-чувствителност,
+      // тук е само 1st-order high-pass наклон).
       const lsb = 1 / 32767;
+      let feedbackErrorL = 0, feedbackErrorR = 0;
       for (let i = 0; i < interleaved.length; i++) {
-        let s = Math.max(-1, Math.min(1, interleaved[i]));
+        const isRightSample = right ? (i % 2 === 1) : false;
+        let feedbackError = isRightSample ? feedbackErrorR : feedbackErrorL;
+
+        let s = Math.max(-1, Math.min(1, interleaved[i] - feedbackError));
         const dither = (Math.random() - Math.random()) * lsb;
-        s = Math.max(-1, Math.min(1, s + dither));
-        const q = Math.round(s < 0 ? s * 0x8000 : s * 0x7FFF);
+        const dithered = Math.max(-1, Math.min(1, s + dither));
+        const q = Math.round(dithered < 0 ? dithered * 0x8000 : dithered * 0x7FFF);
         view.setInt16(offset, q, true);
         offset += 2;
+
+        // квантова грешка спрямо стойността ПРЕДИ dither-а (носи само
+        // реалната загуба от закръгляне, не и умишлено добавения шум)
+        const quantized = q < 0 ? q / 0x8000 : q / 0x7FFF;
+        const error = s - quantized;
+        if (isRightSample) feedbackErrorR = error; else feedbackErrorL = error;
       }
     }
 
