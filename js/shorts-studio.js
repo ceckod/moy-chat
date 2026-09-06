@@ -146,7 +146,7 @@ const ShortsStudio = {
     if (!resultsEl) return;
     if (!lib.length) { resultsEl.innerHTML = ""; if (statusEl) statusEl.textContent = ""; return; }
     const enrichedCount = lib.filter(e => e.platforms && Object.keys(e.platforms).length).length;
-    resultsEl.innerHTML = lib.map(e => this._enrichRowHtml(e)).join("");
+    resultsEl.innerHTML = lib.map((e, i) => this._enrichRowHtml(e, i)).join("");
     if (statusEl) statusEl.textContent = `📚 Запазена библиотека: ${lib.length} песни (${enrichedCount} с намерени линкове). Записана е локално в този браузър — за архив/друго устройство ползвай "⬇️ Изтегли библиотеката (JSON)" по-долу.`;
   },
 
@@ -345,7 +345,7 @@ const ShortsStudio = {
       if (CORE_PLATFORMS.every(key => e.platforms[key])) {
         skipped++;
         if (statusEl) statusEl.textContent = `⏭️ ${i + 1}/${total}: ${e.song} — вече готова (Spotify+Apple+YouTube), пропускам.`;
-        resultsEl.innerHTML += this._enrichRowHtml(e);
+        resultsEl.innerHTML += this._enrichRowHtml(e, i);
         resultsEl.scrollTop = resultsEl.scrollHeight;
         continue;
       }
@@ -369,11 +369,27 @@ const ShortsStudio = {
           if (res.ok) { const d = await res.json(); const u = d.tracks?.items?.[0]?.external_urls?.spotify; if (u) e.platforms.spotify = u; }
         } catch (err) { /* тихо — просто оставаме без Spotify за тази песен */ }
       }
-      if (!e.platforms.apple) {
+      // Търсим и когато Apple линкът вече е намерен от HyperFollow страницата
+      // (Приоритет 1) — тогава пропускаме само трайно вече намереното
+      // (previewAudio/coverArt), защото ТЕЗИ полета не идват от страницата,
+      // а само от този iTunes Search резултат (нужни са на 🎬 AI Shorts Pro
+      // бутона по-долу, виж js/shorts-pro-render.js).
+      if (!e.platforms.apple || !e.previewAudio || !e.coverArt) {
         try {
           const term = `${e.artist} ${e.song}`;
           const res = await this._fetchViaProxies(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`, {}, 9000);
-          if (res.ok) { const d = await res.json(); const u = d.results?.[0]?.trackViewUrl; if (u) e.platforms.apple = u; }
+          if (res.ok) {
+            const d = await res.json();
+            const r0 = d.results?.[0];
+            if (r0?.trackViewUrl) e.platforms.apple = r0.trackViewUrl;
+            // previewUrl — 30-сек AAC preview, публичен URL, точно каквото
+            // трябва на render-pro-short.yml като audio_url (виж
+            // scripts/render_short_ffmpeg.py — сваля го директно с requests).
+            if (r0?.previewUrl) e.previewAudio = r0.previewUrl;
+            // artworkUrl100 е малка (100x100) — upgrade-ваме резолюцията със
+            // същия трик като scripts/_pick_next_song.py (pick_cover_url).
+            if (r0?.artworkUrl100) e.coverArt = r0.artworkUrl100.replace("100x100bb", "1200x1200bb");
+          }
         } catch (err) { /* тихо */ }
       }
       if (!e.platforms.youtube && ytKey) {
@@ -394,7 +410,7 @@ const ShortsStudio = {
       e.appleUrl = e.platforms.apple || e.appleUrl || "";
       e.youtubeUrl = e.platforms.youtube || e.youtubeUrl || "";
 
-      resultsEl.innerHTML += this._enrichRowHtml(e);
+      resultsEl.innerHTML += this._enrichRowHtml(e, i);
       resultsEl.scrollTop = resultsEl.scrollHeight;
       // Кратка пауза между песните — по-щадящо към API квотите.
       await new Promise(r => setTimeout(r, 300));
@@ -409,16 +425,60 @@ const ShortsStudio = {
     this.log(`🔍 Обогатяване на библиотеката готово — ${summary || "нищо не се намери"}${skippedNote}.`);
   },
 
-  _enrichRowHtml(e) {
+  _enrichRowHtml(e, i) {
     const platforms = e.platforms || {};
     const chips = Object.keys(this._PLATFORM_LABELS)
       .filter(key => platforms[key])
       .map(key => `<a href="${this._escAttr(platforms[key])}" target="_blank" rel="noopener">${this._platformLabel(key)} ✅</a>`)
       .join(" · ");
+    // 🎬 AI Shorts Pro — тригва server-side render-pro-short.yml (виж
+    // js/shorts-pro-render.js) за ТАЗИ конкретна песен. Активен само след
+    // като previewAudio/coverArt са намерени (идват от iTunes Search в
+    // enrichLibrary() по-горе) — без тях dispatch()-ът така или иначе би
+    // отказал с ясна грешка, но е по-ясно за потребителя бутонът просто да
+    // е disabled, вместо да кликне и да получи toast с обяснение.
+    const canRender = !!(e.previewAudio && e.coverArt);
+    const renderBtn = typeof i === "number"
+      ? `<button class="btn ghost" style="margin-top:4px;" ${canRender ? "" : "disabled title=\"Първо: 🔍 Намери Spotify + Apple Music + YouTube — трябва Apple Music резултат за preview аудио + обложка\""} onclick="guardClick(this, () => ShortsStudio.dispatchProRender(${i}))">🎬 AI Shorts Pro рендер</button>`
+      : "";
     return `<div style="padding:6px 0;border-bottom:1px solid var(--border);">
       <strong>${this._esc(e.song)}</strong><br>
-      ${chips || '<span class="muted">— нищо намерено —</span>'}
+      ${chips || '<span class="muted">— нищо намерено —</span>'}<br>
+      ${renderBtn}
     </div>`;
+  },
+
+  // Тригва js/shorts-pro-render.js (ShortsProRender.dispatch) за песента на
+  // индекс i от запазената DistroKid библиотека. Самият dispatch() си блокира
+  // (await) до завършен run и сваля резултата — тук само подготвяме entry-то
+  // и логваме резултата; guardClick() (в onclick-а на бутона в _enrichRowHtml)
+  // се грижи бутонът да е disabled по време на изчакването.
+  async dispatchProRender(i) {
+    const lib = this._loadDistrokidLibrary();
+    const e = lib[i];
+    if (!e) return toast("❌ Не намерих тази песен в библиотеката — презареди страницата и опитай пак.");
+    if (!e.previewAudio || !e.coverArt) {
+      return toast('❌ Липсва preview аудио или обложка за тази песен — първо пусни "🔍 Намери Spotify + Apple Music + YouTube".', 6000);
+    }
+    if (typeof ShortsProRender === "undefined") {
+      return toast("❌ js/shorts-pro-render.js не е зареден — провери index.html.");
+    }
+    this.log(`🎬 AI Shorts Pro: тригвам server-side рендер за "${e.song}"...`);
+    const result = await ShortsProRender.dispatch({
+      song: e.song,
+      artist: e.artist,
+      audio_url: e.previewAudio,
+      cover_url: e.coverArt,
+    });
+    if (result && result.ok && result.downloaded) {
+      this.log(`✅ AI Shorts Pro: "${e.song}" — видеото е свалено (.zip).`);
+    } else if (result && result.ok) {
+      this.log(`⚠️ AI Shorts Pro: "${e.song}" — рендерът мина, но свалянето трябва да е ръчно (виж toast-а).`);
+    } else if (result) {
+      this.log(`❌ AI Shorts Pro: "${e.song}" — рендерът се провали (виж toast-а).`);
+    } else {
+      this.log(`❌ AI Shorts Pro: "${e.song}" — dispatch-ът не завърши успешно (виж toast-а).`);
+    }
   },
 
   _parseDistrokidLibrary(text) {
