@@ -1750,11 +1750,101 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="card" style="margin-bottom:14px;">
         <label>WAV формат при износ</label>
         <select id="masterBitDepth">
-          <option value="16" selected>16-bit PCM (стандарт, с TPDF dithering)</option>
+          <option value="16" selected>16-bit PCM (стандарт, с TPDF + noise-shaping dither)</option>
           <option value="24">24-bit PCM (повече хедрум, предпочитано от дистрибутори)</option>
           <option value="32f">32-bit float (без загуба, максимален хедрум)</option>
         </select>
         <p class="muted" style="font-size:11.5px;margin:6px 0 0;">16-bit е достатъчен за краен слушател (Spotify/YouTube транскодират и без това) и е с най-малък размер. 24-bit/32-bit float са полезни, ако файлът ще мине през допълнителна обработка другаде.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>🎛️ Професионални модули</strong>
+        <p class="muted" style="font-size:11.5px;margin:4px 0 12px;">Всичко тук е ИЗКЛЮЧЕНО по подразбиране — старото поведение остава непроменено, докато не пипнеш нещо. True-peak лимитерът и noise-shaped dither-ът са изключение — те винаги подобряват качеството без нужда от превключвател.</p>
+
+        <div style="margin-bottom:14px;">
+          <label>Изходна честота на дискретизация</label>
+          <select id="proSampleRate">
+            <option value="source" selected>Както оригинала</option>
+            <option value="44100">44.1 kHz</option>
+            <option value="48000">48 kHz</option>
+            <option value="88200">88.2 kHz</option>
+            <option value="96000">96 kHz</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label>LUFS нормализация (точка 2)</label>
+          <select id="proLufsTarget" onchange="document.getElementById('proLufsCustomWrap').style.display=this.value==='custom'?'block':'none';">
+            <option value="off" selected>Изкл. (само ръчен true-peak таргет)</option>
+            <option value="spotify">Spotify / YouTube (-14 LUFS)</option>
+            <option value="apple">Apple Music (-16 LUFS)</option>
+            <option value="loud">Силно (-9 LUFS)</option>
+            <option value="custom">Ръчно...</option>
+          </select>
+          <div id="proLufsCustomWrap" style="display:none;margin-top:6px;">
+            <input type="number" id="proLufsCustom" value="-14" step="0.5">
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-bottom:14px;">
+          <div><label>Стерео ширина, високи (0.5x-2x = 50-200%)</label><input type="number" id="proWidth" value="100" min="50" max="200"></div>
+          <div><label>Стерео ширина, бас (0.5x-2x)</label><input type="number" id="proBassWidth" value="100" min="50" max="200"></div>
+          <div><label>Crossover честота (Hz)</label><input type="number" id="proWidthCrossover" value="150"></div>
+        </div>
+
+        <div class="grid cols-2" style="margin-bottom:14px;">
+          <div><label>Saturation drive (%, 0=изкл.)</label><input type="number" id="proSatDrive" value="0" min="0" max="100"></div>
+          <div><label>Exciter amount (%, 0=изкл.)</label><input type="number" id="proExciterAmount" value="0" min="0" max="100"></div>
+          <div><label>Exciter честота (Hz)</label><input type="number" id="proExciterFreq" value="6000"></div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proMultibandEnabled"> Multiband динамика (4 ленти: sub/low-mid/high-mid/air)</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Sub &lt; (Hz)</label><input type="number" id="proXoverSubLow" value="80"></div>
+            <div><label>Low-mid &lt; (Hz)</label><input type="number" id="proXoverLowMid" value="500"></div>
+            <div><label>High-mid &lt; (Hz)</label><input type="number" id="proXoverMidHigh" value="4000"></div>
+            <div></div>
+            <div><label>Sub threshold/ratio</label><input type="number" id="proSubThreshold" value="-16"> / <input type="number" id="proSubRatio" value="2.5" step="0.1"></div>
+            <div><label>Low-mid threshold/ratio</label><input type="number" id="proLowThreshold" value="-18"> / <input type="number" id="proLowRatio" value="2.2" step="0.1"></div>
+            <div><label>High-mid threshold/ratio</label><input type="number" id="proMidThreshold" value="-20"> / <input type="number" id="proMidRatio" value="2" step="0.1"></div>
+            <div><label>Air threshold/ratio</label><input type="number" id="proHighThreshold" value="-22"> / <input type="number" id="proHighRatio" value="2.5" step="0.1"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proDeEsserEnabled"> De-esser (5-8kHz split-band)</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Долна честота (Hz)</label><input type="number" id="proDeEsserFreqLow" value="5000"></div>
+            <div><label>Горна честота (Hz)</label><input type="number" id="proDeEsserFreqHigh" value="8000"></div>
+            <div><label>Праг (dB)</label><input type="number" id="proDeEsserThreshold" value="-24"></div>
+            <div><label>Макс. намаление (dB)</label><input type="number" id="proDeEsserAmount" value="8"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label>True-peak лимитер (винаги активен) — фина настройка</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Oversampling</label><select id="proLimiterOversample"><option value="4" selected>4x</option><option value="8">8x</option></select></div>
+            <div><label>Lookahead (ms)</label><input type="number" id="proLimiterLookahead" value="2" min="1" max="5" step="0.5"></div>
+            <div><label>Атака (ms)</label><input type="number" id="proLimiterAttack" value="2" min="1" max="6" step="0.5"></div>
+            <div><label>Soft knee (dB)</label><input type="number" id="proLimiterKnee" value="2" min="0" max="6" step="0.5"></div>
+            <div><label>Release floor (ms)</label><input type="number" id="proLimiterReleaseFloor" value="40" min="10" max="100"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proAutoGainStaging"> Auto gain staging (input trim към RMS таргет ПРЕДИ EQ/компресора)</label>
+          <div style="margin-top:8px;"><label>RMS таргет (dB)</label><input type="number" id="proGainStagingTarget" value="-18"></div>
+        </div>
+
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proMatchReference"> Изравни тонален баланс спрямо референтен файл</label>
+          <div class="row" style="margin-top:8px;">
+            <input type="file" id="masteringReferenceInput" accept="audio/*">
+          </div>
+          <p id="masteringReferenceStatus" class="muted" style="font-size:12px;margin-top:6px;"></p>
+        </div>
       </div>
 
       <div class="card">
