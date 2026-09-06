@@ -40,6 +40,17 @@ import numpy as np
 import soundfile as sf
 import soxr
 from scipy import signal
+from scipy.ndimage import maximum_filter1d
+
+try:
+    from numba import njit
+except Exception:  # pragma: no cover — fallback: работи, само по-бавно
+    def njit(*args, **kwargs):
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        def _wrap(fn):
+            return fn
+        return _wrap
 
 try:
     import pyloudnorm as pyln
@@ -73,20 +84,30 @@ def lin_to_db(lin: float) -> float:
     return 20.0 * np.log10(max(lin, 1e-12))
 
 
+@njit(cache=True)
+def _envelope_follower_core(ax: np.ndarray, att: float, rel: float) -> np.ndarray:
+    env = np.empty_like(ax)
+    level = 0.0
+    for i in range(ax.shape[0]):
+        coeff = att if ax[i] > level else rel
+        level = coeff * level + (1.0 - coeff) * ax[i]
+        env[i] = level
+    return env
+
+
 def envelope_follower(x: np.ndarray, sr: int, attack_ms: float, release_ms: float) -> np.ndarray:
     """Прост peak envelope follower с отделни attack/release константи
     (експоненциално сглаждане — стандартен подход за envelope detection
-    в компресори/де-есъри, вижте т. "АДАПТИВЕН RELEASE" от спецификацията)."""
+    в компресори/де-есъри, вижте т. "АДАПТИВЕН RELEASE" от спецификацията).
+
+    Рекурсията (level зависи от level[i-1]) не се векторизира directno в
+    numpy, затова ядрото е JIT-компилирано с numba — same алгоритъм,
+    но компилиран нативен код вместо интерпретиран Python цикъл по
+    семпъл (10-50x за милиони семпли)."""
     att = np.exp(-1.0 / (sr * max(attack_ms, 0.1) / 1000.0))
     rel = np.exp(-1.0 / (sr * max(release_ms, 1.0) / 1000.0))
-    env = np.zeros_like(x)
-    level = 0.0
-    ax = np.abs(x)
-    for i in range(len(x)):
-        coeff = att if ax[i] > level else rel
-        level = coeff * level + (1 - coeff) * ax[i]
-        env[i] = level
-    return env
+    ax = np.ascontiguousarray(np.abs(x), dtype=np.float64)
+    return _envelope_follower_core(ax, att, rel)
 
 
 # ---------- 1) Суб-бас моно (<90Hz, M/S) ----------
@@ -185,6 +206,22 @@ def saturate(x: np.ndarray, sr: int, drive: float = 1.6, mix: float = 0.12,
 
 # ---------- 5) Финален oversampled true-peak лимитер (safety net) ----------
 
+@njit(cache=True)
+def _limiter_gain_core(window_peak: np.ndarray, peak: np.ndarray, ceiling: float, release: float) -> np.ndarray:
+    n = window_peak.shape[0]
+    gain = np.empty(n, dtype=np.float64)
+    current_gain = 1.0
+    for i in range(n):
+        wp = window_peak[i]
+        target_gain = ceiling / wp if wp > ceiling else 1.0
+        if target_gain < current_gain:
+            current_gain = target_gain  # моментален attack — никога не позволяваме clip
+        else:
+            current_gain = release * current_gain + (1.0 - release) * target_gain
+        gain[i] = current_gain
+    return gain
+
+
 def true_peak_limiter(x: np.ndarray, sr: int, ceiling_db: float = -1.0,
                        oversample: int = 4, lookahead_ms: float = 2.0,
                        release_ms: float = 60.0) -> np.ndarray:
@@ -202,18 +239,24 @@ def true_peak_limiter(x: np.ndarray, sr: int, ceiling_db: float = -1.0,
     release = np.exp(-1.0 / (os_sr * max(release_ms, 1.0) / 1000.0))
 
     peak = np.max(np.abs(up), axis=1)  # общ peak между L/R (linked, за да не мести стерео образа)
-    padded = np.concatenate([peak, np.full(lookahead, peak[-1] if len(peak) else 0.0)])
 
-    gain = np.ones(len(peak), dtype=np.float64)
-    current_gain = 1.0
-    for i in range(len(peak)):
-        window_peak = np.max(padded[i:i + lookahead + 1]) if lookahead > 0 else peak[i]
-        target_gain = ceiling / window_peak if window_peak > ceiling else 1.0
-        if target_gain < current_gain:
-            current_gain = target_gain  # моментален attack — никога не позволяваме clip
-        else:
-            current_gain = release * current_gain + (1 - release) * target_gain
-        gain[i] = current_gain
+    # Стар код: за всеки семпъл np.max(padded[i:i+lookahead+1]) — O(n * lookahead),
+    # преизчислява същия sliding-window max от нулата всеки път (350+ елемента
+    # на всяка от милионите итерации при 4x oversampling). maximum_filter1d
+    # смята същия "гледам напред lookahead семпъла" резултат с ефективен
+    # (van Herk/Gil-Werman) sliding-window алгоритъм — O(n), без Python цикъл.
+    if lookahead > 0:
+        pad_val = peak[-1] if len(peak) else 0.0
+        padded = np.concatenate([peak, np.full(lookahead, pad_val)])
+        size = lookahead + 1
+        # origin=-(size//2) измества прозореца от "центриран" (scipy default)
+        # към "гледам напред" — window_peak[i] == max(padded[i:i+size]),
+        # верифицирано числено срещу старата O(n*lookahead) формула по-горе.
+        window_peak = maximum_filter1d(padded, size=size, origin=-(size // 2), mode="nearest")[:len(peak)]
+    else:
+        window_peak = peak
+
+    gain = _limiter_gain_core(window_peak, peak, ceiling, release)
 
     limited_up = up * gain[:, None]
     down = np.zeros((n, x.shape[1]), dtype=np.float64)
