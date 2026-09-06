@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:46.545893+00:00"
+      "last_search_at": "2026-09-06T13:51:51.424748+00:00"
     },
     "rap": {
       "candidates": [
@@ -1258,9 +1258,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "pLYgw0gkeWg",
+          "title": "Lefty Gunplay - Just Another Day (Official Music Video)",
+          "channel": "LEFTY GUNPLAY",
+          "published_at": "2026-08-26T20:00:06Z",
+          "views": 156687,
+          "duration_seconds": 143,
+          "discovered_at": "2026-09-06T13:51:53.131586+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:48.113577+00:00"
+      "last_search_at": "2026-09-06T13:51:53.131712+00:00"
     },
     "pop": {
       "candidates": [
@@ -1781,7 +1794,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:48.851828+00:00"
+      "last_search_at": "2026-09-06T13:51:53.767103+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2270,7 +2283,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:49.706286+00:00"
+      "last_search_at": "2026-09-06T13:51:55.243768+00:00"
     },
     "dance": {
       "candidates": [
@@ -2898,7 +2911,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:50.424992+00:00"
+      "last_search_at": "2026-09-06T13:51:55.909268+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3944,7 +3957,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:47.293358+00:00"
+      "last_search_at": "2026-09-06T13:51:52.252062+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4186,9 +4199,22 @@
           "used_in": [
             "Bulgarian Pop"
           ]
+        },
+        {
+          "video_id": "GFDQ5k85YBU",
+          "title": "KSIOR x SISS - BATUT [OFFICIAL 4K VIDEO] 2026",
+          "channel": "KSIOR",
+          "published_at": "2026-07-02T16:00:06Z",
+          "views": 4711672,
+          "duration_seconds": 161,
+          "discovered_at": "2026-09-06T13:51:54.524779+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-08-30T15:07:51.247796+00:00"
+      "last_search_at": "2026-09-06T13:51:54.524976+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [
