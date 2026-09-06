@@ -5,9 +5,13 @@
 # numpy/scipy — DSP (филтри, envelope followers, oversampling)
 # soxr        — висок клас Sample Rate Conversion (SoX resampler bindings)
 # pyloudnorm  — LUFS metering (Integrated + Short-term, ITU-R BS.1770)
+# numba       — JIT компилация на envelope follower / limiter recursion
+#               (същите алгоритми, компилиран нативен код вместо чист
+#               Python for-цикъл по семпъл — 10-50x за 4-мин песен)
 matchering==2.0.6
 soundfile>=0.12
 numpy>=1.24
 scipy>=1.11
 soxr>=0.3
 pyloudnorm>=0.1.1
+numba>=0.59
