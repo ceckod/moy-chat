@@ -30,19 +30,22 @@
      4) веднъж намерен run_id, поллваме GET .../actions/runs/{id} докато
         status стане "completed"
      5) при успех — резултатното .mp4 е GitHub ARTIFACT, не git commit
-        (виж защо в render-pro-short.yml), затова НЕ можем да го покажем
-        inline през raw.githubusercontent.com/CORS trick както
-        result.wav в mastering-pro.js. Артифактите се сервират само през
+        (виж защо в render-pro-short.yml). Артифактите се сервират само през
         GitHub API с auth хедър — теглим ги като .zip (GET
         .../artifacts/{id}/zip с Authorization: Bearer, fetch следва
-        redirect-а автоматично) и предлагаме СВАЛЯНЕ на .zip-а директно
-        (БЕЗ клиентско разархивиране — в repo-то няма JS zip библиотека,
-        а добавянето само за това е излишно; потребителят разархивира
-        локално и отваря .mp4-то). Достатъчно е за работен pipeline —
-        подобри по-късно с JSZip ако инлайн preview стане нужен.
+        redirect-а автоматично), после ги разархивираме В БРАУЗЪРА с JSZip
+        (виж <script src="...jszip..."> в index.html) — както video
+        artifact-а (.mp4), така и report artifact-а (.json с title/
+        description/hashtags) — за да може js/shorts-studio.js да подаде
+        готовия Blob директно на Step4.uploadVideo() и метаданните за
+        заглавие/описание, без потребителят да разархивира нищо ръчно.
+        Ако JSZip липсва (CDN недостъпен) — падаме грациозно назад към
+        суровия .zip download, точно каквото правехме преди (виж
+        downloadResultZip()).
 
    Зависимости (runtime, заредени ПРЕДИ този файл в index.html): Keys,
-   fetchTimeout, toast() — същите като js/mastering-pro.js.
+   fetchTimeout, toast(), JSZip (CDN, виж index.html) — последното по избор,
+   само за auto-unzip; без него пада грациозно назад към суров .zip.
 
    GitHub изисквания: Keys.load() трябва да съдържа ghToken (repo contents
    read/write + Actions read/write), ghOwner, ghRepo (+ опционално
@@ -191,6 +194,29 @@ const ShortsProRender = (() => {
 
   // ---------- 4) сваляне на резултата (GitHub Artifact, не git) ----------
 
+  // Тегли един GitHub Actions artifact като .zip (auth хедър, следва
+  // signed-URL redirect-а автоматично) и връща суровия Blob на .zip-а.
+  async function fetchArtifactZipBlob(k, artifactId) {
+    const zipRes = await fetchTimeout(
+      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/actions/artifacts/${artifactId}/zip`,
+      { headers: authHeaders(k) },
+      5 * 60 * 1000
+    );
+    if (!zipRes.ok) throw new Error(`GitHub ${zipRes.status}`);
+    return zipRes.blob();
+  }
+
+  // Артифактите на GitHub Actions винаги съдържат ТОЧНО файла(овете), който
+  // сме качили с actions/upload-artifact — тук всеки от нашите 2 artifact-а
+  // (video/report) е точно 1 файл (виж render-pro-short.yml). Взимаме
+  // първия НЕ-директория запис вътре — просто и достатъчно за случая.
+  async function extractSingleFileFromZipBlob(zipBlob) {
+    const zip = await JSZip.loadAsync(zipBlob);
+    const entry = Object.values(zip.files).find((f) => !f.dir);
+    if (!entry) throw new Error("Артифактът е празен .zip");
+    return { filename: entry.name, blob: await entry.async("blob") };
+  }
+
   async function downloadResultZip(k, runId, run) {
     let artifacts;
     try {
@@ -207,36 +233,45 @@ const ShortsProRender = (() => {
     }
 
     const videoArtifact = artifacts.find((a) => a.name.startsWith("ai-short-") && !a.name.startsWith("ai-short-report-"));
+    const reportArtifact = artifacts.find((a) => a.name.startsWith("ai-short-report-"));
     if (!videoArtifact) {
       toast("⚠ Няма video artifact в този run — виж лога: " + run.html_url, 10000);
       return { ok: true, run, downloaded: false };
     }
 
+    // report.json е по избор (title/description/hashtags) — ако липсва или
+    // разархивирането му се провали, продължаваме без него (кодът, който
+    // вика dispatch(), пада грациозно назад към празни/generic метаданни).
+    let report = null;
+    if (reportArtifact) {
+      try {
+        const reportZipBlob = await fetchArtifactZipBlob(k, reportArtifact.id);
+        const { blob: reportBlob } = await extractSingleFileFromZipBlob(reportZipBlob);
+        report = JSON.parse(await reportBlob.text());
+      } catch (e) { console.warn("Report artifact — разархивиране/парсване се провали:", e); }
+    }
+
     try {
-      // Artifact-ите се сервират само с auth хедър (не CORS-friendly публичен
-      // URL) — теглим ГИ като .zip (fetch следва redirect-а към временния
-      // signed URL автоматично), после предлагаме сваляне на .zip-а. Няма
-      // JS zip библиотека в repo-то, затова НЕ разархивираме тук — виж
-      // бележката най-горе.
-      const zipRes = await fetchTimeout(
-        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/actions/artifacts/${videoArtifact.id}/zip`,
-        { headers: authHeaders(k) },
-        5 * 60 * 1000
-      );
-      if (!zipRes.ok) throw new Error(`GitHub ${zipRes.status}`);
-      const blob = await zipRes.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${videoArtifact.name}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      toast(`✅ Готово! Свален "${videoArtifact.name}.zip" (разархивирай, за да видиш .mp4-то)`, 8000);
-      return { ok: true, run, downloaded: true, artifact: videoArtifact, zipUrl: url };
+      const videoZipBlob = await fetchArtifactZipBlob(k, videoArtifact.id);
+      if (typeof JSZip === "undefined") {
+        // Няма JSZip (CDN недостъпен) — падаме назад към стария режим:
+        // предлагаме суровия .zip за ръчно сваляне/разархивиране.
+        const url = URL.createObjectURL(videoZipBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${videoArtifact.name}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast(`✅ Готово! Свален "${videoArtifact.name}.zip" (JSZip не е зареден — разархивирай ръчно)`, 8000);
+        return { ok: true, run, downloaded: true, artifact: videoArtifact, zipUrl: url, report };
+      }
+      const { filename, blob: videoBlob } = await extractSingleFileFromZipBlob(videoZipBlob);
+      toast(`✅ Готово! "${filename}" е рендиран и разархивиран.`, 6000);
+      return { ok: true, run, downloaded: true, artifact: videoArtifact, videoBlob, videoFilename: filename, report };
     } catch (e) {
-      toast("⚠ Видеото е готово, но свалянето на artifact-а се провали — свали ръчно от: " + run.html_url, 10000);
-      return { ok: true, run, downloaded: false };
+      toast("⚠ Видеото е готово, но свалянето/разархивирането на artifact-а се провали — свали ръчно от: " + run.html_url, 10000);
+      return { ok: true, run, downloaded: false, report };
     }
   }
 

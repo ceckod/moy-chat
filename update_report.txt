@@ -1,16 +1,14 @@
 CDB UPDATE REPORT
-Timestamp: 20260906-132712
+Timestamp: 20260906-141912
 
 Changed:
-  none
+  index.html
+  scripts/cleanup_mastering_jobs.py
+  js/shorts-pro-render.js
+  js/shorts-studio.js
 
 Added:
-  scripts/requirements-shorts.txt
-  scripts/ai_visualizer_director.py
-  scripts/whisper_subtitles.py
-  scripts/render_short_ffmpeg.py
-  scripts/_pick_next_song.py
-  js/shorts-pro-render.js
+  none
 
 Removed:
   none
@@ -31,7 +29,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   gemini.js
   update_report.txt
   package.json
-  index.html
   AUDIT_PROGRESS.md
   agent-registry.js
   app.js
@@ -79,14 +76,18 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   incoming/.gitkeep
   incoming/README.md
   scripts/_secret_scan.py
+  scripts/requirements-shorts.txt
+  scripts/ai_visualizer_director.py
   scripts/youtube_discovery_engine.py
   scripts/requirements-mastering.txt
   scripts/track_niche_scores.py
-  scripts/cleanup_mastering_jobs.py
   scripts/_youtube_common.py
   scripts/master_engine.py
+  scripts/whisper_subtitles.py
+  scripts/render_short_ffmpeg.py
   scripts/catalog_bootstrap.py
   scripts/cleanup_dead_files.py
+  scripts/_pick_next_song.py
   scripts/youtube_oauth_bootstrap.py
   scripts/discover_niches.py
   scripts/track_trends.py
@@ -129,7 +130,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/agent-registry.js
   js/step1.js
   js/project-archive.js
-  js/shorts-studio.js
   js/viral-lab.js
   js/quick-upload.js
   js/nav.js
@@ -153,6 +153,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   test/load-network.mjs
   test/lyrics-humanizer.test.mjs
   test/network.test.mjs
+  assets/cdb_logo.png
   js/providers/model-finder.js
   js/providers/pollinations-image.js
   js/providers/fallback-loop.js

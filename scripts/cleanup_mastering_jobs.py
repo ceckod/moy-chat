@@ -4,12 +4,19 @@
 cleanup_mastering_jobs.py — чисти 2 вида остатъци от Mastering Pro,
 по-стари от MAX_AGE_HOURS (по подразбиране 24ч):
 
-  1) GitHub Releases с таг "mastering-job-<job_id>" — там живеят ВХОДНИТЕ
-     target.wav/reference.wav asset-и (Releases API, виж коментара "ЗАЩО
-     RELEASES API ЗА ВХОДА" в js/mastering-pro.js). Нормално workflow-ът
-     (.github/workflows/mastering-pro.yml) сам ги трие веднага след
-     обработка — това тук е защитна мрежа за случаите, когато workflow-ът
-     гръмне/увисне ПРЕДИ тази стъпка (release-ът остава "осиротял").
+  1) GitHub Releases с таг "mastering-job-<job_id>" ИЛИ "shorts-job-<job_id>"
+     — там живеят ВХОДНИТЕ файлове, които браузърът качва през Releases API,
+     за да получи публичен URL за GitHub Actions (target.wav/reference.wav
+     за Mastering Pro — виж "ЗАЩО RELEASES API ЗА ВХОДА" в
+     js/mastering-pro.js; audio/cover за AI Shorts Pro — виж
+     _ghCreateShortsJobRelease() в js/shorts-studio.js). Mastering Pro
+     workflow-ът (.github/workflows/mastering-pro.yml) сам трие своя release
+     веднага след обработка — това тук е защитна мрежа за случаите, когато
+     workflow-ът гръмне/увисне ПРЕДИ тази стъпка. render-pro-short.yml
+     НЕ трие своя release изобщо (audio_url/cover_url са просто публични
+     URL-и, които runner-ът сваля с requests — workflow-ът дори не знае, че
+     идват от Release) — за shorts-job-* ТОВА чистене е единственото, което
+     ги маха, не само защитна мрежа.
      Трие се през `gh release delete --cleanup-tag` (нужен GH_TOKEN env).
 
   2) git-tracked mastering-jobs/<job_id>/ папки — там живее ИЗХОДЪТ
@@ -32,7 +39,7 @@ from datetime import datetime, timezone
 
 JOBS_ROOT = "mastering-jobs"
 MAX_AGE_HOURS = 24
-TAG_PREFIX = "mastering-job-"
+TAG_PREFIXES = ("mastering-job-", "shorts-job-")
 
 
 def _age_hours(iso_str, now):
@@ -62,7 +69,7 @@ def cleanup_releases(now):
     removed = []
     for rel in releases:
         tag = rel.get("tagName", "")
-        if not tag.startswith(TAG_PREFIX):
+        if not tag.startswith(TAG_PREFIXES):
             continue
         if _age_hours(rel.get("createdAt", ""), now) > MAX_AGE_HOURS:
             try:
@@ -78,7 +85,7 @@ def cleanup_releases(now):
     if removed:
         print(f"Изтрити {len(removed)} стари release-а: {', '.join(removed)}")
     else:
-        print("Няма release-и (mastering-job-*), по-стари от", MAX_AGE_HOURS, "часа.")
+        print("Няма release-и (mastering-job-*/shorts-job-*), по-стари от", MAX_AGE_HOURS, "часа.")
 
 
 def cleanup_job_dirs(now):

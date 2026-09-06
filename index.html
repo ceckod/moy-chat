@@ -926,9 +926,11 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 
       <div class="card">
         <strong>1 · Качи песента</strong>
-        <p class="muted">Качваш аудио файл → AI екипът сам избира най-"залепващите" моменти от песента, прави за всеки отделен вертикален (9:16) Shorts клип с вградения визуализатор, генерира уникално заглавие/описание/хаштагове за максимален watch time — и с един бутон качва всичко в YouTube.</p>
+        <p class="muted">Качваш аудио файл → AI екипът (Gemini + Whisper + FFmpeg, СЪРВЪРНО в GitHub Actions) избира най-"залепващия" момент от песента, прави вертикален (9:16) Shorts клип с вградени субтитри, генерира уникално заглавие/описание/хаштагове — и автоматично го качва в YouTube (unlisted). Прави 1 Short на клик.</p>
         <input type="file" id="ssAudioFile" accept="audio/*" onchange="ShortsStudio.onAudioSelected(this)">
         <div id="ssAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Обложка (по избор — ако я оставиш празна, ще опитам да я намеря автоматично през Apple Music по артист + заглавие)</label>
+        <input type="file" id="ssCoverFile" accept="image/*">
         <label style="margin-top:12px;">Име на песента (задължителна част от всяко заглавие)</label>
         <input type="text" id="ssSongName" placeholder="напр. Само ти">
         <label style="margin-top:12px;">Артист/канал (помага за точно намиране на Spotify/Apple Music линковете)</label>
@@ -973,21 +975,15 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music + HyperFollow автоматично</button>
         <div id="ssLinksStatus" class="muted" style="margin-top:6px;"></div>
 
-        <label style="margin-top:12px;">Колко Shorts да направи?</label>
-        <select id="ssCount">
-          <option value="1">1 Short</option>
-          <option value="3" selected>3 Shorts (различни моменти)</option>
-          <option value="5">5 Shorts (различни моменти)</option>
-        </select>
+        <button class="btn grad" id="ssStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => ShortsStudio.runProRender())">🚀 Генерирай Short (AI Pro, сървърно)</button>
+        <div id="ssRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — рендерът тече в GitHub Actions (Gemini + Whisper + FFmpeg), може да отнеме няколко минути...</div>
+      </div>
 
-        <button class="btn grad" id="ssStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => ShortsStudio.runFull())">🚀 Генерирай Shorts</button>
-        <div id="ssRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато клиповете се записват...</div>
-        <div id="ssVideoProgressWrap" style="display:none;margin-top:10px;">
-          <div id="ssVideoProgressLabel" class="muted" style="font-size:12px;margin-bottom:4px;">Клип 1/… записва се…</div>
-          <div style="background:var(--panel-2);border:1px solid var(--border);border-radius:20px;height:10px;overflow:hidden;">
-            <div id="ssVideoProgressBar" style="background:var(--grad);height:100%;width:0%;transition:width .2s;"></div>
-          </div>
-        </div>
+      <div class="card" style="margin-top:14px;">
+        <strong>2 · YouTube вход</strong>
+        <p class="muted">Впиши се предварително — тогава готовият Short автоматично се качва в YouTube (<strong>unlisted</strong>, за преглед) веднага след като сървърният рендер завърши.</p>
+        <div class="chip amber g-auth-status" id="gAuthStatus3">Не си вписан</div>
+        <div id="gSignInBtn3" class="g-signin-slot" style="margin-top:10px;"></div>
       </div>
 
       <div class="card" style="margin-top:14px;">
@@ -995,19 +991,18 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <div id="ssLog" style="margin-top:10px;font-family:var(--font-mono);font-size:11.5px;max-height:260px;overflow-y:auto;"></div>
       </div>
 
-      <div id="ssResultsWrap" style="margin-top:14px;display:none;">
+      <div id="ssProResultWrap" style="margin-top:14px;display:none;">
         <div class="card">
-          <strong>2 · YouTube вход</strong>
-          <div class="chip amber g-auth-status" id="gAuthStatus3">Не си вписан</div>
-          <div id="gSignInBtn3" class="g-signin-slot" style="margin-top:10px;"></div>
-          <p class="muted" style="margin-top:10px;">Прегледай/поправи заглавие, описание и тагове за всеки Short по-долу (по желание), после качи всички с един бутон. Качват се като <strong>unlisted</strong> — както всичко останало от този dashboard — за преглед преди да ги пуснеш публично от YouTube Studio.</p>
-          <button class="btn grad" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.uploadAll())">⬆️ Качи всички Shorts в YouTube</button>
-          <div id="ssUploadOverallProgress" class="muted" style="margin-top:8px;"></div>
+          <strong>Готов Short</strong>
+          <div id="ssProResultBody" style="margin-top:10px;"></div>
         </div>
-        <div id="ssItemsWrap" style="margin-top:14px;"></div>
       </div>
 
-      <!-- Скрит визуализатор — рендира всеки Short последователно (собствен iframe, за да не се сблъсква с Бърз ъплоуд) -->
+      <!-- Скрит визуализатор — оставен за старата client-side логика
+           (js/shorts-studio.js: runFull/_renderAllClips), която вече не е
+           закачена за никой бутон (замени я 🚀 бутонът горе, който сега вика
+           runProRender() → js/shorts-pro-render.js, сървърен рендер). Кодът
+           и iframe-ът стоят непипнати като работещ fallback/референция. -->
       <iframe id="shortsVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
     </div>
 
@@ -1947,6 +1942,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/project-archive.js"></script>
 <script src="js/system-update.js"></script>
 <script src="js/quick-upload.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="js/shorts-studio.js"></script>
 <script src="js/shorts-pro-render.js"></script>
 <script src="js/track-record.js"></script>

@@ -815,6 +815,189 @@ const ShortsStudio = {
     return cut.replace(/[,\s]+$/, "").trim();
   },
 
+  // =========================================================
+  // 🎬 AI SHORTS PRO — сървърен pipeline (js/shorts-pro-render.js +
+  // .github/workflows/render-pro-short.yml), замества горния client-side
+  // flow (runFull/_analyzeAndPickMoments/_renderAllClips по-долу, вече не
+  // се викат от никой бутон — виж коментара при <iframe id=
+  // "shortsVisualizerFrame"> в index.html). Разлики от стария flow:
+  //   - Gemini/Whisper/FFmpeg анализът+рендерът текат СЪРВЪРНО (по-бързо,
+  //     не блокира/грее браузъра, работи и от телефон)
+  //   - вградени субтитри (Whisper) — старият flow нямаше
+  //   - ЕДИН Short на клик (сървърният скрипт избира 1 "най-силен" момент,
+  //     без опция да поиска "различен от предишния" — виж discussion-а,
+  //     затова махнахме "Колко Shorts да направи?" избора от UI)
+  //   - качва се АВТОМАТИЧНО в YouTube накрая (ако си вписан горе), вместо
+  //     да чака преглед/редакция на всеки клип поотделно
+  // =========================================================
+
+  // --- GitHub Releases upload (временен public URL за upload-нат файл) ---
+  // Идентичен pattern на ghCreateRelease()/ghUploadReleaseAsset() в
+  // js/mastering-pro.js (собствен namespace тук, не пипаме mastering-pro.js
+  // отвътре — виж header коментара на файла). render-pro-short.yml изисква
+  // audio_url/cover_url да са ВЕЧЕ публични URL-и (DistroKid preview/iTunes)
+  // — за произволен файл от диска няма такъв URL, затова първо го качваме
+  // като GitHub Release asset (Releases API, до 2GB, суров бинарен upload
+  // без base64) и ползваме върнатия browser_download_url.
+  async _ghCreateShortsJobRelease(k, tagName) {
+    const res = await fetchTimeout(
+      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/releases`,
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer " + k.ghToken, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tag_name: tagName,
+          target_commitish: k.ghBranch || "main",
+          name: `🎬 AI Shorts Pro job ${tagName}`,
+          body: "Автоматично създаден от AI Shorts Studio за временен публичен URL на аудио/обложка за GitHub Actions. Трие се автоматично (виж scripts/cleanup_mastering_jobs.py, вече обхваща и \"shorts-job-*\").",
+          draft: false,
+          prerelease: true,
+        }),
+      },
+      20000
+    );
+    if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return res.json();
+  },
+
+  async _ghUploadShortsAsset(k, uploadUrlTemplate, filename, file) {
+    const base = uploadUrlTemplate.replace(/\{.*\}$/, "");
+    const url = `${base}?name=${encodeURIComponent(filename)}`;
+    const res = await fetchTimeout(url, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + k.ghToken, Accept: "application/vnd.github+json", "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    }, 5 * 60 * 1000);
+    if (!res.ok) throw new Error(`GitHub upload asset ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const asset = await res.json();
+    return asset.browser_download_url;
+  },
+
+  // Fallback обложка, ако потребителят не е качил своя: същото iTunes
+  // Search, което вече ползва enrichLibrary() за библиотечните песни, само
+  // че тук резултатът НЕ се пази в библиотеката (произволен upload, не е
+  // задължително част от нея).
+  async _findCoverViaItunes(artist, song) {
+    try {
+      const term = `${artist} ${song}`;
+      const res = await this._fetchViaProxies(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`, {}, 9000);
+      if (!res.ok) return "";
+      const d = await res.json();
+      const art = d.results?.[0]?.artworkUrl100;
+      return art ? art.replace("100x100bb", "1200x1200bb") : "";
+    } catch (e) { return ""; }
+  },
+
+  // Главен вход на новия pipeline — извиква се от 🚀 бутона в index.html.
+  async runProRender() {
+    if (!this.audioFile) return toast("Първо избери аудио файл");
+    const k = Keys.load();
+    if (!k.ghToken || !k.ghOwner || !k.ghRepo) {
+      return toast("❌ Липсва GitHub Token/owner/repo — виж Настройки → API Ключове (нужни права: repo contents + Actions за този токен)");
+    }
+    const songNameEl = document.getElementById("ssSongName");
+    const artistEl = document.getElementById("ssArtistName");
+    const song = (songNameEl && songNameEl.value.trim()) || this.audioFile.name.replace(/\.[^/.]+$/, "");
+    const artist = (artistEl && artistEl.value.trim()) || "";
+    if (!artist) return toast("❌ Въведи \"Артист/канал\" — нужно е за обложката и метаданните.");
+
+    document.getElementById("ssLog").innerHTML = "";
+    document.getElementById("ssProResultWrap").style.display = "none";
+    this._setRunning(true);
+    this.log(`🚀 Стартирам AI Shorts Pro за "${song}" (${artist})...`);
+
+    try {
+      const jobId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : "job-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+      const tagName = `shorts-job-${jobId}`;
+      this.log("⏳ Създавам временен GitHub Release за публичен URL на файловете...");
+      const release = await this._ghCreateShortsJobRelease(k, tagName);
+
+      this.log(`⏳ Качвам аудиото (${this.audioFile.name})...`);
+      const audioUrl = await this._ghUploadShortsAsset(k, release.upload_url, "audio" + (this.audioFile.name.match(/\.[^/.]+$/)?.[0] || ".mp3"), this.audioFile);
+
+      let coverUrl = "";
+      const coverInput = document.getElementById("ssCoverFile");
+      const coverFile = coverInput && coverInput.files[0];
+      if (coverFile) {
+        this.log(`⏳ Качвам обложката (${coverFile.name})...`);
+        coverUrl = await this._ghUploadShortsAsset(k, release.upload_url, "cover" + (coverFile.name.match(/\.[^/.]+$/)?.[0] || ".jpg"), coverFile);
+      } else {
+        this.log("🔍 Няма качена обложка — търся автоматично през Apple Music (iTunes Search)...");
+        coverUrl = await this._findCoverViaItunes(artist, song);
+        if (!coverUrl) {
+          this.log("❌ Не намерих обложка автоматично.");
+          toast("❌ Не намерих обложка автоматично — качи обложка ръчно (полето по-горе) и опитай пак.", 6000);
+          return;
+        }
+        this.log("✅ Намерих обложка през Apple Music.");
+      }
+
+      if (typeof ShortsProRender === "undefined") {
+        this.log("❌ js/shorts-pro-render.js не е зареден — провери index.html.");
+        return;
+      }
+      this.log("🎬 Тригвам сървърния рендер (GitHub Actions)...");
+      const result = await ShortsProRender.dispatch({ song, artist, audio_url: audioUrl, cover_url: coverUrl });
+
+      if (!result || !result.ok) {
+        this.log("❌ Рендерът не завърши успешно (виж toast-а по-горе за подробности).");
+        return;
+      }
+      if (!result.videoBlob) {
+        this.log("⚠️ Видеото е готово, но не успях да го разархивирам автоматично тук — виж бутона за ръчно сваляне (toast-а по-горе) и качи ръчно в YouTube.");
+        return;
+      }
+      this.log(`✅ Видеото е готово (${result.videoFilename}).`);
+      await this._autoUploadProResult(result, song, artist);
+    } catch (e) {
+      this.log("❌ Грешка: " + e.message);
+      toast("❌ " + e.message, 6000);
+    } finally {
+      this._setRunning(false);
+    }
+  },
+
+  // Взима title/description/hashtags от report.json (ако го има — виж
+  // downloadResultZip() в js/shorts-pro-render.js), качва videoBlob-а
+  // директно в YouTube през Step4.uploadVideo() (fileOverride/metaOverride,
+  // същия механизъм като QuickUpload — виж header коментара на файла).
+  // Ако потребителят не е вписан в Google — не гърми, а показва бутон за
+  // РЪЧНО сваляне на .mp4-то (videoBlob вече е в паметта, не се губи).
+  async _autoUploadProResult(result, song, artist) {
+    const report = result.report || {};
+    const title = report.title || `${song} — ${artist} | Short`;
+    const description = report.description || "";
+    const tags = Array.isArray(report.hashtags) ? report.hashtags.map(h => h.replace(/^#/, "")).filter(Boolean) : [];
+    const videoFile = new File([result.videoBlob], result.videoFilename || `${song}.mp4`, { type: "video/mp4" });
+
+    const wrap = document.getElementById("ssProResultWrap");
+    const body = document.getElementById("ssProResultBody");
+    wrap.style.display = "block";
+
+    if (!Step4.accessToken) {
+      this.log("⚠️ Не си вписан в YouTube (Стъпка 2 по-горе) — качвам ръчно сваляне на .mp4-то вместо автоматично качване.");
+      const url = URL.createObjectURL(result.videoBlob);
+      body.innerHTML = `<p class="muted">Не беше активен YouTube вход по време на рендера — ето .mp4-то за ръчно сваляне/качване:</p>
+        <a class="btn ghost" href="${this._escAttr(url)}" download="${this._escAttr(videoFile.name)}">⬇️ Свали ${this._esc(videoFile.name)}</a>
+        <p class="muted" style="margin-top:8px;"><strong>Заглавие:</strong> ${this._esc(title)}</p>`;
+      return;
+    }
+
+    this.log("⬆️ Качвам автоматично в YouTube (unlisted)...");
+    body.innerHTML = `<div id="ssProUploadProgress" class="muted">⏳ Качвам...</div>`;
+    try {
+      const ytResult = await Step4.uploadVideo(videoFile, { title, description, tags, madeForKids: false }, "ssProUploadProgress");
+      this.log(`✅ Качено в YouTube! Video ID: ${ytResult.id} (unlisted)`);
+      body.innerHTML = `<p>✅ Качено в YouTube (unlisted) — <a href="https://www.youtube.com/watch?v=${this._escAttr(ytResult.id)}" target="_blank" rel="noopener">отвори видеото</a></p>
+        <p class="muted" style="margin-top:6px;"><strong>Заглавие:</strong> ${this._esc(title)}</p>`;
+    } catch (e) {
+      this.log("❌ Качването в YouTube се провали: " + e.message + " — ето .mp4-то за ръчно качване.");
+      const url = URL.createObjectURL(result.videoBlob);
+      body.innerHTML = `<p class="muted">❌ Автоматичното качване се провали (${this._esc(e.message)}). Ръчно сваляне:</p>
+        <a class="btn ghost" href="${this._escAttr(url)}" download="${this._escAttr(videoFile.name)}">⬇️ Свали ${this._esc(videoFile.name)}</a>`;
+    }
+  },
+
   // Основен вход — целият pipeline: анализ+избор на моменти → метаданни → видео за всеки → преглед.
   async runFull() {
     if (!this.audioFile) return toast("Първо избери аудио файл");
