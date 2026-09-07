@@ -555,7 +555,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:51.424748+00:00"
+      "last_search_at": "2026-09-07T16:13:20.484244+00:00"
     },
     "rap": {
       "candidates": [
@@ -1273,7 +1273,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:53.131712+00:00"
+      "last_search_at": "2026-09-07T16:13:22.218325+00:00"
     },
     "pop": {
       "candidates": [
@@ -1794,7 +1794,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:53.767103+00:00"
+      "last_search_at": "2026-09-07T16:13:23.146789+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2283,7 +2283,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:55.243768+00:00"
+      "last_search_at": "2026-09-07T16:13:24.094012+00:00"
     },
     "dance": {
       "candidates": [
@@ -2911,7 +2911,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:55.909268+00:00"
+      "last_search_at": "2026-09-07T16:13:24.969307+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3955,9 +3955,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "IScg0ZGJ4rI",
+          "title": "AI Music News: Suno Teases v6 & Finland Bans AI Songs From The Charts",
+          "channel": "Chris Wieduwilt (The AI Musicpreneur)",
+          "published_at": "2026-09-06T13:10:11Z",
+          "views": 5423,
+          "duration_seconds": 427,
+          "discovered_at": "2026-09-07T16:13:21.449725+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-06T13:51:52.252062+00:00"
+      "last_search_at": "2026-09-07T16:13:21.449833+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
