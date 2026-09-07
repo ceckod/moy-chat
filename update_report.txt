@@ -1,10 +1,10 @@
 CDB UPDATE REPORT
-Timestamp: 20260906-141912
+Timestamp: 20260907-081334
 
 Changed:
   index.html
   scripts/cleanup_mastering_jobs.py
-  js/shorts-pro-render.js
+  js/settings.js
   js/shorts-studio.js
 
 Added:
@@ -110,6 +110,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/mastering.js
   js/ai-provider-order.js
   js/idea-vault.js
+  js/shorts-pro-render.js
   js/app-log.js
   js/ai-chat.js
   js/track-record.js
@@ -117,7 +118,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/system-test.js
   js/metadata-optimizer.js
   js/release-roadmap.js
-  js/settings.js
   js/song-lab.js
   js/niche-data-sources.js
   js/ai-call-log.js

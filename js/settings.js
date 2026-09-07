@@ -35,6 +35,8 @@ const Settings = {
     set("gh_repo", k.ghRepo);
     set("gh_branch", k.ghBranch || "main");
     set("key_github_token", k.ghToken);
+    set("key_shorts_relay_url", k.shortsRelayUrl);
+    set("key_shorts_relay_secret", k.shortsRelaySecret);
     const kt = document.getElementById("keyTestOut");
     if (kt) kt.textContent = "";
     this.populateModelDropdowns();
@@ -192,6 +194,8 @@ const Settings = {
       spotifyClientSecret: val("key_spotify_client_secret") ?? prev.spotifyClientSecret,
       proxyUrl: ((val("key_proxy_url") ?? prev.proxyUrl) || "").replace(/\/$/, ""),
       ghToken: val("key_github_token") ?? prev.ghToken,
+      shortsRelayUrl: ((val("key_shorts_relay_url") ?? prev.shortsRelayUrl) || "").replace(/\/$/, ""),
+      shortsRelaySecret: val("key_shorts_relay_secret") ?? prev.shortsRelaySecret,
     });
     toast("Запазено локално 🔒");
     // Бутонът "Вход с Google" се създава само ако ytClientId вече е бил наличен

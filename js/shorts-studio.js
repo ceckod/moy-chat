@@ -831,25 +831,78 @@ const ShortsStudio = {
   //     да чака преглед/редакция на всеки клип поотделно
   // =========================================================
 
-  // --- GitHub Releases upload (временен public URL за upload-нат файл) ---
-  // Идентичен pattern на ghCreateRelease()/ghUploadReleaseAsset() в
-  // js/mastering-pro.js (собствен namespace тук, не пипаме mastering-pro.js
-  // отвътре — виж header коментара на файла). render-pro-short.yml изисква
-  // audio_url/cover_url да са ВЕЧЕ публични URL-и (DistroKid preview/iTunes)
-  // — за произволен файл от диска няма такъв URL, затова първо го качваме
-  // като GitHub Release asset (Releases API, до 2GB, суров бинарен upload
-  // без base64) и ползваме върнатия browser_download_url.
+  // --- Временен публичен URL за upload-нат файл — Contents API (api.github.com) ---
+  // ЗАЩО НЕ Releases API: uploads.github.com (upload_url на Releases) НЕ
+  // поддържа CORS — само api.github.com го поддържа официално (виж GitHub
+  // Docs "CORS and JSONP"). Браузърен fetch() към uploads.github.com гърми
+  // с генеричен мрежов "Failed to fetch" (без ясна CORS грешка в конзолата
+  // дори). Затова тук ползваме СЪЩИЯ Contents API механизъм като
+  // saveLibraryToGitHub() по-горе — вече доказано работещ.
+  // Лимити (виж GitHub Docs "Create or update file contents"): до 100MB на
+  // файл официално, но на практика някои получават 422 "too large to be
+  // processed" някъде между ~25-50MB — за нормален .mp3 (няколко MB) е ОК.
+  // base64 добавя ~33% overhead към payload-а.
+  async _ghPutTempFile(k, path, file) {
+    const branch = k.ghBranch || "main";
+    const content = await fileToBase64(file);
+    const res = await fetchTimeout(
+      `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/contents/${path}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${k.ghToken}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify({ message: `🎬 AI Shorts Pro: временен файл ${path}`, content, branch }),
+      },
+      5 * 60 * 1000
+    );
+    if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const json = await res.json();
+    return {
+      // raw.githubusercontent.com е публичен CDN без auth — точно каквото
+      // трябва на GitHub Actions runner-а (requests.get, не браузър —
+      // CORS изобщо не важи там). Малък риск: CDN кеш може да закъснее
+      // няколко секунди след push — dispatch()-ът по-долу тръгва веднага
+      // след upload-а, но самият workflow run отнема секунди преди да
+      // стигне до download стъпката, така че на практика не сме забелязвали проблем.
+      url: `https://raw.githubusercontent.com/${k.ghOwner}/${k.ghRepo}/${branch}/${path}`,
+      sha: json.content?.sha,
+    };
+  },
+
+  // Best-effort чистене след завършен job — да не се трупат осиротели
+  // файлове в git история-та. Провалът тук НЕ трябва да развали резултата
+  // за потребителя (видеото вече е готово) — затова само console.warn.
+  async _ghDeleteTempFile(k, path, sha) {
+    if (!sha) return;
+    try {
+      await fetchTimeout(
+        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/contents/${path}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${k.ghToken}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+          body: JSON.stringify({ message: `🎬 AI Shorts Pro: чистене на ${path}`, sha, branch: k.ghBranch || "main" }),
+        },
+        20000
+      );
+    } catch (e) { console.warn("Чистене на временен файл се провали (не е фатално):", path, e); }
+  },
+
+  // --- Relay път (до 2GB) — виж scripts/shorts-relay-server/README.md ---
+  // Активен само ако потребителят е конфигурирал Keys.load().shortsRelayUrl
+  // (Настройки → API Ключове → "🎬 Shorts Relay"). Създава ОБИЧАЙНА GitHub
+  // Release (api.github.com — CORS работи директно, нищо специално не е
+  // нужно тук), после ЗАСЕБНО качва всеки asset през relay-я (защото самото
+  // качване е това, което гърми CORS — не създаването на release-а).
   async _ghCreateShortsJobRelease(k, tagName) {
     const res = await fetchTimeout(
       `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/releases`,
       {
         method: "POST",
-        headers: { Authorization: "Bearer " + k.ghToken, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${k.ghToken}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
         body: JSON.stringify({
           tag_name: tagName,
           target_commitish: k.ghBranch || "main",
           name: `🎬 AI Shorts Pro job ${tagName}`,
-          body: "Автоматично създаден от AI Shorts Studio за временен публичен URL на аудио/обложка за GitHub Actions. Трие се автоматично (виж scripts/cleanup_mastering_jobs.py, вече обхваща и \"shorts-job-*\").",
+          body: "Автоматично създаден за временен публичен URL на аудио/обложка (upload през relay сървър — виж scripts/shorts-relay-server/). Трие се автоматично след завършен job, или до 24ч резервно от scripts/cleanup_mastering_jobs.py.",
           draft: false,
           prerelease: true,
         }),
@@ -860,17 +913,58 @@ const ShortsStudio = {
     return res.json();
   },
 
-  async _ghUploadShortsAsset(k, uploadUrlTemplate, filename, file) {
-    const base = uploadUrlTemplate.replace(/\{.*\}$/, "");
-    const url = `${base}?name=${encodeURIComponent(filename)}`;
-    const res = await fetchTimeout(url, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + k.ghToken, Accept: "application/vnd.github+json", "Content-Type": file.type || "application/octet-stream" },
-      body: file,
-    }, 5 * 60 * 1000);
-    if (!res.ok) throw new Error(`GitHub upload asset ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  async _relayUploadReleaseAsset(k, release, filename, file) {
+    const base = release.upload_url.replace(/\{.*\}$/, "");
+    const targetUrl = `${base}?name=${encodeURIComponent(filename)}`;
+    const res = await fetchTimeout(
+      `${k.shortsRelayUrl}/upload`,
+      {
+        method: "POST",
+        headers: {
+          "X-Proxy-Secret": k.shortsRelaySecret,
+          "X-Target-Url": targetUrl,
+          Authorization: `Bearer ${k.ghToken}`,
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      },
+      20 * 60 * 1000 // до 20 мин — голям файл + евентуален Render cold start
+    );
+    if (!res.ok) throw new Error(`Relay upload ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const asset = await res.json();
-    return asset.browser_download_url;
+    return { url: asset.browser_download_url };
+  },
+
+  // Изтрива release + git таг — best-effort, НЕ блокира резултата.
+  async _ghDeleteRelease(k, releaseId, tagName) {
+    try {
+      await fetchTimeout(
+        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/releases/${releaseId}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${k.ghToken}`, Accept: "application/vnd.github+json" } },
+        20000
+      );
+    } catch (e) { console.warn("Изтриване на temp release се провали (не е фатално):", e); }
+    try {
+      await fetchTimeout(
+        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/git/refs/tags/${encodeURIComponent(tagName)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${k.ghToken}`, Accept: "application/vnd.github+json" } },
+        20000
+      );
+    } catch (e) { console.warn("Изтриване на temp git таг се провали (не е фатално):", e); }
+  },
+
+  // Единна входна точка за upload на 1 файл — сама решава кой път да ползва
+  // (relay+Releases до 2GB, или Contents API до ~100MB) според настройките.
+  // `release` се подава само в relay режим (създава се ВЕДНЪЖ на job,
+  // споделя се между audio+cover — виж повикването в runProRender()).
+  async _uploadShortsFile(k, useRelay, release, jobDir, filename, file) {
+    if (useRelay) {
+      const asset = await this._relayUploadReleaseAsset(k, release, filename, file);
+      return { url: asset.url, cleanup: null }; // release-ът се трие целия наведнъж по-долу
+    }
+    const path = `${jobDir}/${filename}`;
+    const asset = await this._ghPutTempFile(k, path, file);
+    return { url: asset.url, cleanup: { path, sha: asset.sha } };
   },
 
   // Fallback обложка, ако потребителят не е качил своя: същото iTunes
@@ -895,32 +989,46 @@ const ShortsStudio = {
     if (!k.ghToken || !k.ghOwner || !k.ghRepo) {
       return toast("❌ Липсва GitHub Token/owner/repo — виж Настройки → API Ключове (нужни права: repo contents + Actions за този токен)");
     }
+    const useRelay = !!(k.shortsRelayUrl && k.shortsRelaySecret);
     const songNameEl = document.getElementById("ssSongName");
     const artistEl = document.getElementById("ssArtistName");
     const song = (songNameEl && songNameEl.value.trim()) || this.audioFile.name.replace(/\.[^/.]+$/, "");
     const artist = (artistEl && artistEl.value.trim()) || "";
     if (!artist) return toast("❌ Въведи \"Артист/канал\" — нужно е за обложката и метаданните.");
+    if (!useRelay && this.audioFile.size > 90 * 1024 * 1024) {
+      return toast("❌ Файлът е над ~90MB, а Relay не е конфигуриран (Настройки → API Ключове → \"🎬 Shorts Relay\") — Contents API пътят не е сигурен над този размер. Виж scripts/shorts-relay-server/README.md.", 8000);
+    }
 
     document.getElementById("ssLog").innerHTML = "";
     document.getElementById("ssProResultWrap").style.display = "none";
     this._setRunning(true);
-    this.log(`🚀 Стартирам AI Shorts Pro за "${song}" (${artist})...`);
+    this.log(`🚀 Стартирам AI Shorts Pro за "${song}" (${artist})... [${useRelay ? "Relay път, до 2GB" : "Contents API път, до ~100MB"}]`);
 
     try {
       const jobId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : "job-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+      const jobDir = `shorts-tmp/${jobId}`;
       const tagName = `shorts-job-${jobId}`;
-      this.log("⏳ Създавам временен GitHub Release за публичен URL на файловете...");
-      const release = await this._ghCreateShortsJobRelease(k, tagName);
 
-      this.log(`⏳ Качвам аудиото (${this.audioFile.name})...`);
-      const audioUrl = await this._ghUploadShortsAsset(k, release.upload_url, "audio" + (this.audioFile.name.match(/\.[^/.]+$/)?.[0] || ".mp3"), this.audioFile);
+      let release = null;
+      if (useRelay) {
+        this.log("⏳ Създавам временен GitHub Release (2GB upload път)...");
+        release = await this._ghCreateShortsJobRelease(k, tagName);
+      }
 
+      this.log(`⏳ Качвам аудиото (${this.audioFile.name}, ${(this.audioFile.size / 1024 / 1024).toFixed(1)}MB)${useRelay ? " през relay-я..." : "..."}`);
+      const audioFilename = "audio" + (this.audioFile.name.match(/\.[^/.]+$/)?.[0] || ".mp3");
+      const audioAsset = await this._uploadShortsFile(k, useRelay, release, jobDir, audioFilename, this.audioFile);
+
+      let coverCleanup = null;
       let coverUrl = "";
       const coverInput = document.getElementById("ssCoverFile");
       const coverFile = coverInput && coverInput.files[0];
       if (coverFile) {
         this.log(`⏳ Качвам обложката (${coverFile.name})...`);
-        coverUrl = await this._ghUploadShortsAsset(k, release.upload_url, "cover" + (coverFile.name.match(/\.[^/.]+$/)?.[0] || ".jpg"), coverFile);
+        const coverFilename = "cover" + (coverFile.name.match(/\.[^/.]+$/)?.[0] || ".jpg");
+        const coverAsset = await this._uploadShortsFile(k, useRelay, release, jobDir, coverFilename, coverFile);
+        coverUrl = coverAsset.url;
+        coverCleanup = coverAsset.cleanup;
       } else {
         this.log("🔍 Няма качена обложка — търся автоматично през Apple Music (iTunes Search)...");
         coverUrl = await this._findCoverViaItunes(artist, song);
@@ -937,7 +1045,17 @@ const ShortsStudio = {
         return;
       }
       this.log("🎬 Тригвам сървърния рендер (GitHub Actions)...");
-      const result = await ShortsProRender.dispatch({ song, artist, audio_url: audioUrl, cover_url: coverUrl });
+      const result = await ShortsProRender.dispatch({ song, artist, audio_url: audioAsset.url, cover_url: coverUrl });
+
+      // Чистене на временните файлове/release-а — best-effort, НЕ блокира
+      // резултата за потребителя. Правим го СЛЕД dispatch()-а завършва (не
+      // по-рано!) — runner-ът трябва вече да е свалил файловете дотук.
+      if (useRelay) {
+        this._ghDeleteRelease(k, release.id, tagName);
+      } else {
+        if (audioAsset.cleanup) this._ghDeleteTempFile(k, audioAsset.cleanup.path, audioAsset.cleanup.sha);
+        if (coverCleanup) this._ghDeleteTempFile(k, coverCleanup.path, coverCleanup.sha);
+      }
 
       if (!result || !result.ok) {
         this.log("❌ Рендерът не завърши успешно (виж toast-а по-горе за подробности).");

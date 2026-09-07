@@ -1331,6 +1331,12 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <label>GitHub Personal Access Token — за AI редакция на това repo (scope: repo)</label>
         <input type="password" id="key_github_token" placeholder="ghp_...">
         <p class="muted" style="margin-top:6px;">Използва се от AI Чата на Dashboard-а, за да чете/пише файлове директно в repo-то (виж полетата repo owner/име/branch в "Статистика → YouTube Тракер"). Пази се само локално в браузъра.</p>
+        <hr style="margin:18px 0;">
+        <label>🎬 Shorts Relay URL — по избор, за upload до 2GB (виж scripts/shorts-relay-server/)</label>
+        <input type="text" id="key_shorts_relay_url" placeholder="https://твоя-relay.onrender.com">
+        <label>🎬 Shorts Relay Secret</label>
+        <input type="password" id="key_shorts_relay_secret" placeholder="същия PROXY_SECRET, който си сложил в Render">
+        <p class="muted" style="margin-top:6px;">GitHub's upload-API (uploads.github.com) няма CORS за браузър заявки — Contents API има, но е ограничен до ~100MB (лимит на самия Git). Ако искаш upload до 2GB (Releases API), качи малкия relay сървър от <code>scripts/shorts-relay-server/</code> (безплатен Render/Fly.io/etc, виж README-то вътре) и сложи тук неговия URL + тайната си. Ако оставиш празно — AI Shorts Pro автоматично пада назад на Contents API (до ~100MB).</p>
         <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
         <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>

@@ -4,20 +4,22 @@
 cleanup_mastering_jobs.py — чисти 2 вида остатъци от Mastering Pro,
 по-стари от MAX_AGE_HOURS (по подразбиране 24ч):
 
-  1) GitHub Releases с таг "mastering-job-<job_id>" ИЛИ "shorts-job-<job_id>"
-     — там живеят ВХОДНИТЕ файлове, които браузърът качва през Releases API,
-     за да получи публичен URL за GitHub Actions (target.wav/reference.wav
-     за Mastering Pro — виж "ЗАЩО RELEASES API ЗА ВХОДА" в
-     js/mastering-pro.js; audio/cover за AI Shorts Pro — виж
-     _ghCreateShortsJobRelease() в js/shorts-studio.js). Mastering Pro
-     workflow-ът (.github/workflows/mastering-pro.yml) сам трие своя release
-     веднага след обработка — това тук е защитна мрежа за случаите, когато
-     workflow-ът гръмне/увисне ПРЕДИ тази стъпка. render-pro-short.yml
-     НЕ трие своя release изобщо (audio_url/cover_url са просто публични
-     URL-и, които runner-ът сваля с requests — workflow-ът дори не знае, че
-     идват от Release) — за shorts-job-* ТОВА чистене е единственото, което
-     ги маха, не само защитна мрежа.
+  1) GitHub Releases с таг "mastering-job-<job_id>" — там живеят ВХОДНИТЕ
+     target.wav/reference.wav asset-и (Releases API, виж коментара "ЗАЩО
+     RELEASES API ЗА ВХОДА" в js/mastering-pro.js). Нормално workflow-ът
+     (.github/workflows/mastering-pro.yml) сам ги трие веднага след
+     обработка — това тук е защитна мрежа за случаите, когато workflow-ът
+     гръмне/увисне ПРЕДИ тази стъпка (release-ът остава "осиротял").
      Трие се през `gh release delete --cleanup-tag` (нужен GH_TOKEN env).
+     ВАЖНО: AI Shorts Pro (js/shorts-studio.js) обикновено САМА трие своя
+     shorts-job-* release веднага след завършен render (виж
+     _ghDeleteRelease() там) — това чистене е защитна мрежа, ако браузърът
+     се затвори/скапе преди тази стъпка. Ако Relay НЕ е конфигуриран (виж
+     scripts/shorts-relay-server/README.md), AI Shorts Pro изобщо не
+     ползва Releases — минава през Contents API (git commits в
+     shorts-tmp/<job_id>/, api.github.com) и се самопочиства веднага след
+     dispatch — тези commits НЕ се пипат от този скрипт (git история-та ги
+     пази, но работното дърво остава чисто).
 
   2) git-tracked mastering-jobs/<job_id>/ папки — там живее ИЗХОДЪТ
      (result.wav + status.json), който продължава да се commit-ва в git,
