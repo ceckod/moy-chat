@@ -1,11 +1,19 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-31T15:54:59.161629+00:00",
+  "generated_at": "2026-09-07T14:03:11.245670+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "ice spice",
+      "term": "doja cat",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "micha niewski",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -14,26 +22,57 @@
     {
       "term": "rod wave",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
-      "term": "lil yachty",
+      "term": "marnz malone",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "love you",
+      "term": "tom macdonald",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "leo rosiori",
+      "term": "baby wow",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "helene fischer",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "bby wow",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "capital bra",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "born again",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -41,6 +80,36 @@
     },
     {
       "term": "lil durk",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "abra cadabra",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "light blue",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "ghetto gospel",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "kevin gates",
       "confirmed_by": [
         "musicbrainz"
       ],
