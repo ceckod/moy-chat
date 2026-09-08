@@ -553,9 +553,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "Xweg2rDhhAw",
+          "title": "音樂的入門到改行 - 是非題（R&B版）『你是窗外另外一片風景，在你眼裏我是什麼關系』【動態歌詞MV】",
+          "channel": "Aurora Music Channel",
+          "published_at": "2026-04-21T02:00:25Z",
+          "views": 1697165,
+          "duration_seconds": 249,
+          "discovered_at": "2026-09-08T14:50:03.734735+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:20.484244+00:00"
+      "last_search_at": "2026-09-08T14:50:03.734848+00:00"
     },
     "rap": {
       "candidates": [
@@ -1271,9 +1284,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "06d8Ev8UwW4",
+          "title": "Musashi Rap (Baki) “Run My Fade” Daddyphatsnaps ft. Gameboyjones [AMV/Music Video]",
+          "channel": "Daddyphatsnaps",
+          "published_at": "2026-08-29T17:16:01Z",
+          "views": 191910,
+          "duration_seconds": 184,
+          "discovered_at": "2026-09-08T14:50:05.734477+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "uUNr6lHljXM",
+          "title": "SAINT MOSSES X YOUNG CJ - BAD (Official Music Video) [New Ethiopian Dancehall Music]",
+          "channel": "GRAND49 Entertainment",
+          "published_at": "2026-08-28T15:16:35Z",
+          "views": 859836,
+          "duration_seconds": 190,
+          "discovered_at": "2026-09-08T14:50:05.734528+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:22.218325+00:00"
+      "last_search_at": "2026-09-08T14:50:05.734620+00:00"
     },
     "pop": {
       "candidates": [
@@ -1794,7 +1833,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:23.146789+00:00"
+      "last_search_at": "2026-09-08T14:50:06.441090+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2281,9 +2320,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "4ubjZcyxzBY",
+          "title": "Don Omar - Dale Don Dale (Lyric Video)",
+          "channel": "MacheteMusicVEVO",
+          "published_at": "2026-06-30T04:00:00Z",
+          "views": 10236068,
+          "duration_seconds": 213,
+          "discovered_at": "2026-09-08T14:50:07.400536+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:24.094012+00:00"
+      "last_search_at": "2026-09-08T14:50:07.400655+00:00"
     },
     "dance": {
       "candidates": [
@@ -2911,7 +2963,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:24.969307+00:00"
+      "last_search_at": "2026-09-08T14:50:08.122956+00:00"
     },
     "unknown": {
       "candidates": [
@@ -3970,7 +4022,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-07T16:13:21.449833+00:00"
+      "last_search_at": "2026-09-08T14:50:04.659154+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
