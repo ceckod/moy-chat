@@ -1,14 +1,12 @@
 CDB UPDATE REPORT
-Timestamp: 20260907-081334
+Timestamp: 20260908-204740
 
 Changed:
   index.html
-  scripts/cleanup_mastering_jobs.py
-  js/settings.js
-  js/shorts-studio.js
+  js/nav.js
 
 Added:
-  none
+  js/code-arena.js
 
 Removed:
   none
@@ -81,6 +79,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/youtube_discovery_engine.py
   scripts/requirements-mastering.txt
   scripts/track_niche_scores.py
+  scripts/cleanup_mastering_jobs.py
   scripts/_youtube_common.py
   scripts/master_engine.py
   scripts/whisper_subtitles.py
@@ -118,6 +117,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/system-test.js
   js/metadata-optimizer.js
   js/release-roadmap.js
+  js/settings.js
   js/song-lab.js
   js/niche-data-sources.js
   js/ai-call-log.js
@@ -130,9 +130,9 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/agent-registry.js
   js/step1.js
   js/project-archive.js
+  js/shorts-studio.js
   js/viral-lab.js
   js/quick-upload.js
-  js/nav.js
   js/system-log.js
   js/gemini-validator.js
   js/model-pref.js

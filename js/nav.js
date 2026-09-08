@@ -43,6 +43,7 @@ const Nav = {
     if (id === "suno-preview") { SunoPreview.render(); }
     if (id === "idea-vault") { IdeaVault.render(); }
     if (id === "ai-chat") { AIChat.render(); }
+    if (id === "code-arena") { CodeArena.render(); }
     // Плаващият "AI Чат" бутон (виж #aiChatFab в index.html) е излишен,
     // докато самата чат секция вече е активна — скрий го само тогава.
     const fab = document.getElementById("aiChatFab");

@@ -299,6 +299,14 @@ textarea{min-height:100px;resize:vertical;}
   box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;}
 .ai-chat-fab:hover{filter:brightness(1.08);}
 #view-ai-chat .chip{background:var(--panel-2);border:1px solid var(--border);color:var(--text);}
+.ca-log{display:flex;flex-direction:column;gap:10px;}
+.ca-info{font-size:13px;color:var(--muted);padding:4px 2px;}
+.ca-error{font-size:13px;color:#ff6b6b;background:rgba(255,107,107,.08);padding:8px 10px;border-radius:8px;}
+.ca-card{border:1px solid var(--border);border-radius:12px;background:var(--panel-2);overflow:hidden;}
+.ca-card-head{padding:8px 12px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted);}
+.ca-final .ca-card-head{color:var(--text);background:rgba(120,190,255,.08);}
+.ca-code{margin:0;padding:12px;font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;font-family:ui-monospace,Consolas,monospace;}
+.ca-review{padding:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;color:var(--text);}
 .ai-chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 190px);min-height:420px;
   background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
 .ai-chat-agentbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;
@@ -413,6 +421,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div class="nav-label">Навигация</div>
       <button class="nav-btn" data-view="dashboard" onclick="Nav.showView('dashboard')"><span class="ic">🏠</span> Табло</button>
       <button class="nav-btn" data-view="ai-chat" onclick="Nav.showView('ai-chat')"><span class="ic">💬</span> AI Чат</button>
+      <button class="nav-btn" data-view="code-arena" onclick="Nav.showView('code-arena')"><span class="ic">🥊</span> Code Arena</button>
     </div>
 
     <div class="nav-group">
@@ -1619,6 +1628,28 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ CODE ARENA ============ -->
+    <div class="view" id="view-code-arena">
+      <div class="section-title" style="margin-top:0;">🥊 Code Arena</div>
+      <p class="muted" style="margin:-8px 0 14px;">Опиши задача → няколко безплатни AI агента пишат код независимо → после всеки чете и критикува кода на другите → накрая един агент синтезира финална, подобрена версия. Сваляш всичко като .zip.</p>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>Задача за кода</label>
+        <textarea id="codeArenaTask" rows="3" placeholder="напр. Python скрипт, който събира публична информация за обществени поръчки от сайт X и я записва в CSV"></textarea>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>Кои агенти участват (избери поне 2)</label>
+        <div id="codeArenaAgentPicker" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+        <p class="muted" style="margin:8px 0 0;font-size:12px;">Кои агенти са налични зависи от ключовете, които си задал в ⚙️ API Ключове. Groq, Mistral и OpenRouter (безплатни модели) са напълно безплатни.</p>
+      </div>
+
+      <button class="btn grad" id="codeArenaRunBtn" style="width:auto;" onclick="CodeArena.run()" disabled>🚀 Пусни агентите</button>
+      <button class="btn ghost" id="codeArenaDownloadBtn" style="width:auto;display:none;margin-left:8px;" onclick="CodeArena.downloadZip()">📦 Свали .zip</button>
+
+      <div id="codeArenaLog" class="ca-log" style="margin-top:16px;"></div>
+    </div>
+
     <!-- ============ ОНЛАЙН МАСТЕРИНГ ============ -->
     <div class="view" id="view-mastering">
       <div class="section-title" style="margin-top:0;">🎚️ Онлайн Мастеринг</div>
@@ -1928,6 +1959,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/providers/subtitles.js"></script>
 <script src="js/agent-registry.js"></script>
 <script src="js/ai-chat.js"></script>
+<script src="js/code-arena.js"></script>
 <script src="js/youtube.js"></script>
 <script src="js/system-log.js"></script>
 <script src="js/app-log.js"></script>
