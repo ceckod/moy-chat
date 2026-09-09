@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:03.734848+00:00"
+      "last_search_at": "2026-09-09T14:56:36.146171+00:00"
     },
     "rap": {
       "candidates": [
@@ -1310,9 +1310,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "K0UQJl44ln4",
+          "title": "Eminem - The Street Directive (ft. Future) Music Video 2026",
+          "channel": "DEX",
+          "published_at": "2026-06-13T11:00:28Z",
+          "views": 295583,
+          "duration_seconds": 390,
+          "discovered_at": "2026-09-09T14:56:37.733186+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "cJE8_DcQw7s",
+          "title": "The Game - The Life (Official Music Video)",
+          "channel": "The Game ",
+          "published_at": "2026-08-27T17:11:06Z",
+          "views": 1140327,
+          "duration_seconds": 174,
+          "discovered_at": "2026-09-09T14:56:37.733218+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:05.734620+00:00"
+      "last_search_at": "2026-09-09T14:56:37.733329+00:00"
     },
     "pop": {
       "candidates": [
@@ -1831,9 +1857,35 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "UvhkjVBBKiU",
+          "title": "Tame Impala, JENNIE - Dracula (JENNIE Remix) (Lyrics)",
+          "channel": "7clouds",
+          "published_at": "2026-04-08T13:01:01Z",
+          "views": 48599197,
+          "duration_seconds": 210,
+          "discovered_at": "2026-09-09T14:56:38.396821+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "RBaSiVjtKR4",
+          "title": "Body to Body",
+          "channel": "BTS - Topic",
+          "published_at": "2026-03-20T04:00:34Z",
+          "views": 129368518,
+          "duration_seconds": 190,
+          "discovered_at": "2026-09-09T14:56:38.396826+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:06.441090+00:00"
+      "last_search_at": "2026-09-09T14:56:38.396935+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2335,7 +2387,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:07.400655+00:00"
+      "last_search_at": "2026-09-09T14:56:39.298991+00:00"
     },
     "dance": {
       "candidates": [
@@ -2963,7 +3015,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:08.122956+00:00"
+      "last_search_at": "2026-09-09T14:56:40.049537+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4020,9 +4072,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "sSgxGgOephg",
+          "title": "ขออยู่ด้วยคน Ai Music Cover ศิลปินต้นฉบับ สายันห์ สัญญา (Audio Version)",
+          "channel": "LongSong channel",
+          "published_at": "2026-04-28T23:00:56Z",
+          "views": 1415321,
+          "duration_seconds": 265,
+          "discovered_at": "2026-09-09T14:56:36.895859+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-08T14:50:04.659154+00:00"
+      "last_search_at": "2026-09-09T14:56:36.896001+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
