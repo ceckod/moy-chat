@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:36.146171+00:00"
+      "last_search_at": "2026-09-10T14:42:41.608716+00:00"
     },
     "rap": {
       "candidates": [
@@ -1336,9 +1336,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "WqTO4uk1siU",
+          "title": "CENTRAL CEE - WAGWAN [MUSIC VIDEO]",
+          "channel": "Central Cee",
+          "published_at": "2026-03-29T18:00:06Z",
+          "views": 14246675,
+          "duration_seconds": 184,
+          "discovered_at": "2026-09-10T14:42:43.347442+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:37.733329+00:00"
+      "last_search_at": "2026-09-10T14:42:43.347564+00:00"
     },
     "pop": {
       "candidates": [
@@ -1885,7 +1898,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:38.396935+00:00"
+      "last_search_at": "2026-09-10T14:42:44.053891+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2387,7 +2400,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:39.298991+00:00"
+      "last_search_at": "2026-09-10T14:42:44.989820+00:00"
     },
     "dance": {
       "candidates": [
@@ -3013,9 +3026,48 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "5RyI89k4O5w",
+          "title": "DJ XOXO 2 – Kiss Kiss 💋 | Official Music Video | Dance Music 2026",
+          "channel": "DJ XOXO 2",
+          "published_at": "2026-09-09T15:16:27Z",
+          "views": 2373,
+          "duration_seconds": 201,
+          "discovered_at": "2026-09-10T14:42:45.791562+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "BAPUobg-vc8",
+          "title": "Aventura - DJ XOXO | New Dance Music Hit 2026",
+          "channel": "DJ XOXO ‎ ",
+          "published_at": "2026-09-08T14:40:45Z",
+          "views": 43733,
+          "duration_seconds": 268,
+          "discovered_at": "2026-09-10T14:42:45.791597+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "jm1HGnjFJAo",
+          "title": "DJ XAN – SHA-LA-LA | Viral Dance Music 2026",
+          "channel": "DJXAN",
+          "published_at": "2026-09-08T11:33:34Z",
+          "views": 12186,
+          "duration_seconds": 239,
+          "discovered_at": "2026-09-10T14:42:45.791604+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:40.049537+00:00"
+      "last_search_at": "2026-09-10T14:42:45.791705+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4085,9 +4137,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "JYulEahPoJY",
+          "title": "SULTAN HAJOLI - TALLAVA 2026 🔥 (Official Audio) Romano Ai Music",
+          "channel": "Romano Ai Music",
+          "published_at": "2026-03-31T14:00:42Z",
+          "views": 198495,
+          "duration_seconds": 260,
+          "discovered_at": "2026-09-10T14:42:42.463232+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-09T14:56:36.896001+00:00"
+      "last_search_at": "2026-09-10T14:42:42.463382+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
