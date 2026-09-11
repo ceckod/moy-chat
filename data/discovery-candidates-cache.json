@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:41.608716+00:00"
+      "last_search_at": "2026-09-11T14:44:29.190229+00:00"
     },
     "rap": {
       "candidates": [
@@ -1349,9 +1349,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "o4OEg34SslQ",
+          "title": "Pooh Shiesty - Reap What You Sow [Official Audio]",
+          "channel": "Pooh Shiesty",
+          "published_at": "2026-08-07T04:00:19Z",
+          "views": 7528515,
+          "duration_seconds": 218,
+          "discovered_at": "2026-09-11T14:44:30.715327+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:43.347564+00:00"
+      "last_search_at": "2026-09-11T14:44:30.715461+00:00"
     },
     "pop": {
       "candidates": [
@@ -1896,9 +1909,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "V_4XaKGMcQ0",
+          "title": "Lottery | I-POPSTAR | EP 06 | Rockzane",
+          "channel": "Saregama Tamil",
+          "published_at": "2026-08-04T13:30:20Z",
+          "views": 1027424,
+          "duration_seconds": 158,
+          "discovered_at": "2026-09-11T14:44:31.471814+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:44.053891+00:00"
+      "last_search_at": "2026-09-11T14:44:31.471902+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2400,7 +2426,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:44.989820+00:00"
+      "last_search_at": "2026-09-11T14:44:32.606276+00:00"
     },
     "dance": {
       "candidates": [
@@ -3067,7 +3093,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:45.791705+00:00"
+      "last_search_at": "2026-09-11T14:44:33.304105+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4150,9 +4176,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "AbhxGafHfG0",
+          "title": "Suno V6: Turn Your Songs Into an AI Music Video With Perfect Lip Sync",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-11T01:00:16Z",
+          "views": 2157,
+          "duration_seconds": 368,
+          "discovered_at": "2026-09-11T14:44:29.991442+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "MI3lTanWEbg",
+          "title": " Zurbagan (Зурбаган из К/Ф - \"Выше Радуги\") / Кавер на английском языке",
+          "channel": "AI-MUSIC",
+          "published_at": "2026-06-11T13:00:06Z",
+          "views": 462568,
+          "duration_seconds": 285,
+          "discovered_at": "2026-09-11T14:44:29.991472+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-10T14:42:42.463382+00:00"
+      "last_search_at": "2026-09-11T14:44:29.991585+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4694,9 +4746,20 @@
           "discovered_at": "2026-09-05T13:37:51.115818+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "GSM4HX0zKhQ",
+          "title": "Bulgarian Trap + Russian Abstract Hip Hop",
+          "channel": "Genre Soup",
+          "published_at": "2026-07-13T23:00:07Z",
+          "views": 88,
+          "duration_seconds": 416,
+          "discovered_at": "2026-09-11T14:44:34.417282+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-05T13:37:51.115955+00:00"
+      "last_search_at": "2026-09-11T14:44:34.417400+00:00"
     },
     "bulgarian-folk": {
       "candidates": [
@@ -5072,9 +5135,22 @@
           "used_in": [
             "Bulgarian Folk"
           ]
+        },
+        {
+          "video_id": "PRQx5Q5ZrUY",
+          "title": "Твойте сини очи, либе | Tvoyte Sini Ochi, Libe | Българска Народна Песен | Bulgarian Folk Song 2026",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-07-06T05:35:13Z",
+          "views": 794,
+          "duration_seconds": 280,
+          "discovered_at": "2026-09-11T14:44:35.172835+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         }
       ],
-      "last_search_at": "2026-09-05T13:37:51.771019+00:00"
+      "last_search_at": "2026-09-11T14:44:35.172933+00:00"
     }
   }
 }
