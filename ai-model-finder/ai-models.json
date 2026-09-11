@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-10T07:50:30.144Z",
-  "total": 64,
+  "generated_at": "2026-09-11T07:44:49.007Z",
+  "total": 65,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 21
+      "count": 22
     },
     "static": {
       "ok": true,
@@ -26,6 +26,26 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "inclusionai/ling-3.0-flash-vl:free",
+      "name": "inclusionAI: Ling 3.0 Flash VL (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/inclusionai/ling-3.0-flash-vl:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.0-flash-vl:free"
+    },
     {
       "source": "openrouter",
       "id": "nex-agi/nex-n2.5-mini:free",
