@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:29.190229+00:00"
+      "last_search_at": "2026-09-12T13:48:44.477563+00:00"
     },
     "rap": {
       "candidates": [
@@ -1362,9 +1362,48 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "vRgWHE9e7mI",
+          "title": "Lil Rome Praba x Tikx Kooda - අත ඇරලා දාලා (Atha Arala Daala) OFFICIAL MUSIC VIDEO",
+          "channel": "Lil Rome",
+          "published_at": "2026-08-07T14:15:06Z",
+          "views": 5051909,
+          "duration_seconds": 286,
+          "discovered_at": "2026-09-12T13:48:46.130244+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "LVj7Zh90oLQ",
+          "title": "Superstar Pride - First Day Out (Official Video)",
+          "channel": "Superstar Pride",
+          "published_at": "2026-08-27T02:57:45Z",
+          "views": 1791433,
+          "duration_seconds": 180,
+          "discovered_at": "2026-09-12T13:48:46.130249+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "SDkSzvQWg6Y",
+          "title": "Belly Gang Kushington - No Jewelry (Official Music Video)",
+          "channel": "Belly Gang Kushington ",
+          "published_at": "2026-08-19T18:30:06Z",
+          "views": 1585456,
+          "duration_seconds": 170,
+          "discovered_at": "2026-09-12T13:48:46.130259+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:30.715461+00:00"
+      "last_search_at": "2026-09-12T13:48:46.130363+00:00"
     },
     "pop": {
       "candidates": [
@@ -1924,7 +1963,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:31.471902+00:00"
+      "last_search_at": "2026-09-12T13:48:46.860641+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2424,9 +2463,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "Rc7h-fCQ2FM",
+          "title": "No Hay Nadie",
+          "channel": "Héctor El Father - Topic",
+          "published_at": "2026-03-30T22:34:29Z",
+          "views": 768466,
+          "duration_seconds": 270,
+          "discovered_at": "2026-09-12T13:48:47.727245+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:32.606276+00:00"
+      "last_search_at": "2026-09-12T13:48:47.727355+00:00"
     },
     "dance": {
       "candidates": [
@@ -3093,7 +3145,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:33.304105+00:00"
+      "last_search_at": "2026-09-12T13:48:48.406868+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4204,7 +4256,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:29.991585+00:00"
+      "last_search_at": "2026-09-12T13:48:45.275958+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
