@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:44.477563+00:00"
+      "last_search_at": "2026-09-13T14:44:57.062541+00:00"
     },
     "rap": {
       "candidates": [
@@ -1403,7 +1403,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:46.130363+00:00"
+      "last_search_at": "2026-09-13T14:44:58.579035+00:00"
     },
     "pop": {
       "candidates": [
@@ -1963,7 +1963,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:46.860641+00:00"
+      "last_search_at": "2026-09-13T14:44:59.459973+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2478,7 +2478,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:47.727355+00:00"
+      "last_search_at": "2026-09-13T14:45:00.725165+00:00"
     },
     "dance": {
       "candidates": [
@@ -3145,7 +3145,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:48.406868+00:00"
+      "last_search_at": "2026-09-13T14:45:01.490723+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4256,7 +4256,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-12T13:48:45.275958+00:00"
+      "last_search_at": "2026-09-13T14:44:57.801012+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4511,9 +4511,20 @@
           "used_in": [
             "Bulgarian Pop"
           ]
+        },
+        {
+          "video_id": "sNcDtrlCLV8",
+          "title": "Недочетена история | Оригинална песен | Bulgarian Pop Rock Ballad",
+          "channel": "Tsvetomir Tsvetanov | Original Bulgarian Songs",
+          "published_at": "2026-09-12T22:22:13Z",
+          "views": 11,
+          "duration_seconds": 194,
+          "discovered_at": "2026-09-13T14:45:00.043043+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-06T13:51:54.524976+00:00"
+      "last_search_at": "2026-09-13T14:45:00.043123+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [
