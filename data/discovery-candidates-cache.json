@@ -568,7 +568,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:20.276249+00:00"
+      "last_search_at": "2026-09-15T15:21:14.438059+00:00"
     },
     "rap": {
       "candidates": [
@@ -1403,7 +1403,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:22.157506+00:00"
+      "last_search_at": "2026-09-15T15:21:16.075342+00:00"
     },
     "pop": {
       "candidates": [
@@ -1961,9 +1961,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "B402rKl4bUg",
+          "title": "Olivia Rodrigo - the cure (Official Music Video)",
+          "channel": "OliviaRodrigoVEVO",
+          "published_at": "2026-05-22T04:00:06Z",
+          "views": 40244136,
+          "duration_seconds": 315,
+          "discovered_at": "2026-09-15T15:21:16.848352+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:22.939280+00:00"
+      "last_search_at": "2026-09-15T15:21:16.848463+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2478,7 +2491,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:24.052022+00:00"
+      "last_search_at": "2026-09-15T15:21:17.618276+00:00"
     },
     "dance": {
       "candidates": [
@@ -3145,7 +3158,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:24.913095+00:00"
+      "last_search_at": "2026-09-15T15:21:19.528872+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4254,9 +4267,61 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "31g2oGF30ho",
+          "title": "Hot take on AI music",
+          "channel": "Big Z",
+          "published_at": "2026-04-27T16:57:09Z",
+          "views": 14297,
+          "duration_seconds": 123,
+          "discovered_at": "2026-09-15T15:21:15.316391+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "mun8LP45YBY",
+          "title": "New Rules for AI Music: What Producers MUST Know",
+          "channel": "Plugin Boutique",
+          "published_at": "2026-08-18T10:38:06Z",
+          "views": 4550,
+          "duration_seconds": 305,
+          "discovered_at": "2026-09-15T15:21:15.316411+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "BMFHPTDiG9Q",
+          "title": "The AI Music Civil War Has Started - Will Suno Survive?",
+          "channel": "AiDIY The Ai Music Guy",
+          "published_at": "2026-06-25T12:00:31Z",
+          "views": 3007,
+          "duration_seconds": 513,
+          "discovered_at": "2026-09-15T15:21:15.316424+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "vTfetsdyMaw",
+          "title": "🎵 Qamar Yusuf – Bubbullee Walagarraa | Female AI Cover | Oromo Music 2026 | Oromo AI Musics",
+          "channel": "Oromo AI Music",
+          "published_at": "2026-06-08T15:07:47Z",
+          "views": 428640,
+          "duration_seconds": 355,
+          "discovered_at": "2026-09-15T15:21:15.316428+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-14T16:43:21.293155+00:00"
+      "last_search_at": "2026-09-15T15:21:15.316536+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
