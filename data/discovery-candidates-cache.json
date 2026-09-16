@@ -566,9 +566,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "YdrW1SJwiMs",
+          "title": "Tyla - IS IT LOVE (Official Music Video)",
+          "channel": "TylaVEVO",
+          "published_at": "2026-06-18T16:00:06Z",
+          "views": 6748278,
+          "duration_seconds": 191,
+          "discovered_at": "2026-09-16T15:14:14.794273+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:14.438059+00:00"
+      "last_search_at": "2026-09-16T15:14:14.794399+00:00"
     },
     "rap": {
       "candidates": [
@@ -1401,9 +1414,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "1Tn8yHBlfZU",
+          "title": "GO F*CK YOURSELF 💀 Dirty Country Rap | Outlaw Attitude Song 🔥",
+          "channel": "Bassora",
+          "published_at": "2026-06-04T17:38:04Z",
+          "views": 767181,
+          "duration_seconds": 282,
+          "discovered_at": "2026-09-16T15:14:16.613977+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:16.075342+00:00"
+      "last_search_at": "2026-09-16T15:14:16.614163+00:00"
     },
     "pop": {
       "candidates": [
@@ -1976,7 +2002,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:16.848463+00:00"
+      "last_search_at": "2026-09-16T15:14:17.366340+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2491,7 +2517,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:17.618276+00:00"
+      "last_search_at": "2026-09-16T15:14:18.353434+00:00"
     },
     "dance": {
       "candidates": [
@@ -3156,9 +3182,35 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "K-vRqYWAkEw",
+          "title": "Baila Morena - DJ XOXO | Dance Music Hit 2026",
+          "channel": "DJ XOXO ‎ ",
+          "published_at": "2026-05-27T15:00:10Z",
+          "views": 1439523,
+          "duration_seconds": 170,
+          "discovered_at": "2026-09-16T15:14:19.216295+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
+        },
+        {
+          "video_id": "iKN2j1tSyGc",
+          "title": "Baby Dance - I'm a DJ (Music Video 4k HD)",
+          "channel": "Vik4S",
+          "published_at": "2026-05-01T06:17:42Z",
+          "views": 486210,
+          "duration_seconds": 179,
+          "discovered_at": "2026-09-16T15:14:19.216304+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:19.528872+00:00"
+      "last_search_at": "2026-09-16T15:14:19.216444+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4321,7 +4373,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-15T15:21:15.316536+00:00"
+      "last_search_at": "2026-09-16T15:14:15.718101+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
