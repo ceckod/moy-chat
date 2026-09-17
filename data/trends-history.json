@@ -5311,6 +5311,132 @@
           "trend_growth_ratio": -0.287
         }
       ]
+    },
+    {
+      "date": "2026-09-17",
+      "timestamp": "2026-09-17T13:05:11.558401+00:00",
+      "niches": [
+        {
+          "niche": "Lo-fi hip hop",
+          "score": 60.0,
+          "reason": "Растящо темпо на публикуване (+51% за 14 дни), ~127577 видеа конкуренция (30 дни).",
+          "search_signal": "расте (+51% за 14 дни)",
+          "competition_signal": "127577 видеа  ~1 429 480 avg views (30д)",
+          "trend_growth_ratio": 0.509
+        },
+        {
+          "niche": "Sad boy hyperpop",
+          "score": 57.5,
+          "reason": "Спадащо темпо на публикуване (-23% за 14 дни), ~19260 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-23% за 14 дни)",
+          "competition_signal": "19260 видеа  ~117 avg views (30д)",
+          "trend_growth_ratio": -0.229
+        },
+        {
+          "niche": "Drift phonk",
+          "score": 57.4,
+          "reason": "Стабилно темпо на публикуване (+8% за 14 дни), ~67979 видеа конкуренция (30 дни).",
+          "search_signal": "стабилно (+8% за 14 дни)",
+          "competition_signal": "67979 видеа  ~798 232 avg views (30д)",
+          "trend_growth_ratio": 0.08
+        },
+        {
+          "niche": "Hyperpop",
+          "score": 52.6,
+          "reason": "Спадащо темпо на публикуване (-17% за 14 дни), ~42733 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-17% за 14 дни)",
+          "competition_signal": "42733 видеа  ~994 152 avg views (30д)",
+          "trend_growth_ratio": -0.171
+        },
+        {
+          "niche": "Balkan phonk",
+          "score": 50.2,
+          "reason": "Спадащо темпо на публикуване (-42% за 14 дни), ~10251 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-42% за 14 дни)",
+          "competition_signal": "10251 видеа  ~2 921 avg views (30д)",
+          "trend_growth_ratio": -0.424
+        },
+        {
+          "niche": "Afrobeats",
+          "score": 47.8,
+          "reason": "Стабилно темпо на публикуване (-6% за 14 дни), ~74779 видеа конкуренция (30 дни).",
+          "search_signal": "стабилно (-6% за 14 дни)",
+          "competition_signal": "74779 видеа  ~2 229 284 avg views (30д)",
+          "trend_growth_ratio": -0.057
+        },
+        {
+          "niche": "Sped up remix",
+          "score": 47.6,
+          "reason": "Стабилно темпо на публикуване (+2% за 14 дни), ~87248 видеа конкуренция (30 дни).",
+          "search_signal": "стабилно (+2% за 14 дни)",
+          "competition_signal": "87248 видеа  ~1 289 621 avg views (30д)",
+          "trend_growth_ratio": 0.019
+        },
+        {
+          "niche": "Dark academia music",
+          "score": 46.8,
+          "reason": "Стабилно темпо на публикуване (-9% за 14 дни), ~72389 видеа конкуренция (30 дни).",
+          "search_signal": "стабилно (-9% за 14 дни)",
+          "competition_signal": "72389 видеа  ~41 626 avg views (30д)",
+          "trend_growth_ratio": -0.091
+        },
+        {
+          "niche": "Cloud rap",
+          "score": 44.2,
+          "reason": "Спадащо темпо на публикуване (-25% за 14 дни), ~55284 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-25% за 14 дни)",
+          "competition_signal": "55284 видеа  ~15 175 avg views (30д)",
+          "trend_growth_ratio": -0.249
+        },
+        {
+          "niche": "Amapiano",
+          "score": 42.8,
+          "reason": "Спадащо темпо на публикуване (-12% за 14 дни), ~78890 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-12% за 14 дни)",
+          "competition_signal": "78890 видеа  ~1 663 301 avg views (30д)",
+          "trend_growth_ratio": -0.124
+        },
+        {
+          "niche": "Dark folk",
+          "score": 42.3,
+          "reason": "Спадащо темпо на публикуване (-21% за 14 дни), ~66962 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-21% за 14 дни)",
+          "competition_signal": "66962 видеа  ~2 211 470 avg views (30д)",
+          "trend_growth_ratio": -0.209
+        },
+        {
+          "niche": "Jersey club",
+          "score": 40.1,
+          "reason": "Спадащо темпо на публикуване (-22% за 14 дни), ~71175 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-22% за 14 дни)",
+          "competition_signal": "71175 видеа  ~887 764 avg views (30д)",
+          "trend_growth_ratio": -0.224
+        },
+        {
+          "niche": "Dariacore",
+          "score": 38.5,
+          "reason": "Спадащо темпо на публикуване (-61% за 14 дни), ~14774 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-61% за 14 дни)",
+          "competition_signal": "14774 видеа  ~19 891 avg views (30д)",
+          "trend_growth_ratio": -0.615
+        },
+        {
+          "niche": "Rage beat",
+          "score": 38.1,
+          "reason": "Спадащо темпо на публикуване (-28% за 14 дни), ~67658 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-28% за 14 дни)",
+          "competition_signal": "67658 видеа  ~100 449 avg views (30д)",
+          "trend_growth_ratio": -0.284
+        },
+        {
+          "niche": "Latin trap",
+          "score": 36.9,
+          "reason": "Спадащо темпо на публикуване (-27% за 14 дни), ~72647 видеа конкуренция (30 дни).",
+          "search_signal": "спада (-27% за 14 дни)",
+          "competition_signal": "72647 видеа  ~172 729 avg views (30д)",
+          "trend_growth_ratio": -0.274
+        }
+      ]
     }
   ]
 }
