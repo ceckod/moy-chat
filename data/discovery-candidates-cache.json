@@ -579,9 +579,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "jdlCOIaWwTQ",
+          "title": "Chris Brown - It Depends/Obvious (Official Video)",
+          "channel": "ChrisBrownVEVO",
+          "published_at": "2026-06-19T14:00:37Z",
+          "views": 11137400,
+          "duration_seconds": 335,
+          "discovered_at": "2026-09-17T15:22:35.235386+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:14.794399+00:00"
+      "last_search_at": "2026-09-17T15:22:35.235530+00:00"
     },
     "rap": {
       "candidates": [
@@ -1429,7 +1442,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:16.614163+00:00"
+      "last_search_at": "2026-09-17T15:22:36.945790+00:00"
     },
     "pop": {
       "candidates": [
@@ -2002,7 +2015,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:17.366340+00:00"
+      "last_search_at": "2026-09-17T15:22:37.713958+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2517,7 +2530,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:18.353434+00:00"
+      "last_search_at": "2026-09-17T15:22:38.754176+00:00"
     },
     "dance": {
       "candidates": [
@@ -3210,7 +3223,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:19.216444+00:00"
+      "last_search_at": "2026-09-17T15:22:39.609563+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4371,9 +4384,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "Jv55Yj6C43s",
+          "title": "I SWEAR | All-4-One (Soulful R&B cover) #REINEMUSIC",
+          "channel": "REINE MUSIC Official",
+          "published_at": "2026-06-10T09:00:07Z",
+          "views": 1006335,
+          "duration_seconds": 275,
+          "discovered_at": "2026-09-17T15:22:36.004346+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-16T15:14:15.718101+00:00"
+      "last_search_at": "2026-09-17T15:22:36.004496+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4937,9 +4963,162 @@
           "discovered_at": "2026-09-11T14:44:34.417282+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "AXZPZa-EJrE",
+          "title": "NASYO CHERNIA x FURY x BOBO ARMANI x KSIOR - GASOLINA [OFFICIAL 2026 VIDEO]",
+          "channel": "Nasyo Chernia",
+          "published_at": "2026-08-22T15:00:06Z",
+          "views": 614292,
+          "duration_seconds": 215,
+          "discovered_at": "2026-09-17T15:22:40.329101+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "GFDQ5k85YBU",
+          "title": "KSIOR x SISS - BATUT [OFFICIAL 4K VIDEO] 2026",
+          "channel": "KSIOR",
+          "published_at": "2026-07-02T16:00:06Z",
+          "views": 5203818,
+          "duration_seconds": 161,
+          "discovered_at": "2026-09-17T15:22:40.329140+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "xH67vyXL8UM",
+          "title": "KSIOR x SISS - BMW [OFFICIAL 4K VIDEO] 2026",
+          "channel": "KSIOR",
+          "published_at": "2026-07-14T16:00:06Z",
+          "views": 2932088,
+          "duration_seconds": 167,
+          "discovered_at": "2026-09-17T15:22:40.329145+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "9Lsp1iVgkIQ",
+          "title": "TORINO & PASHATA X TONI STORARO - BEDNI  &  BOGATI / БЕДНИ И БОГАТИ [OFFICIAL 4K VIDEO]",
+          "channel": "TORINO & PASHATA ",
+          "published_at": "2026-03-21T16:00:06Z",
+          "views": 11117138,
+          "duration_seconds": 189,
+          "discovered_at": "2026-09-17T15:22:40.329150+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "IJNJTRnUj7U",
+          "title": "Merkz - Mislead (Official Music Video)",
+          "channel": "Merkz876VEVO",
+          "published_at": "2026-04-10T22:00:17Z",
+          "views": 2081183,
+          "duration_seconds": 174,
+          "discovered_at": "2026-09-17T15:22:40.329166+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "ei-7qSql1Ws",
+          "title": "DJ Gimi-O - Loqka Jem [Official Video]",
+          "channel": "DJ Gimi-O",
+          "published_at": "2026-05-21T22:00:06Z",
+          "views": 7222193,
+          "duration_seconds": 223,
+          "discovered_at": "2026-09-17T15:22:40.329172+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "gB0KOe5g5Hk",
+          "title": "Bandata Na Ruba x TITA - JOHN CENA (Official Video)",
+          "channel": "Bandata Na Ruba",
+          "published_at": "2026-06-04T15:28:07Z",
+          "views": 1719514,
+          "duration_seconds": 236,
+          "discovered_at": "2026-09-17T15:22:40.329177+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "L1hC_i8scK8",
+          "title": "Volvería Contigo - Santa Fe Klan (Video Lyrics)",
+          "channel": "Ldragoh",
+          "published_at": "2026-06-27T18:00:06Z",
+          "views": 798671,
+          "duration_seconds": 154,
+          "discovered_at": "2026-09-17T15:22:40.329181+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "loZ8SX3CpqM",
+          "title": "DJAANY - А ТАКА [Official Music Video] (Prod. by ANDY GOLDEN) - REGGAETON",
+          "channel": "kartelarecords",
+          "published_at": "2026-07-03T15:00:06Z",
+          "views": 586028,
+          "duration_seconds": 149,
+          "discovered_at": "2026-09-17T15:22:40.329186+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
+        },
+        {
+          "video_id": "nOFDmqxkiPE",
+          "title": "GALIN x KSIOR - NA POJAR | OFFICIAL 4K VIDEO 2026",
+          "channel": "GALIN",
+          "published_at": "2026-08-15T14:00:11Z",
+          "views": 2266481,
+          "duration_seconds": 195,
+          "discovered_at": "2026-09-17T15:22:40.329191+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "Rd7KKygHCtM",
+          "title": "SIMONA - PRAHOSMUKACHKA / СИМОНА - ПРАХОСМУКАЧКА | OFFICIAL 4k VIDEO 2026",
+          "channel": "Alpha Music Bulgaria",
+          "published_at": "2026-05-23T15:00:31Z",
+          "views": 7715499,
+          "duration_seconds": 230,
+          "discovered_at": "2026-09-17T15:22:40.329198+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "tSrCMEZvyWo",
+          "title": "Young Thug - Bvlgari (ft. iyrus, Tezzus, Lito, Biggs, Yung Kayo, Lil Unky, Bslime, Papito, Rundown)",
+          "channel": "Young Thug",
+          "published_at": "2026-09-13T19:03:10Z",
+          "views": 522787,
+          "duration_seconds": 457,
+          "discovered_at": "2026-09-17T15:22:40.329203+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "wQ8YqXgMw4I",
+          "title": "KSIOR x SISS x MARKICHA x STEFAN - JETSKI (REMIX) [OFFICIAL 4K VIDEO] 2026",
+          "channel": "KSIOR",
+          "published_at": "2026-08-04T16:00:06Z",
+          "views": 994118,
+          "duration_seconds": 146,
+          "discovered_at": "2026-09-17T15:22:40.329208+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-11T14:44:34.417400+00:00"
+      "last_search_at": "2026-09-17T15:22:40.329300+00:00"
     },
     "bulgarian-folk": {
       "candidates": [
@@ -5328,9 +5507,44 @@
           "used_in": [
             "Bulgarian Folk"
           ]
+        },
+        {
+          "video_id": "5KzXhN6djC0",
+          "title": "Моята песен | Moyata Pesen – Angel Uzunov | Българска народна песен | Bulgarian Folk Song UZi 2026",
+          "channel": "Angel Uzunov",
+          "published_at": "2026-09-12T06:28:33Z",
+          "views": 210,
+          "duration_seconds": 276,
+          "discovered_at": "2026-09-17T15:22:41.066136+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "0r_mihzjvpA",
+          "title": "Epic Bulgarian Folk Music",
+          "channel": "Nova Music BG - Topic",
+          "published_at": "2026-09-03T19:30:28Z",
+          "views": 14,
+          "duration_seconds": 158,
+          "discovered_at": "2026-09-17T15:22:41.066171+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "ziClKG9ZE_c",
+          "title": "Разболело са е галеното Аве - народна песен",
+          "channel": "Mustafa Byalk",
+          "published_at": "2026-04-24T16:00:00Z",
+          "views": 79353,
+          "duration_seconds": 219,
+          "discovered_at": "2026-09-17T15:22:41.066177+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         }
       ],
-      "last_search_at": "2026-09-11T14:44:35.172933+00:00"
+      "last_search_at": "2026-09-17T15:22:41.066287+00:00"
     }
   }
 }
