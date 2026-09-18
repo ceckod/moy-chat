@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:35.235530+00:00"
+      "last_search_at": "2026-09-18T14:42:48.859042+00:00"
     },
     "rap": {
       "candidates": [
@@ -1440,9 +1440,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "BH9IOx6xPgE",
+          "title": "Valhalla Calling 🔥❄️ | Official Music Video | Ragal Ironbull",
+          "channel": "Ragal Ironbull",
+          "published_at": "2026-09-16T16:00:06Z",
+          "views": 271965,
+          "duration_seconds": 196,
+          "discovered_at": "2026-09-18T14:42:50.668637+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:36.945790+00:00"
+      "last_search_at": "2026-09-18T14:42:50.668805+00:00"
     },
     "pop": {
       "candidates": [
@@ -2013,9 +2026,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "3sB4Iv_tM7U",
+          "title": "ADÉLA - Nicole Kidman",
+          "channel": "AdelaMusicVEVO",
+          "published_at": "2026-09-04T04:00:07Z",
+          "views": 6716834,
+          "duration_seconds": 222,
+          "discovered_at": "2026-09-18T14:42:51.466982+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:37.713958+00:00"
+      "last_search_at": "2026-09-18T14:42:51.467097+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2530,7 +2556,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:38.754176+00:00"
+      "last_search_at": "2026-09-18T14:42:52.500088+00:00"
     },
     "dance": {
       "candidates": [
@@ -3223,7 +3249,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:39.609563+00:00"
+      "last_search_at": "2026-09-18T14:42:53.229757+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4397,9 +4423,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "5XrMEoMuB7g",
+          "title": "How To Make Long Form AI Music Videos Faster Than Ever (Free)",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-17T17:00:15Z",
+          "views": 4220,
+          "duration_seconds": 504,
+          "discovered_at": "2026-09-18T14:42:49.741137+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:36.004496+00:00"
+      "last_search_at": "2026-09-18T14:42:49.741283+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5022,8 +5061,10 @@
           "views": 2081183,
           "duration_seconds": 174,
           "discovered_at": "2026-09-17T15:22:40.329166+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         },
         {
           "video_id": "ei-7qSql1Ws",
@@ -5033,8 +5074,10 @@
           "views": 7222193,
           "duration_seconds": 223,
           "discovered_at": "2026-09-17T15:22:40.329172+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         },
         {
           "video_id": "gB0KOe5g5Hk",
@@ -5044,8 +5087,10 @@
           "views": 1719514,
           "duration_seconds": 236,
           "discovered_at": "2026-09-17T15:22:40.329177+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "L1hC_i8scK8",
@@ -5081,8 +5126,10 @@
           "views": 2266481,
           "duration_seconds": 195,
           "discovered_at": "2026-09-17T15:22:40.329191+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         },
         {
           "video_id": "Rd7KKygHCtM",
@@ -5092,8 +5139,10 @@
           "views": 7715499,
           "duration_seconds": 230,
           "discovered_at": "2026-09-17T15:22:40.329198+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "tSrCMEZvyWo",
@@ -5103,8 +5152,10 @@
           "views": 522787,
           "duration_seconds": 457,
           "discovered_at": "2026-09-17T15:22:40.329203+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         },
         {
           "video_id": "wQ8YqXgMw4I",
@@ -5114,8 +5165,10 @@
           "views": 994118,
           "duration_seconds": 146,
           "discovered_at": "2026-09-17T15:22:40.329208+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         }
       ],
       "last_search_at": "2026-09-17T15:22:40.329300+00:00"
