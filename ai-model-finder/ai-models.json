@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-17T08:21:03.935Z",
-  "total": 67,
+  "generated_at": "2026-09-18T07:56:29.992Z",
+  "total": 68,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 24
+      "count": 25
     },
     "static": {
       "ok": true,
@@ -26,26 +26,6 @@
     "JINA_API_KEY"
   ],
   "models": [
-    {
-      "source": "openrouter",
-      "id": "stealth/union-alpha",
-      "name": "Union Alpha",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/stealth/union-alpha",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: stealth/union-alpha"
-    },
     {
       "source": "openrouter",
       "id": "inclusionai/ling-3.0-flash-vl:free",
@@ -148,6 +128,26 @@
     },
     {
       "source": "openrouter",
+      "id": "qwen/qwen3.8-27b:free",
+      "name": "Qwen: Qwen3.8 27B (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/qwen/qwen3.8-27b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: qwen/qwen3.8-27b:free"
+    },
+    {
+      "source": "openrouter",
       "id": "dots-studio/dots-3-note-preview:free",
       "name": "Dots Studio: Dots3-Note Preview (free)",
       "provider": "OpenRouter",
@@ -205,6 +205,26 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3.5-lightning:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "deepseek/deepseek-v4-flash-0731:free",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/deepseek/deepseek-v4-flash-0731:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: deepseek/deepseek-v4-flash-0731:free"
     },
     {
       "source": "openrouter",
