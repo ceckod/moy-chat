@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:48.859042+00:00"
+      "last_search_at": "2026-09-19T14:03:44.853349+00:00"
     },
     "rap": {
       "candidates": [
@@ -1455,7 +1455,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:50.668805+00:00"
+      "last_search_at": "2026-09-19T14:03:46.420394+00:00"
     },
     "pop": {
       "candidates": [
@@ -2041,7 +2041,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:51.467097+00:00"
+      "last_search_at": "2026-09-19T14:03:47.227532+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2556,7 +2556,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:52.500088+00:00"
+      "last_search_at": "2026-09-19T14:03:47.995102+00:00"
     },
     "dance": {
       "candidates": [
@@ -3249,7 +3249,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:53.229757+00:00"
+      "last_search_at": "2026-09-19T14:03:48.625897+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4438,7 +4438,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-18T14:42:49.741283+00:00"
+      "last_search_at": "2026-09-19T14:03:45.653279+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5050,8 +5050,10 @@
           "views": 11117138,
           "duration_seconds": 189,
           "discovered_at": "2026-09-17T15:22:40.329150+00:00",
-          "status": "unused",
-          "used_in": []
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop (reconciled-duplicate)"
+          ]
         },
         {
           "video_id": "IJNJTRnUj7U",
