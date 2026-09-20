@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:44.853349+00:00"
+      "last_search_at": "2026-09-20T14:24:09.929266+00:00"
     },
     "rap": {
       "candidates": [
@@ -1453,9 +1453,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "JffHTWti1es",
+          "title": "Drake - National Treasures",
+          "channel": "DrakeVEVO",
+          "published_at": "2026-05-15T06:25:11Z",
+          "views": 32005219,
+          "duration_seconds": 209,
+          "discovered_at": "2026-09-20T14:24:11.623994+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:46.420394+00:00"
+      "last_search_at": "2026-09-20T14:24:11.624072+00:00"
     },
     "pop": {
       "candidates": [
@@ -2039,9 +2052,61 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "m7k9UMcHbr0",
+          "title": "KATSEYE (캣츠아이) \"Animal\" Official MV",
+          "channel": "HYBE LABELS",
+          "published_at": "2026-07-24T03:59:06Z",
+          "views": 106969380,
+          "duration_seconds": 191,
+          "discovered_at": "2026-09-20T14:24:12.312446+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "7F1ET2XHQfk",
+          "title": "KATSEYE (캣츠아이) \"PINKY UP\" Official MV",
+          "channel": "HYBE LABELS",
+          "published_at": "2026-04-09T15:59:07Z",
+          "views": 78674981,
+          "duration_seconds": 182,
+          "discovered_at": "2026-09-20T14:24:12.312452+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "KEXZREwKipY",
+          "title": "MAYA LE (Official Music Video)",
+          "channel": "John Rai",
+          "published_at": "2026-08-08T14:15:06Z",
+          "views": 9774774,
+          "duration_seconds": 241,
+          "discovered_at": "2026-09-20T14:24:12.312456+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "bMhDJ0S0OBA",
+          "title": "ILLIT (아일릿) ‘It’s Me’ Official MV",
+          "channel": "HYBE LABELS",
+          "published_at": "2026-04-30T08:58:06Z",
+          "views": 166554000,
+          "duration_seconds": 147,
+          "discovered_at": "2026-09-20T14:24:12.312461+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:47.227532+00:00"
+      "last_search_at": "2026-09-20T14:24:12.312583+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2556,7 +2621,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:47.995102+00:00"
+      "last_search_at": "2026-09-20T14:24:14.146118+00:00"
     },
     "dance": {
       "candidates": [
@@ -3249,7 +3314,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:48.625897+00:00"
+      "last_search_at": "2026-09-20T14:24:14.825501+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4436,9 +4501,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "WLAvBi1T-mI",
+          "title": "Vuma Vuma (feat. SKING)",
+          "channel": "uNkosazana - Topic",
+          "published_at": "2026-05-09T17:55:00Z",
+          "views": 2414703,
+          "duration_seconds": 489,
+          "discovered_at": "2026-09-20T14:24:10.754555+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "0s3NP6i0PMY",
+          "title": "Pashto Songs 2026 Pa Dedanono Pabandi Olagedala | Pashto Music | New Ai Songs | Pashto Ai Songs 2026",
+          "channel": "Laila Majnun",
+          "published_at": "2026-04-21T14:20:47Z",
+          "views": 10491340,
+          "duration_seconds": 223,
+          "discovered_at": "2026-09-20T14:24:10.754600+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-19T14:03:45.653279+00:00"
+      "last_search_at": "2026-09-20T14:24:10.754698+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -4704,9 +4795,20 @@
           "discovered_at": "2026-09-13T14:45:00.043043+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "92wQZZXVN0c",
+          "title": "Bulgarian Pop-Folk 🇧🇬 | Barefoot Garden Party | Боса по тревата | FUSIVISION",
+          "channel": "Fusion Music Global",
+          "published_at": "2026-09-17T13:09:47Z",
+          "views": 37,
+          "duration_seconds": 289,
+          "discovered_at": "2026-09-20T14:24:13.177522+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-13T14:45:00.043123+00:00"
+      "last_search_at": "2026-09-20T14:24:13.177641+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [
