@@ -1,11 +1,32 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-14T14:47:45.845390+00:00",
+  "generated_at": "2026-09-21T14:54:32.977019+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "est gee",
+      "term": "falling reverse",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "valhalla calling",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "ragal ironbull",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "maluma shakira",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -13,25 +34,55 @@
       "confidence": "HIGH"
     },
     {
-      "term": "tom macdonald",
-      "confirmed_by": [
-        "wikipedia"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "dafina zeqiri matolale",
+      "term": "shakira agua",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "micha niewski",
+      "term": "hip hop",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "extra arte",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
+    },
+    {
+      "term": "geile sau",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "sau trotzdem",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "geile sau trotzdem",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "maluma shakira agua",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
     },
     {
       "term": "born again",
@@ -41,21 +92,15 @@
       "confidence": "LOW"
     },
     {
-      "term": "broke bitch",
+      "term": "pooh shiesty",
       "confirmed_by": [
-        "wikipedia"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "tee grizzley",
-      "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
-      "term": "nje dance",
+      "term": "jai jai",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
