@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:07.211257+00:00"
+      "last_search_at": "2026-09-22T15:17:49.375367+00:00"
     },
     "rap": {
       "candidates": [
@@ -1479,9 +1479,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "x30_IHP1x3s",
+          "title": "Janice STFU",
+          "channel": "Drake - Topic",
+          "published_at": "2026-05-15T04:00:28Z",
+          "views": 40895051,
+          "duration_seconds": 238,
+          "discovered_at": "2026-09-22T15:17:51.203887+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "7hzTqv5BQTQ",
+          "title": "BossMan Dlow - Intro (Official Music Video)",
+          "channel": "BossMan Dlow",
+          "published_at": "2026-08-21T00:14:44Z",
+          "views": 2320817,
+          "duration_seconds": 198,
+          "discovered_at": "2026-09-22T15:17:51.203897+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:08.939059+00:00"
+      "last_search_at": "2026-09-22T15:17:51.204030+00:00"
     },
     "pop": {
       "candidates": [
@@ -2119,7 +2145,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:09.492179+00:00"
+      "last_search_at": "2026-09-22T15:17:52.119476+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2634,7 +2660,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:10.367648+00:00"
+      "last_search_at": "2026-09-22T15:17:53.217418+00:00"
     },
     "dance": {
       "candidates": [
@@ -3353,7 +3379,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:10.944636+00:00"
+      "last_search_at": "2026-09-22T15:17:54.085188+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4579,9 +4605,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "NszV2_EQbw0",
+          "title": "How To Make SUNO AI Music Videos Fast (Mone Motion)",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-20T19:30:02Z",
+          "views": 4562,
+          "duration_seconds": 619,
+          "discovered_at": "2026-09-22T15:17:50.273024+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "xYb-sBSqK_Q",
+          "title": "Make Money with Suno AI Music Videos on YouTube Shorts",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-21T22:00:30Z",
+          "views": 5102,
+          "duration_seconds": 574,
+          "discovered_at": "2026-09-22T15:17:50.273032+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-21T16:43:08.075911+00:00"
+      "last_search_at": "2026-09-22T15:17:50.273237+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
