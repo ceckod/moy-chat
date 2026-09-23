@@ -947,6 +947,47 @@ hr{border:none;border-top:1px solid var(--border-soft);}
         <label style="margin-top:12px;">Текст на песента (по избор — помага на AI да избере по-добри моменти)</label>
         <textarea id="ssLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, AI ще анализира само звука."></textarea>
 
+        <label style="margin-top:16px;">✍️ Текст върху обложката (задължително) — точно това ще се появи изписано върху снимката</label>
+        <textarea id="ssOverlayText" placeholder="напр. Само ти ми трябваш тази вечер" style="min-height:60px;"></textarea>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Автоматичните субтитри (дума по дума, синхронизирани с гласа) вървят отделно и винаги излизат сами — това поле е само за краткия "надпис"/заглавие върху самата снимка.</div>
+
+        <label style="margin-top:12px;">🔤 Шрифт на надписа</label>
+        <select id="ssFontChoice">
+          <option value="russoone" selected>Russo One — едър, футуристичен</option>
+          <option value="montserrat">Montserrat — чист, силен, модерен</option>
+          <option value="oswald">Oswald — тесен, елегантен</option>
+          <option value="unbounded">Unbounded — обемен, трендов</option>
+          <option value="playfair">Playfair Display — драматичен, лукс</option>
+          <option value="comfortaa">Comfortaa — заоблен, мек</option>
+          <option value="caveat">Caveat — ръкописен, личен</option>
+          <option value="badscript">Bad Script — елегантен ръкописен</option>
+        </select>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Всички шрифтове поддържат пълна кирилица. Надписът излиза с вграден "neon glow" ореол в цвета на темата + черен контур, за да се чете върху всякаква снимка.</div>
+
+        <label style="margin-top:12px;">✨ Ефект на надписа</label>
+        <select id="ssTextEffect">
+          <option value="glow_pulse" selected>Пулсиращо осветяване (glow pulse)</option>
+          <option value="blink_neon">Неоново премигване (blink)</option>
+          <option value="slide_in">Плъзгане отдолу (движение)</option>
+          <option value="shake">Леко разклащане (енергично)</option>
+          <option value="typewriter">Пишеща машина (разкриване)</option>
+          <option value="static_glow">Без анимация — само неподвижен glow</option>
+        </select>
+
+        <label style="margin-top:12px;">🎬 Стил на видео монтажа</label>
+        <select id="ssVideoStyle">
+          <option value="auto" selected>🤖 AI избира автоматично според настроението</option>
+          <option value="neon_particles">Neon Particles</option>
+          <option value="circular_glow">Circular Glow</option>
+          <option value="particle_field_3d">Particle Field 3D</option>
+          <option value="synthwave_wave">Synthwave Wave</option>
+          <option value="minimal_monochromatic">Minimal Monochromatic</option>
+          <option value="frosted_glass_ui">Frosted Glass UI</option>
+          <option value="vertical_lyrics">Vertical Lyrics</option>
+          <option value="glitch_aesthetics">Glitch Aesthetics</option>
+        </select>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Всеки стил вече включва пулсации по бита, вградени преходи и лек постоянен zoom (Ken Burns) на снимката — AI-то предлага според настроението на песента, но можеш да форсираш конкретен стил.</div>
+
         <label style="margin-top:12px;">🔗 Линкове за стрийминг (по избор — влизат автоматично във всяко описание)</label>
         <div class="muted" style="font-size:12px;margin-bottom:4px;">Ако ги оставиш празни, съответният ред просто няма да се появи в описанието — AI-ят НЕ си измисля линкове.</div>
         <input type="text" id="ssLinkSpotify" placeholder="Spotify линк (https://open.spotify.com/track/...)">

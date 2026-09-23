@@ -46,11 +46,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import uuid
 
 import numpy as np
 import requests
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ai_visualizer_director as director  # noqa: E402
@@ -60,6 +61,14 @@ W, H = 1080, 1920
 FPS = 60
 LIBRARY_JSON = os.path.join("data", "distrokid-library.json")
 
+# GitHub Actions инжектира автоматично GITHUB_TOKEN (repo-scoped read) —
+# виж env: в render-pro-short.yml. Нужен е, защото audio_url/cover_url
+# сочат към raw.githubusercontent.com/<owner>/<repo>/... — ако repo-то е
+# PRIVATE, анонимна (без auth) заявка към тоя URL връща 404 и целият
+# рендер гърми ощe на самото сваляне (най-честата причина клипче изобщо
+# да не излезе). За PUBLIC repo хедърът е просто излишен, не пречи.
+GH_TOKEN = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
+
 
 # ───────────────────────── помощни общи функции ─────────────────────────
 
@@ -68,8 +77,20 @@ def log(msg: str) -> None:
 
 
 def download(url: str, dest: str, timeout=120) -> str:
-    r = requests.get(url, stream=True, timeout=timeout)
-    r.raise_for_status()
+    headers = {}
+    if GH_TOKEN and ("githubusercontent.com" in url or "api.github.com" in url):
+        headers["Authorization"] = f"Bearer {GH_TOKEN}"
+    try:
+        r = requests.get(url, stream=True, timeout=timeout, headers=headers)
+        r.raise_for_status()
+    except requests.HTTPError as e:
+        raise RuntimeError(
+            f"свалянето на {url} се провали с {e} — ако repo-то е PRIVATE и това "
+            "не е github URL (напр. DistroKid preview линк), провери дали линкът "
+            "изобщо е публично достъпен; ако Е github URL, провери правата на "
+            "GITHUB_TOKEN (Settings → Actions → General → Workflow permissions → "
+            "'Read and write permissions')"
+        ) from e
     with open(dest, "wb") as f:
         for chunk in r.iter_content(chunk_size=1 << 16):
             if chunk:
@@ -277,8 +298,13 @@ def theme_circular_glow(ctx):
     build_halo(halo, ctx["primary"], ctx["secondary"], halo_size)
     i_halo = ctx["add_input"](halo, loop=True)
     i_circle = ctx["add_input"](circle, loop=True)
+    # sendcmd с ПРАЗЕН cmds файл гърми ffmpeg-а ("No commands were specified" —
+    # Error initializing filters) — ако беат детекторът не е засякъл нито един
+    # бас удар (тих микс / инструментал / кратко превю), пропускаме sendcmd
+    # СЪВСЕМ вместо да чупим целия рендер заради липса на пулсация.
+    sendcmd_part = f",sendcmd=f={ctx['cmds_esc']},eq=brightness=0" if ctx.get("has_beats") else ""
     return f"""
-[{i_halo}:v]format=rgba,sendcmd=f={ctx['cmds_esc']},eq=brightness=0[cg_halo];
+[{i_halo}:v]format=rgba{sendcmd_part}[cg_halo];
 [bg][cg_halo]overlay=(W-w)/2:(H-h)/2-260[cg_1];
 [{i_circle}:v]format=rgba[cg_circle];
 [cg_1][cg_circle]overlay=(W-w)/2:(H-h)/2-260[themed]
@@ -371,11 +397,19 @@ def theme_glitch_aesthetics(ctx):
     glitch_cmds = os.path.join(ctx["tmp"], "glitch_cmds.txt")
     _build_glitch_cmds(ctx["beat_times"], glitch_cmds)
     glitch_cmds_esc = ffmpeg_escape_path(glitch_cmds)
+    # Виж коментара в theme_circular_glow — празен cmds файл (0 засечени бас
+    # удара) гърми sendcmd-а; пропускаме rgbashift глитч слоя изцяло вместо
+    # да чупим целия рендер.
+    if ctx.get("has_beats"):
+        glitch_part = f"[ga_noise]sendcmd=f={glitch_cmds_esc},rgbashift=rh=0:bh=0[ga_glitch];\n"
+        glitch_src = "ga_glitch"
+    else:
+        glitch_part = ""
+        glitch_src = "ga_noise"
     return f"""
 [bg]noise=alls=14:allf=t[ga_noise];
-[ga_noise]sendcmd=f={glitch_cmds_esc},rgbashift=rh=0:bh=0[ga_glitch];
-[{i_card}:v]format=rgba[ga_card];
-[ga_glitch][ga_card]overlay=(W-w)/2:340[themed]
+{glitch_part}[{i_card}:v]format=rgba[ga_card];
+[{glitch_src}][ga_card]overlay=(W-w)/2:340[themed]
 """.strip()
 
 
@@ -388,6 +422,127 @@ def _build_glitch_cmds(beat_times, out_path):
         lines.append(f"{t + 0.07:.3f} rgbashift bh 0;")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + ("\n" if lines else ""))
+
+
+# ───────────────────────── 2.5) текст върху обложката (ръчен, потребителски) ─────────────────────────
+# Потребителят сам пише текста (виж index.html поле #ssOverlayText) — тук
+# САМО го рендираме: избран шрифт (от FONT_CHOICES, реален .ttf в
+# assets/fonts/, всички проверени за пълна поддръжка на кирилица) + избран
+# ефект (FONT_TEXT_EFFECTS). Рисуваме го ЕДНОКРАТНО като PNG с Pillow
+# (същия принцип като build_glass_card/build_halo по-горе — виж защо в
+# коментара в началото на файла), с вграден "neon glow" halo (офсетнат
+# блъров дубликат зад острия текст) — после ffmpeg само анимира готовия
+# PNG (alpha/позиция), не рисува текст сам.
+
+FONTS_DIR = os.path.join("assets", "fonts")
+FONT_CHOICES = {
+    "montserrat": ("Montserrat.ttf", "Montserrat — чист, силен, модерен"),
+    "russoone": ("RussoOne.ttf", "Russo One — едър, футуристичен"),
+    "oswald": ("Oswald.ttf", "Oswald — тесен, елегантен"),
+    "unbounded": ("Unbounded.ttf", "Unbounded — обемен, трендов"),
+    "playfair": ("PlayfairDisplay.ttf", "Playfair Display — драматичен, лукс"),
+    "comfortaa": ("Comfortaa.ttf", "Comfortaa — заоблен, мек"),
+    "caveat": ("Caveat.ttf", "Caveat — ръкописен, личен"),
+    "badscript": ("BadScript.ttf", "Bad Script — елегантен ръкописен"),
+}
+DEFAULT_FONT_CHOICE = "russoone"
+
+TEXT_EFFECT_CHOICES = ("static_glow", "glow_pulse", "blink_neon", "slide_in", "typewriter", "shake")
+DEFAULT_TEXT_EFFECT = "glow_pulse"
+
+
+def resolve_font_path(font_choice: str) -> str:
+    filename, _ = FONT_CHOICES.get(font_choice, FONT_CHOICES[DEFAULT_FONT_CHOICE])
+    path = os.path.join(FONTS_DIR, filename)
+    if os.path.isfile(path):
+        return path
+    log(f"⚠ шрифт {path} не е намерен — falling back към {DEFAULT_FONT_CHOICE}")
+    return os.path.join(FONTS_DIR, FONT_CHOICES[DEFAULT_FONT_CHOICE][0])
+
+
+def build_overlay_text_png(text: str, font_path: str, primary_hex: str, out_path: str,
+                            max_width=940, max_font=140, min_font=54) -> tuple:
+    """Рисува потребителския текст върху прозрачен PNG: neon glow halo
+    (замъглен дубликат в primary_hex) + остър бял текст с черен контур
+    отгоре (четимост върху всякаква снимка). Автоматично намалява размера
+    на шрифта, докато текстът се събере в <=3 реда до max_width. Връща
+    (width, height) на готовия PNG — нужно за overlay позиционирането."""
+    color = hex_to_rgb(primary_hex)
+    pad = 60
+    size = max_font
+    lines = [text]
+    font = ImageFont.truetype(font_path, size)
+    while size > min_font:
+        font = ImageFont.truetype(font_path, size)
+        avg_char_w = max(1.0, font.getlength("АБВГДЕ ") / 7)
+        wrap_chars = max(4, int(max_width / avg_char_w))
+        lines = textwrap.wrap(text, width=wrap_chars) or [text]
+        if len(lines) <= 3 and max(font.getlength(l) for l in lines) <= max_width:
+            break
+        size -= 4
+
+    line_h = int(size * 1.22)
+    canvas_w = max_width + pad * 2
+    canvas_h = line_h * len(lines) + pad * 2
+
+    # 1) glow halo — текстът изчертан в primary цвета, силно замъглен, зад острия
+    glow = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    y = pad
+    for line in lines:
+        w = font.getlength(line)
+        gd.text(((canvas_w - w) / 2, y), line, font=font, fill=color + (255,))
+        y += line_h
+    glow = glow.filter(ImageFilter.GaussianBlur(radius=max(6, size * 0.09)))
+
+    canvas = Image.alpha_composite(Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0)), glow)
+
+    # 2) остър текст — бял, с дебел черен контур (чете се върху всякаква снимка)
+    sharp = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sharp)
+    y = pad
+    outline_w = max(2, size // 22)
+    for line in lines:
+        w = font.getlength(line)
+        sd.text(((canvas_w - w) / 2, y), line, font=font, fill=(255, 255, 255, 255),
+                 stroke_width=outline_w, stroke_fill=(0, 0, 0, 235))
+        y += line_h
+    canvas = Image.alpha_composite(canvas, sharp)
+
+    canvas.save(out_path)
+    return canvas_w, canvas_h
+
+
+def build_text_effect_fragment(effect: str, i_overlay: int, prev_label: str, out_label: str, y=190) -> str:
+    """Връща filter_complex ФРАГМЕНТ, който overlay-ва [i_overlay:v] (веднъж
+    рисуваният PNG от build_overlay_text_png) върху [prev_label], анимиран
+    според избрания ефект, и завършва с [out_label]. Всички изрази са
+    проверени реално с ffmpeg (виж чат историята на промяната) — 'geq' се
+    ползва за динамична alpha-модулация, защото colorchannelmixer НЯМА
+    per-frame eval на този ffmpeg build (само timeline commands)."""
+    base = f"[{i_overlay}:v]format=rgba[ovraw]"
+    if effect == "glow_pulse":
+        aexpr = "alpha(X,Y)*(0.62+0.38*sin(2*PI*T/1.3))"
+        return (f"{base};[ovraw]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='{aexpr}'[ovtxt]"
+                f";\n[{prev_label}][ovtxt]overlay=(W-w)/2:{y}:format=auto[{out_label}]")
+    if effect == "blink_neon":
+        aexpr = "alpha(X,Y)*if(lt(mod(T,1.1),0.75),1,0.18)"
+        return (f"{base};[ovraw]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='{aexpr}'[ovtxt]"
+                f";\n[{prev_label}][ovtxt]overlay=(W-w)/2:{y}:format=auto[{out_label}]")
+    if effect == "slide_in":
+        aexpr = "alpha(X,Y)*if(lt(T,0.9),T/0.9,1)"
+        yexpr = f"if(lt(t,0.9),{y}+420*(0.9-t)*(0.9-t)/0.81,{y})"
+        return (f"{base};[ovraw]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='{aexpr}'[ovtxt]"
+                f";\n[{prev_label}][ovtxt]overlay=x=(W-w)/2:y='{yexpr}':format=auto[{out_label}]")
+    if effect == "typewriter":
+        cexpr = "if(lt(t,1.3),max(2,iw*t/1.3),iw)"
+        return (f"{base};[ovraw]crop=w='{cexpr}':h=ih:x=0:y=0[ovtxt]"
+                f";\n[{prev_label}][ovtxt]overlay=(W-w)/2:{y}:format=auto[{out_label}]")
+    if effect == "shake":
+        return (f"{base};[ovraw]null[ovtxt]"
+                f";\n[{prev_label}][ovtxt]overlay=x='(W-w)/2+6*sin(2*PI*t*5)':y='{y}+3*cos(2*PI*t*6)':format=auto[{out_label}]")
+    # static_glow (по подразбиране / fallback) — без анимация, само неподвижен halo
+    return f"{base};[ovraw]null[ovtxt];\n[{prev_label}][ovtxt]overlay=(W-w)/2:{y}:format=auto[{out_label}]"
 
 
 THEME_BUILDERS = {
@@ -427,10 +582,21 @@ def render(args) -> dict:
         log(f"⏬ свалям обложка: {args.cover_url}")
         download(args.cover_url, cover_path)
 
-        log("🤖 Gemini AI анализ...")
+        log(f"🤖 Gemini AI анализ (STB Search-Phase keyword)...")
         cfg = director.analyze(audio_path, args.song_title, args.artist_name)
-        theme = cfg["theme"]
-        log(f"   тема: {theme} | цветове: {cfg['primary_color']} / {cfg['secondary_color']}")
+        log(f"   search_keyword: \"{cfg.get('search_keyword', '')}\"")
+        ai_theme = cfg["theme"]
+        # video_style="auto" (или непознат ключ) → AI-то решава (cfg["theme"]);
+        # иначе потребителят е избрал КОНКРЕТЕН стил от падащото меню — форсираме
+        # го тук, останалата част от cfg (цветове/заглавие/описание/hashtags/
+        # hook) си остава от AI анализа непроменена.
+        video_style = getattr(args, "video_style", "auto") or "auto"
+        if video_style != "auto" and video_style in THEME_BUILDERS:
+            theme = video_style
+            log(f"   тема: {theme} (ръчно избрана, AI предлагаше '{ai_theme}') | цветове: {cfg['primary_color']} / {cfg['secondary_color']}")
+        else:
+            theme = ai_theme
+            log(f"   тема: {theme} (AI избор) | цветове: {cfg['primary_color']} / {cfg['secondary_color']}")
 
         log("🥁 извличам bass-envelope за beat-flash...")
         cmds_path = os.path.join(tmp, "beat_flash_cmds.txt")
@@ -473,10 +639,18 @@ def render(args) -> dict:
             "add_input": add_input,
             "cmds_esc": ffmpeg_escape_path(cmds_path),
             "beat_times": beat_times,
+            "has_beats": n_beats > 0,
         }
 
+        # Бавен, непрекъснат Ken Burns зуум (0% → 6% за първите 20 сек) върху
+        # фоновия слой — точно "професионален монтаж" усещането, което липсваше
+        # (статична снимка изглежда любителски). scale с eval=frame преизчислява
+        # израза всеки кадър ('t' е наличен само с eval=frame — виж ffmpeg -h
+        # filter=scale); crop-нато центрирано, за да не се вижда ръб.
         bg = (
-            f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+            f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}[bg0]"
+            f";\n[bg0]scale=w='iw*(1+0.06*min(t/20,1))':h='ih*(1+0.06*min(t/20,1))':eval=frame[bg1]"
+            f";\n[bg1]crop={W}:{H}:x='(in_w-{W})/2':y='(in_h-{H})/2',"
             f"gblur=sigma={cfg['blur_amount']},eq=brightness={cfg['brightness']}[bg]"
         )
         theme_fragment = THEME_BUILDERS[theme](ctx)
@@ -484,7 +658,10 @@ def render(args) -> dict:
         # circular_glow и glitch_aesthetics си карат собствен sendcmd/beat ефект
         # ВЪТРЕ в темата (halo pulse / rgbashift), затова НЕ прилагаме и общия
         # whole-frame beat-flash отгоре — би дублирало ефекта до претрупване.
-        if theme in ("circular_glow", "glitch_aesthetics"):
+        # (виж коментара в theme_circular_glow) — sendcmd с празен cmds файл
+        # (0 засечени бас удара) гърми целия ffmpeg процес, затова тук СЪЩО
+        # пропускаме флаш слоя изцяло, ако beat детекторът не е намерил нищо.
+        if theme in ("circular_glow", "glitch_aesthetics") or not ctx["has_beats"]:
             post_theme_label = "themed"
         else:
             theme_fragment += f";\n[themed]sendcmd=f={ctx['cmds_esc']},eq=brightness=0[flashed]"
@@ -504,15 +681,24 @@ def render(args) -> dict:
         else:
             log(f"⚠ лого не е намерено ({args.logo}) — пропускам брандинг слоя")
 
-        # Auto-Hook Intro (първите 3 секунди), fade in/out.
-        hook_text = cfg["hook_text"].replace("'", "\u2019").replace(":", "\uFF1A")
-        hook_fragment = (
-            f";\n[{final_pre_ass}]drawtext=text='{hook_text}':fontsize=64:"
-            f"fontcolor={cfg['primary_color']}:borderw=4:bordercolor=black@0.8:"
-            f"x=(w-text_w)/2:y=180:"
-            f"alpha='if(lt(t,0.3),t/0.3,if(lt(t,2.6),1,if(lt(t,3),(3-t)/0.4,0)))'"
-            f"[hooked]"
-        )
+        # Текст върху обложката — потребителят го пише РЪЧНО (виж index.html
+        # #ssOverlayText, задължително поле в UI). Ако все пак дойде празно
+        # (defensive coding — UI-то валидира, но скриптът не бива да гърми),
+        # падаме назад към AI-генерирания hook_text от Gemini анализа.
+        overlay_text_raw = (getattr(args, "overlay_text", "") or "").strip()
+        overlay_text = overlay_text_raw or cfg["hook_text"]
+        font_choice = getattr(args, "font_choice", DEFAULT_FONT_CHOICE) or DEFAULT_FONT_CHOICE
+        text_effect = getattr(args, "text_effect", DEFAULT_TEXT_EFFECT) or DEFAULT_TEXT_EFFECT
+        if text_effect not in TEXT_EFFECT_CHOICES:
+            text_effect = DEFAULT_TEXT_EFFECT
+        font_path = resolve_font_path(font_choice)
+        log(f"✍️ текст върху обложката: \"{overlay_text}\" | шрифт={font_choice} | ефект={text_effect}"
+            + (" (AI fallback, полето беше празно)" if not overlay_text_raw else ""))
+
+        overlay_png = os.path.join(tmp, "overlay_text.png")
+        build_overlay_text_png(overlay_text, font_path, cfg["primary_color"], overlay_png)
+        i_overlaytxt = add_input(overlay_png, loop=True)
+        hook_fragment = ";\n" + build_text_effect_fragment(text_effect, i_overlaytxt, final_pre_ass, "hooked")
 
         ass_esc = ffmpeg_escape_path(ass_path)
         subs_fragment = f";\n[hooked]ass='{ass_esc}'[vout]"
@@ -542,10 +728,14 @@ def render(args) -> dict:
             "title": cfg["title"],
             "description": cfg["description"],
             "hashtags": cfg["hashtags"],
+            "search_keyword": cfg.get("search_keyword", ""),
             "theme": theme,
             "primary_color": cfg["primary_color"],
             "secondary_color": cfg["secondary_color"],
             "beats_detected": n_beats,
+            "overlay_text": overlay_text,
+            "font_choice": font_choice,
+            "text_effect": text_effect,
         }
     finally:
         if not args.keep_tmp:
@@ -600,6 +790,11 @@ def main() -> int:
     ap.add_argument("--output", required=True, help="изходен .mp4 път")
     ap.add_argument("--logo", default="assets/cdb_logo.png")
     ap.add_argument("--whisper-model", default="small")
+    ap.add_argument("--overlay-text", default="", help="текст, който потребителят е написал ръчно за върху обложката (ако е празно — AI fallback hook_text)")
+    ap.add_argument("--font-choice", default=DEFAULT_FONT_CHOICE, choices=list(FONT_CHOICES.keys()))
+    ap.add_argument("--text-effect", default=DEFAULT_TEXT_EFFECT, choices=list(TEXT_EFFECT_CHOICES))
+    ap.add_argument("--video-style", default="auto",
+                     help="'auto' = AI избира тема според настроението, или едно от: " + ", ".join(THEME_BUILDERS.keys()))
     ap.add_argument("--update-library", action="store_true",
                      help="обнови data/distrokid-library.json след успешен рендер")
     ap.add_argument("--report-json", default=None, help="запиши JSON отчет за workflow-а")

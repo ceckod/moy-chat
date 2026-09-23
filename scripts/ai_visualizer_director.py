@@ -68,18 +68,37 @@ VALID_THEMES = [
 
 HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
-PROMPT_TEMPLATE = """Ти си AI режисьор за вертикални (9:16) YouTube Shorts / TikTok видеа.
-Ще чуеш аудио откъс от песен на български изпълнител "{artist}" със заглавие
-"{song}". Анализирай жанра, темпото (BPM), енергията и емоцията на песента.
+PROMPT_TEMPLATE = """Ти си AI режисьор и YouTube growth стратег за вертикални (9:16)
+YouTube Shorts / TikTok видеа. Ще чуеш аудио откъс от песен на български
+изпълнител "{artist}" със заглавие "{song}". Анализирай жанра, темпото
+(BPM), енергията и емоцията на песента.
+
+ВАЖНО за title/description/hashtags — прилагай техниката "Search-to-Browse
+(STB)" (стандартна стратегия за малки/нови канали да пробият YouTube
+алгоритъма чрез Search Phase, преди Browse Phase да ги подхване):
+- Избери ЕДНА конкретна, ниско-конкурентна търсеща фраза (search_keyword),
+  съобразена с жанр/настроение/изпълнител (напр. "българска трап балада",
+  "{artist} нова песен", конкретен жанр+емоция комбо) — нещо, което реален
+  зрител би написал в YouTube search, не генерична дума.
+- "title": постави search_keyword В НАЧАЛОТО на заглавието (front-load),
+  после кратка кукичка/емоция. До 60 символа.
+- "description": ПЪРВИТЕ 1-2 изречения трябва да повтарят/затвърждават
+  search_keyword директно (YouTube претегля силно първите редове), после
+  1 кратко изречение с emotional hook, и ЗАДЪЛЖИТЕЛНО завърши с кратък
+  Call-To-Action за абониране/гледане на следващо видео (session watch
+  time) — напр. "Абонирай се за повече!" или сходно на български.
+- "hashtags": подравни ги със search_keyword и жанра (не генерични
+  #fyp/#viral без връзка с темата) — те засилват search relevance.
 
 Върни САМО валиден JSON обект (без markdown, без ```json блок, без никакъв
 друг текст преди или след), с точно следните полета:
 
 {{
-  "title": "кратко, привличащо заглавие за Shorts (до 60 символа)",
-  "description": "1-2 изречения описание за описанието на видеото",
+  "search_keyword": "конкретната ниско-конкурентна търсеща фраза (STB Search Phase)",
+  "title": "заглавие, започващо със search_keyword (до 60 символа)",
+  "description": "1-2 изр. потвърждаващи search_keyword + emotional hook + CTA за абонамент",
   "hook_text": "текст-кука за първите 3 секунди на видеото (напр. 'Чуй баса на 0:15!')",
-  "hashtags": ["до 8 хаштага, релевантни за жанра/настроението, с # отпред"],
+  "hashtags": ["до 8 хаштага, релевантни за search_keyword/жанра/настроението, с # отпред"],
   "theme": "точно едно от: {themes}",
   "primary_color": "#RRGGBB — основен неонов цвят, съобразен с жанра/енергията",
   "secondary_color": "#RRGGBB — вторичен/допълващ цвят за градиент",
@@ -132,6 +151,7 @@ def _validate(cfg: dict) -> dict:
     cfg.setdefault("hook_text", "")
     cfg.setdefault("genre", "")
     cfg.setdefault("mood", "")
+    cfg.setdefault("search_keyword", "")
     try:
         cfg["tempo_bpm"] = int(float(cfg.get("tempo_bpm", 0))) or None
     except (TypeError, ValueError):
@@ -142,12 +162,18 @@ def _validate(cfg: dict) -> dict:
 def fallback(song: str, artist: str, reason: str) -> dict:
     """Детерминиран, винаги-валиден резултат — БЕЗ мрежа, БЕЗ Gemini. Темата се
     избира стабилно (hash на заглавието), за да не е винаги първата в списъка,
-    ако fallback-ът се задейства за много песни подред."""
+    ако fallback-ът се задейства за много песни подред. Заглавие/описание
+    следват същия STB (Search-to-Browse) принцип като Gemini промпта —
+    search_keyword front-loaded в заглавието, описанието го потвърждава +
+    завършва с CTA за абонамент (виж PROMPT_TEMPLATE по-горе за пълния контекст)."""
     print(f"⚠ ai_visualizer_director: fallback ({reason})", file=sys.stderr)
     theme = VALID_THEMES[abs(hash(song or artist)) % len(VALID_THEMES)]
+    keyword = f"{artist} нова песен" if artist else "нова българска песен"
     return {
-        "title": f"{artist} — {song}" if artist and song else (song or artist or "Ново парче"),
-        "description": f"Ново парче от {artist}." if artist else "Ново парче.",
+        "search_keyword": keyword,
+        "title": f"{keyword} — {song}" if song else keyword,
+        "description": f"{keyword[:1].upper()}{keyword[1:]} — \"{song}\" е тук! 🔥 Абонирай се за повече!" if song
+                        else f"{keyword[:1].upper()}{keyword[1:]} тук! 🔥 Абонирай се за повече!",
         "hook_text": "Чуй това! 🔥",
         "hashtags": ["#music", "#newmusic", "#shorts", "#cdbrecords"],
         "theme": theme,

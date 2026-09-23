@@ -995,6 +995,12 @@ const ShortsStudio = {
     const song = (songNameEl && songNameEl.value.trim()) || this.audioFile.name.replace(/\.[^/.]+$/, "");
     const artist = (artistEl && artistEl.value.trim()) || "";
     if (!artist) return toast("❌ Въведи \"Артист/канал\" — нужно е за обложката и метаданните.");
+    const overlayTextEl = document.getElementById("ssOverlayText");
+    const overlayText = (overlayTextEl && overlayTextEl.value.trim()) || "";
+    if (!overlayText) return toast("❌ Напиши текста, който да излезе върху обложката (полето \"✍️ Текст върху обложката\").");
+    const fontChoice = document.getElementById("ssFontChoice")?.value || "russoone";
+    const textEffect = document.getElementById("ssTextEffect")?.value || "glow_pulse";
+    const videoStyle = document.getElementById("ssVideoStyle")?.value || "auto";
     if (!useRelay && this.audioFile.size > 90 * 1024 * 1024) {
       return toast("❌ Файлът е над ~90MB, а Relay не е конфигуриран (Настройки → API Ключове → \"🎬 Shorts Relay\") — Contents API пътят не е сигурен над този размер. Виж scripts/shorts-relay-server/README.md.", 8000);
     }
@@ -1045,7 +1051,10 @@ const ShortsStudio = {
         return;
       }
       this.log("🎬 Тригвам сървърния рендер (GitHub Actions)...");
-      const result = await ShortsProRender.dispatch({ song, artist, audio_url: audioAsset.url, cover_url: coverUrl });
+      const result = await ShortsProRender.dispatch({
+        song, artist, audio_url: audioAsset.url, cover_url: coverUrl,
+        overlay_text: overlayText, font_choice: fontChoice, text_effect: textEffect, video_style: videoStyle,
+      });
 
       // Чистене на временните файлове/release-а — best-effort, НЕ блокира
       // резултата за потребителя. Правим го СЛЕД dispatch()-а завършва (не
