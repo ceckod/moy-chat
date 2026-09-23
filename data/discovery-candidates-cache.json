@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:49.375367+00:00"
+      "last_search_at": "2026-09-23T15:14:51.688032+00:00"
     },
     "rap": {
       "candidates": [
@@ -1507,7 +1507,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:51.204030+00:00"
+      "last_search_at": "2026-09-23T15:14:53.352571+00:00"
     },
     "pop": {
       "candidates": [
@@ -2145,7 +2145,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:52.119476+00:00"
+      "last_search_at": "2026-09-23T15:14:54.088915+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2660,7 +2660,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:53.217418+00:00"
+      "last_search_at": "2026-09-23T15:14:54.878158+00:00"
     },
     "dance": {
       "candidates": [
@@ -3377,9 +3377,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "6Db-cEgbmC4",
+          "title": "Dj Goja x Jason Derulo x Melody - Mi Chico (Official Music Video)",
+          "channel": "Jason Derulo",
+          "published_at": "2026-06-26T16:00:06Z",
+          "views": 66232956,
+          "duration_seconds": 130,
+          "discovered_at": "2026-09-23T15:14:55.487945+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:54.085188+00:00"
+      "last_search_at": "2026-09-23T15:14:55.488115+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4633,7 +4646,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-22T15:17:50.273237+00:00"
+      "last_search_at": "2026-09-23T15:14:52.494671+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
