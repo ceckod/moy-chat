@@ -44,6 +44,21 @@ on:
       artist_name:
         description: "Име на изпълнителя"
         required: true
+      overlay_text:
+        description: "Текст, който потребителят е написал ръчно за върху обложката (празно = AI fallback)"
+        required: false
+      font_choice:
+        description: "Ключ на шрифта (виж FONT_CHOICES в scripts/render_short_ffmpeg.py)"
+        required: false
+        default: "russoone"
+      text_effect:
+        description: "Ефект на надписа (glow_pulse/blink_neon/slide_in/shake/typewriter/static_glow)"
+        required: false
+        default: "glow_pulse"
+      video_style:
+        description: "'auto' (AI избира) или конкретна тема от THEME_BUILDERS"
+        required: false
+        default: "auto"
   schedule:
     # Всеки ден в 09:00 UTC — коригирай по желание. За да СПРЕШ автоматичния
     # режим без да пипаш кода, просто изтрий/закоментирай тези 2 реда.
@@ -61,6 +76,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Нужен за автентикирано сваляне на audio_url/cover_url от
+      # raw.githubusercontent.com, когато repo-то е PRIVATE — виж коментара
+      # при GH_TOKEN/download() в scripts/render_short_ffmpeg.py. GITHUB_TOKEN
+      # се инжектира автоматично от Actions, не е нужно да го създаваш сам.
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
