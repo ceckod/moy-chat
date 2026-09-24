@@ -69,6 +69,25 @@ LIBRARY_JSON = os.path.join("data", "distrokid-library.json")
 # да не излезе). За PUBLIC repo хедърът е просто излишен, не пречи.
 GH_TOKEN = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
 
+import re as _re  # noqa: E402
+_RAW_GH_RE = _re.compile(r"^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$")
+
+
+def _rewrite_raw_github_url(url: str) -> str:
+    """raw.githubusercontent.com НЕ приема надеждно ephemeral Actions
+    GITHUB_TOKEN за PRIVATE repo — CDN-ът връща 404, сякаш изобщо няма
+    Authorization хедър (реално потвърдено — виж чат историята на
+    промяната). Заобикаляме, като пренасочваме към истинското REST API
+    (api.github.com/repos/.../contents/...) с Accept: application/vnd.
+    github.raw — то приема Actions token-а коректно и връща същите байтове."""
+    m = _RAW_GH_RE.match(url)
+    if not m:
+        return url
+    owner, repo, ref, path = m.groups()
+    from urllib.parse import quote, urlencode
+    safe_path = "/".join(quote(seg) for seg in path.split("/"))
+    return f"https://api.github.com/repos/{owner}/{repo}/contents/{safe_path}?{urlencode({'ref': ref})}"
+
 
 # ───────────────────────── помощни общи функции ─────────────────────────
 
@@ -77,9 +96,13 @@ def log(msg: str) -> None:
 
 
 def download(url: str, dest: str, timeout=120) -> str:
+    if GH_TOKEN and url.startswith("https://raw.githubusercontent.com/"):
+        url = _rewrite_raw_github_url(url)
     headers = {}
     if GH_TOKEN and ("githubusercontent.com" in url or "api.github.com" in url):
         headers["Authorization"] = f"Bearer {GH_TOKEN}"
+        if "api.github.com/repos/" in url and "/contents/" in url:
+            headers["Accept"] = "application/vnd.github.raw"
     try:
         r = requests.get(url, stream=True, timeout=timeout, headers=headers)
         r.raise_for_status()
