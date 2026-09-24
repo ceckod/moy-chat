@@ -97,7 +97,20 @@ jobs:
           ffmpeg -version | head -1
 
       - name: Инсталирай Python зависимости (requests, numpy, scipy, pillow, openai-whisper, torch CPU)
-        run: pip install -r scripts/requirements-shorts.txt
+        # openai-whisper==20231117 е стар пакет БЕЗ pyproject.toml (legacy
+        # setup.py build), който при build-ване прави `import pkg_resources`.
+        # Най-новите setuptools версии (81+) ГО ПРЕМАХНАХА напълно от пакета
+        # си → "ModuleNotFoundError: No module named 'pkg_resources'" при
+        # "Getting requirements to build wheel" на GitHub Actions runner-а
+        # (реално тествано и потвърдено — виж чат историята на промяната).
+        # Фиксът е ПИННАТА по-стара версия setuptools<81 (последната, която
+        # още носи pkg_resources), ПРЕДИ да инсталираме requirements файла;
+        # --no-build-isolation кара pip да ползва точно тази версия при
+        # build-ването на openai-whisper, вместо да сваля друга в изолирана
+        # temp среда.
+        run: |
+          pip install --upgrade pip "setuptools<81" wheel
+          pip install --no-build-isolation -r scripts/requirements-shorts.txt
 
       - name: Определи входните данни (ръчно от таблото ИЛИ автоматично по cron)
         id: pick
