@@ -594,7 +594,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:51.688032+00:00"
+      "last_search_at": "2026-09-25T15:41:34.376433+00:00"
     },
     "rap": {
       "candidates": [
@@ -1505,9 +1505,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "fIXxif7ud4A",
+          "title": "Ragalor ft Laga - BORN TO FIGHT 🔥| Epic Viking Rap | Viking Song | Viking Duet🔥",
+          "channel": "Ragalor",
+          "published_at": "2026-05-17T11:00:53Z",
+          "views": 4305766,
+          "duration_seconds": 213,
+          "discovered_at": "2026-09-25T15:41:35.907634+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "gFnnNiaCpNc",
+          "title": "GHAMANDA NAGAR 😡 | VTEN  | New Nepali Hip Hop Song 2026",
+          "channel": "SK Music Vibes",
+          "published_at": "2026-06-28T06:15:05Z",
+          "views": 169230,
+          "duration_seconds": 227,
+          "discovered_at": "2026-09-25T15:41:35.907656+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:53.352571+00:00"
+      "last_search_at": "2026-09-25T15:41:35.907759+00:00"
     },
     "pop": {
       "candidates": [
@@ -2145,7 +2171,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:54.088915+00:00"
+      "last_search_at": "2026-09-25T15:41:36.542858+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2660,7 +2686,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:54.878158+00:00"
+      "last_search_at": "2026-09-25T15:41:37.288504+00:00"
     },
     "dance": {
       "candidates": [
@@ -3392,7 +3418,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:55.488115+00:00"
+      "last_search_at": "2026-09-25T15:41:37.924564+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4644,9 +4670,61 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "YSuoXkP4RVY",
+          "title": "How To Make A Full Suno AI Music Video In Under 5 Minutes",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-23T23:00:28Z",
+          "views": 5269,
+          "duration_seconds": 402,
+          "discovered_at": "2026-09-25T15:41:35.099767+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "gcHnXUd3gkM",
+          "title": "I Made a Full Suno AI Music Video in 3 MINUTES (Plus Shorts)",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-24T21:00:23Z",
+          "views": 3892,
+          "duration_seconds": 432,
+          "discovered_at": "2026-09-25T15:41:35.099771+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "kxKwsVszygo",
+          "title": "Adele ft. Sia - She's a Fighter (AI Music Video)",
+          "channel": "Glitch Music",
+          "published_at": "2026-05-10T13:07:21Z",
+          "views": 224872,
+          "duration_seconds": 268,
+          "discovered_at": "2026-09-25T15:41:35.099779+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "4jp5dMQyj1A",
+          "title": "\"လေလွင်းခြင်း လမ်းမများ Ai\" ဆို-Ai တေးရေး-မြင့်မိုးအောင် #aimusic #song #burmesemusic #myanmar ",
+          "channel": "Ban Ban Music Studio",
+          "published_at": "2026-04-20T11:30:11Z",
+          "views": 488140,
+          "duration_seconds": 223,
+          "discovered_at": "2026-09-25T15:41:35.099803+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-23T15:14:52.494671+00:00"
+      "last_search_at": "2026-09-25T15:41:35.099905+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5390,9 +5468,42 @@
           "used_in": [
             "Bulgarian Hip-Hop"
           ]
+        },
+        {
+          "video_id": "AAz_PeIZs90",
+          "title": "NAKATA - OLD TOWN ( Trap / Bulgarian Folk )",
+          "channel": "Nakata Music",
+          "published_at": "2026-09-06T10:00:04Z",
+          "views": 18,
+          "duration_seconds": 123,
+          "discovered_at": "2026-09-25T15:41:38.609374+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "VA-iQC6EphY",
+          "title": "Ecce Homo | Dark bulgarian hip-hop/ rap song",
+          "channel": "Urantia",
+          "published_at": "2026-04-28T23:09:04Z",
+          "views": 11,
+          "duration_seconds": 154,
+          "discovered_at": "2026-09-25T15:41:38.609393+00:00",
+          "status": "unused",
+          "used_in": []
+        },
+        {
+          "video_id": "wS5QgfvXUxc",
+          "title": "ЛЯТОТО НЕ СПИ 🌴 | Bulgarian Summer Rap 2026",
+          "channel": "APD Sound",
+          "published_at": "2026-05-17T08:51:14Z",
+          "views": 78,
+          "duration_seconds": 164,
+          "discovered_at": "2026-09-25T15:41:38.609397+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-17T15:22:40.329300+00:00"
+      "last_search_at": "2026-09-25T15:41:38.609506+00:00"
     },
     "bulgarian-folk": {
       "candidates": [
@@ -5818,7 +5929,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-17T15:22:41.066287+00:00"
+      "last_search_at": "2026-09-25T15:41:39.253781+00:00"
     }
   }
 }
