@@ -55,7 +55,7 @@
    ============================================================ */
 
 const SHORTS_PRO_WORKFLOW_FILE = "render-pro-short.yml";
-const SHORTS_PRO_FIND_RUN_TIMEOUT_MS = 60 * 1000;     // до 1 мин да намерим run_id-то
+const SHORTS_PRO_FIND_RUN_TIMEOUT_MS = 90 * 1000;     // до 1.5 мин да намерим run_id-то (safety margin)
 const SHORTS_PRO_FIND_RUN_POLL_MS = 4000;
 const SHORTS_PRO_STATUS_POLL_MS = 15000;
 const SHORTS_PRO_TIMEOUT_MS = 20 * 60 * 1000;         // Whisper+FFmpeg може да отнеме повече от mastering-а
@@ -126,9 +126,9 @@ const ShortsProRender = (() => {
     const run = await findOurRun(k, entry.song, dispatchedAt, myToken);
     if (!run) {
       if (myToken === currentDispatchToken) {
-        toast("⚠ Тригнато е, но не намерих run-а автоматично — провери Actions таба ръчно.", 8000);
+        toast("⚠ Тригнато е и рендерът вероятно РАБОТИ нормално в GitHub Actions — само не успях да го проследя автоматично тук. Провери Actions таба на repo-то си ръчно (не значи, че се е провалил).", 10000);
       }
-      return null;
+      return { ok: false, reason: "not_found" }; // НЕ значи провал — само не успяхме да проследим run-а автоматично, виж runProRender() в shorts-studio.js
     }
 
     toast(`⏳ Рендиране в процес (run #${run.run_number})...`);
@@ -151,7 +151,12 @@ const ShortsProRender = (() => {
           const data = await res.json();
           const candidate = (data.workflow_runs || []).find((r) => {
             const created = new Date(r.created_at).getTime();
-            return created >= dispatchedAt - 10000 && (r.name || "").includes(songTitle);
+            // r.name е СТАТИЧНОТО име на workflow-а (yml "name:" — еднакво за
+            // ВСЕКИ run, никога не съдържа песента!) — динамичният "run-name:"
+            // (напр. 'AI Short: Пак 2') идва в r.display_title. Проверяваме и
+            // двете полета за сигурност (различни API версии/бъдещи промени).
+            const haystack = `${r.display_title || ""} ${r.name || ""}`;
+            return created >= dispatchedAt - 10000 && haystack.includes(songTitle);
           });
           if (candidate) return candidate;
         }

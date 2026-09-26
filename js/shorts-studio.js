@@ -1067,7 +1067,11 @@ const ShortsStudio = {
       }
 
       if (!result || !result.ok) {
-        this.log("❌ Рендерът не завърши успешно (виж toast-а по-горе за подробности).");
+        if (result && result.reason === "not_found") {
+          this.log("ℹ️ Не успях да проследя run-а автоматично тук, но той вероятно РАБОТИ нормално в GitHub Actions в момента (Whisper+FFmpeg отнема няколко минути) — провери Actions таба на repo-то си директно. Видеото ще се появи там като готов artifact, дори това табло да не го е хванало.");
+        } else {
+          this.log("❌ Рендерът не завърши успешно (виж toast-а по-горе за подробности).");
+        }
         return;
       }
       if (!result.videoBlob) {
