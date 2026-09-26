@@ -592,9 +592,35 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "Txu6OIOWuGk",
+          "title": "Kevin Gates & Kehlani – Still Choose You | Melodic Trap & R&B Love Song",
+          "channel": "Gates District",
+          "published_at": "2026-08-02T20:00:06Z",
+          "views": 382223,
+          "duration_seconds": 369,
+          "discovered_at": "2026-09-26T14:48:57.623783+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
+        },
+        {
+          "video_id": "KOdmlV1S1Qk",
+          "title": "Shape Of My Heart",
+          "channel": "AYA MUSIC OFC - Topic",
+          "published_at": "2026-05-29T10:02:01Z",
+          "views": 1095185,
+          "duration_seconds": 251,
+          "discovered_at": "2026-09-26T14:48:57.623806+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:34.376433+00:00"
+      "last_search_at": "2026-09-26T14:48:57.623961+00:00"
     },
     "rap": {
       "candidates": [
@@ -1533,7 +1559,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:35.907759+00:00"
+      "last_search_at": "2026-09-26T14:48:59.172074+00:00"
     },
     "pop": {
       "candidates": [
@@ -2171,7 +2197,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:36.542858+00:00"
+      "last_search_at": "2026-09-26T14:49:00.040001+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2684,9 +2710,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "o7t7X500O3o",
+          "title": "rares x Ursaru - Regele pe reggaeton (Official Music Video)",
+          "channel": "rares",
+          "published_at": "2026-05-08T12:03:12Z",
+          "views": 3455154,
+          "duration_seconds": 124,
+          "discovered_at": "2026-09-26T14:49:01.662206+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:37.288504+00:00"
+      "last_search_at": "2026-09-26T14:49:01.662346+00:00"
     },
     "dance": {
       "candidates": [
@@ -3418,7 +3457,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:37.924564+00:00"
+      "last_search_at": "2026-09-26T14:49:02.516162+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4722,9 +4761,35 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "QRxSZJhM-90",
+          "title": "How To Make Suno AI Music Videos With Celebrities (Michael Jackson Tutorial)",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-09-26T00:00:22Z",
+          "views": 2516,
+          "duration_seconds": 478,
+          "discovered_at": "2026-09-26T14:48:58.414184+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "cgprKvWN5T8",
+          "title": "Kim《長大以後真的好嗎？》Official AI Music Video｜全片以 AI 打造的原創 MV",
+          "channel": "那對夫妻",
+          "published_at": "2026-09-25T11:02:25Z",
+          "views": 18548,
+          "duration_seconds": 245,
+          "discovered_at": "2026-09-26T14:48:58.414242+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:35.099905+00:00"
+      "last_search_at": "2026-09-26T14:48:58.414351+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5001,9 +5066,20 @@
           "discovered_at": "2026-09-20T14:24:13.177522+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "eHcfKGdzDjM",
+          "title": "Sanya Armoutlieva Biography: The Woman Who Helped Build Bulgaria’s Pop Music Industry",
+          "channel": "Titan007",
+          "published_at": "2026-05-18T20:22:33Z",
+          "views": 156,
+          "duration_seconds": 180,
+          "discovered_at": "2026-09-26T14:49:00.745004+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-20T14:24:13.177641+00:00"
+      "last_search_at": "2026-09-26T14:49:00.745141+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [

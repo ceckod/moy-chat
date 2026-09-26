@@ -3,22 +3,6 @@
   "notes": "Append-only лог на всеки run на youtube_discovery_engine.py (и dry runs). Пази се само последните 60 записа. Всеки run запис съдържа: run_id, started_at, dry_run, status (ok/partial_failure/error/paused), new_own_tracks, clusters_changed, playlists_created, tracks_added, tracks_removed, tracks_reordered, candidate_searches, no_changes (bool), quota_spent_units, quota_calls, errors[] (с playlist/op/video_id/error/at), warnings[] (напр. от verification несъответствия). Dashboard-ът чете това за 'API calls днес', 'нови песни намерени', 'добавени/премахнати/пренаредени' и т.н.",
   "runs": [
     {
-      "run_id": "abf42c90",
-      "started_at": "2026-08-16T11:06:17.977808+00:00",
-      "dry_run": false,
-      "status": "paused",
-      "new_own_tracks": 0,
-      "clusters_changed": [],
-      "playlists_created": 0,
-      "tracks_added": 0,
-      "tracks_removed": 0,
-      "tracks_reordered": 0,
-      "candidate_searches": 0,
-      "no_changes": false,
-      "errors": [],
-      "warnings": []
-    },
-    {
       "run_id": "54e78af4",
       "started_at": "2026-08-16T11:09:04.289499+00:00",
       "dry_run": false,
@@ -2806,6 +2790,60 @@
         "playlistItems.list",
         "search.list",
         "videos.list"
+      ]
+    },
+    {
+      "run_id": "7879febc",
+      "started_at": "2026-09-26T14:48:56.232151+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "r-b",
+        "ai-music",
+        "rap",
+        "pop",
+        "bulgarian-pop",
+        "reggaeton",
+        "bulgarian-hip-hop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 7,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [],
+      "quota_spent_units": 720,
+      "quota_calls": [
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "search.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list"
       ]
     }
   ]
