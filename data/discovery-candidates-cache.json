@@ -620,7 +620,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-26T14:48:57.623961+00:00"
+      "last_search_at": "2026-09-27T15:28:32.194348+00:00"
     },
     "rap": {
       "candidates": [
@@ -1557,9 +1557,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "W3XVXqExo_s",
+          "title": "BossMan Dlow - Nothin Like Me (Official Music Video)",
+          "channel": "BossMan Dlow",
+          "published_at": "2026-04-15T21:00:26Z",
+          "views": 4182809,
+          "duration_seconds": 131,
+          "discovered_at": "2026-09-27T15:28:34.050201+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "CwKb85C0ZuA",
+          "title": "Meek Mill - Nightmares To Dreams (Official Video)",
+          "channel": "Meek Mill",
+          "published_at": "2026-08-03T17:00:06Z",
+          "views": 5509077,
+          "duration_seconds": 189,
+          "discovered_at": "2026-09-27T15:28:34.050274+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-26T14:48:59.172074+00:00"
+      "last_search_at": "2026-09-27T15:28:34.050416+00:00"
     },
     "pop": {
       "candidates": [
@@ -2197,7 +2223,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-26T14:49:00.040001+00:00"
+      "last_search_at": "2026-09-27T15:28:34.889668+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2723,9 +2749,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "zaKFUkSxkyc",
+          "title": "Daddy Yankee Style - Baila Conmigo💥💃🏻 - Reggaeton 2026 | Emozik |  (Official Music Video)",
+          "channel": "Emozik",
+          "published_at": "2026-08-21T14:00:23Z",
+          "views": 602163,
+          "duration_seconds": 350,
+          "discovered_at": "2026-09-27T15:28:35.886678+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-09-26T14:49:01.662346+00:00"
+      "last_search_at": "2026-09-27T15:28:35.886830+00:00"
     },
     "dance": {
       "candidates": [
@@ -3457,7 +3496,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-26T14:49:02.516162+00:00"
+      "last_search_at": "2026-09-27T15:28:36.752956+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4789,7 +4828,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-26T14:48:58.414351+00:00"
+      "last_search_at": "2026-09-27T15:28:33.107052+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
