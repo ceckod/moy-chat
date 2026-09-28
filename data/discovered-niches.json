@@ -1,32 +1,47 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-21T14:54:32.977019+00:00",
+  "generated_at": "2026-09-28T16:31:58.438323+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
       "term": "falling reverse",
       "confirmed_by": [
-        "wikipedia"
+        "wikipedia",
+        "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
-      "term": "valhalla calling",
+      "term": "dolly babe",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "ragal ironbull",
+      "term": "pink blush",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "maluma shakira",
+      "term": "ich gebe",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "gebe dir",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "dir mein",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -34,14 +49,7 @@
       "confidence": "HIGH"
     },
     {
-      "term": "shakira agua",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "hip hop",
+      "term": "mein wort",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -49,35 +57,21 @@
       "confidence": "HIGH"
     },
     {
-      "term": "extra arte",
+      "term": "ich gebe dir",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "geile sau",
+      "term": "gebe dir mein",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "sau trotzdem",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "geile sau trotzdem",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "maluma shakira agua",
+      "term": "dir mein wort",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -85,14 +79,22 @@
       "confidence": "HIGH"
     },
     {
-      "term": "born again",
+      "term": "tee grizzley",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "bessan ismail",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "pooh shiesty",
+      "term": "taylor swift",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -100,12 +102,18 @@
       "confidence": "HIGH"
     },
     {
-      "term": "jai jai",
+      "term": "marnz malone",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
+    },
+    {
+      "term": "capital bra",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
     }
   ]
 }
