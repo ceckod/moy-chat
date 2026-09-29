@@ -633,7 +633,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:07.048431+00:00"
+      "last_search_at": "2026-09-29T16:42:17.816370+00:00"
     },
     "rap": {
       "candidates": [
@@ -1609,9 +1609,35 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "EqNPLPQ8530",
+          "title": "BIG30 - First Day Back",
+          "channel": "BIG30VEVO",
+          "published_at": "2026-08-25T18:00:06Z",
+          "views": 2680519,
+          "duration_seconds": 174,
+          "discovered_at": "2026-09-29T16:42:19.595437+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
+        },
+        {
+          "video_id": "fpr2AM8ziEs",
+          "title": "Shabang",
+          "channel": "Drake - Topic",
+          "published_at": "2026-05-15T04:00:17Z",
+          "views": 25418017,
+          "duration_seconds": 189,
+          "discovered_at": "2026-09-29T16:42:19.595445+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:08.500661+00:00"
+      "last_search_at": "2026-09-29T16:42:19.595560+00:00"
     },
     "pop": {
       "candidates": [
@@ -2247,9 +2273,35 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "MEf8erMTsGs",
+          "title": "Too Music Radio POP Hits | 2026' Hits Radio Live | Best Pop Songs Today - Pop Music 2025",
+          "channel": "Too Music",
+          "published_at": "2026-05-04T07:51:23Z",
+          "views": 224378,
+          "duration_seconds": null,
+          "discovered_at": "2026-09-29T16:42:20.358585+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
+        },
+        {
+          "video_id": "27C4pfRsf9g",
+          "title": "LE SSERAFIM (르세라핌) x ILLIT (아일릿) x KATSEYE (캣츠아이) 'ICONIC BY MISTAKE' Official MV",
+          "channel": "HYBE LABELS",
+          "published_at": "2026-06-10T14:58:06Z",
+          "views": 172236472,
+          "duration_seconds": 200,
+          "discovered_at": "2026-09-29T16:42:20.358593+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:09.297903+00:00"
+      "last_search_at": "2026-09-29T16:42:20.358755+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2790,7 +2842,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:10.193109+00:00"
+      "last_search_at": "2026-09-29T16:42:21.483180+00:00"
     },
     "dance": {
       "candidates": [
@@ -3522,7 +3574,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:10.896482+00:00"
+      "last_search_at": "2026-09-29T16:42:22.317692+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4880,7 +4932,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-28T18:19:07.829130+00:00"
+      "last_search_at": "2026-09-29T16:42:18.693695+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
