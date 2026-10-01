@@ -633,7 +633,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:23.267821+00:00"
+      "last_search_at": "2026-10-01T17:12:50.251042+00:00"
     },
     "rap": {
       "candidates": [
@@ -1635,9 +1635,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "ayNjC9vgwF4",
+          "title": "It’s Too Early for This Much Stupid 😂 (Funny Country Grit Rap)  #countrymusic #countrygrit #music",
+          "channel": "TrueTouchCreations",
+          "published_at": "2026-05-03T12:00:05Z",
+          "views": 418884,
+          "duration_seconds": 170,
+          "discovered_at": "2026-10-01T17:12:52.765312+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:25.169258+00:00"
+      "last_search_at": "2026-10-01T17:12:52.765419+00:00"
     },
     "pop": {
       "candidates": [
@@ -2301,7 +2314,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:26.294215+00:00"
+      "last_search_at": "2026-10-01T17:12:53.954007+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2842,7 +2855,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:27.316089+00:00"
+      "last_search_at": "2026-10-01T17:12:56.258236+00:00"
     },
     "dance": {
       "candidates": [
@@ -3574,7 +3587,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:28.111152+00:00"
+      "last_search_at": "2026-10-01T17:12:57.324431+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4930,9 +4943,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "Jny1ZsyDFmE",
+          "title": "Whitney Houston & Lionel Richie – If We Start Again ( 2026 AI Music Video )",
+          "channel": "TuneLyric Studio",
+          "published_at": "2026-09-29T19:30:22Z",
+          "views": 60839,
+          "duration_seconds": 574,
+          "discovered_at": "2026-10-01T17:12:51.655731+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-09-30T16:34:24.221441+00:00"
+      "last_search_at": "2026-10-01T17:12:51.655896+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5720,9 +5746,22 @@
           "discovered_at": "2026-09-25T15:41:38.609397+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "yqZkrhfFYCo",
+          "title": "10. Danny Boy FT. Ruthless Boy - Na granicata (Prod. Gansko Beats)",
+          "channel": "DoubleTrouble (044)",
+          "published_at": "2026-07-05T10:09:21Z",
+          "views": 566,
+          "duration_seconds": 191,
+          "discovered_at": "2026-10-01T17:12:58.327421+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Hip-Hop"
+          ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:38.609506+00:00"
+      "last_search_at": "2026-10-01T17:12:58.327514+00:00"
     },
     "bulgarian-folk": {
       "candidates": [
@@ -6146,9 +6185,22 @@
           "used_in": [
             "Bulgarian Folk"
           ]
+        },
+        {
+          "video_id": "vlhSpHqM4y0",
+          "title": "VandC - Blood Of The Balkans | Bulgarian Folk Metal",
+          "channel": "VAndC Music",
+          "published_at": "2026-04-25T00:00:58Z",
+          "views": 591,
+          "duration_seconds": 403,
+          "discovered_at": "2026-10-01T17:12:59.396357+00:00",
+          "status": "used",
+          "used_in": [
+            "Bulgarian Folk"
+          ]
         }
       ],
-      "last_search_at": "2026-09-25T15:41:39.253781+00:00"
+      "last_search_at": "2026-10-01T17:12:59.396463+00:00"
     }
   }
 }
