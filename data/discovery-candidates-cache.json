@@ -631,9 +631,22 @@
           "used_in": [
             "R&B"
           ]
+        },
+        {
+          "video_id": "951ZsPxNoek",
+          "title": "Brandy & Monica made one of the biggest R&B duets ever. Then things got complicated. #brandy #monica",
+          "channel": "SND1st",
+          "published_at": "2026-09-29T06:28:25Z",
+          "views": 186405,
+          "duration_seconds": 152,
+          "discovered_at": "2026-10-02T16:26:18.458843+00:00",
+          "status": "used",
+          "used_in": [
+            "R&B"
+          ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:50.251042+00:00"
+      "last_search_at": "2026-10-02T16:26:18.458983+00:00"
     },
     "rap": {
       "candidates": [
@@ -1650,7 +1663,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:52.765419+00:00"
+      "last_search_at": "2026-10-02T16:26:20.099324+00:00"
     },
     "pop": {
       "candidates": [
@@ -2312,9 +2325,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "Gm3gHPT_fwY",
+          "title": "New AI Music 2026 | Emotional Pop Song ❤️ | Best Viral Music Video",
+          "channel": "aml music",
+          "published_at": "2026-06-10T21:30:12Z",
+          "views": 3399,
+          "duration_seconds": 152,
+          "discovered_at": "2026-10-02T16:26:21.193479+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:53.954007+00:00"
+      "last_search_at": "2026-10-02T16:26:21.193628+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2855,7 +2881,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:56.258236+00:00"
+      "last_search_at": "2026-10-02T16:26:22.799425+00:00"
     },
     "dance": {
       "candidates": [
@@ -3585,9 +3611,22 @@
           "used_in": [
             "Dance"
           ]
+        },
+        {
+          "video_id": "1l7wbZmdtys",
+          "title": "Bruno Mars - Dance With Me [Official Music Video]",
+          "channel": "Bruno Mars",
+          "published_at": "2026-10-01T16:00:04Z",
+          "views": 1851656,
+          "duration_seconds": 220,
+          "discovered_at": "2026-10-02T16:26:23.571508+00:00",
+          "status": "used",
+          "used_in": [
+            "Dance"
+          ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:57.324431+00:00"
+      "last_search_at": "2026-10-02T16:26:23.571670+00:00"
     },
     "unknown": {
       "candidates": [
@@ -4956,9 +4995,22 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "OnV8Nbd-RYg",
+          "title": "RICE JOURNEY | African Makossa x Amapiano | AI Music 2026",
+          "channel": "Afro Sound Lab",
+          "published_at": "2026-09-26T18:53:35Z",
+          "views": 40129,
+          "duration_seconds": 469,
+          "discovered_at": "2026-10-02T16:26:19.276874+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-10-01T17:12:51.655896+00:00"
+      "last_search_at": "2026-10-02T16:26:19.277032+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
@@ -5246,9 +5298,20 @@
           "discovered_at": "2026-09-26T14:49:00.745004+00:00",
           "status": "unused",
           "used_in": []
+        },
+        {
+          "video_id": "_Orn5mDt6ZA",
+          "title": "Без сценарий | Bulgarian Pop Rock / Latin Pop | Official Music Video",
+          "channel": "Tsvetomir Tsvetanov | Original Bulgarian Songs",
+          "published_at": "2026-09-27T20:37:59Z",
+          "views": 165,
+          "duration_seconds": 165,
+          "discovered_at": "2026-10-02T16:26:21.856023+00:00",
+          "status": "unused",
+          "used_in": []
         }
       ],
-      "last_search_at": "2026-09-26T14:49:00.745141+00:00"
+      "last_search_at": "2026-10-02T16:26:21.856179+00:00"
     },
     "bulgarian-hip-hop": {
       "candidates": [
