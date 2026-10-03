@@ -34,6 +34,7 @@ const Nav = {
     if (id === "stats-tracker") Settings.fillFields();
     if (id === "yt-discovery") { YouTubeDiscovery.render(); }
     if (id === "metadata-optimizer") { MetadataOptimizer.render(); }
+    if (id === "yt-consultant") { Consultant.render(); }
     if (id === "app-logs") AppLog.render();
     if (id === "shorts-studio") { ShortsStudio.renderSavedLibrary(); }
     if (id === "niche-toolkit") NicheToolkit.Playbook.renderRows();

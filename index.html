@@ -481,6 +481,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <button class="nav-btn" data-view="stats-analytics" onclick="Nav.showView('stats-analytics')"><span class="ic">📊</span> Анализи &amp; Графики</button>
       <button class="nav-btn" data-view="yt-discovery" onclick="Nav.showView('yt-discovery')"><span class="ic">🎧</span> YouTube Discovery Engine</button>
       <button class="nav-btn" data-view="metadata-optimizer" onclick="Nav.showView('metadata-optimizer')"><span class="ic">🏷️</span> Metadata Optimizer</button>
+      <button class="nav-btn" data-view="yt-consultant" onclick="Nav.showView('yt-consultant')"><span class="ic">🧑‍💼</span> YT Консултант</button>
     </div>
 
     <div class="nav-group">
@@ -1596,6 +1597,47 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <div id="metadataOptimizerOut" style="margin-top:14px;"></div>
     </div>
 
+    <!-- ============ YT CHANNEL CONSULTANT (отделен модул — js/consultant.js) ============ -->
+    <div class="view" id="view-yt-consultant">
+      <div class="section-title">🧑‍💼 YT Консултант</div>
+      <div class="card">
+        <p class="muted">Публичен анализ на канал, оценка на заглавия, keyword ранг и AI стратегически отчет. Ползва вече въведените ключове (YouTube API ключ + AI провайдърите от Настройки → API Ключове) — нищо ново за въвеждане.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <input type="text" id="consultantChannel" placeholder="@handle или UC... Channel ID" style="flex:1;min-width:200px;">
+          <button class="btn grad" onclick="Consultant.runAudit()">📊 Audit</button>
+          <button class="btn grad" onclick="Consultant.runReport()">💡 AI отчет</button>
+        </div>
+        <div id="consultantAuditOut"></div>
+        <div id="consultantReportOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📝 Оценка на заглавия</strong>
+        <textarea id="consultantTitles" rows="4" placeholder="По едно заглавие на ред, напр.&#10;КЮЧЕК 2026 | Нови хитове 🔥" style="width:100%;margin-top:8px;"></textarea>
+        <button class="btn grad" style="margin-top:8px;" onclick="Consultant.scoreTitles()">Оцени</button>
+        <div id="consultantTitlesOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🔍 Keywords</strong>
+        <p class="muted" style="margin-top:4px;"><b>Търсене</b> е ръчна оценка (YouTube няма API за честота на търсене). <b>Конкуренцията</b> може да се измерва жива от YouTube. Формат на ред: <code>дума, търсене, конкуренция</code></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn grad" onclick="Consultant.refreshLive()">🔄 Обнови конкуренцията (≈100 quota/дума)</button>
+        </div>
+        <div id="consultantKeywordsOut" style="margin-top:8px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <input type="text" id="consultantSeed" placeholder="Начална дума за предложения, напр. чалга" style="flex:1;min-width:200px;">
+          <button class="btn ghost" onclick="Consultant.suggest()">💡 Предложения от YouTube</button>
+        </div>
+        <div id="consultantSuggestOut"></div>
+        <details style="margin-top:10px;"><summary class="muted" style="cursor:pointer;">✏️ Редактирай keywords</summary>
+          <textarea id="consultantKeywords" rows="8" style="width:100%;margin-top:8px;font-family:var(--font-mono);font-size:12px;"></textarea>
+          <button class="btn grad" style="margin-top:8px;" onclick="Consultant.saveKeywords()">💾 Запази</button>
+          <button class="btn ghost" style="margin-top:8px;" onclick="Consultant.resetKeywords()">↩️ По подразбиране</button>
+        </details>
+      </div>
+    </div>
+
     <!-- ============ INFRA: LOGS ============ -->
     <div class="view" id="view-infra-logs">
       <div class="section-title">Системни логове</div>
@@ -2017,6 +2059,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/stats.js"></script>
 <script src="js/youtube-discovery.js"></script>
 <script src="js/metadata-optimizer.js"></script>
+<script src="js/consultant.js"></script>
 <script src="js/gemini-validator.js"></script>
 <script src="js/project-archive.js"></script>
 <script src="js/system-update.js"></script>
