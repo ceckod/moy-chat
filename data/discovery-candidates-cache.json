@@ -646,7 +646,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:18.458983+00:00"
+      "last_search_at": "2026-10-03T15:00:08.855816+00:00"
     },
     "rap": {
       "candidates": [
@@ -1661,9 +1661,22 @@
           "used_in": [
             "Rap"
           ]
+        },
+        {
+          "video_id": "eLqKlldj-rY",
+          "title": "Wiz Khalifa — No Turning Back  | Emotional Rap Song — (Lyires music video)",
+          "channel": "MelodyScope",
+          "published_at": "2026-09-29T18:41:14Z",
+          "views": 53293,
+          "duration_seconds": 566,
+          "discovered_at": "2026-10-03T15:00:10.706944+00:00",
+          "status": "used",
+          "used_in": [
+            "Rap"
+          ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:20.099324+00:00"
+      "last_search_at": "2026-10-03T15:00:10.707063+00:00"
     },
     "pop": {
       "candidates": [
@@ -2338,9 +2351,22 @@
           "used_in": [
             "Pop"
           ]
+        },
+        {
+          "video_id": "5ahOgVddIrY",
+          "title": "1970s Do You Still Remember Them? #musichistory #70s80s90smusichits  #music #60hits #80smusic",
+          "channel": "GoldenEraHits",
+          "published_at": "2026-10-02T16:37:59Z",
+          "views": 110643,
+          "duration_seconds": 175,
+          "discovered_at": "2026-10-03T15:00:11.487342+00:00",
+          "status": "used",
+          "used_in": [
+            "Pop"
+          ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:21.193628+00:00"
+      "last_search_at": "2026-10-03T15:00:11.487402+00:00"
     },
     "reggaeton": {
       "candidates": [
@@ -2879,9 +2905,22 @@
           "used_in": [
             "Reggaeton"
           ]
+        },
+        {
+          "video_id": "YxgfGp7Yt1s",
+          "title": "Myke Towers - CARITA FELIZ (Official Music Video)",
+          "channel": "Myke Towers",
+          "published_at": "2026-08-20T00:00:06Z",
+          "views": 6810182,
+          "duration_seconds": 273,
+          "discovered_at": "2026-10-03T15:00:12.440630+00:00",
+          "status": "used",
+          "used_in": [
+            "Reggaeton"
+          ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:22.799425+00:00"
+      "last_search_at": "2026-10-03T15:00:12.440742+00:00"
     },
     "dance": {
       "candidates": [
@@ -3626,7 +3665,7 @@
           ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:23.571670+00:00"
+      "last_search_at": "2026-10-03T15:00:13.229466+00:00"
     },
     "unknown": {
       "candidates": [
@@ -5008,9 +5047,48 @@
           "used_in": [
             "AI Music"
           ]
+        },
+        {
+          "video_id": "iciPidFEdw8",
+          "title": "Sambossa | Fan Made Music Video (Inspired by Shakira & Rihanna)",
+          "channel": "LightSound records",
+          "published_at": "2026-08-09T17:48:42Z",
+          "views": 1725777,
+          "duration_seconds": 485,
+          "discovered_at": "2026-10-03T15:00:09.803490+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "j-pxZGyA6iI",
+          "title": "I Made A Suno AI Music Video & 4 Shorts In 3 Minutes (FREE Credits)",
+          "channel": "MoneOnDaBeat",
+          "published_at": "2026-10-02T22:50:14Z",
+          "views": 2351,
+          "duration_seconds": 399,
+          "discovered_at": "2026-10-03T15:00:09.803500+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
+        },
+        {
+          "video_id": "baMEsTju6Xw",
+          "title": "Nobody Checks on Me  | I’m Not Okay (Sad Rap Ai music)",
+          "channel": "steven",
+          "published_at": "2026-04-08T13:30:45Z",
+          "views": 1086743,
+          "duration_seconds": 223,
+          "discovered_at": "2026-10-03T15:00:09.803513+00:00",
+          "status": "used",
+          "used_in": [
+            "AI Music"
+          ]
         }
       ],
-      "last_search_at": "2026-10-02T16:26:19.277032+00:00"
+      "last_search_at": "2026-10-03T15:00:09.803605+00:00"
     },
     "bulgarian-pop": {
       "candidates": [
