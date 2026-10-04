@@ -284,7 +284,7 @@ def _call_gemini(system_prompt, user_prompt, max_tokens):
     api_key = _env("GEMINI_API_KEY")
     if not api_key:
         return None
-    model = "gemini-2.0-flash"
+    model = _env("GEMINI_MODEL") or "gemini-2.0-flash"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     body = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
@@ -356,6 +356,29 @@ def call_ai_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500):
             return result, name
     log("  ⚪ Никой AI provider не е конфигуриран/отговорил — heuristic fallback.")
     return None, None
+
+
+def call_ai_all_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500, include_pollinations: bool = False):
+    """Пита ВСЕКИ конфигуриран AI provider (не само първия) и връща списък от
+    (име, parsed_json) за тези, които са отговорили с валиден JSON. Ползва се за
+    гласуване/консенсус между агентите. Провайдър без ключ или с грешка се прескача;
+    празен списък = никой не е отговорил (извикващият сам решава резерва).
+    Pollinations е публична услуга без ключ — включва се само ако изрично е позволено."""
+    results = []
+    for name, fn in _AI_PROVIDER_CHAIN:
+        if name == "pollinations" and not include_pollinations:
+            continue
+        try:
+            result = fn(system_prompt, user_prompt, max_tokens)
+        except urllib.error.HTTPError as e:
+            log(f"::warning::{name}: HTTP {e.code} — прескачам този агент.")
+            continue
+        except Exception as e:
+            log(f"::warning::{name}: {str(e)[:160]} — прескачам този агент.")
+            continue
+        if result is not None:
+            results.append((name, result))
+    return results
 
 
 def call_anthropic_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500):

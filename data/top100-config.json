@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "playlist_id": null,
+  "playlist_title": "Топ 100 кючеци",
+  "size": 100,
+  "include_own": true,
+  "min_views": 1000,
+  "max_age_days": 365,
+  "score": {
+    "views_weight": 0.6,
+    "freshness_weight": 0.4,
+    "freshness_half_life_days": 60
+  },
+  "daily_quota_units": 3000,
+  "notes": "Редактирай само това, което искаш да промениш — всичко останало има стойности по подразбиране в scripts/top100_kyuchek.py (DEFAULTS). playlist_id: сложи ID на вече съществуващ плейлист, ако искаш той да се ползва вместо нов."
+}

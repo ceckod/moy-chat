@@ -1,14 +1,16 @@
 CDB UPDATE REPORT
-Timestamp: 20261004-083933
+Timestamp: 20261004-085330
 
 Changed:
+  sw.js
   README.md
-  data/discovery-config.json
-  scripts/youtube_discovery_engine.py
-  test/test_discovery_focus.py
+  js/youtube-discovery.js
+  scripts/_youtube_common.py
 
 Added:
-  none
+  data/top100-config.json
+  scripts/top100_kyuchek.py
+  test/test_top100.py
 
 Removed:
   none
@@ -129,7 +131,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/cleanup_mastering_jobs.py
   scripts/master_engine.py
   scripts/_pick_next_song.py
-  scripts/_youtube_common.py
   scripts/track_stats.py
   scripts/render_short_ffmpeg.py
   scripts/_secret_scan.py

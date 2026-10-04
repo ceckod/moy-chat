@@ -20,6 +20,7 @@
    ========================================================= */
 
 const YT_DISCOVERY_WORKFLOW_FILE = "youtube-discovery.yml";
+const YT_TOP100_WORKFLOW_FILE = "top100-kyuchek.yml";
 
 const YouTubeDiscovery = {
   _cache: {},
@@ -48,13 +49,15 @@ const YouTubeDiscovery = {
 
   async loadAll(force = false) {
     if (this._cache.loaded && !force) return this._cache;
-    const [catalog, state, log, config] = await Promise.all([
+    const [catalog, state, log, config, top100, top100log] = await Promise.all([
       this._fetchJson("catalog.json", { tracks: [] }),
       this._fetchJson("playlists-state.json", { playlists: [] }),
       this._fetchJson("discovery-log.json", { runs: [] }),
       this._fetchJson("discovery-config.json", {}),
+      this._fetchJson("top100-state.json", null),
+      this._fetchJson("top100-log.json", { runs: [] }),
     ]);
-    this._cache = { catalog, state, log, config, loaded: true };
+    this._cache = { catalog, state, log, config, top100, top100log, loaded: true };
     return this._cache;
   },
 
@@ -86,6 +89,67 @@ const YouTubeDiscovery = {
   },
   runNow() { this._dispatchWorkflow(false); },
   dryRun() { this._dispatchWorkflow(true); },
+
+  // ---------- 🏆 Топ 100 кючеци (scripts/top100_kyuchek.py, .github/workflows/top100-kyuchek.yml) ----------
+  async _dispatchTop100(dryRun) {
+    const k = Keys.load();
+    if (!k.ghToken) return toast("❌ Липсва GitHub Token — виж Настройки → API Ключове");
+    if (!k.ghOwner || !k.ghRepo) return toast("❌ Липсват GitHub owner/repo — виж Настройки → YouTube Тракер");
+    const label = dryRun ? "Dry Run" : "Обнови сега";
+    try {
+      const res = await fetchTimeout(
+        `https://api.github.com/repos/${k.ghOwner}/${k.ghRepo}/actions/workflows/${YT_TOP100_WORKFLOW_FILE}/dispatches`,
+        {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${k.ghToken}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+          body: JSON.stringify({ ref: k.ghBranch || "main", inputs: { dry_run: dryRun ? "true" : "false" } }),
+        }, 20000
+      );
+      if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      toast(dryRun ? "🧪 Dry Run на Топ 100 стартиран — резултат след ~2-4 мин" : "▶️ Обновяване на Топ 100 стартирано — резултат след ~2-4 мин");
+      AppLog.write("🏆 Топ 100 кючеци", `✅ ${label} тригнат в GitHub Actions`);
+      setTimeout(() => this.render(true), 180000);
+    } catch (e) {
+      toast("❌ " + e.message);
+      AppLog.write("🏆 Топ 100 кючеци", `❌ ${label} неуспешен: ${e.message}`);
+    }
+  },
+  runTop100() { this._dispatchTop100(false); },
+  dryRunTop100() { this._dispatchTop100(true); },
+
+  _esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); },
+
+  _top100Panel(top100, top100log) {
+    const runs = top100log?.runs || [];
+    const last = runs.length ? runs[runs.length - 1] : null;
+    const buttons = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn grad" onclick="YouTubeDiscovery.runTop100()">▶️ Обнови сега</button>
+        <button class="btn ghost" onclick="YouTubeDiscovery.dryRunTop100()">🧪 Dry Run</button>
+        ${top100?.playlist_url ? `<a class="btn ghost" href="${this._esc(top100.playlist_url)}" target="_blank" rel="noopener">▶ Отвори в YouTube</a>` : ""}
+      </div>`;
+    const warn = last && (last.errors?.length || last.warnings?.length)
+      ? `<div class="muted" style="margin-top:8px;font-size:12px;">${[...(last.warnings || []), ...(last.errors || []).map(e => (typeof e === "string" ? e : (e.error || JSON.stringify(e))))].slice(0, 5).map(w => `⚠️ ${this._esc(w)}`).join("<br>")}</div>` : "";
+    if (!top100) {
+      return `<div class="section-title" style="margin-top:20px;">🏆 Топ 100 кючеци</div>
+        <div class="card"><p class="muted">Още няма данни — автоматичното обновяване е всеки ден в 07:00 ч. (софийско време). Можеш да пуснеш първото ръчно.</p>${buttons}${warn}</div>`;
+    }
+    const rows = (top100.ranking || []).slice(0, 10).map(c => {
+      const mv = c.prev_rank == null ? "🆕" : c.prev_rank > c.rank ? `▲${c.prev_rank - c.rank}` : c.prev_rank < c.rank ? `▼${c.rank - c.prev_rank}` : "•";
+      return `<tr><td style="text-align:right">${c.rank}</td><td>${this._esc(c.title.slice(0, 60))}${c.is_mine ? " ⭐" : ""}</td><td style="text-align:right">${Number(c.views || 0).toLocaleString("bg-BG")}</td><td style="text-align:center">${mv}</td></tr>`;
+    }).join("");
+    const size = (top100.ranking || []).length;
+    const mine = (top100.ranking || []).filter(c => c.is_mine).length;
+    return `<div class="section-title" style="margin-top:20px;">🏆 Топ 100 кючеци</div>
+      <div class="card">
+        <p class="muted">Последно обновяване: <b>${top100.last_run ? new Date(top100.last_run).toLocaleString("bg-BG") : "—"}</b> ·
+          в класацията: <b>${size}</b> (мои ⭐: ${mine}) · допустими кандидати: ${top100.eligible_total ?? "—"}
+          ${top100.deferred_ops ? ` · ⏳ чакат за следващия ден: <b>${top100.deferred_ops}</b> операции (дневна квота)` : ""}
+          ${last ? ` · +${last.added ?? 0} / −${last.removed ?? 0} / ~${last.moved ?? 0} · quota ~${last.quota_spent_units ?? 0}` : ""}</p>
+        <p class="muted" style="font-size:12px;">AI агенти в последния run: ${(top100.ai_agents || []).map(a => this._esc(a)).join(", ") || "няма (само правила)"}</p>
+        <div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;font-size:12.5px;"><thead><tr><th>#</th><th style="text-align:left">Топ 10</th><th>Гледания</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+        ${buttons}${warn}
+      </div>`;
+  },
 
   // ---------- Contents API write за playlists-state.json (manual overrides, т.34) ----------
   async _writeState(mutatorFn) {
@@ -376,7 +440,7 @@ const YouTubeDiscovery = {
     const el = document.getElementById("ytDiscoveryOut");
     if (!el) return;
     el.innerHTML = `<p class="muted">⏳ Зареждам данни от GitHub...</p>`;
-    const { catalog, state, log, config } = await this.loadAll(force);
+    const { catalog, state, log, config, top100, top100log } = await this.loadAll(force);
 
     if (!Keys.load().ghOwner || !Keys.load().ghRepo) {
       el.innerHTML = `<div class="card muted">Настрой GitHub repo (owner/repo/branch) в <strong>Настройки → YouTube Тракер</strong> — Discovery Engine чете същия repo.</div>`;
@@ -422,6 +486,8 @@ const YouTubeDiscovery = {
           ${(lastRun.warnings || []).length ? `<div class="muted" style="margin-top:6px;font-size:12px;">${lastRun.warnings.map(w => `⚠️ ${w}`).join("<br>")}</div>` : ""}` :
           `<p class="muted" style="margin-top:10px;">Все още няма запис за run — пусни "Run Now" или изчакай daily cron-а (11:00 UTC).</p>`}
       </div>
+
+      ${this._top100Panel(top100, top100log)}
 
       <div class="section-title" style="margin-top:20px;">Playlist-и</div>
       ${activePlaylists.length ? activePlaylists.map(p => this._playlistCard(p)).join("") : `<div class="card muted">Още няма създадени playlist-и — трябват поне ${config.min_cluster_size || 6} песни в един стил в каталога. Каталог: ${catalog.tracks?.length || 0} класифицирани песни.</div>`}
