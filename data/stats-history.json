@@ -29447,9 +29447,9 @@
     },
     {
       "date": "2026-10-04",
-      "timestamp": "2026-10-04T08:22:36.152630+00:00",
+      "timestamp": "2026-10-04T14:41:34.989044+00:00",
       "channel": {
-        "subscribers": 2000,
+        "subscribers": 2010,
         "total_views": 1551726,
         "video_count": 38
       },
@@ -29475,7 +29475,7 @@
             "танц"
           ],
           "published_at": "2026-10-02T15:00:06Z",
-          "views": 40,
+          "views": 42,
           "likes": 3,
           "comments": 1
         },
@@ -29514,8 +29514,8 @@
             "оркестър суно 100 евро"
           ],
           "published_at": "2026-09-24T21:32:58Z",
-          "views": 7444,
-          "likes": 109,
+          "views": 7923,
+          "likes": 114,
           "comments": 1
         },
         {
@@ -29533,8 +29533,8 @@
             "нова музика"
           ],
           "published_at": "2026-09-22T06:07:36Z",
-          "views": 623,
-          "likes": 8,
+          "views": 634,
+          "likes": 9,
           "comments": 0
         },
         {
@@ -29608,7 +29608,7 @@
             "романтична музика"
           ],
           "published_at": "2026-08-16T15:18:11Z",
-          "views": 546,
+          "views": 550,
           "likes": 7,
           "comments": 3
         },
@@ -29629,7 +29629,7 @@
             "поп фолк"
           ],
           "published_at": "2026-08-16T11:21:10Z",
-          "views": 26,
+          "views": 27,
           "likes": 1,
           "comments": 0
         },
@@ -29924,7 +29924,7 @@
             "hit"
           ],
           "published_at": "2026-05-03T14:32:51Z",
-          "views": 672,
+          "views": 674,
           "likes": 6,
           "comments": 1
         },
@@ -30108,8 +30108,8 @@
             "igrae"
           ],
           "published_at": "2015-10-24T14:49:45Z",
-          "views": 1493430,
-          "likes": 5645,
+          "views": 1493434,
+          "likes": 5646,
           "comments": 0
         }
       ]
