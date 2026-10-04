@@ -49,6 +49,7 @@
     "min_candidate_pool": 12,
     "max_playlist_size": 50,
     "self_spacing": 2,
-    "max_self_inserts_per_run": 12
+    "max_self_inserts_per_run": 12,
+    "create_non_focus_playlists": false
   }
 }

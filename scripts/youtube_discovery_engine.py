@@ -203,8 +203,9 @@ def cluster_catalog(catalog_tracks, min_cluster_size, fcfg=None):
 #   1. МОИ песни се разпознават по стил (заглавие/тагове/subgenre), а не само по
 #      AI subgenre — на практика чалга и кючеци са пръснати в "Pop", "Dance",
 #      "Bulgarian Folk", "unknown" и т.н. Всички стари И нови такива песни се
-#      събират в два плейлиста: "Чалга & Поп-фолк" (преизползва съществуващия
-#      cluster_key "bulgarian-folk") и "Кючеци" (нов, cluster_key "kyuchek").
+#      събират в два НОВИ плейлиста: "Чалга & Поп-фолк" (cluster_key "chalga") и
+#      "Кючеци" (cluster_key "kyuchek"). Старият "Bulgarian Folk — Discover"
+#      (народна музика) не се пипа.
 #   2. ВСИЧКИ мои песни в този стил се вмъкват (не са ограничени от self-track
 #      ratio), разпръснати между външните; най-новите първо.
 #   3. Външните кандидати са най-новото: search order=date, регион BG, къс
@@ -213,12 +214,13 @@ def cluster_catalog(catalog_tracks, min_cluster_size, fcfg=None):
 # Всичко е изключимо: focus.enabled=false връща старото поведение 1:1.
 # ---------------------------------------------------------------------------
 
-FOCUS_KEY_CHALGA = "bulgarian-folk"   # съществуващ playlist — не се създава дубликат
+FOCUS_KEY_CHALGA = "chalga"   # НОВ плейлист; старият "bulgarian-folk" (народна музика) остава непокътнат
 FOCUS_KEY_KYUCHEK = "kyuchek"
 
 FOCUS_DEFAULTS = {
     "enabled": False,
     "non_focus_external_discovery": False,
+    "create_non_focus_playlists": False,   # във focus режим не се създават НОВИ плейлисти за други стилове
     "include_non_releases": True,
     "labels": {FOCUS_KEY_CHALGA: "Чалга & Поп-фолк", FOCUS_KEY_KYUCHEK: "Кючеци"},
     "kyuchek_keywords": ["кючек", "кючеци", "kuchek", "kyuchek", "kiuchek", "kuchek"],
@@ -511,6 +513,9 @@ def _maybe_sync_description(playlist_entry, cluster_label, yt: YouTubeClient, dr
         log(f"  ⚠ Неуспешно обновяване на описание за '{playlist_entry['name']}': {e}")
 
 
+_CREATE_SKIPPED = []   # имена на плейлисти, които не са създадени заради read-only режим (за run_log)
+
+
 def find_or_create_playlist(cluster_key, cluster_label, state, yt: YouTubeClient, dry_run, cfg):
     existing = next((p for p in state["playlists"] if p["cluster_key"] == cluster_key), None)
     if existing:
@@ -548,6 +553,7 @@ def find_or_create_playlist(cluster_key, cluster_label, state, yt: YouTubeClient
 
     if not yt.can_write:
         log(f"  ⚠ Няма OAuth access — не мога да създам playlist '{name}' (read-only run).")
+        _CREATE_SKIPPED.append(name)
         return None, False
 
     result = retry(lambda: yt.write(
@@ -1270,6 +1276,9 @@ def _run(cfg, dry_run, run_log):
     if not dry_run and not access_token:
         log("⚠ Няма OAuth access token — READ-ONLY режим (анализ + лог, без писане в YouTube). "
             "Виж README.md → 'Еднократен OAuth setup'.")
+        run_log["warnings"].append(
+            "READ-ONLY: няма валиден OAuth access token (липсващи/изтекли YOUTUBE_OAUTH_* secrets). "
+            "Нови плейлисти НЕ се създават и нищо не се записва в YouTube, докато не се поднови refresh token-ът.")
 
     quota = QuotaBudget(cfg.get("youtube_search_daily_budget_units", 3000))
     yt = YouTubeClient(api_key, access_token, quota)
@@ -1315,8 +1324,12 @@ def _run(cfg, dry_run, run_log):
         is_focus = bool(fcfg) and cluster_key in (FOCUS_KEY_CHALGA, FOCUS_KEY_KYUCHEK)
         if is_focus:
             ccfg = focus_overlay(cfg, fcfg)
-        elif fcfg and not fcfg.get("non_focus_external_discovery", False):
-            ccfg = {**cfg, "enable_external_discovery": False}   # quota отива към чалга/кючек
+        elif fcfg:
+            ccfg = {**cfg}
+            if not fcfg.get("non_focus_external_discovery", False):
+                ccfg["enable_external_discovery"] = False        # quota отива към чалга/кючек
+            if not fcfg.get("create_non_focus_playlists", False):
+                ccfg["enable_auto_playlist_creation"] = False    # съществуващите плейлисти продължават, нови не се правят
         else:
             ccfg = cfg
         log(f"\n── Клъстер: {label} ({len(cluster['tracks'])} мои песни){' 🎯' if is_focus else ''} ──")
@@ -1330,7 +1343,7 @@ def _run(cfg, dry_run, run_log):
                 log(f"    ℹ️ НЕ са в Releases (значи няма да се self-insert-ват): {sample}"
                     + (" ..." if len(not_eligible) > 5 else ""))
 
-        entry, is_new = find_or_create_playlist(cluster_key, label, state, yt, dry_run, cfg)
+        entry, is_new = find_or_create_playlist(cluster_key, label, state, yt, dry_run, ccfg)
         if entry is None:
             continue
         if is_new:
@@ -1426,6 +1439,8 @@ def _run(cfg, dry_run, run_log):
             verify_playlist_state(entry["youtube_playlist_id"], inserted_ids, removed_ids, yt, run_log, label)
 
     save_json(CACHE_PATH, cache)
+    if _CREATE_SKIPPED:
+        run_log["warnings"].append("Не са създадени (read-only): " + ", ".join(_CREATE_SKIPPED))
 
     if not dry_run:
         try:

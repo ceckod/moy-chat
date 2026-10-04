@@ -161,3 +161,13 @@ class RealCatalog(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FocusDefaults(unittest.TestCase):
+    def test_no_new_non_focus_playlists_by_default(self):
+        self.assertFalse(F["create_non_focus_playlists"])
+        self.assertFalse(F["non_focus_external_discovery"])
+
+    def test_chalga_is_a_new_playlist_key(self):
+        self.assertEqual(E.FOCUS_KEY_CHALGA, "chalga")
+        self.assertNotEqual(E.FOCUS_KEY_CHALGA, "bulgarian-folk")
