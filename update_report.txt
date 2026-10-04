@@ -1,5 +1,5 @@
 CDB UPDATE REPORT
-Timestamp: 20261003-053527
+Timestamp: 20261004-075012
 
 Changed:
   index.html
@@ -7,8 +7,8 @@ Changed:
   js/nav.js
 
 Added:
-  js/consultant.js
-  test/consultant.test.mjs
+  js/thumbnail-maker.js
+  test/thumbnail-maker.test.mjs
 
 Removed:
   none

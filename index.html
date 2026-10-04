@@ -482,6 +482,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       <button class="nav-btn" data-view="yt-discovery" onclick="Nav.showView('yt-discovery')"><span class="ic">🎧</span> YouTube Discovery Engine</button>
       <button class="nav-btn" data-view="metadata-optimizer" onclick="Nav.showView('metadata-optimizer')"><span class="ic">🏷️</span> Metadata Optimizer</button>
       <button class="nav-btn" data-view="yt-consultant" onclick="Nav.showView('yt-consultant')"><span class="ic">🧑‍💼</span> YT Консултант</button>
+      <button class="nav-btn" data-view="thumbnail-maker" onclick="Nav.showView('thumbnail-maker')"><span class="ic">🖼️</span> Thumbnail Maker</button>
     </div>
 
     <div class="nav-group">
@@ -1638,6 +1639,56 @@ hr{border:none;border-top:1px solid var(--border-soft);}
       </div>
     </div>
 
+    <!-- ============ THUMBNAIL MAKER (отделен модул — js/thumbnail-maker.js) ============ -->
+    <div class="view" id="view-thumbnail-maker">
+      <div class="section-title">🖼️ Thumbnail Maker</div>
+      <div class="card">
+        <p class="muted">Въведи заглавието — AI измисля 3 концепции, генерира фоновете и слага надписа. Ползва вече въведените ключове, нищо ново.</p>
+        <div id="thumbKeyHint" style="margin-top:6px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <label class="muted" style="font-size:12px;">Агент за концепции
+            <select id="thumbTextAgent" style="width:100%;height:34px;">
+              <option value="free">Най-добър безплатен първо</option>
+              <option value="auto">Редът от Настройки</option>
+              <option value="gemini">Gemini</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="modelfinder">Model Finder (Groq/Mistral/CF)</option>
+              <option value="claude">Claude (платен)</option>
+            </select></label>
+          <label class="muted" style="font-size:12px;">Генератор на фон
+            <select id="thumbImgProvider" onchange="Thumb._refreshKeyHint()" style="width:100%;height:34px;">
+              <option value="auto">Най-силният първо</option>
+              <option value="gemini">Gemini image</option>
+              <option value="cloudflare">Cloudflare FLUX</option>
+              <option value="pollinations">Pollinations</option>
+            </select></label>
+        </div>
+        <input type="text" id="thumbTitle" placeholder="Заглавие на видеото" style="width:100%;margin-top:10px;">
+        <input type="text" id="thumbVibe" placeholder="Настроение/стил (по избор): напр. тъмно, неон, купон" style="width:100%;margin-top:8px;">
+        <button class="btn grad" style="margin-top:10px;" onclick="Thumb.autoCreate()">⚡ Създай автоматично (3 варианта)</button>
+        <div id="thumbStatus" style="margin-top:8px;"></div>
+        <div id="thumbVariants"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <canvas id="thumbCanvas" width="1280" height="720" style="width:100%;height:auto;border-radius:8px;background:#111;display:block;"></canvas>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <input type="text" id="thumbHeadline" placeholder="Надпис (до 4 думи)" oninput="Thumb.draw()" style="grid-column:1/3;">
+          <label class="muted" style="font-size:12px;">Акцент <input type="color" id="thumbAccent" value="#ffd400" oninput="Thumb.draw()" style="width:100%;height:34px;"></label>
+          <label class="muted" style="font-size:12px;">Позиция
+            <select id="thumbPosition" onchange="Thumb.draw()" style="width:100%;height:34px;"><option value="left">Ляво</option><option value="center">Център</option><option value="bottom">Долу</option></select></label>
+          <label class="muted" style="font-size:12px;">Затъмняване <input type="range" id="thumbOverlay" min="0" max="100" value="55" oninput="Thumb.draw()" style="width:100%;"></label>
+          <label class="muted" style="font-size:12px;">Размер <input type="range" id="thumbFont" min="60" max="220" value="150" oninput="Thumb.draw()" style="width:100%;"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <input type="text" id="thumbBgPrompt" placeholder="Нов фон (описание, по-добре на английски)" style="flex:1;min-width:180px;">
+          <button class="btn ghost" onclick="Thumb.regenBackground()">🎨 Нов фон</button>
+          <label class="btn ghost" style="cursor:pointer;">📁 Свой фон<input type="file" accept="image/*" style="display:none" onchange="Thumb.uploadBackground(this)"></label>
+        </div>
+        <button class="btn grad" style="margin-top:10px;width:100%;" onclick="Thumb.download()">⬇️ Свали (1280×720)</button>
+      </div>
+    </div>
+
     <!-- ============ INFRA: LOGS ============ -->
     <div class="view" id="view-infra-logs">
       <div class="section-title">Системни логове</div>
@@ -2060,6 +2111,7 @@ hr{border:none;border-top:1px solid var(--border-soft);}
 <script src="js/youtube-discovery.js"></script>
 <script src="js/metadata-optimizer.js"></script>
 <script src="js/consultant.js"></script>
+<script src="js/thumbnail-maker.js"></script>
 <script src="js/gemini-validator.js"></script>
 <script src="js/project-archive.js"></script>
 <script src="js/system-update.js"></script>
