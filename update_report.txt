@@ -1,14 +1,15 @@
 CDB UPDATE REPORT
-Timestamp: 20261004-075012
+Timestamp: 20261004-081806
 
 Changed:
-  index.html
   sw.js
-  js/nav.js
+  README.md
+  js/youtube-discovery.js
+  data/discovery-config.json
+  scripts/youtube_discovery_engine.py
 
 Added:
-  js/thumbnail-maker.js
-  test/thumbnail-maker.test.mjs
+  test/test_discovery_focus.py
 
 Removed:
   none
@@ -36,7 +37,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   MASTERING_PRO_INSTALL_NOTES.md
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   app.js
-  README.md
   update.zip
   visualizer.html
   PROJECT_STATE.md
@@ -61,7 +61,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/app-log.js
   js/cost-tracker.js
   js/niche-scoring.js
-  js/youtube-discovery.js
   js/shorts-studio.js
   js/settings.js
   js/youtube.js
@@ -111,7 +110,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   data/releases-catalog-cache.json
   data/discovery-log.json
   data/track-performance.json
-  data/discovery-config.json
   data/discovered-niches.json
   data/stats-history.json
   data/distrokid-library.json
@@ -127,7 +125,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/clock-and-keys.js
   scripts/cleanup_dead_files.py
   scripts/fetch_distrokid_links.py
-  scripts/youtube_discovery_engine.py
   scripts/catalog_bootstrap.py
   scripts/discover_niches.py
   scripts/cleanup_mastering_jobs.py

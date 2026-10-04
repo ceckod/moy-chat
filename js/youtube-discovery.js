@@ -325,6 +325,7 @@ const YouTubeDiscovery = {
       cross_playlist_similarity_threshold: num("dsc_cross_threshold"),
       max_track_duration_seconds: num("dsc_max_duration"),
       min_track_duration_seconds: num("dsc_min_duration"),
+      focus: { ...(config.focus || {}), enabled: bool("dsc_focus_enabled") },
       enable_external_discovery: bool("dsc_enable_discovery"),
       enable_auto_playlist_creation: bool("dsc_enable_creation"),
       enable_auto_reorder: bool("dsc_enable_reorder"),
@@ -444,6 +445,7 @@ const YouTubeDiscovery = {
           <div><label>Мин. дължина на песен (сек.) — филтрира Shorts/teaser клипове</label><input type="number" id="dsc_min_duration" value="${config.min_track_duration_seconds ?? 60}"></div>
         </div>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+          <label><input type="checkbox" id="dsc_focus_enabled" ${config.focus?.enabled ? "checked" : ""}> 🎯 Focus: чалга + кючеци (най-ново отвън + всички мои песни в стила; другите плейлисти не търсят нови външни). Подробни настройки: <code>focus</code> в data/discovery-config.json</label>
           <label><input type="checkbox" id="dsc_enable_discovery" ${config.enable_external_discovery !== false ? "checked" : ""}> Enable External Discovery (search.list)</label>
           <label><input type="checkbox" id="dsc_enable_creation" ${config.enable_auto_playlist_creation !== false ? "checked" : ""}> Enable Auto Playlist Creation</label>
           <label><input type="checkbox" id="dsc_enable_reorder" ${config.enable_auto_reorder !== false ? "checked" : ""}> Enable Auto Reorder</label>

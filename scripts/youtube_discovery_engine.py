@@ -163,12 +163,19 @@ _CANONICAL_CLUSTER_KEY_MAP = {
 }
 
 
-def cluster_catalog(catalog_tracks, min_cluster_size):
+def cluster_catalog(catalog_tracks, min_cluster_size, fcfg=None):
     """Групира по AI-присвоения subgenre (fallback: genre), пази само групи
-    с >= min_cluster_size песни. Връща {cluster_key: {"label":..., "tracks":[...]}}"""
+    с >= min_cluster_size песни. Връща {cluster_key: {"label":..., "tracks":[...]}}
+    С fcfg (focus режим): песните в чалга/кючек стил отиват в двата focus клъстера
+    независимо от AI subgenre-а им, а тези клъстери са първи в реда (първи за quota)."""
     buckets = defaultdict(list)
     labels = {}
+    focus_buckets = defaultdict(list)
     for t in catalog_tracks:
+        fkey = classify_focus_style(t, fcfg) if fcfg else None
+        if fkey:
+            focus_buckets[fkey].append(t)
+            continue
         label = t.get("subgenre") if t.get("subgenre") not in (None, "unknown", "") else t.get("genre")
         if not label or label == "unknown":
             continue
@@ -176,11 +183,191 @@ def cluster_catalog(catalog_tracks, min_cluster_size):
         buckets[key].append(t)
         labels.setdefault(key, label)  # първият видян label печели показвания текст
 
-    significant = {k: {"label": labels[k], "tracks": v} for k, v in buckets.items() if len(v) >= min_cluster_size}
+    significant = {}
+    if fcfg:
+        for fkey in (FOCUS_KEY_KYUCHEK, FOCUS_KEY_CHALGA):
+            # focus клъстерите съществуват и без мои песни (за да се пълнят с външна музика)
+            significant[fkey] = {"label": fcfg["labels"][fkey], "tracks": focus_buckets.get(fkey, [])}
+    significant.update({k: {"label": labels[k], "tracks": v} for k, v in buckets.items()
+                        if len(v) >= min_cluster_size and k not in significant})
     skipped = {k: len(v) for k, v in buckets.items() if len(v) < min_cluster_size}
     if skipped:
         log(f"  ⚪ Пропуснати клъстери под min_cluster_size ({min_cluster_size}): {skipped}")
     return significant
+
+
+# ---------------------------------------------------------------------------
+# FOCUS РЕЖИМ: чалга + кючеци (data/discovery-config.json → "focus")
+#
+# Какво променя, когато focus.enabled=true:
+#   1. МОИ песни се разпознават по стил (заглавие/тагове/subgenre), а не само по
+#      AI subgenre — на практика чалга и кючеци са пръснати в "Pop", "Dance",
+#      "Bulgarian Folk", "unknown" и т.н. Всички стари И нови такива песни се
+#      събират в два плейлиста: "Чалга & Поп-фолк" (преизползва съществуващия
+#      cluster_key "bulgarian-folk") и "Кючеци" (нов, cluster_key "kyuchek").
+#   2. ВСИЧКИ мои песни в този стил се вмъкват (не са ограничени от self-track
+#      ratio), разпръснати между външните; най-новите първо.
+#   3. Външните кандидати са най-новото: search order=date, регион BG, къс
+#      прозорец, силен акцент върху свежестта, по-ниски прагове за views.
+#   4. Останалите плейлисти не харчат quota за нови външни кандидати.
+# Всичко е изключимо: focus.enabled=false връща старото поведение 1:1.
+# ---------------------------------------------------------------------------
+
+FOCUS_KEY_CHALGA = "bulgarian-folk"   # съществуващ playlist — не се създава дубликат
+FOCUS_KEY_KYUCHEK = "kyuchek"
+
+FOCUS_DEFAULTS = {
+    "enabled": False,
+    "non_focus_external_discovery": False,
+    "include_non_releases": True,
+    "labels": {FOCUS_KEY_CHALGA: "Чалга & Поп-фолк", FOCUS_KEY_KYUCHEK: "Кючеци"},
+    "kyuchek_keywords": ["кючек", "кючеци", "kuchek", "kyuchek", "kiuchek", "kuchek"],
+    "chalga_keywords": ["чалга", "chalga", "поп-фолк", "поп фолк", "попфолк", "popfolk", "pop-folk",
+                        "pop folk", "фолк", "folk", "балкански поп"],
+    "queries": {
+        FOCUS_KEY_KYUCHEK: ["кючек 2026", "нов кючек official", "кючек оркестър нова песен",
+                            "кючек хит", "кючек instrumental 2026"],
+        FOCUS_KEY_CHALGA: ["чалга 2026", "нова чалга official", "поп фолк 2026 нова песен",
+                           "нова чалга видео", "поп-фолк хит ново", "българска чалга нови песни"],
+    },
+    "block_patterns": [r"\bmix\b", r"compilation", r"сборка", r"\bтоп\s*\d+", r"\btop\s*\d+",
+                       r"\b\d+\s*(hours?|час(а|ове)?)\b", r"караоке", r"karaoke", r"type beat",
+                       r"reaction", r"tutorial", r"nightcore", r"\bremix\b.*\b(1|one) hour"],
+    "queries_per_run": 3,
+    "search_window_days": 45,
+    "search_order": "date",
+    "region_code": "BG",
+    "relevance_language": "bg",
+    "freshness_weight": 0.85,
+    "fresh_target_days": 14,
+    "max_age_days": 90,
+    "min_candidate_views": 300,
+    "external_tracks_per_run": 8,
+    "candidate_cache_ttl_days": 2,
+    "min_candidate_pool": 12,
+    "max_playlist_size": 50,
+    "self_spacing": 2,
+    "max_self_inserts_per_run": 12,
+}
+
+
+def focus_settings(cfg):
+    """Връща пълните focus настройки (defaults + конфиг) или None, ако режимът е изключен."""
+    user = cfg.get("focus") or {}
+    if not user.get("enabled", FOCUS_DEFAULTS["enabled"]):
+        return None
+    merged = {**FOCUS_DEFAULTS, **user}
+    # вложените речници се сливат, за да може потребителят да замени само един ключ
+    merged["labels"] = {**FOCUS_DEFAULTS["labels"], **(user.get("labels") or {})}
+    merged["queries"] = {**FOCUS_DEFAULTS["queries"], **(user.get("queries") or {})}
+    return merged
+
+
+def _norm_title(title):
+    """Ключ за дубликати: без хаштагове и без всичко след ' | ', за да се хванат
+    един и същи релийз и ъплоуд със слегка различно заглавие."""
+    t = re.sub(r"#\S+", " ", title or "")
+    t = t.split(" | ")[0]
+    return re.sub(r"[\W_]+", " ", t.lower(), flags=re.UNICODE).strip()
+
+
+def classify_focus_style(track, fcfg):
+    """FOCUS_KEY_KYUCHEK / FOCUS_KEY_CHALGA / None — по заглавие, тагове, genre и subgenre.
+    Кючек има предимство пред чалга (по-специфичен стил)."""
+    hay = " ".join([
+        str(track.get("title") or ""), str(track.get("subgenre") or ""), str(track.get("genre") or ""),
+        " ".join(str(x) for x in (track.get("style_tags") or [])),
+    ]).lower()
+    if any(k.lower() in hay for k in fcfg["kyuchek_keywords"]):
+        return FOCUS_KEY_KYUCHEK
+    if any(k.lower() in hay for k in fcfg["chalga_keywords"]):
+        return FOCUS_KEY_CHALGA
+    return None
+
+
+def is_short_like(title):
+    """Shorts/тийзъри не са 'песни' за плейлист. Евристика по заглавие (в каталога няма duration)."""
+    t = (title or "").lower()
+    return "#shorts" in t or re.search(r"\bshorts?\b", t) is not None
+
+
+def candidate_on_style(candidate, fcfg):
+    """Външен кандидат е приемлив, ако не е компилация/караоке/т.н. и изглежда като BG/стил заглавие."""
+    title = candidate.get("title") or ""
+    low = title.lower()
+    if any(re.search(p, low) for p in fcfg["block_patterns"]):
+        return False
+    if re.search(r"[а-яА-Я]", title) or re.search(r"[а-яА-Я]", candidate.get("channel") or ""):
+        return True
+    keys = fcfg["kyuchek_keywords"] + fcfg["chalga_keywords"] + ["bulgar", "balkan"]
+    return any(k.lower() in low for k in keys)
+
+
+def focus_overlay(cfg, fcfg):
+    """Конфиг само за focus плейлистите: по-къса свежест, повече външни, без reorder-а на self-track-овете
+    (там разстоянието се управлява от build_focus_self_ops)."""
+    return {
+        **cfg,
+        "candidate_search_window_days": fcfg["search_window_days"],
+        "fresh_track_target_days": fcfg["fresh_target_days"],
+        "max_track_age_days": fcfg["max_age_days"],
+        "min_candidate_views": fcfg["min_candidate_views"],
+        "external_tracks_per_run": fcfg["external_tracks_per_run"],
+        "candidate_cache_ttl_days": fcfg["candidate_cache_ttl_days"],
+        "min_candidate_pool": fcfg["min_candidate_pool"],
+        "max_playlist_size": fcfg["max_playlist_size"],
+        "freshness_weight": fcfg["freshness_weight"],
+        "min_external_between_self": 0,   # b - a <= 0 никога не е вярно → build_reorder_plan не прави нищо
+    }
+
+
+def focus_self_pool(cluster_tracks, releases_video_ids, fcfg):
+    """Всички мои песни в стила: от Releases таба + (по избор) по-стари/други ъплоуди, без Shorts и дубликати
+    по заглавие. Най-новите първи."""
+    pool, seen_titles = [], set()
+    ordered = sorted(cluster_tracks, key=lambda t: t.get("release_date") or "", reverse=True)
+    # първо тези от Releases, за да печелят при дубликат по заглавие
+    ordered.sort(key=lambda t: not (t["youtube_video_id"] in releases_video_ids or t.get("distribution") == "distrokid"))
+    for t in ordered:
+        # DistroKid релийз е истинска песен, дори заглавието да носи #Shorts хаштаг
+        in_releases = t["youtube_video_id"] in releases_video_ids or t.get("distribution") == "distrokid"
+        if not in_releases:
+            if not fcfg.get("include_non_releases", True) or is_short_like(t.get("title")):
+                continue
+        key = _norm_title(t.get("title"))
+        if key in seen_titles:
+            continue
+        seen_titles.add(key)
+        pool.append(t)
+    pool.sort(key=lambda t: t.get("release_date") or "", reverse=True)
+    return pool
+
+
+def build_focus_self_ops(entry, insert_ops, own_pool, fcfg):
+    """INSERT на ВСИЧКИ мои песни от пула, които още не са в плейлиста — разпръснати между външните.
+    Симулира списъка (текущи + вече планирани външни, които се добавят в края), за да са позициите валидни
+    при последователно прилагане. Ограничено до max_self_inserts_per_run заради quota (50 ед. на insert)."""
+    excluded = set(entry.get("excluded_video_ids", []))
+    tracks = [{"youtube_video_id": t["youtube_video_id"], "is_mine": bool(t.get("is_mine"))} for t in entry["tracks"]]
+    for op in insert_ops:
+        if op["action"] == "insert" and op.get("position") is None:
+            tracks.append({"youtube_video_id": op["video_id"], "is_mine": False})
+    present = {t["youtube_video_id"] for t in tracks}
+    missing = [t for t in own_pool if t["youtube_video_id"] not in present and t["youtube_video_id"] not in excluded]
+    cap = int(fcfg.get("max_self_inserts_per_run", 12))
+    if len(missing) > cap:
+        log(f"    ℹ️ {len(missing)} мои песни чакат за вмъкване; този run — първите {cap} (quota). Останалите — следващия.")
+        missing = missing[:cap]
+    spacing = max(1, int(fcfg.get("self_spacing", 2)))
+    ops = []
+    for t in missing:
+        pos = next((p for p in range(1, len(tracks) + 1) if valid_insert_distance(tracks, p, spacing)), None)
+        if pos is None:   # няма достатъчно външни за разстоянието — по-добре залепени, отколкото пропуснати
+            pos = len(tracks)
+        tracks.insert(pos, {"youtube_video_id": t["youtube_video_id"], "is_mine": True})
+        ops.append({"action": "insert", "video_id": t["youtube_video_id"], "is_mine": True,
+                    "title": t.get("title", ""), "position": pos})
+    return ops
 
 
 _BG_STYLE_HINTS = ("чалга", "кючек", "поп-фолк", "popfolk", "pop-folk", "народна", "bulgarian")
@@ -518,14 +705,16 @@ def _parse_iso8601_duration_seconds(duration):
 
 
 def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_channel_id=None,
-                     max_duration_seconds=None, min_duration_seconds=None):
+                     max_duration_seconds=None, min_duration_seconds=None,
+                     order="relevance", region_code=None, relevance_language=None):
     published_after = _iso(_now() - timedelta(days=window_days))
-    data = retry(lambda: yt.get(
-        "search",
-        {"part": "snippet", "type": "video", "videoCategoryId": "10", "order": "relevance",
-         "maxResults": max_results, "publishedAfter": published_after, "q": query},
-        "search.list",
-    ), label=f"search.list('{query}')")
+    params = {"part": "snippet", "type": "video", "videoCategoryId": "10", "order": order,
+              "maxResults": max_results, "publishedAfter": published_after, "q": query}
+    if region_code:
+        params["regionCode"] = region_code
+    if relevance_language:
+        params["relevanceLanguage"] = relevance_language
+    data = retry(lambda: yt.get("search", params, "search.list"), label=f"search.list('{query}')")
     ids = [i["id"]["videoId"] for i in data.get("items", []) if i.get("id", {}).get("videoId")]
     if not ids:
         return []
@@ -583,7 +772,7 @@ def _search_youtube(query, yt: YouTubeClient, window_days, max_results=15, own_c
     return out
 
 
-def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, own_channel_id=None):
+def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, own_channel_id=None, fcfg=None):
     """Връща (unused_candidates, did_search: bool). Прави search.list САМО
     ако pool-ът е под min_candidate_pool ИЛИ cache записът е по-стар от
     candidate_cache_ttl_days — иначе директно връща вече кешираните
@@ -614,6 +803,15 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, 
     ]
     queries_n = max(1, int(cfg.get("candidate_search_queries_per_playlist_per_run", 1)))
     queries = query_templates[:queries_n]
+    search_extra = {}
+    if fcfg and fcfg["queries"].get(cluster_key):
+        # focus: целенасочени BG заявки за най-ново; ротират се по дни, за да не се пита всеки път едно и също
+        pool_q = fcfg["queries"][cluster_key]
+        n = max(1, min(int(fcfg["queries_per_run"]), len(pool_q)))
+        start = (_now().timetuple().tm_yday * n) % len(pool_q)
+        queries = [pool_q[(start + i) % len(pool_q)] for i in range(n)]
+        search_extra = {"order": fcfg["search_order"], "region_code": fcfg["region_code"],
+                        "relevance_language": fcfg["relevance_language"]}
 
     did_search = False
     total_added = 0
@@ -622,7 +820,8 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, 
             found = _search_youtube(q, yt, cfg["candidate_search_window_days"],
                                      own_channel_id=own_channel_id,
                                      max_duration_seconds=cfg.get("max_track_duration_seconds", 720),
-                                     min_duration_seconds=cfg.get("min_track_duration_seconds", 60))
+                                     min_duration_seconds=cfg.get("min_track_duration_seconds", 60),
+                                     **search_extra)
             run_log["candidate_searches"] += 1
             did_search = True
         except RuntimeError as e:
@@ -631,7 +830,8 @@ def refresh_candidate_pool(cluster_key, cluster_label, cache, yt, cfg, run_log, 
             break  # спри тук — не пробвай следващите заявки (напр. изчерпана quota), но пази вече намереното
 
         known_ids = {c["video_id"] for c in entry["candidates"]}
-        added = [c for c in found if c["video_id"] not in known_ids]
+        added = [c for c in found if c["video_id"] not in known_ids
+                 and (not fcfg or candidate_on_style(c, fcfg))]
         entry["candidates"].extend(added)
         total_added += len(added)
 
@@ -651,7 +851,8 @@ def _candidate_score(c, cfg):
     но никога не се извикваха никъде — мъртви настройки до тази промяна)."""
     fresh = freshness_score(c.get("published_at"), cfg["fresh_track_target_days"], cfg["max_track_age_days"])
     norm_views = min(1.0, c.get("views", 0) / cfg["min_candidate_views"] / 10)  # ~10x над прага = максимален views score
-    return 0.6 * fresh + 0.4 * norm_views
+    w = float(cfg.get("freshness_weight", 0.6))
+    return w * fresh + (1 - w) * norm_views
 
 
 def pick_candidates_for_playlist(cluster_key, cluster_label, unused_candidates, cache, cfg,
@@ -1091,7 +1292,10 @@ def _run(cfg, dry_run, run_log):
     added_count, catalog = sync_new_tracks(releases_video_ids)
     run_log["new_own_tracks"] = added_count
 
-    clusters = cluster_catalog(catalog["tracks"], cfg["min_cluster_size"])
+    fcfg = focus_settings(cfg)
+    if fcfg:
+        log("🎯 FOCUS режим: чалга + кючеци (виж discovery-config.json → focus).")
+    clusters = cluster_catalog(catalog["tracks"], cfg["min_cluster_size"], fcfg)
     log(f"→ {len(clusters)} значими клъстера: {[c['label'] for c in clusters.values()]}")
 
     state = load_json(STATE_PATH, {"schema_version": 1, "playlists": []})
@@ -1108,8 +1312,15 @@ def _run(cfg, dry_run, run_log):
 
     for cluster_key, cluster in clusters.items():
         label = cluster["label"]
-        log(f"\n── Клъстер: {label} ({len(cluster['tracks'])} мои песни) ──")
-        if releases_video_ids:
+        is_focus = bool(fcfg) and cluster_key in (FOCUS_KEY_CHALGA, FOCUS_KEY_KYUCHEK)
+        if is_focus:
+            ccfg = focus_overlay(cfg, fcfg)
+        elif fcfg and not fcfg.get("non_focus_external_discovery", False):
+            ccfg = {**cfg, "enable_external_discovery": False}   # quota отива към чалга/кючек
+        else:
+            ccfg = cfg
+        log(f"\n── Клъстер: {label} ({len(cluster['tracks'])} мои песни){' 🎯' if is_focus else ''} ──")
+        if releases_video_ids and not is_focus:   # за focus клъстерите пулът се смята другаде (focus_self_pool)
             eligible = [t for t in cluster["tracks"] if t["youtube_video_id"] in releases_video_ids]
             not_eligible = [t for t in cluster["tracks"] if t["youtube_video_id"] not in releases_video_ids]
             log(f"    ℹ️ Self-track pool за '{label}': {len(eligible)}/{len(cluster['tracks'])} "
@@ -1151,10 +1362,11 @@ def _run(cfg, dry_run, run_log):
 
         used_globally = {t["youtube_video_id"] for p in state["playlists"] for t in p["tracks"]}
         excluded_ids = set(entry.get("excluded_video_ids", []))
-        unused_candidates, _ = refresh_candidate_pool(cluster_key, label, cache, yt, cfg, run_log, own_channel_id)
-        new_external = pick_candidates_for_playlist(cluster_key, label, unused_candidates, cache, cfg,
+        unused_candidates, _ = refresh_candidate_pool(cluster_key, label, cache, yt, ccfg, run_log, own_channel_id,
+                                                      fcfg if is_focus else None)
+        new_external = pick_candidates_for_playlist(cluster_key, label, unused_candidates, cache, ccfg,
                                                       used_globally, excluded_ids,
-                                                      needed=cfg.get("external_tracks_per_run", 5))
+                                                      needed=ccfg.get("external_tracks_per_run", 5))
 
         # Единствен източник на истина за "моя песен" вече е releases табът
         # на канала (yt-dlp, кеширан в releases_video_ids по-горе) — НЕ
@@ -1162,9 +1374,16 @@ def _run(cfg, dry_run, run_log):
         # visualizer, тийзъри), които не са в releases списъка, никога не
         # влизат в пула, дори да имат разпозната дистрибуция.
         my_release_pool = [t for t in cluster["tracks"] if t["youtube_video_id"] in releases_video_ids]
-        insert_ops = build_insert_plan(entry, my_release_pool, new_external, cfg)
-        reorder_ops = build_reorder_plan(entry, cfg)
-        prune_ops = build_prune_plan(entry, cfg)
+        if is_focus:
+            # всички мои песни в стила (стари + нови), без ratio ограничението
+            own_pool = focus_self_pool(cluster["tracks"], releases_video_ids, fcfg)
+            log(f"    🎯 Мои песни в стила: {len(own_pool)} (от {len(cluster['tracks'])} разпознати).")
+            insert_ops = build_insert_plan(entry, [], new_external, ccfg)
+            insert_ops += build_focus_self_ops(entry, insert_ops, own_pool, fcfg)
+        else:
+            insert_ops = build_insert_plan(entry, my_release_pool, new_external, ccfg)
+        reorder_ops = build_reorder_plan(entry, ccfg)
+        prune_ops = build_prune_plan(entry, ccfg)
         availability_prune_ops = build_availability_prune_plan(entry, video_status_map)
         if availability_prune_ops:
             log(f"  🧹 {len(availability_prune_ops)} песен(ни) вече не са публично достъпни "

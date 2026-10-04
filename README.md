@@ -1276,3 +1276,14 @@ README на живо (offline PWA кеш + различни среди биха 
 
 ## Pro visual layer
 The dashboard includes a premium Music Control Center visual layer inspired by modern music products and AI SaaS: command bar, studio status, recommendation rail, refined hierarchy, glass surfaces, responsive behavior, and ambient grid. Functional IDs/handlers are preserved.
+
+### 🎯 Discovery Engine — Focus режим (чалга + кючеци)
+
+Включва се от Dashboard → 🎧 YouTube Discovery Engine → Настройки (отметка „Focus"), или `focus.enabled` в `data/discovery-config.json`.
+
+- Мои песни се разпознават по стил (заглавие, хаштагове, тагове, subgenre) и **всички** — стари и нови — влизат в два плейлиста: „Чалга & Поп-фолк" (съществуващия `bulgarian-folk`) и „Кючеци" (нов, `kyuchek`). Разпръснати между външните, най-новите първо; Shorts и дубликати (ъплоуд + релийз) се прескачат; DistroKid релийзи се броят винаги.
+- Външните кандидати са най-новото: `search.list` с `order=date`, регион BG, прозорец 45 дни, ротиращи BG заявки (`focus.queries`), филтър срещу компилации/караоке/MIX (`focus.block_patterns`).
+- Останалите плейлисти не харчат quota за нови външни; focus плейлистите се обработват първи.
+- За да върнеш старото поведение: `focus.enabled=false`.
+- Quota: всеки insert е 50 ед. Мои песни се вмъкват до `focus.max_self_inserts_per_run` на ден (по подразбиране 12), останалите — на следващия run.
+- Тестове: `python3 -m unittest discover -s test -p "test_*.py"` (пускат се и в CI).
