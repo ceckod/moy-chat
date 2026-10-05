@@ -1,16 +1,22 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-28T16:31:58.438323+00:00",
+  "generated_at": "2026-10-05T16:53:05.076396+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "falling reverse",
+      "term": "fie bine",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
+    },
+    {
+      "term": "zeynep bast",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
     },
     {
       "term": "dolly babe",
@@ -29,39 +35,40 @@
     {
       "term": "ich gebe",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
       "term": "gebe dir",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
       "term": "dir mein",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     },
     {
       "term": "mein wort",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     },
     {
       "term": "ich gebe dir",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
       "term": "gebe dir mein",
@@ -73,21 +80,19 @@
     {
       "term": "dir mein wort",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     },
     {
       "term": "tee grizzley",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
     },
     {
-      "term": "bessan ismail",
+      "term": "florin cercel",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -102,14 +107,7 @@
       "confidence": "HIGH"
     },
     {
-      "term": "marnz malone",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "capital bra",
+      "term": "kodak black",
       "confirmed_by": [
         "musicbrainz"
       ],
