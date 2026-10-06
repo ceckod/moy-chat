@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-05T09:58:05.037Z",
-  "total": 65,
+  "generated_at": "2026-10-06T09:44:06.188Z",
+  "total": 63,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 22
+      "count": 20
     },
     "static": {
       "ok": true,
@@ -68,26 +68,6 @@
     },
     {
       "source": "openrouter",
-      "id": "stealth/space-bunny-alpha",
-      "name": "Space Bunny Alpha",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/stealth/space-bunny-alpha",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: stealth/space-bunny-alpha"
-    },
-    {
-      "source": "openrouter",
       "id": "inclusionai/ling-3.0-flash-sante:free",
       "name": "inclusionAI: Ling 3.0 Flash Sante (free)",
       "provider": "OpenRouter",
@@ -105,26 +85,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.0-flash-sante:free"
-    },
-    {
-      "source": "openrouter",
-      "id": "qwen/qwen3.8-27b:free",
-      "name": "Qwen: Qwen3.8 27B (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/qwen/qwen3.8-27b:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: qwen/qwen3.8-27b:free"
     },
     {
       "source": "openrouter",
