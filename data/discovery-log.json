@@ -3,51 +3,6 @@
   "notes": "Append-only лог на всеки run на youtube_discovery_engine.py (и dry runs). Пази се само последните 60 записа. Всеки run запис съдържа: run_id, started_at, dry_run, status (ok/partial_failure/error/paused), new_own_tracks, clusters_changed, playlists_created, tracks_added, tracks_removed, tracks_reordered, candidate_searches, no_changes (bool), quota_spent_units, quota_calls, errors[] (с playlist/op/video_id/error/at), warnings[] (напр. от verification несъответствия). Dashboard-ът чете това за 'API calls днес', 'нови песни намерени', 'добавени/премахнати/пренаредени' и т.н.",
   "runs": [
     {
-      "run_id": "44d52f4f",
-      "started_at": "2026-08-21T11:18:19.198573+00:00",
-      "dry_run": false,
-      "status": "ok",
-      "new_own_tracks": 0,
-      "clusters_changed": [
-        "rap"
-      ],
-      "playlists_created": 0,
-      "tracks_added": 1,
-      "tracks_removed": 0,
-      "tracks_reordered": 0,
-      "candidate_searches": 5,
-      "no_changes": false,
-      "errors": [],
-      "warnings": [
-        "Verification: 'Rap' — 1 добавени видеа не се виждат все още в playlist-а."
-      ],
-      "quota_spent_units": 566,
-      "quota_calls": [
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.insert",
-        "playlistItems.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "playlistItems.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "playlistItems.list"
-      ]
-    },
-    {
       "run_id": "8c9b0dd1",
       "started_at": "2026-08-22T11:13:30.172517+00:00",
       "dry_run": false,
@@ -2891,6 +2846,45 @@
       "dry_run": false,
       "status": "ok",
       "new_own_tracks": 1,
+      "clusters_changed": [
+        "rap",
+        "pop",
+        "bulgarian-pop",
+        "bulgarian-hip-hop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "READ-ONLY: няма валиден OAuth access token (липсващи/изтекли YOUTUBE_OAUTH_* secrets). Нови плейлисти НЕ се създават и нищо не се записва в YouTube, докато не се поднови refresh token-ът.",
+        "Не са създадени (read-only): Кючеци — Discover, Чалга & Поп-фолк — Discover"
+      ],
+      "quota_spent_units": 12,
+      "quota_calls": [
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
+    },
+    {
+      "run_id": "e854e518",
+      "started_at": "2026-10-08T17:40:26.184078+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
       "clusters_changed": [
         "rap",
         "pop",
