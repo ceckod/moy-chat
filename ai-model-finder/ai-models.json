@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-08T09:54:42.970Z",
-  "total": 63,
+  "generated_at": "2026-10-09T09:58:26.277Z",
+  "total": 62,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 20
+      "count": 19
     },
     "static": {
       "ok": true,
@@ -65,26 +65,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: apodex/apodex-1.1-mini:free"
-    },
-    {
-      "source": "openrouter",
-      "id": "inclusionai/ling-3.0-flash-sante:free",
-      "name": "inclusionAI: Ling 3.0 Flash Sante (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/inclusionai/ling-3.0-flash-sante:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.0-flash-sante:free"
     },
     {
       "source": "openrouter",
