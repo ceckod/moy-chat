@@ -1,11 +1,32 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-05T16:53:05.076396+00:00",
+  "generated_at": "2026-10-12T17:28:34.684339+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "fie bine",
+      "term": "hip hop",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "gunna pop",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "gangsta ralph",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "dafina zeqiri",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -19,73 +40,7 @@
       "confidence": "LOW"
     },
     {
-      "term": "dolly babe",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "pink blush",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "ich gebe",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "gebe dir",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "dir mein",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "mein wort",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "ich gebe dir",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "gebe dir mein",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "dir mein wort",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "tee grizzley",
+      "term": "horror skunx",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -99,7 +54,7 @@
       "confidence": "LOW"
     },
     {
-      "term": "taylor swift",
+      "term": "dhurata dora",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -107,7 +62,21 @@
       "confidence": "HIGH"
     },
     {
-      "term": "kodak black",
+      "term": "ark lar",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "pop gunna",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "fully chop",
       "confirmed_by": [
         "musicbrainz"
       ],
