@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-15T07:57:54.846Z",
-  "total": 60,
+  "generated_at": "2026-10-16T07:51:34.666Z",
+  "total": 61,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 17
+      "count": 18
     },
     "static": {
       "ok": true,
@@ -26,6 +26,26 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "nvidia/nemotron-3.5-super-vl:free",
+      "name": "NVIDIA: Nemotron 3.5 Super VL (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/nvidia/nemotron-3.5-super-vl:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3.5-super-vl:free"
+    },
     {
       "source": "openrouter",
       "id": "dots-studio/dots-3-note-preview:free",
