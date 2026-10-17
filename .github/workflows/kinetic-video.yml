@@ -1,10 +1,10 @@
 name: Kinetic Video
-run-name: "Kinetic: ${{ inputs.job }}"
+run-name: "Kinetic ${{ inputs.job_id }}"
 on:
   workflow_dispatch:
     inputs:
-      job:
-        description: "Име на папката в kinetic-jobs/ (там са scenario.json, снимките и аудиото)"
+      job_id:
+        description: "ID на job-а (идва от сайта)"
         required: true
       size:
         description: "Размер"
@@ -15,17 +15,27 @@ permissions:
 jobs:
   render:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: kinetic-job-${{ inputs.job_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: |
+      - name: Инсталация
+        run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install -r scripts/requirements-kinetic.txt
-      - name: Render
-        run: python scripts/kinetic_render.py --job "kinetic-jobs/${{ inputs.job }}" --out "out/${{ inputs.job }}.mp4" --size "${{ inputs.size }}"
-      - name: Публикувай MP4 в Releases (директен линк за сваляне от телефона)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "kinetic-${{ inputs.job }}-${{ github.run_number }}" "out/${{ inputs.job }}.mp4" --title "Kinetic: ${{ inputs.job }}" --notes "Рендерирано автоматично"
+      - name: Свали входа от Release
+        run: gh release download "$TAG" --dir job
+      - name: Рендер
+        run: python scripts/kinetic_render.py --job job --out out/result.mp4 --size "${{ inputs.size }}" 2>&1 | tee render.log
+      - name: Качи резултата
+        run: gh release upload "$TAG" out/result.mp4
+      - name: Качи грешката (ако има)
+        if: failure()
+        run: |
+          tail -n 25 render.log > error.txt 2>/dev/null || echo "Рендерът се провали — виж Actions лога." > error.txt
+          gh release upload "$TAG" error.txt --clobber
