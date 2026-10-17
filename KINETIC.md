@@ -1,14 +1,11 @@
-# Kinetic Video — видео от снимки + текст + музика, без приложения
+# Kinetic Видео (раздел в сайта)
 
-1. В `kinetic-jobs/` направи папка (напр. `demo`) и качи в нея: `scenario.json`, снимките, едно аудио (mp3/wav).
-2. GitHub → Actions → **Kinetic Video** → Run workflow → job = `demo`.
-3. След 2-5 мин: Releases → свали `demo.mp4`.
+Сайт → 🎬 Kinetic Видео → 1) напиши идея и питай агентите (те пишат думите, ефектите и промптовете за снимките) → 2) песен → 3) качи снимките по ред → Генерирай.
+Сайтът качва файловете в GitHub Release, пуска workflow `kinetic-video.yml` и показва видеото, когато е готово.
 
-Сцените се режат на бийтовете на музиката; всяка има 1-3 думи, снимката е фон.
+Еднократно: качи `kinetic-video.yml` ръчно в `.github/workflows/` (auto-update не пипа тази папка).
+Нужен е GitHub токен в Настройки → API Ключове (като за Mastering Pro; с права за repo + Actions).
+
+JSON за агентите: {"style":"slam_red","scenes":[{"text":"NEW OPUS"},{"text":"ARE YOU KIDDING","effect":"glitch"}]}
 Ефекти: slam, glitch, stretch, zoom, slide. Стилове: slam_red, glitch, stretch, zoom_punch, clean.
-Сцена без `image` = плътен цвят. Пример: `kinetic-jobs/_example/scenario.json`.
-
-## Промпт за AI агентите
-„Напиши scenario.json за кратко видео на тема X. Формат: {style, scenes:[{text, image, effect}]}.
-Всяка сцена: 1-3 думи, главни букви, силни и кратки. 8-14 сцени. image = 1.jpg, 2.jpg... по ред.
-За всяка сцена дай и промпт за снимка (вертикална 9:16, без текст в кадъра, тъмна, контрастна)."
+Старите job Releases (kinetic-job-*) могат да се трият от GitHub → Releases.

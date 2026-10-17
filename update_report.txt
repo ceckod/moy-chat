@@ -1,14 +1,13 @@
 CDB UPDATE REPORT
-Timestamp: 20261017-105201
+Timestamp: 20261017-110355
 
 Changed:
-  none
+  KINETIC.md
+  index.html
+  scripts/kinetic_render.py
 
 Added:
-  KINETIC.md
-  scripts/kinetic_render.py
-  scripts/requirements-kinetic.txt
-  kinetic-jobs/_example/scenario.json
+  js/kinetic.js
 
 Removed:
   none
@@ -30,7 +29,6 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   config.json
   agent-registry.js
   pollinations-image.js
-  index.html
   update_engine.py
   cloudflare-image.js
   gemini.js
@@ -184,6 +182,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/providers/subtitles.js
   js/providers/model-finder.js
   js/providers/song-lab.js
+  kinetic-jobs/_example/scenario.json
   assets/fonts/BadScript.ttf
   assets/fonts/PlayfairDisplay.ttf
   assets/fonts/Caveat.ttf

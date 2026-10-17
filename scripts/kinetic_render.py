@@ -171,7 +171,7 @@ def main():
     style = STYLES.get(sc.get("style", "slam_red"), STYLES["slam_red"])
     font_name = sc.get("font", "russoone")
     audio = os.path.join(a.job, sc["audio"]) if sc.get("audio") else next(
-        iter(sorted(sum((glob.glob(os.path.join(a.job, "*." + e)) for e in ("mp3", "wav", "m4a", "ogg")), []))), None)
+        iter(sorted(sum((glob.glob(os.path.join(a.job, "*." + e)) for e in ("mp3", "wav", "m4a", "ogg", "aac", "flac", "opus")), []))), None)
     if not audio: sys.exit("❌ Няма аудио файл в папката на job-а")
     y, sr = load_audio(audio)
     start = float(sc.get("audio_start", 0))
