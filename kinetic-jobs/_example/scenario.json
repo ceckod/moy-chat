@@ -1,0 +1,12 @@
+{
+  "style": "slam_red",
+  "font": "russoone",
+  "max_seconds": 30,
+  "audio_start": 0,
+  "scenes": [
+    {"text": "NEW OPUS", "image": "1.jpg"},
+    {"text": "ARE YOU KIDDING", "image": "2.jpg", "effect": "glitch"},
+    {"text": "STRETCH", "image": "3.jpg", "effect": "stretch"},
+    {"text": "KINETIC TYPE"}
+  ]
+}

@@ -1,11 +1,14 @@
 CDB UPDATE REPORT
-Timestamp: 20261004-105714
+Timestamp: 20261017-105201
 
 Changed:
   none
 
 Added:
-  none
+  KINETIC.md
+  scripts/kinetic_render.py
+  scripts/requirements-kinetic.txt
+  kinetic-jobs/_example/scenario.json
 
 Removed:
   none
@@ -27,12 +30,15 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   config.json
   agent-registry.js
   pollinations-image.js
+  index.html
   update_engine.py
   cloudflare-image.js
   gemini.js
   MASTERING_PRO_INSTALL_NOTES.md
+  sw.js
   #U0422#U0435#U0445#U043d#U0438#U0447#U0435#U0441#U043a#U0438-#U043e#U0434#U0438#U0442-CDB-Dashboard.md
   app.js
+  README.md
   update.zip
   visualizer.html
   PROJECT_STATE.md
@@ -45,6 +51,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/storage.js
   js/ai-cache.js
   js/ai-provider-order.js
+  js/thumbnail-maker.js
   js/learning-loop.js
   js/suno-preview.js
   js/mastering.js
@@ -57,6 +64,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/app-log.js
   js/cost-tracker.js
   js/niche-scoring.js
+  js/youtube-discovery.js
   js/shorts-studio.js
   js/settings.js
   js/youtube.js
@@ -74,6 +82,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/gemini-validator.js
   js/ai-chat.js
   js/system-log.js
+  js/nav.js
   js/idea-vault.js
   js/mastering-limiter-worklet.js
   js/quota-tracker.js
@@ -91,6 +100,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   js/song-lab.js
   js/shorts-pro-render.js
   js/prefs.js
+  js/consultant.js
   ai-model-finder/check-keys.mjs
   ai-model-finder/worker.js
   ai-model-finder/keys.json
@@ -105,7 +115,9 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   mastering-jobs/.gitkeep
   data/releases-catalog-cache.json
   data/discovery-log.json
+  data/top100-config.json
   data/track-performance.json
+  data/discovery-config.json
   data/discovered-niches.json
   data/stats-history.json
   data/distrokid-library.json
@@ -121,11 +133,14 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/clock-and-keys.js
   scripts/cleanup_dead_files.py
   scripts/fetch_distrokid_links.py
+  scripts/top100_kyuchek.py
+  scripts/youtube_discovery_engine.py
   scripts/catalog_bootstrap.py
   scripts/discover_niches.py
   scripts/cleanup_mastering_jobs.py
   scripts/master_engine.py
   scripts/_pick_next_song.py
+  scripts/_youtube_common.py
   scripts/track_stats.py
   scripts/render_short_ffmpeg.py
   scripts/_secret_scan.py
@@ -136,6 +151,7 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   scripts/track_niche_scores.py
   scripts/whisper_subtitles.py
   scripts/requirements-shorts.txt
+  test/test_discovery_focus.py
   test/app-state.test.mjs
   test/load-niche-scoring.mjs
   test/load-lyrics-humanizer.mjs
@@ -143,7 +159,10 @@ Preserved (missing from ZIP, kept as-is — e.g. visualizer.html by convention):
   test/load-provider.mjs
   test/providers-fallback.test.mjs
   test/lyrics-humanizer.test.mjs
+  test/thumbnail-maker.test.mjs
+  test/consultant.test.mjs
   test/niche-scoring.test.mjs
+  test/test_top100.py
   test/network.test.mjs
   helpers/load-app.mjs
   drafts/╨Æ╨á╨ò╨£╨ò╨¥╨¥╨É ╨ƒ╨É╨ƒ╨Ü╨É.txt
