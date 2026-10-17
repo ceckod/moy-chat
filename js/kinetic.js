@@ -3,7 +3,7 @@
    проверка на run-а + на release asset result.mp4. Нужен е workflow .github/workflows/kinetic-video.yml */
 const Kinetic = (() => {
   const WF = "kinetic-video.yml", POLL_MS = 6000, TIMEOUT_MS = 20 * 60 * 1000;
-  let audio = null, rows = [], timer = null, t0 = 0, jobId = null;
+  let audio = null, music = null, rows = [], timer = null, t0 = 0, jobId = null;
   const $ = (id) => document.getElementById(id);
   const cfg = () => { try { return Keys.load() || {}; } catch (e) { return {}; } };
   const note = (m) => { if (typeof toast === "function") toast(m, 5000); };
@@ -15,7 +15,7 @@ const Kinetic = (() => {
 
   function init() {
     if (!$("kineticAudio")) return;
-    $("kineticAudio").onchange = (e) => { audio = e.target.files[0] || null; $("kineticAudioName").textContent = audio ? audio.name : ""; btn(); };
+    $("kineticAudio").onchange = (e) => { audio = e.target.files[0] || null; music = null; $("kineticAudioName").textContent = audio ? audio.name : ""; btn(); if (audio) listen(); };
     $("kineticImages").onchange = (e) => { [...e.target.files].forEach((f, i) => { rows[i] = rows[i] || { text: "", effect: "", prompt: "" }; rows[i].file = f; }); render(); btn(); };
     refreshAgents();
   }
@@ -29,6 +29,41 @@ const Kinetic = (() => {
       ${r.prompt ? `<button class="btn ghost sm" title="Копирай промпта за снимката" onclick="Kinetic.copyPrompt(${i})">📋</button>` : ""}</div>`).join("") : '<span class="muted">Още няма сцени — питай агентите или качи снимки.</span>';
   }
 
+  // ---------- Анализ на песента (в браузъра) ----------
+  async function analyze(file, maxSec) {
+    const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
+    const buf = await ctx.decodeAudioData(await file.arrayBuffer()); if (ctx.close) ctx.close();
+    const sr = buf.sampleRate, ch = buf.getChannelData(0), dur = Math.min(buf.duration, maxSec), hop = Math.round(sr * 0.01), n = Math.floor(dur * sr / hop);
+    const rms = new Float32Array(n), on = new Float32Array(n);
+    for (let i = 0; i < n; i++) { let t = 0; const o = i * hop; for (let j = 0; j < hop; j += 2) { const v = ch[o + j] || 0; t += v * v; } rms[i] = Math.sqrt(t / (hop / 2)); }
+    for (let i = 1; i < n; i++) on[i] = Math.max(rms[i] - rms[i - 1], 0);
+    let best = 0, bpm = 120;
+    for (let b = 70; b <= 180; b++) { const lag = Math.round(6000 / b); let t = 0; for (let i = lag; i < n; i++) t += on[i] * on[i - lag]; if (t > best) { best = t; bpm = b; } }
+    while (bpm < 80) bpm *= 2; while (bpm > 160) bpm /= 2;
+    const segN = Math.max(1, Math.round(dur / 4)), per = Math.floor(n / segN), en = [];
+    for (let i = 0; i < segN; i++) { let t = 0; for (let j = i * per; j < (i + 1) * per; j++) t += rms[j]; en.push(t / per); }
+    const sorted = [...en].sort((x, y) => x - y), lo = sorted[Math.floor(sorted.length / 3)], hi = sorted[Math.floor(sorted.length * 2 / 3)];
+    const lvl = en.map((e) => (e <= lo ? "спокойно" : e >= hi ? "интензивно" : "средно")), parts = [];
+    lvl.forEach((l, i) => { const t0 = Math.round(i * dur / segN), t1 = Math.round((i + 1) * dur / segN); if (parts.length && parts[parts.length - 1].l === l) parts[parts.length - 1].t1 = t1; else parts.push({ l, t0, t1 }); });
+    let drop = null, jump = 0; for (let i = 1; i < en.length; i++) if (en[i] - en[i - 1] > jump) { jump = en[i] - en[i - 1]; drop = i; }
+    const beat = 60 / bpm; let len = beat * (bpm < 90 ? 2 : 4); while (len < 1.1) len *= 2; while (len > 3) len /= 2;
+    return { dur, bpm: Math.round(bpm), len, count: Math.min(24, Math.max(4, Math.round(dur / len))), sections: parts.map((p) => `${p.t0}-${p.t1}с ${p.l}`).join(", "), drop: drop && jump > (hi || 0) * 0.3 ? Math.round(drop * dur / segN) : null };
+  }
+  async function listen() {
+    const st = $("kineticMusic"); st.style.display = "block"; st.textContent = "🎧 Слушам песента…";
+    try {
+      music = await analyze(audio, +$("kineticSecs").value || 30);
+      $("kineticCount").value = music.count; $("kineticSecs").value = Math.min(Math.ceil(music.dur), 60);
+      st.textContent = `🎵 ${Math.round(music.dur)} сек · ~${music.bpm} BPM · ${music.sections}${music.drop ? ` · силен момент ~${music.drop}с` : ""}\n➡️ Препоръчвам ${music.count} сцени (смяна на ~${music.len.toFixed(1)} сек).`;
+      if ($("kineticGemini") && $("kineticGemini").checked && typeof callGeminiMultimodal === "function" && audio.size < 15e6) {
+        st.textContent += "\n🎧 Gemini слуша за настроение…";
+        const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(audio); });
+        music.mood = String(await callGeminiMultimodal("Опиши в 2 кратки изречения настроението, жанра и енергията на тази песен. Без списъци.", b64, audio.type || "audio/mpeg")).slice(0, 400);
+        st.textContent += "\n💬 " + music.mood;
+      }
+    } catch (e) { st.textContent = "⚠ Не успях да анализирам песента (" + e.message + "). Задай броя сцени на ръка."; }
+  }
+
   // ---------- AI агентите ----------
   function refreshAgents() {
     const box = $("kineticAgents"); if (!box || typeof AgentRegistry === "undefined") return;
@@ -39,6 +74,7 @@ const Kinetic = (() => {
     const n = $("kineticCount").value, lang = $("kineticLang").value;
     return `Ти си режисьор на кинетични вертикални видеа (TikTok/Reels/Shorts), в които силни думи изскачат в такт с музиката върху снимки.
 Тема/идея: ${$("kineticIdea").value.trim()}
+${music ? `МУЗИКА (анализирана): ${Math.round(music.dur)} сек, ~${music.bpm} BPM. Енергия по части: ${music.sections}.${music.drop ? ` Най-силният момент е около ${music.drop}-тата секунда.` : ""}${music.mood ? ` Настроение: ${music.mood}` : ""}\nСмяната на сцените ще е на бийт — приблизително на всеки ${music.len.toFixed(1)} сек. Следвай енергията: спокойните части = по-малко и по-тихи думи, ефекти slide/zoom; интензивните и силния момент = резки думи и ефекти slam/glitch/stretch. Последната сцена да е силно затваряне.` : ""}
 Направи точно ${n} сцени. За всяка сцена:
 - "text": 1-3 думи, ГЛАВНИ БУКВИ, на ${lang}, силни и кратки (като заглавия, не изречения);
 - "effect": един от slam, glitch, stretch, zoom, slide — редувай ги;
