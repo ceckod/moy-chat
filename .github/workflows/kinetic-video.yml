@@ -1,0 +1,31 @@
+name: Kinetic Video
+run-name: "Kinetic: ${{ inputs.job }}"
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Име на папката в kinetic-jobs/ (там са scenario.json, снимките и аудиото)"
+        required: true
+      size:
+        description: "Размер"
+        required: false
+        default: "1080x1920"
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -r scripts/requirements-kinetic.txt
+      - name: Render
+        run: python scripts/kinetic_render.py --job "kinetic-jobs/${{ inputs.job }}" --out "out/${{ inputs.job }}.mp4" --size "${{ inputs.size }}"
+      - name: Публикувай MP4 в Releases (директен линк за сваляне от телефона)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "kinetic-${{ inputs.job }}-${{ github.run_number }}" "out/${{ inputs.job }}.mp4" --title "Kinetic: ${{ inputs.job }}" --notes "Рендерирано автоматично"
