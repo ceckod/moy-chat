@@ -3,57 +3,6 @@
   "notes": "Append-only лог на всеки run на youtube_discovery_engine.py (и dry runs). Пази се само последните 60 записа. Всеки run запис съдържа: run_id, started_at, dry_run, status (ok/partial_failure/error/paused), new_own_tracks, clusters_changed, playlists_created, tracks_added, tracks_removed, tracks_reordered, candidate_searches, no_changes (bool), quota_spent_units, quota_calls, errors[] (с playlist/op/video_id/error/at), warnings[] (напр. от verification несъответствия). Dashboard-ът чете това за 'API calls днес', 'нови песни намерени', 'добавени/премахнати/пренаредени' и т.н.",
   "runs": [
     {
-      "run_id": "972181df",
-      "started_at": "2026-08-23T15:52:11.992757+00:00",
-      "dry_run": false,
-      "status": "ok",
-      "new_own_tracks": 0,
-      "clusters_changed": [
-        "r-b",
-        "bulgarian-pop",
-        "bulgarian-hip-hop"
-      ],
-      "playlists_created": 0,
-      "tracks_added": 0,
-      "tracks_removed": 0,
-      "tracks_reordered": 0,
-      "candidate_searches": 6,
-      "no_changes": false,
-      "errors": [],
-      "warnings": [
-        "search неуспешен за 'Reggaeton' ('Reggaeton music'): HTTP 429 GET https://www.googleapis.com/youtube/v3/search: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n    \"errors\": [\n      {\n        \"message\": \"Quota exceeded for quota metric 'Search Queries' and limit 'Search Queries per day' of service 'youtube.googleapis.com' for consumer 'project_number:97499800503'.\",\n        \"domain\": \"global\",\n        \"reason\": \"rateLimitExceeded\"\n      }\n    "
-      ],
-      "quota_spent_units": 719,
-      "quota_calls": [
-        "videos.list",
-        "videos.list",
-        "videos.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "search.list",
-        "playlistItems.list",
-        "search.list",
-        "videos.list",
-        "playlistItems.list",
-        "playlistItems.list"
-      ]
-    },
-    {
       "run_id": "7255f020",
       "started_at": "2026-08-24T11:19:25.710657+00:00",
       "dry_run": false,
@@ -2808,6 +2757,46 @@
     {
       "run_id": "dee260d5",
       "started_at": "2026-10-18T14:12:37.214746+00:00",
+      "dry_run": false,
+      "status": "ok",
+      "new_own_tracks": 0,
+      "clusters_changed": [
+        "rap",
+        "pop",
+        "bulgarian-pop",
+        "dance",
+        "bulgarian-hip-hop"
+      ],
+      "playlists_created": 0,
+      "tracks_added": 0,
+      "tracks_removed": 0,
+      "tracks_reordered": 0,
+      "candidate_searches": 0,
+      "no_changes": false,
+      "errors": [],
+      "warnings": [
+        "READ-ONLY: няма валиден OAuth access token (липсващи/изтекли YOUTUBE_OAUTH_* secrets). Нови плейлисти НЕ се създават и нищо не се записва в YouTube, докато не се поднови refresh token-ът.",
+        "Не са създадени (read-only): Кючеци — Discover, Чалга & Поп-фолк — Discover"
+      ],
+      "quota_spent_units": 12,
+      "quota_calls": [
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "videos.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list",
+        "playlistItems.list"
+      ]
+    },
+    {
+      "run_id": "5cf4b28b",
+      "started_at": "2026-10-19T17:16:28.869894+00:00",
       "dry_run": false,
       "status": "ok",
       "new_own_tracks": 0,
