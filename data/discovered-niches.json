@@ -1,60 +1,11 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-12T17:28:34.684339+00:00",
+  "generated_at": "2026-10-19T15:20:21.773477+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "hip hop",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "gunna pop",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "gangsta ralph",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "dafina zeqiri",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "zeynep bast",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "horror skunx",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "florin cercel",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "dhurata dora",
+      "term": "tate mcrae",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -62,25 +13,86 @@
       "confidence": "HIGH"
     },
     {
-      "term": "ark lar",
+      "term": "olivia rodrigo",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "tame impala",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "tom macdonald",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "pop gunna",
+      "term": "afro house",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "fully chop",
+      "term": "andrea berg",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "midnight sun",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "helene fischer",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "horror skunx",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "chappell roan",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "blue moon",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
+    },
+    {
+      "term": "james blunt",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
     }
   ]
 }
