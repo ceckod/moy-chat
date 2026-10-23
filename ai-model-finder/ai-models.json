@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-22T08:16:04.168Z",
-  "total": 64,
+  "generated_at": "2026-10-23T08:13:07.676Z",
+  "total": 63,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 21
+      "count": 20
     },
     "static": {
       "ok": true,
@@ -45,26 +45,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: recursive/flint-v1.0:free"
-    },
-    {
-      "source": "openrouter",
-      "id": "minimax/minimax-m3.1-flash:free",
-      "name": "MiniMax: MiniMax M3.1 Flash (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/minimax/minimax-m3.1-flash:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: minimax/minimax-m3.1-flash:free"
     },
     {
       "source": "openrouter",
