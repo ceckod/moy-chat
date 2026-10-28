@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-27T08:36:04.184Z",
-  "total": 63,
+  "generated_at": "2026-10-28T09:16:04.712Z",
+  "total": 62,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 20
+      "count": 19
     },
     "static": {
       "ok": true,
@@ -385,26 +385,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: google/lyria-3-clip-preview"
-    },
-    {
-      "source": "openrouter",
-      "id": "nvidia/nemotron-3-super-120b-a12b:free",
-      "name": "NVIDIA: Nemotron 3 Super (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/nvidia/nemotron-3-super-120b-a12b:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3-super-120b-a12b:free"
     },
     {
       "source": "openrouter",
