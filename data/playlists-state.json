@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "notes": "Source of truth за кои playlist-и engine-ът вече управлява. cluster_key е стабилен идентификатор (не се пипа ръчно) — по него engine-ът разпознава 'вече съществуващ' playlist, за да НЕ създава дубликати при нов daily run. Всеки playlist entry поддържа manual overrides (т.34): locked (без промени, само tracking), disabled (пропуска се изцяло), excluded_video_ids (никога не се добавят), forced_video_ids (винаги присъстват, защитени от pruning), self_track_ratio_override / max_playlist_size_override (null = ползва глобалния discovery-config.json). Engine-ът НИКОГА не презаписва тези полета сам.",
-  "last_run": "2026-10-29T17:12:52.342565+00:00",
+  "last_run": "2026-10-30T16:53:46.178968+00:00",
   "last_run_status": "ok",
   "playlists": [
     {
@@ -311,7 +311,7 @@
       "name": "Rap — Discover",
       "description": "🎧 Rap Discovery — a curated mix blending fresh Rap picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:31.096950+00:00",
-      "last_updated": "2026-10-29T17:13:19.511037+00:00",
+      "last_updated": "2026-10-30T16:53:47.374838+00:00",
       "tracks": [
         {
           "youtube_video_id": "495zc7_vGgA",
@@ -330,14 +330,14 @@
         {
           "youtube_video_id": "JVDUsaqgSq0",
           "is_mine": false,
-          "title": "BigXthaPlug - 2AM (Official Music Video)  | NEW ALBUM OCT 30",
+          "title": "BigXthaPlug - 2AM (Official Music Video)",
           "added_at": "2026-08-14T18:28:32.910754+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy4wMTcyMDhGQUE4NTIzM0Y5"
         },
         {
           "youtube_video_id": "3QwZjhHcLZk",
           "is_mine": false,
-          "title": "BigXthaPlug - The Largest (Official Music Video) | NEW ALBUM OCT 30",
+          "title": "BigXthaPlug - The Largest (Official Music Video)",
           "added_at": "2026-08-14T18:28:32.910754+00:00",
           "playlist_item_id": "UExMVkk0ekphVGZ1dy41MjE1MkI0OTQ2QzJGNzNG"
         },
@@ -856,7 +856,7 @@
       "name": "Pop — Discover",
       "description": "🎧 Pop Discovery — a curated mix blending fresh Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:35.674863+00:00",
-      "last_updated": "2026-10-29T17:13:19.706992+00:00",
+      "last_updated": "2026-10-30T16:53:47.508901+00:00",
       "tracks": [
         {
           "youtube_video_id": "o3FYn6Hsdyw",
@@ -1560,7 +1560,7 @@
       "name": "Dance — Discover",
       "description": "🎧 Dance Discovery — a curated mix blending fresh Dance picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-14T18:28:44.793950+00:00",
-      "last_updated": "2026-10-29T17:13:20.204664+00:00",
+      "last_updated": "2026-10-30T16:53:48.003727+00:00",
       "tracks": [
         {
           "youtube_video_id": "RQxQZV66Bl8",
@@ -2363,7 +2363,7 @@
       "name": "AI Music — Discover",
       "description": "🎧 AI Music Discovery — a curated mix blending fresh AI Music picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:50.961665+00:00",
-      "last_updated": "2026-10-29T17:13:19.231750+00:00",
+      "last_updated": "2026-10-30T16:53:47.143489+00:00",
       "tracks": [
         {
           "youtube_video_id": "9Txb15fKgjY",
@@ -2712,7 +2712,7 @@
       "name": "Bulgarian Pop — Discover",
       "description": "🎧 Bulgarian Pop Discovery — a curated mix blending fresh Bulgarian Pop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:07:57.105921+00:00",
-      "last_updated": "2026-10-29T17:13:19.836389+00:00",
+      "last_updated": "2026-10-30T16:53:47.609698+00:00",
       "tracks": [
         {
           "youtube_video_id": "PybjeAvIfck",
@@ -2858,7 +2858,7 @@
       "name": "Bulgarian Hip-Hop — Discover",
       "description": "🎧 Bulgarian Hip-Hop Discovery — a curated mix blending fresh Bulgarian Hip-Hop picks with select original releases. Refreshed periodically by the CD-B Discovery Engine.",
       "created_at": "2026-08-15T12:58:19.215922+00:00",
-      "last_updated": "2026-10-29T17:13:20.434537+00:00",
+      "last_updated": "2026-10-30T16:53:48.117928+00:00",
       "tracks": [
         {
           "youtube_video_id": "VInwR3nq_Uw",
