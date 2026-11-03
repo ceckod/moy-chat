@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "notes": "Learning loop данни за МОИТЕ песни в playlist-ите: views преди/след добавяне, за да се смята 'playlist lift'. ВАЖНО: винаги correlation/lift estimate, никога твърдение за причинност — виж lift_estimate.note във всеки запис.",
+  "entries": [
+    {
+      "video_id": "LkKxC5FVF4w",
+      "playlist": "pop",
+      "position_added": null,
+      "added_at": "2026-08-14T18:41:44.006169+00:00",
+      "views_before": 1425,
+      "views_24h": 1425,
+      "views_7d": null,
+      "views_30d": null,
+      "lift_estimate": null
+    },
+    {
+      "video_id": "W0vH30K5bLE",
+      "playlist": "pop",
+      "position_added": null,
+      "added_at": "2026-08-14T19:45:55.746641+00:00",
+      "views_before": 424,
+      "views_24h": 425,
+      "views_7d": 444,
+      "views_30d": 545,
+      "lift_estimate": {
+        "value": 2.9,
+        "unit": "views/day since added",
+        "confidence": "medium",
+        "note": "Correlation/lift estimate спрямо views преди добавянето — НЕ доказана причинност. Изисква минимален sample size, за да се ползва за repositioning (т.28)."
+      }
+    },
+    {
+      "video_id": "cpxqhiJh9gQ",
+      "playlist": "r-b",
+      "position_added": null,
+      "added_at": "2026-08-15T13:14:37.090050+00:00",
+      "views_before": 66,
+      "views_24h": 68,
+      "views_7d": 78,
+      "views_30d": 100,
+      "lift_estimate": {
+        "value": 1.7,
+        "unit": "views/day since added",
+        "confidence": "medium",
+        "note": "Correlation/lift estimate спрямо views преди добавянето — НЕ доказана причинност. Изисква минимален sample size, за да се ползва за repositioning (т.28)."
+      }
+    }
+  ]
+}

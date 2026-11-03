@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Music Suite — CD-B Records</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AI Music Suite">
+<meta name="theme-color" content="#0a0a14">
+<script>
+// Изпълнява се СИНХРОННО, преди останалото да се render-не — за да не
+// проблесне съдържанието за части от секундата преди да сложим ключалката.
+// Ако няма зададена парола (никога не е активирана) ИЛИ вече е отключено
+// в тази сесия (sessionStorage — важи докато е отворен табът), показваме
+// dashboard-а веднага. Виж js/auth-gate.js за реалната логика на паролата.
+//
+// ---------- РЕСЕТ НА ЗАКЛЮЧЕНАТА КЛЮЧАЛКА ОТ АДРЕСНАТА ЛЕНТА (телефон) ----------
+// На телефон няма лесен достъп до DevTools конзолата (виж README), а
+// "Изчисти всички данни" на сайта трие ВСИЧКО (проекти, API ключове...),
+// не само ключалката — прекалено грубо за нещо толкова тясно. Затова:
+// ?resetGate=1 в края на адреса + потвърждение (window.confirm) трие
+// САМО записа на ключалката (cdb_auth_gate_hash_v1), нищо друго. Не е
+// бутон в интерфейса (не се вижда, нито се разчита случайно) — трябва
+// изрично да знаеш и да напишеш параметъра сам, което е същият праг като
+// DevTools варианта, само че достъпен и от телефон. Виж README "Известни
+// ограничения" — честната рамка си остава същата: privacy screen, не
+// сървърна защита.
+(function(){
+  try {
+    var params = new URLSearchParams(location.search);
+    if (params.has('resetGate')) {
+      if (window.confirm('Да изтрия ли ключалката (потребител+парола)? Останалите ти данни (проекти, API ключове) НЯМА да се пипнат.')) {
+        localStorage.removeItem('cdb_auth_gate_hash_v1');
+        sessionStorage.removeItem('cdb_auth_gate_unlocked_v1');
+      }
+      params.delete('resetGate');
+      var cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+      history.replaceState(null, '', cleanUrl);
+    }
+    var hash = localStorage.getItem('cdb_auth_gate_hash_v1');
+    var unlocked = sessionStorage.getItem('cdb_auth_gate_unlocked_v1') === '1';
+    if (!hash || unlocked) document.documentElement.classList.add('gate-unlocked');
+  } catch(e) { document.documentElement.classList.add('gate-unlocked'); }
+})();
+</script>
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+:root{
+  --bg:#0a0a14; --bg-sidebar:#0d0e1a; --panel:#13142450; --panel-solid:#141527;
+  --panel-2:#1a1b30; --border:#25263f; --border-soft:#1d1e35;
+  --text:#eef0fb; --muted:#8b8fb0; --muted-2:#5f6285;
+  --p1:#8b5cf6; --p2:#ec4899; --cyan:#22d3ee;
+  --grad: linear-gradient(135deg, var(--p1), var(--p2));
+  --green:#22c55e; --amber:#f59e0b; --red:#f43f5e;
+  --radius:14px; --radius-sm:9px;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-head:'Space Grotesk',var(--font-ui);
+  --font-mono:'JetBrains Mono',monospace;
+}
+body.theme-light{
+  --bg:#f3f4fb; --bg-sidebar:#ffffff; --panel:#ffffffcc; --panel-solid:#ffffff;
+  --panel-2:#f0f1fa; --border:#e3e5f4; --border-soft:#ececf7;
+  --text:#191a2e; --muted:#666a8c; --muted-2:#9a9dbb;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-ui);background:var(--bg);color:var(--text);
+     -webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:inherit;}
+a{color:var(--cyan);}
+
+/* ---------- SHELL ---------- */
+.shell{display:flex;min-height:100vh;}
+
+/* AUTH GATE — виж js/auth-gate.js. По подразбиране (без клас "gate-unlocked"
+   на <html>) целият dashboard е скрит и overlay-я се показва вместо него. */
+html:not(.gate-unlocked) .shell{display:none;}
+#authGateOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);
+  align-items:center;justify-content:center;padding:24px;}
+html:not(.gate-unlocked) #authGateOverlay{display:flex;}
+.gate-card{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;width:380px;max-width:100%;}
+.gate-card h3{margin:0 0 6px;font-family:var(--font-head);}
+
+/* AGENT ROSTER GATE — виж js/agent-roster.js. За разлика от AUTH GATE
+   по-горе (заключено/отключено по подразбиране чрез CSS клас), тук
+   display-ът се управлява директно от JS (AgentRoster.maybeShowGate()) —
+   overlay-ят се показва само ако вече има зададен AI ключ И дневният
+   ростър липсва/е изтекъл, затова е скрит по подразбиране (display:none),
+   не обвързан с клас на <html>. z-index е ПОД auth gate-а (200), за да
+   се появи едва СЛЕД отключване на privacy екрана, ако и двата са активни. */
+#rosterGateOverlay{display:none;position:fixed;inset:0;z-index:190;background:var(--bg);
+  align-items:center;justify-content:center;padding:24px;}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{width:250px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border-soft);
+         padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 18px;}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--grad);display:flex;align-items:center;
+            justify-content:center;font-size:16px;flex-shrink:0;}
+.brand-name{font-family:var(--font-head);font-weight:700;font-size:15px;line-height:1.2;}
+.brand-sub{font-size:10.5px;color:var(--muted);}
+.nav-group{margin-top:16px;}
+.nav-label{font-size:10px;letter-spacing:.08em;color:var(--muted-2);font-weight:700;
+           padding:0 10px;margin-bottom:6px;text-transform:uppercase;}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;
+         border:none;color:var(--muted);padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;
+         margin-bottom:2px;}
+.nav-btn:hover{background:var(--panel-2);color:var(--text);}
+.nav-btn.active{background:var(--panel-2);color:var(--text);position:relative;}
+.nav-btn.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;
+                         border-radius:3px;background:var(--grad);}
+.nav-btn .ic{width:16px;text-align:center;flex-shrink:0;opacity:.9;}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border-soft);}
+.theme-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:12px;color:var(--muted);}
+.switch{position:relative;width:38px;height:21px;border-radius:20px;background:var(--panel-2);
+        border:1px solid var(--border);cursor:pointer;flex-shrink:0;}
+.switch .knob{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--grad);
+              transition:left .15s;}
+.switch.on .knob{left:19px;}
+.user-card{display:flex;align-items:center;gap:9px;padding:10px;border-radius:10px;background:var(--panel-2);margin-top:8px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--grad);flex-shrink:0;}
+.user-name{font-size:12.5px;font-weight:600;}
+.user-plan{font-size:10.5px;color:var(--muted);}
+.version-tag{font-size:10px;color:var(--muted-2);text-align:center;margin-top:10px;}
+
+/* ---------- MAIN ---------- */
+.main{flex:1;min-width:0;padding:22px 26px 60px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.topbar h1{font-family:var(--font-head);font-size:22px;margin:0;}
+.topbar .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.pill{display:flex;align-items:center;gap:8px;background:var(--panel-solid);border:1px solid var(--border);
+      border-radius:20px;padding:7px 14px;font-size:12px;}
+.pill .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;}
+.pill strong{font-size:12px;}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--panel-solid);border:1px solid var(--border);
+          color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+
+/* ---------- VIEWS ---------- */
+.view{display:none;}
+.view.active{display:block;}
+.section-title{font-family:var(--font-head);font-size:12px;letter-spacing:.06em;color:var(--muted);
+               font-weight:700;text-transform:uppercase;margin:26px 0 12px;}
+.section-title:first-child{margin-top:0;}
+
+/* ---------- CARDS / GRID ---------- */
+.grid{display:grid;gap:14px;}
+.grid.cols-6{grid-template-columns:repeat(6,1fr);}
+.grid.cols-5{grid-template-columns:repeat(5,1fr);}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.grid.cols-2{grid-template-columns:repeat(2,1fr);}
+@media (max-width:1100px){
+  .grid.cols-6,.grid.cols-5,.grid.cols-4{grid-template-columns:repeat(3,1fr);}
+}
+/* ---------- MOBILE NAV (hamburger + overlay sidebar) ----------
+   На десктоп .sidebar е нормален sticky колона елемент (виж по-горе).
+   На мобилен (<=760px) я превръщаме във fixed overlay, скрит по подразбиране
+   (translateX извън екрана — не display:none, за да може transition-ът да
+   плъзга), и добавяме ☰ бутон + тъмен backdrop за отварянето ѝ. Виж
+   Nav.toggleMobileSidebar() в app.js. */
+.mobile-nav-toggle{display:none;}
+.sidebar-backdrop{display:none;}
+@media (max-width:760px){
+  .mobile-nav-toggle{display:flex;}
+  .sidebar{
+    display:flex; position:fixed; inset:0 auto 0 0; z-index:120; width:78vw; max-width:300px;
+    transform:translateX(-100%); transition:transform .2s ease; box-shadow:2px 0 24px rgba(0,0,0,.4);
+  }
+  .sidebar.mobile-open{transform:translateX(0);}
+  .sidebar-backdrop{
+    display:block; position:fixed; inset:0; z-index:110; background:rgba(0,0,0,.5);
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .sidebar-backdrop.mobile-open{opacity:1; pointer-events:auto;}
+  .grid.cols-6,.grid.cols-5,.grid.cols-4,.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}
+}
+
+.card{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card.tight{padding:14px;}
+.num-card{position:relative;}
+.num-card .n{position:absolute;top:12px;right:14px;font-family:var(--font-mono);font-size:11px;color:var(--muted-2);}
+.num-card .ic-badge{width:34px;height:34px;border-radius:9px;background:var(--panel-2);display:flex;align-items:center;
+                     justify-content:center;font-size:16px;margin-bottom:10px;}
+.num-card h4{margin:0 0 6px;font-size:13.5px;font-weight:600;}
+.num-card p{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.4;min-height:32px;}
+
+/* Стъпка-1 номерация + "по избор" маркер — за визуален ред вътре в
+   картите, не само на Dashboard-а (виж README "Модулна структура"). */
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;
+  margin-right:8px;flex-shrink:0;vertical-align:middle;}
+.optional-tag{display:inline-block;font-size:10px;letter-spacing:.03em;color:var(--muted-2);
+  border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin-left:8px;
+  vertical-align:middle;font-weight:600;}
+.flow-divider{font-size:10.5px;letter-spacing:.06em;color:var(--muted-2);text-align:center;
+  margin:18px 0 4px;text-transform:uppercase;}
+
+/* buttons */
+.btn{border:none;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;}
+.btn.grad{background:var(--grad);color:#fff;}
+.btn.grad:hover{opacity:.92;}
+.btn.ghost{background:var(--panel-2);border:1px solid var(--border);color:var(--text);}
+.btn.ghost:hover{background:var(--border);}
+.btn.full{width:100%;}
+.btn.sm{padding:6px 11px;font-size:11.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* forms */
+label{display:block;font-size:11.5px;color:var(--muted);margin:12px 0 4px;font-weight:600;}
+input[type=text],input[type=number],input[type=password],textarea,select{
+  width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:13.5px;font-family:inherit;
+}
+textarea{min-height:100px;resize:vertical;}
+.row{display:flex;gap:12px;flex-wrap:wrap;}
+.row > *{flex:1;min-width:150px;}
+.copy-field{display:flex;gap:8px;align-items:center;background:var(--bg);
+            border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-top:6px;}
+.copy-field span{flex:1;font-size:12.5px;word-break:break-word;line-height:1.4;}
+.copy-field button{flex-shrink:0;}
+.hashtags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.hashtags span{background:var(--panel-2);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11.5px;}
+.muted{color:var(--muted);font-size:12px;}
+
+/* ---------- VIRAL LAB ---------- */
+.vscore-hero{display:flex;align-items:center;gap:18px;padding:6px 0 14px;flex-wrap:wrap;}
+.vscore-ring{position:relative;width:96px;height:96px;flex-shrink:0;border-radius:50%;
+  background:conic-gradient(var(--p1) calc(var(--pct)*1%), var(--panel-2) 0);
+  display:flex;align-items:center;justify-content:center;}
+.vscore-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--panel-solid);}
+.vscore-ring .v{position:relative;font-family:var(--font-head);font-size:22px;font-weight:700;}
+.vscore-ring .v small{display:block;font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+.vscore-meta strong{font-size:14px;}
+.vscore-meta p{margin:4px 0 0;}
+.vbar-row{margin-top:10px;}
+.vbar-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+.vbar-row .lbl span:last-child{color:var(--muted);font-family:var(--font-mono);}
+.vbar-track{height:7px;border-radius:6px;background:var(--panel-2);overflow:hidden;}
+.vbar-fill{height:100%;border-radius:6px;background:var(--grad);}
+.vpred-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px;}
+.vpred-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.vpred-item .pv{font-family:var(--font-head);font-size:18px;font-weight:700;}
+.vpred-item .pl{font-size:11px;color:var(--muted);margin-top:2px;}
+.stars{color:var(--amber);font-size:15px;letter-spacing:1px;}
+.vlist{margin:8px 0 0;padding-left:18px;font-size:12.5px;line-height:1.55;color:var(--text);}
+.vlist.cons{color:var(--muted);}
+.weak-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.weak-card .ws-score{font-family:var(--font-mono);font-size:12px;color:var(--red);flex-shrink:0;}
+@media (max-width:760px){.vpred-grid{grid-template-columns:1fr 1fr;}}
+
+/* ---------- HOOK EVOLUTION ARENA ---------- */
+.arena-gen{margin-top:16px;}
+.arena-gen-title{font-family:var(--font-head);font-size:12.5px;font-weight:700;color:var(--cyan);
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.arena-gen-title .best{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+.arena-hook{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;
+  display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.arena-hook.winner{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+.arena-hook .txt{font-size:12.5px;line-height:1.5;flex:1;}
+.arena-hook .sc{font-family:var(--font-mono);font-size:13px;font-weight:700;flex-shrink:0;color:var(--p1);}
+.lineage{font-size:10.5px;color:var(--muted-2);margin-top:4px;font-style:italic;}
+
+/* ---------- GHOST AUDIENCE ---------- */
+.persona-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;}
+.persona-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.persona-card .who{display:flex;justify-content:space-between;font-size:12px;font-weight:700;}
+.persona-card .who span:last-child{font-weight:400;color:var(--muted);font-size:11px;}
+.persona-card .quote{font-size:12.5px;margin:5px 0;line-height:1.5;font-style:italic;}
+.persona-card .scroll{font-size:11px;}
+.persona-card .scroll.stay{color:var(--green);}
+.persona-card .scroll.leave{color:var(--red);}
+.heat-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.heat-row .sec{width:100px;flex-shrink:0;font-size:11.5px;color:var(--muted);}
+.heat-track{flex:1;height:16px;border-radius:6px;background:var(--panel-2);overflow:hidden;position:relative;}
+.heat-fill{height:100%;border-radius:6px;}
+.meme-flag{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.35);border-radius:10px;
+  padding:9px 11px;margin-top:8px;font-size:12px;}
+
+/* status chips */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.chip.green{background:rgba(34,197,94,.13);color:var(--green);}
+.chip.amber{background:rgba(245,158,11,.13);color:var(--amber);}
+.chip.red{background:rgba(244,63,94,.13);color:var(--red);}
+.chip.cyan{background:rgba(34,211,238,.13);color:var(--cyan);}
+.chip .d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* ---------- AI CHAT (view-ai-chat) ---------- */
+.ai-chat-fab{position:fixed;right:22px;bottom:22px;z-index:60;width:52px;height:52px;border-radius:50%;
+  border:none;background:var(--grad);color:#fff;font-size:22px;cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;}
+.ai-chat-fab:hover{filter:brightness(1.08);}
+#view-ai-chat .chip{background:var(--panel-2);border:1px solid var(--border);color:var(--text);}
+.ca-log{display:flex;flex-direction:column;gap:10px;}
+.ca-info{font-size:13px;color:var(--muted);padding:4px 2px;}
+.ca-error{font-size:13px;color:#ff6b6b;background:rgba(255,107,107,.08);padding:8px 10px;border-radius:8px;}
+.ca-card{border:1px solid var(--border);border-radius:12px;background:var(--panel-2);overflow:hidden;}
+.ca-card-head{padding:8px 12px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted);}
+.ca-final .ca-card-head{color:var(--text);background:rgba(120,190,255,.08);}
+.ca-code{margin:0;padding:12px;font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;font-family:ui-monospace,Consolas,monospace;}
+.ca-review{padding:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;color:var(--text);}
+.ai-chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 190px);min-height:420px;
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.ai-chat-agentbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;
+  border-bottom:1px solid var(--border);background:var(--panel-2);}
+.ai-chat-messages{flex:1;overflow-y:auto;padding:16px;}
+.ai-chat-inputbar{border-top:1px solid var(--border);padding:12px 16px;background:var(--panel-2);}
+.ai-chat-typing{display:none;align-items:center;gap:6px;color:var(--muted);font-size:12px;padding:0 16px 8px;}
+@media (max-width:760px){.ai-chat-fab{right:14px;bottom:78px;}.ai-chat-wrap{height:calc(100vh - 220px);}}
+
+/* KPI stat block */
+.kpi{background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.badge{display:inline-block;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;color:var(--muted);}
+.kpi .label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.kpi .value{font-family:var(--font-mono);font-size:20px;font-weight:600;}
+.kpi .delta{font-size:11px;color:var(--green);margin-top:4px;}
+.kpi .delta.down{color:var(--red);}
+
+/* table */
+table.data{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.data th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 8px;
+              border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.03em;}
+table.data td{padding:9px 8px;border-bottom:1px solid var(--border-soft);}
+table.data tr:last-child td{border-bottom:none;}
+
+/* settings list row */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;
+         border-bottom:1px solid var(--border-soft);}
+.set-row:last-child{border-bottom:none;}
+.set-row .txt strong{font-size:13px;display:block;}
+.set-row .txt span{font-size:11.5px;color:var(--muted);}
+
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;
+           align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--panel-solid);border:1px solid var(--border);border-radius:16px;
+       padding:22px;width:460px;max-width:100%;max-height:88vh;overflow-y:auto;}
+.modal h3{margin-top:0;font-family:var(--font-head);}
+hr{border:none;border-top:1px solid var(--border-soft);}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--panel-solid);border:1px solid var(--border);
+       padding:12px 16px;border-radius:10px;font-size:13px;z-index:60;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+
+/* visualizer / transition mini widget */
+.transition-badge{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 0;}
+.tb-box{width:64px;height:64px;border-radius:12px;border:2px solid var(--p1);display:flex;align-items:center;
+        justify-content:center;font-family:var(--font-head);font-weight:700;font-size:24px;
+        box-shadow:0 0 20px rgba(139,92,246,.35);color:var(--p1);}
+.tb-arrow{font-size:20px;color:var(--p2);}
+
+.checklist-item{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:6px;color:var(--muted);}
+.checklist-item .ok{color:var(--green);}
+.checklist-item .bug{color:var(--amber);}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+
+</style>
+</head>
+   
+<body>
+
+<!-- AUTH GATE overlay — виж js/auth-gate.js. Показва се само ако е зададена
+     парола (Настройки → "🔒 Достъп до dashboard-а") и още не е отключено
+     в тази сесия. НЯМА "забравена парола" бутон тук — нарочно, виж
+     README "Известни ограничения" и коментара в js/auth-gate.js. -->
+<div id="authGateOverlay">
+  <div class="gate-card">
+    <h3>🔒 Заключено</h3>
+    <p class="muted">Въведи потребител и парола, за да продължиш към dashboard-а.</p>
+    <input type="text" id="authGateUnlockUser" placeholder="Потребител" autocomplete="username" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter') document.getElementById('authGateUnlockPass').focus()">
+    <input type="password" id="authGateUnlockPass" placeholder="Парола" autocomplete="current-password" onkeydown="if(event.key==='Enter') AuthGate.unlock()">
+    <button class="btn grad" style="margin-top:14px;width:100%;" onclick="AuthGate.unlock()">🔓 Отключи</button>
+    <button class="btn ghost" style="margin-top:8px;width:100%;" onclick="AuthGate.bioUnlockClick()">👆 Отключи с биометрия</button>
+    <div id="authGateError" class="muted" style="margin-top:10px;color:var(--red);"></div>
+  </div>
+</div>
+
+<!-- AGENT ROSTER GATE overlay — виж js/agent-roster.js. Показва се (JS,
+     не CSS клас) само ако има зададен поне 1 AI ключ И дневният списък с
+     "работещи" модели липсва/е по-стар от 24ч — задължителна стъпка
+     преди да продължиш към dashboard-а, за да не чака после всяка задача
+     докато AI екипът рови между целия списък модели. -->
+<div id="rosterGateOverlay">
+  <div class="gate-card">
+    <h3>🤖 Обнови AI агентите</h3>
+    <p class="muted">Дневната проверка кои Claude/Gemini/OpenRouter модели РЕАЛНО отговарят точно сега липсва или е стара. Без нея всяка задача би претърсвала целия списък модели наново (бавно). Натисни бутона, за да построиш днешния списък — прави се само веднъж на 24ч.</p>
+    <div id="rosterGateStatus" class="muted" style="margin:10px 0;font-size:12.5px;white-space:pre-wrap;"></div>
+    <button class="btn grad" id="rosterGateBtn" style="width:100%;" onclick="AgentRoster.runGateRefresh()">🔄 Обнови списъците с модели</button>
+  </div>
+</div>
+
+<div id="vaultBanner" style="display:none;position:sticky;top:0;left:0;right:0;z-index:70;background:var(--amber);color:#1a1200;padding:8px 16px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;" onclick="Nav.showView('set-keys')">
+  🔒 Ключовете са заключени за тази сесия — натисни тук, за да въведеш паролата на трезора
+</div>
+<div class="shell">
+
+  <!-- Backdrop зад mobile sidebar-а — клик върху него затваря менюто.
+       Само визуален елемент на <=760px (виж CSS media query по-горе). -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="Nav.closeMobileSidebar()"></div>
+
+  <!-- ================= SIDEBAR ================= -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">🎚️</div>
+      <div>
+        <div class="brand-name">AI Music Suite</div>
+        <div class="brand-sub">Your AI Co-Pilot for Viral Music</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Навигация</div>
+      <button class="nav-btn" data-view="dashboard" onclick="Nav.showView('dashboard')"><span class="ic">🏠</span> Табло</button>
+      <button class="nav-btn" data-view="ai-chat" onclick="Nav.showView('ai-chat')"><span class="ic">💬</span> AI Чат</button>
+      <button class="nav-btn" data-view="code-arena" onclick="Nav.showView('code-arena')"><span class="ic">🥊</span> Code Arena</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Текстове</div>
+      <button class="nav-btn" data-view="lyrics-library" onclick="Nav.showView('lyrics-library')"><span class="ic">📝</span> Библиотека с текстове</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Song Intelligence Lab</div>
+      <button class="nav-btn" data-view="song-lab" onclick="Nav.showView('song-lab')"><span class="ic">🎵</span> Song Intelligence Lab</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Създаване на песен</div>
+      <button class="nav-btn" data-view="step1" onclick="Nav.showView('step1')"><span class="ic">🔍</span> 1. Пазарен анализ</button>
+      <button class="nav-btn" data-view="step2" onclick="Nav.showView('step2')"><span class="ic">🎬</span> 2. Визуализатор</button>
+      <button class="nav-btn" data-view="step3" onclick="Nav.showView('step3')"><span class="ic">📤</span> 3. Публикуване</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Алтернативен път</div>
+      <button class="nav-btn" data-view="quick" onclick="Nav.showView('quick')"><span class="ic">⚡</span> Бърз ъплоуд (стари песни)</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Shorts</div>
+      <button class="nav-btn" data-view="shorts-studio" onclick="Nav.showView('shorts-studio')"><span class="ic">🎞️</span> AI Shorts Studio</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Мастеринг</div>
+      <button class="nav-btn" data-view="mastering" onclick="Nav.showView('mastering')"><span class="ic">🎚️</span> Онлайн Мастеринг</button>
+      <button class="nav-btn" data-view="kinetic" onclick="Nav.showView('kinetic')"><span class="ic">🎬</span> Kinetic Видео</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Инструменти</div>
+      <button class="nav-btn" data-view="niche-toolkit" onclick="Nav.showView('niche-toolkit')"><span class="ic">🎯</span> Niche Toolkit (Spotify)</button>
+      <button class="nav-btn" data-view="release-roadmap" onclick="Nav.showView('release-roadmap')"><span class="ic">🗓️</span> Release Roadmap</button>
+      <button class="nav-btn" data-view="suno-preview" onclick="Nav.showView('suno-preview')"><span class="ic">🎧</span> Suno Preview Player</button>
+      <button class="nav-btn" data-view="idea-vault" onclick="Nav.showView('idea-vault')"><span class="ic">💡</span> Idea Vault</button>
+      <button class="nav-btn" data-view="validator" onclick="Nav.showView('validator')"><span class="ic">🤖</span> Gemini Validator (лог)</button>
+      <button class="nav-btn" data-view="model-finder" onclick="Nav.showView('model-finder')"><span class="ic">🧠</span> AI Model Finder</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Диагностика</div>
+      <button class="nav-btn" data-view="system-test" onclick="Nav.showView('system-test')"><span class="ic">🧪</span> Системен тест</button>
+      <button class="nav-btn" data-view="ai-ideas" onclick="Nav.showView('ai-ideas')"><span class="ic">🗂️</span> Архив на идеи от AI екипа</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Настройки</div>
+      <button class="nav-btn" data-view="set-keys" onclick="Nav.showView('set-keys')"><span class="ic">🔑</span> API Ключове</button>
+      <button class="nav-btn" data-view="set-proxy" onclick="Nav.showView('set-proxy')"><span class="ic">🌐</span> Proxy &amp; Мрежа</button>
+      <button class="nav-btn" data-view="set-project" onclick="Nav.showView('set-project')"><span class="ic">💾</span> Проект &amp; Данни</button>
+      <button class="nav-btn" data-view="set-prefs" onclick="Nav.showView('set-prefs')"><span class="ic">🎛️</span> Предпочитания</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Статистика</div>
+      <button class="nav-btn" data-view="stats-tracker" onclick="Nav.showView('stats-tracker')"><span class="ic">📡</span> YouTube Тракер</button>
+      <button class="nav-btn" data-view="stats-analytics" onclick="Nav.showView('stats-analytics')"><span class="ic">📊</span> Анализи &amp; Графики</button>
+      <button class="nav-btn" data-view="yt-discovery" onclick="Nav.showView('yt-discovery')"><span class="ic">🎧</span> YouTube Discovery Engine</button>
+      <button class="nav-btn" data-view="metadata-optimizer" onclick="Nav.showView('metadata-optimizer')"><span class="ic">🏷️</span> Metadata Optimizer</button>
+      <button class="nav-btn" data-view="yt-consultant" onclick="Nav.showView('yt-consultant')"><span class="ic">🧑‍💼</span> YT Консултант</button>
+      <button class="nav-btn" data-view="thumbnail-maker" onclick="Nav.showView('thumbnail-maker')"><span class="ic">🖼️</span> Thumbnail Maker</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Инфраструктура</div>
+      <button class="nav-btn" data-view="infra-logs" onclick="Nav.showView('infra-logs')"><span class="ic">🖥️</span> Системни логове</button>
+      <button class="nav-btn" data-view="app-logs" onclick="Nav.showView('app-logs')"><span class="ic">📋</span> Логове (по модул)</button>
+      <button class="nav-btn" data-view="infra-config" onclick="Nav.showView('infra-config')"><span class="ic">🧩</span> Конфигурация</button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="theme-row">
+        <span>Тема</span>
+        <div class="switch" id="themeSwitch" onclick="Prefs.toggleTheme()"><div class="knob"></div></div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div>
+          <div class="user-name">Музикален Визионер</div>
+          <div class="user-plan">CD-B Records</div>
+        </div>
+      </div>
+      <div class="version-tag">v2.1.0 · AI Music Suite</div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" onclick="Nav.toggleMobileSidebar()" title="Меню" aria-label="Отвори менюто">☰</button>
+        <div>
+          <h1>Здравей, Музикален Визионер! 👋</h1>
+          <div class="sub">Създавай. Анализирай. Публикувай. Расти.</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <select id="contentProviderSelectTop" title="Кой AI генерира съдържание (концепции/текстове/анализи) — 'Автоматично' следва реда от последното 'Тествай ключовете'" style="width:auto;min-width:110px;" onchange="Prefs.setContentProvider(this.value)">
+          <option value="auto">🔄 Автоматично</option>
+          <option value="claude">✍️ Claude</option>
+          <option value="gemini">✍️ Gemini</option>
+          <option value="openrouter">✍️ OpenRouter</option>
+          <option value="modelfinder">✍️ AI Model Finder</option>
+        </select>
+        <div class="pill"><span class="dot-live" id="validatorStatusDot"></span> <span>Gemini Validator<br><strong id="validatorStatusText">Проверка...</strong></span></div>
+        <button class="btn grad" onclick="Settings.newProject()">+ Нов проект</button>
+        <button class="icon-btn" onclick="Nav.showView('ai-chat')" title="AI Чат">💬</button>
+        <button class="icon-btn" onclick="Nav.showView('set-keys')" title="Настройки">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Плаващ бутон за бърз достъп до AI Чат — видим от всеки екран (fixed).
+         Скрива се автоматично, докато самата чат секция е активна — виж
+         Nav.showView() (js/nav.js), което toggle-ва display-а й на всяка навигация. -->
+    <button class="ai-chat-fab" id="aiChatFab" onclick="Nav.showView('ai-chat')" title="AI Чат">💬</button>
+
+    <!-- ============ DASHBOARD VIEW ============ -->
+    <div class="view active" id="view-dashboard">
+
+      <div class="section-title" style="margin-top:0;">🧭 Текущ проект</div>
+      <div id="projectNextAction"></div>
+
+      <div class="card" style="background:var(--grad);border:none;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:15px;">⚡ Бърз ъплоуд за стари песни</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Аудио → видео → Gemini анализ (звук + текст) → Claude заглавие/описание/тагове → авто качване в YouTube (unlisted). Прескача концепция/обложка.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('quick')">Отвори →</button>
+      </div>
+
+      <div class="section-title">Стъпка 1 — Пазарен анализ</div>
+      <div class="grid cols-6" id="dashStep1Cards">
+        <div class="card num-card"><span class="n">1</span><div class="ic-badge">🔍</div><h4>Пазарен анализ</h4><p>Открий топ ниши, тренд-ове и възможности.</p><button class="btn grad full sm" onclick="Nav.showView('step1')">Стартирай анализ</button></div>
+        <div class="card num-card"><span class="n">2</span><div class="ic-badge">📊</div><h4>YouTube Outlier</h4><p>Намери малки канали с непропорционално много гледания.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Открий outliers</button></div>
+        <div class="card num-card"><span class="n">3</span><div class="ic-badge">🔎</div><h4>Свързани търсения</h4><p>Виж какво реално търси аудиторията (autocomplete).</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Провери търсения</button></div>
+        <div class="card num-card"><span class="n">4</span><div class="ic-badge">✨</div><h4>Концепция</h4><p>Генерирай заглавие, style prompt и хаштагове.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Генерирай концепция</button></div>
+        <div class="card num-card"><span class="n">5</span><div class="ic-badge">📀</div><h4>Album Sprint</h4><p>Генерирай 10-30 идеи за заглавия + hook + mood.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Стартирай Sprint</button></div>
+        <div class="card num-card"><span class="n">6</span><div class="ic-badge">✍️</div><h4>Текст на песента</h4><p>Генерирай пълен текст на песента.</p><button class="btn ghost full sm" onclick="Nav.showView('step1')">Генерирай текст</button></div>
+      </div>
+
+      <div class="section-title">Бърз изглед — Пазарни ниши (auto scan)</div>
+      <div class="row" style="align-items:stretch;">
+        <div style="flex:3;min-width:280px;">
+          <div class="grid cols-4" id="dashNicheQuick">
+            <div class="card tight muted" style="grid-column:1/-1;">Все още няма сканиране — отвори Стъпка 1 и натисни "Предложение за песен".</div>
+          </div>
+        </div>
+        <div class="card tight" style="flex:1;min-width:200px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;">
+          <span class="muted">Ръчно сравнение на ниши</span>
+          <button class="btn ghost full sm" onclick="Nav.showView('step1')">Въведи свои жанрове</button>
+        </div>
+      </div>
+
+      <div class="section-title">Gemini Validator</div>
+      <div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--grad);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🤖</div>
+        <div style="flex:1;min-width:220px;">
+          <strong>Gemini Validator (втори поглед)</strong>
+          <p class="muted" style="margin:4px 0 0;">Автоматичен кратък анализ след всяка стъпка. Логът се трупа и може да бъде прегледан по всяко време.</p>
+        </div>
+        <button class="btn grad sm" onclick="Nav.showView('validator')">Отвори лог →</button>
+        <span class="chip cyan" id="dashValidatorCount">0</span>
+      </div>
+
+      <div class="section-title">Стъпка 2 — Визуализатор</div>
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <div style="flex:1;min-width:260px;">
+            <strong>Видео1 → Видео2 преход</strong>
+            <span class="chip green" id="dashTransitionChip" style="margin-left:8px;">Поправено</span>
+            <p class="muted" style="margin-top:8px;">Прецизно pre-priming на буферите премахва замръзването/черния кадър при прехода.</p>
+            <div class="checklist-item"><span class="ok">✔</span> Видео1: заредено</div>
+            <div class="checklist-item"><span class="ok">✔</span> Видео2: заредено</div>
+            <div class="checklist-item"><span class="ok">✔</span> Преход: pre-primed, без freeze</div>
+            <button class="btn grad sm" style="margin-top:14px;" onclick="Nav.showView('step2')">Отвори визуализатор</button>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <div class="transition-badge">
+              <div class="tb-box">1</div><span class="tb-arrow">→</span><div class="tb-box">2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Стъпка 3 — Публикуване</div>
+      <div class="grid cols-5">
+        <div class="card num-card"><span class="n">10</span><div class="ic-badge">🖼️</div><h4>Обложка</h4><p>Промпт + генериране на обложка (Gemini / Nano Banana).</p><button class="btn grad full sm" onclick="Nav.showView('step3')">Генерирай обложка</button></div>
+        <div class="card num-card"><span class="n">11</span><div class="ic-badge">🎧</div><h4>DistroKid</h4><p>Auto-fill текстове за DistroKid формата.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Попълни автоматично</button></div>
+        <div class="card num-card"><span class="n">12</span><div class="ic-badge">🎵</div><h4>Spotify / Apple</h4><p>Готови текстове за Spotify/Apple Music for Artists.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Генерирай текстове</button></div>
+        <div class="card num-card"><span class="n">13</span><div class="ic-badge">📺</div><h4>YouTube A/B</h4><p>3 A/B варианта заглавие + thumbnail текст. Gemini анализ.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Генерирай варианти</button></div>
+        <div class="card num-card"><span class="n">14</span><div class="ic-badge">🛡️</div><h4>Проверка за прилика</h4><p>Бърза проверка за прилика с съществуваща песен.</p><button class="btn ghost full sm" onclick="Nav.showView('step3')">Провери сега</button></div>
+      </div>
+      <p class="muted" style="text-align:center;margin-top:6px;">Всички готови текстове и резултати са готови за copy-paste и директно публикуване.</p>
+
+      <div class="row" style="align-items:flex-start;margin-top:6px;">
+        <div style="flex:2;min-width:320px;">
+          <div class="section-title">Статистика Tracker (GitHub Actions)</div>
+          <div class="grid cols-4">
+            <div class="card num-card tight"><span class="n">23</span><div class="ic-badge">⏱️</div><h4>Дневен tracker</h4><p>GitHub Actions cron следи целия канал.</p></div>
+            <div class="card num-card tight"><span class="n">24</span><div class="ic-badge">📸</div><h4>Daily snapshot</h4><p>Абонати, views, likes, comments.</p></div>
+            <div class="card num-card tight"><span class="n">25</span><div class="ic-badge">🗂️</div><h4>История в JSON</h4><p>Версиониран JSON (schema_version).</p></div>
+            <div class="card num-card tight"><span class="n">27</span><div class="ic-badge">📈</div><h4>Performance Check</h4><p>Сравнява 24ч views с очакването.</p></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:280px;">
+          <div class="section-title">Инфраструктура &amp; Дизайн</div>
+          <div class="grid cols-2">
+            <div class="card num-card tight"><span class="n">28</span><div class="ic-badge">🎨</div><h4>Дизайн система</h4><p>Цветове, шрифтове, layout на референцията.</p></div>
+            <div class="card num-card tight"><span class="n">29</span><div class="ic-badge">🧱</div><h4>Модулна структура</h4><p>Разделени файлове/конфиг за лесно разширяване.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Статистика — YouTube Канал</div>
+      <div id="dashStatsArea"></div>
+
+      <div class="section-title">Настройки</div>
+      <div class="card">
+        <div class="set-row"><div class="txt"><strong>16. API ключове</strong><span>Управлявай Claude, Gemini, YouTube ключове.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-keys')">Управление →</button></div>
+        <div class="set-row"><div class="txt"><strong>17. Proxy URL</strong><span>Cloudflare Worker прокси за заобикаляне на CORS.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-proxy')">Конфигурирай →</button></div>
+        <div class="set-row"><div class="txt"><strong>18. Тествай ключовете</strong><span>Бърза проверка на всички ключове.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-keys')">Тествай сега →</button></div>
+        <div class="set-row"><div class="txt"><strong>19. Export / Import проект</strong><span>Бекъп и възстановяване на проекта.</span></div><button class="btn ghost sm" onclick="Nav.showView('set-project')">Export / Импорт →</button></div>
+        <div class="set-row"><div class="txt"><strong>20. Нов проект</strong><span>Данните за песента ще се изчистят.</span></div><button class="btn ghost sm" onclick="Settings.newProject()">Нов проект →</button></div>
+        <div class="set-row"><div class="txt"><strong>21. Проверка на ключовете при зареждане</strong><span>Тихо проверява дали някой ключ е "умрял".</span></div>
+          <div class="switch on" id="healthSwitch" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div>
+        </div>
+        <div class="set-row"><div class="txt"><strong>22. Тъмен / Светъл Theme</strong><span>Превключи външния вид на таблото.</span></div>
+          <div class="switch" id="themeSwitch2" onclick="Prefs.toggleTheme()"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 1 VIEW ============ -->
+    <div class="view" id="view-step1">
+      <div class="section-title">Стъпка 1 — Пазарен анализ &amp; Текст</div>
+
+      <div class="card">
+        <strong><span class="step-badge">1</span>Пазарен анализ (SEO)</strong>
+        <p class="muted">Остави полето празно и натисни бутона — чете дневния trend snapshot (GitHub Actions, Google Trends + YouTube данни, обновява се веднъж на ден, без Gemini квота) и ти връща нишата с най-добро съотношение търсене/конкуренция. По желание можеш да въведеш свои 2-3 ниши, за да сравниш точно тях вместо авто-сканиране (използва Claude).</p>
+        <label>Жанрове/ниши за сравнение (по избор — празно = авто-сканиране)</label>
+        <textarea id="nicheInput" placeholder="празно = авто · или напр.&#10;lofi hip hop&#10;phonk drift&#10;sad r&b 2026"></textarea>
+        <button class="btn grad" style="margin-top:14px;" onclick="guardClick(this, () => Step1.scanNiches())">🔍 Предложение за песен</button>
+        <div id="nicheResults" style="margin-top:14px;"></div>
+        <div id="outlierResults" style="margin-top:10px;"></div>
+        <div id="keywordSuggestOut" style="margin-top:10px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="Nav.showView('niche-toolkit')">🎯 Разширен Niche & Signal анализ (Spotify)<span class="optional-tag">по избор</span></button>
+      </div>
+
+      <div class="flow-divider">— по избор, преди текста — по-добри hook-ове/заглавия —</div>
+
+      <div class="card" id="albumSprintCard" style="display:none;margin-top:8px;">
+        <strong>📀 Album Sprint<span class="optional-tag">по избор</span></strong>
+        <p class="muted">Наведнъж генерира 10-30 кратки заглавия + hook идеи в избраната ниша — опашка от идеи вместо 1 по 1.</p>
+        <div class="row">
+          <div><label>Брой концепции</label>
+            <select id="albumSprintCount"><option>10</option><option selected>15</option><option>20</option><option>30</option></select>
+          </div>
+        </div>
+        <button class="btn ghost" onclick="guardClick(this, () => Step1.generateAlbumSprint())">📀 Генерирай Album Sprint</button>
+        <div id="albumSprintOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🧬 Hook Evolution Arena<span class="optional-tag">по избор</span></strong>
+        <p class="muted">8 различни hook-а се раждат, минават "3-секунден scroll тест" (симулация на реално TikTok поведение), топ 3 се кръстосват в следващо поколение — 3 поколения по-късно остава 1 победител. Победителят автоматично се вгражда като chorus hook при следващото генериране на текст.</p>
+        <button class="btn grad" onclick="guardClick(this, () => HookArena.start())">🧬 Стартирай еволюцията</button>
+        <div id="hookArenaOut" style="margin-top:14px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => HookArena.compareWithRealHits())">📊 Сравни с реални hits в нишата</button>
+        <div id="hookArenaCompareOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="flow-divider">— обратно към задължителния път —</div>
+
+      <div class="card" id="conceptCard" style="display:none;margin-top:8px;">
+        <strong><span class="step-badge">2</span>Концепция за Suno AI</strong>
+        <div class="row">
+          <div><label>Заглавие</label><input type="text" id="songTitle"></div>
+          <div><label>Score</label><input type="text" id="nicheScore" disabled></div>
+        </div>
+        <label>Style Prompt (за Suno)</label>
+        <textarea id="stylePrompt"></textarea>
+        <label>3 хаштага</label>
+        <div class="hashtags" id="hashtagsOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong><span class="step-badge">3</span>Текст на песента (Claude)</strong>
+        <p class="muted">Chorus най-отпред, мета-тагове [Chorus] [Verse] [Drop].</p>
+        <div class="row">
+          <button class="btn grad" onclick="guardClick(this, () => Step1.generateLyrics())">✍️ Генерирай текст</button>
+          <button class="btn ghost" onclick="LyricsHistory.toggle()">🕐 История на версиите</button>
+        </div>
+        <textarea id="lyricsOut" style="min-height:220px;margin-top:10px;"></textarea>
+        <div id="humanizerOut" style="margin-top:8px;"></div>
+        <div id="lyricsHistoryOut" style="display:none;margin-top:10px;"></div>
+      </div>
+
+      <div class="flow-divider">— по избор, преди да продължиш — задълбочен анализ на готовия текст —</div>
+
+      <div class="card" style="margin-top:8px;">
+        <strong>🚀 Viral Lab — AI Music Producer<span class="optional-tag">по избор</span></strong>
+        <p class="muted">Пълен анализ на вирусния потенциал: Viral Score, прогноза за успех, оценка на текста, hook/chorus анализ, структура, жанрова проверка, конкуренция и AI Producer Review. Изисква генериран текст (по-горе).</p>
+        <button class="btn grad" onclick="guardClick(this, () => ViralLab.analyze())">🚀 Анализирай вирусния потенциал</button>
+        <button class="btn ghost" onclick="guardClick(this, () => ViralLab.analyze(true))">🔄 Презареди (игнорирай кеша)</button>
+        <div id="viralLabOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>👻 Ghost Audience<span class="optional-tag">по избор</span></strong>
+        <p class="muted">12 синтетични, но правдоподобни слушателя "чуват" песента и реагират с техния глас — плюс attention heatmap (къде реално губиш вниманието) и meme risk radar (редове, за които публиката би те закачила). Изисква генериран текст.</p>
+        <button class="btn grad" onclick="guardClick(this, () => GhostAudience.run())">👻 Пусни фокус-групата</button>
+        <button class="btn ghost" onclick="guardClick(this, () => GhostAudience.run(true))">🔄 Презареди (игнорирай кеша)</button>
+        <div id="ghostAudienceOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🤖 Gemini Validator<span class="optional-tag">помощен</span></strong>
+        <p class="muted">Малък модул за "втори поглед" — анализира сам, автоматично, резултата от всяка стъпка. Пълният лог е в раздел "Инструменти → Gemini Validator".</p>
+        <button class="btn ghost" onclick="Step1.validateWithGemini()">🔁 Ръчна повторна проверка на текста</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">Готов с текста и анализа?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Продължи към Стъпка 2 — Визуализатор.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('step2')">Стъпка 2 →</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 2 VIEW ============ -->
+    <div class="view" id="view-step2">
+      <div class="section-title">Стъпка 2 — Визуализатор</div>
+
+      <div class="card">
+        <strong>FX конфигурация (генерирана от Claude според жанра)</strong>
+        <p class="muted">Справочен бриф за настроението/ефектите — визуализаторът отдолу си има собствена аудио-реактивна логика (бас пулс, bloom, частици).</p>
+        <button class="btn ghost" onclick="guardClick(this, () => Step2.generateFxConfig())">🎛️ Генерирай FX конфиг</button>
+        <textarea id="fxConfigOut" style="margin-top:10px;font-family:var(--font-mono);font-size:12px;"></textarea>
+      </div>
+
+      <div class="card tight" style="margin-top:14px;">
+        <strong style="padding-left:2px;">Видео1 → Видео2 преход <span class="chip green">Поправено</span></strong>
+        <p class="muted" style="padding-left:2px;">Двата буфера се "загряват" (pre-seek) 1.2 сек преди прехода, докато видео1 все още тече — вече няма черен/замръзнал кадър при смяната.</p>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;margin-top:14px;">
+        <div style="padding:14px 18px 0;">
+          <strong>Видео Визуализатор</strong>
+          <p class="muted">Заглавието от Стъпка 1 се подава автоматично. Качи аудиото директно тук.</p>
+        </div>
+        <iframe id="visualizerFrame" src="visualizer.html" style="width:100%;height:900px;border:0;display:block;margin-top:10px;"></iframe>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">Видеото готово?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Продължи към Стъпка 3 — Публикуване.</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Nav.showView('step3')">Стъпка 3 →</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 3 VIEW ============ -->
+    <div class="view" id="view-step3">
+      <div class="section-title">Стъпка 3 — Публикуване</div>
+
+      <div class="card">
+        <strong>10 · Обложка (Gemini / Nano Banana)</strong>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => Step3.generateCoverPrompt())">🎨 Генерирай визуален промпт</button>
+        <textarea id="coverPromptOut" style="margin-top:10px;"></textarea>
+        <button class="btn grad" onclick="guardClick(this, () => Step3.generateCoverImage())">🖼️ Генерирай обложка (3000×3000)</button>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateCoverImageFree())">🆓 Безплатна обложка (Cloudflare FLUX)</button>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);">
+          <label class="muted" style="font-size:12.5px;">🔤 Код-лого (гарантиран точен текст, без AI)</label>
+          <input type="text" id="codeLogoText" placeholder="Основен текст (напр. CD-B Records)" value="CD-B Records" style="margin-top:6px;">
+          <input type="text" id="codeLogoSubtitle" placeholder="Подзаглавие (по избор, напр. RECORDS)" style="margin-top:6px;">
+          <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateCoverImageCodeLogo())">🔤 Генерирай код-лого</button>
+        </div>
+        <div id="coverImgOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>16 · AI Демо мелодия <span class="optional-tag">безплатно · MusicGen</span></strong>
+        <p class="muted">Кратък инструментален откъс (~15 сек) по жанра на песента — само за бърза идея/референция, без вокали. Нужен е безплатен Hugging Face токен (Настройки → AI Model Finder → Ключове).</p>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => Step3.generateDemoMelody())">🎵 Генерирай демо мелодия</button>
+        <div id="demoMelodyOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>11 · DistroKid — Auto-fill Асистент</strong>
+        <p class="muted">Копирай всяко поле директно в DistroKid формата.</p>
+        <div id="distrokidFields"></div>
+        <button class="btn ghost" onclick="Step3.buildDistrokidFields()" style="margin-top:12px;">🔄 Генерирай/обнови полетата</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>12 · Spotify for Artists / Apple Music for Artists</strong>
+        <p class="muted">Готов bio текст + описание на пускането за двата профила.</p>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.generateSpotifyAppleText())">🎵 Генерирай текстове</button>
+        <div id="spotifyAppleOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>13 · YouTube A/B заглавия</strong>
+        <p class="muted">3 варианта заглавие + thumbnail текст, с кратък Gemini коментар кой е по-clickable.</p>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.generateABTitles())">📺 Генерирай A/B варианти</button>
+        <div id="abTitlesOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>14 · Проверка за прилика</strong>
+        <p class="muted">Бърза проверка дали заглавието вече не е твърде близко до съществуваща песен в YouTube.</p>
+        <button class="btn ghost" onclick="guardClick(this, () => Step3.checkSimilarity())">🛡️ Провери сега</button>
+        <div id="similarityOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>15 · 🎬 Кратки видео сценарии (TikTok/Reels/Shorts)</strong>
+        <p class="muted">3 различни сценария за 15-30 сек промо клип (не hook-а на песента — визуалния/текстов hook на видеото), базирани на настроението на песента. Ползва вече генерирания текст/Viral Lab доклад, ако има такъв.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="guardClick(this, () => Step3.generateShortFormScripts())">🎬 Генерирай сценарии</button>
+        <div id="shortFormScriptsOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Google вход</strong>
+        <div class="chip amber g-auth-status" id="gAuthStatus">Не си вписан</div>
+        <div id="gSignInBtn" class="g-signin-slot" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Видео за качване в YouTube (Unlisted)</strong>
+        <input type="file" id="youtubeVideoFile" accept="video/*" style="margin-top:10px;">
+        <label>Заглавие</label><input type="text" id="ytTitle">
+        <label>Описание</label>
+        <textarea id="ytDescription" placeholder="Линкове към Spotify/DistroKid най-горе...&#10;&#10;#tag1 #tag2 #tag3 най-долу"></textarea>
+        <label>Тагове (запетая разделени)</label><input type="text" id="ytTags">
+        <div class="row" style="margin-top:10px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="ytMadeForKids" style="width:auto;"> Not made for kids</label>
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="ytSynthetic" checked disabled style="width:auto;"> Synthetic/AI content (задължително)</label>
+        </div>
+        <p class="muted">privacyStatus е фиксиран на <strong>unlisted</strong> — не подлежи на промяна.</p>
+        <button class="btn grad" onclick="Step4.uploadVideo()">⬆️ Качи в YouTube</button>
+        <div id="ytUploadProgress" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:var(--grad);border:none;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:14px;">🎉 Публикувано?</strong>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.85);">Готов си за следваща песен — стартирай нов проект (текущите данни се архивират автоматично).</p>
+        </div>
+        <button class="btn full sm" style="background:#fff;color:#141527;width:auto;flex-shrink:0;" onclick="Settings.newProject()">Нов проект →</button>
+      </div>
+    </div>
+
+    <!-- ============ QUICK UPLOAD VIEW ============ -->
+    <div class="view" id="view-quick">
+      <div class="section-title">⚡ Бърз ъплоуд за стари песни</div>
+
+      <div class="card">
+        <strong>1 · Аудио на старата песен</strong>
+        <p class="muted">Визуализаторът прави видео директно от аудиото — без концепция/обложка. По желание пейстни готов текст, ако имаш; иначе Gemini ще се опита да го разпознае от звука.</p>
+        <input type="file" id="qAudioFile" accept="audio/*" onchange="QuickUpload.onAudioSelected(this)">
+        <div id="qAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Име на песента (задължително ще е НАЧАЛОТО на YouTube заглавието — провери/поправи го)</label>
+        <input type="text" id="qSongName" placeholder="напр. Само ти">
+        <label style="margin-top:12px;">Текст на песента (по избор — ако го имаш)</label>
+        <textarea id="qLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, Gemini ще опита да разпознае текста директно от аудиото."></textarea>
+        <button class="btn grad" id="qStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => QuickUpload.runFull())">🚀 Стартирай пълния процес</button>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => QuickUpload.generateSubtitles())">🎬 Генерирай субтитри (Whisper, автоматично)</button>
+        <div id="qSubtitlesOut" class="muted" style="margin-top:6px;font-size:12.5px;"></div>
+        <div id="qRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — не сменяй раздела, докато видеото се записва...</div>
+        <div id="qVideoProgressWrap" style="display:none;margin-top:10px;">
+          <div id="qVideoProgressLabel" class="muted" style="font-size:12px;margin-bottom:4px;">Видео: записва се…</div>
+          <div style="background:var(--panel-2);border:1px solid var(--border);border-radius:20px;height:10px;overflow:hidden;">
+            <div id="qVideoProgressBar" style="background:var(--grad);height:100%;width:0%;transition:width .2s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Лог на процеса</strong>
+        <div id="qLog" style="margin-top:10px;font-family:var(--font-mono);font-size:11.5px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+
+      <div class="card" id="qResultCard" style="margin-top:14px;display:none;">
+        <strong>2 · Gemini анализ</strong>
+        <div id="qAnalysisOut" style="margin-top:8px;"></div>
+        <label style="margin-top:10px;">Разпознат/пейстнат текст</label>
+        <textarea id="qLyricsOut" readonly style="font-size:12px;"></textarea>
+
+        <strong style="display:block;margin-top:16px;">3 · Заглавие / Описание / Тагове (генерирани от Claude — редактируеми)</strong>
+        <label>Заглавие</label><input type="text" id="qTitle">
+        <label>Описание</label><textarea id="qDescription"></textarea>
+        <label>Тагове (запетая разделени)</label><input type="text" id="qTags">
+
+        <strong style="display:block;margin-top:16px;">4 · YouTube (Unlisted)</strong>
+        <div class="chip amber g-auth-status" id="gAuthStatus2">Не си вписан</div>
+        <div id="gSignInBtn2" class="g-signin-slot" style="margin-top:10px;"></div>
+        <p class="muted" style="margin-top:10px;">Автоматично се качва веднага щом видеото и метаданните са готови (ако вече си вписан). Иначе — качи ръчно тук.</p>
+        <button class="btn grad" style="margin-top:6px;" onclick="QuickUpload.manualUpload()">⬆️ Качи в YouTube (unlisted)</button>
+        <div id="qUploadProgress" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Скрит визуализатор — прави видеото програмно (без потребителят да вижда/пипа контролите) -->
+      <iframe id="quickVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
+    </div>
+
+    <!-- ============ AI SHORTS STUDIO VIEW ============ -->
+    <div class="view" id="view-shorts-studio">
+      <div class="section-title">🎞️ AI Shorts Studio</div>
+
+      <div class="card">
+        <strong>1 · Качи песента</strong>
+        <p class="muted">Качваш аудио файл → AI екипът (Gemini + Whisper + FFmpeg, СЪРВЪРНО в GitHub Actions) избира най-"залепващия" момент от песента, прави вертикален (9:16) Shorts клип с вградени субтитри, генерира уникално заглавие/описание/хаштагове — и автоматично го качва в YouTube (unlisted). Прави 1 Short на клик.</p>
+        <input type="file" id="ssAudioFile" accept="audio/*" onchange="ShortsStudio.onAudioSelected(this)">
+        <div id="ssAudioInfo" class="muted" style="margin-top:6px;"></div>
+        <label style="margin-top:12px;">Обложка (по избор — ако я оставиш празна, ще опитам да я намеря автоматично през Apple Music по артист + заглавие)</label>
+        <input type="file" id="ssCoverFile" accept="image/*">
+        <label style="margin-top:12px;">Име на песента (задължителна част от всяко заглавие)</label>
+        <input type="text" id="ssSongName" placeholder="напр. Само ти">
+        <label style="margin-top:12px;">Артист/канал (помага за точно намиране на Spotify/Apple Music линковете)</label>
+        <input type="text" id="ssArtistName" placeholder="напр. CD-B Records" oninput="ShortsStudio.saveArtistName(this.value)">
+        <label style="margin-top:12px;">Текст на песента (по избор — помага на AI да избере по-добри моменти)</label>
+        <textarea id="ssLyricsPaste" placeholder="Пейстни готов текст тук, ако имаш го под ръка. Ако полето е празно, AI ще анализира само звука."></textarea>
+
+        <label style="margin-top:16px;">✍️ Текст върху обложката (задължително) — точно това ще се появи изписано върху снимката</label>
+        <textarea id="ssOverlayText" placeholder="напр. Само ти ми трябваш тази вечер" style="min-height:60px;"></textarea>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Автоматичните субтитри (дума по дума, синхронизирани с гласа) вървят отделно и винаги излизат сами — това поле е само за краткия "надпис"/заглавие върху самата снимка.</div>
+
+        <label style="margin-top:12px;">🔤 Шрифт на надписа</label>
+        <select id="ssFontChoice">
+          <option value="russoone" selected>Russo One — едър, футуристичен</option>
+          <option value="montserrat">Montserrat — чист, силен, модерен</option>
+          <option value="oswald">Oswald — тесен, елегантен</option>
+          <option value="unbounded">Unbounded — обемен, трендов</option>
+          <option value="playfair">Playfair Display — драматичен, лукс</option>
+          <option value="comfortaa">Comfortaa — заоблен, мек</option>
+          <option value="caveat">Caveat — ръкописен, личен</option>
+          <option value="badscript">Bad Script — елегантен ръкописен</option>
+        </select>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Всички шрифтове поддържат пълна кирилица. Надписът излиза с вграден "neon glow" ореол в цвета на темата + черен контур, за да се чете върху всякаква снимка.</div>
+
+        <label style="margin-top:12px;">✨ Ефект на надписа</label>
+        <select id="ssTextEffect">
+          <option value="glow_pulse" selected>Пулсиращо осветяване (glow pulse)</option>
+          <option value="blink_neon">Неоново премигване (blink)</option>
+          <option value="slide_in">Плъзгане отдолу (движение)</option>
+          <option value="shake">Леко разклащане (енергично)</option>
+          <option value="typewriter">Пишеща машина (разкриване)</option>
+          <option value="static_glow">Без анимация — само неподвижен glow</option>
+        </select>
+
+        <label style="margin-top:12px;">🎬 Стил на видео монтажа</label>
+        <select id="ssVideoStyle">
+          <option value="auto" selected>🤖 AI избира автоматично според настроението</option>
+          <option value="neon_particles">Neon Particles</option>
+          <option value="circular_glow">Circular Glow</option>
+          <option value="particle_field_3d">Particle Field 3D</option>
+          <option value="synthwave_wave">Synthwave Wave</option>
+          <option value="minimal_monochromatic">Minimal Monochromatic</option>
+          <option value="frosted_glass_ui">Frosted Glass UI</option>
+          <option value="vertical_lyrics">Vertical Lyrics</option>
+          <option value="glitch_aesthetics">Glitch Aesthetics</option>
+        </select>
+        <div class="muted" style="font-size:12px;margin-top:4px;">Всеки стил вече включва пулсации по бита, вградени преходи и лек постоянен zoom (Ken Burns) на снимката — AI-то предлага според настроението на песента, но можеш да форсираш конкретен стил.</div>
+
+        <label style="margin-top:12px;">🔗 Линкове за стрийминг (по избор — влизат автоматично във всяко описание)</label>
+        <div class="muted" style="font-size:12px;margin-bottom:4px;">Ако ги оставиш празни, съответният ред просто няма да се появи в описанието — AI-ят НЕ си измисля линкове.</div>
+        <input type="text" id="ssLinkSpotify" placeholder="Spotify линк (https://open.spotify.com/track/...)">
+        <input type="text" id="ssLinkApple" placeholder="Apple Music линк" style="margin-top:6px;">
+        <input type="text" id="ssLinkDistrokid" placeholder="DistroKid / HyperFollow линк (или използвай библиотеката/юзърнейма долу)" style="margin-top:6px;">
+        <input type="text" id="ssHyperfollowUsername" placeholder="HyperFollow юзърнейм (напр. tsetskoboyanov → hyperfollow.com/tsetskoboyanov)" style="margin-top:6px;">
+
+        <details style="margin-top:8px;">
+          <summary style="cursor:pointer;">📋 Библиотека с DistroKid песни (по избор, но по-точно от юзърнейма)</summary>
+          <p class="muted" style="font-size:12px;margin-top:6px;">DistroKid прави ОТДЕЛНА HyperFollow страница за всяка песен. Отвори "My Music" в DistroKid → маркирай/копирай целия списък с песни (заглавия + линкове) → пейстни го тук. Приложението сам ще намери правилния линк за ТАЗИ конкретна песен всеки път — не общ линк към артиста.</p>
+          <textarea id="ssDistrokidLibraryPaste" placeholder="Пейстни целия списък от My Music тук (заглавия + hyperfollow линкове, точно както е копирано)" style="min-height:90px;"></textarea>
+          <button class="btn" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.importDistrokidLibrary())">📥 Импортирай списъка</button>
+          <div id="ssDistrokidLibStatus" class="muted" style="margin-top:6px;"></div>
+          <button class="btn" style="margin-top:10px;" onclick="guardClick(this, () => ShortsStudio.enrichLibrary())">🔍 Намери Spotify + Apple Music + YouTube за ЦЯЛАТА библиотека</button>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Минава последователно през всяка песен от импортираната библиотека и търси реални линкове (не измисля) — за YouTube трябва YouTube API Key в Настройки, иначе пропуска само тази колона.</div>
+          <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.enrichLibraryViaGemini())">🔵 Обогати през Gemini (заобикаля DistroKid блокировката)</button>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Ако горният бутон получава 403 от DistroKid — този праща URL-ите на Gemini (url_context tool), който ги чете от собствената инфраструктура на Google, не от нашия прокси. Изисква Gemini ключ, работи по 15 песни наведнъж.</div>
+          <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.downloadLibraryJson())">⬇️ Изтегли библиотеката (JSON)</button>
+          <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.saveLibraryToGitHub())">💾 1. Запази трайно в GitHub repo-то</button>
+          <button class="btn" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.dispatchLibraryScan())">▶️ 2. Пусни пълно сканиране (GitHub Actions, без прокси)</button>
+          <button class="btn ghost" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.loadLibraryFromGitHub())">📥 3. Зареди резултата от repo-то</button>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Библиотеката в браузъра е локална само за него. Тези 3 бутона я карат да живее в самия GitHub repo и да се обогатява СЪРВЪРНО (GitHub Actions runner чете HyperFollow страниците директно, без браузърни CORS прокси — точно проблема с 3-те прокситата по-горе). Ред: (1) запази списъка → (2) пусни сканирането (~1-2 мин, изисква GitHub Token с "Contents: Read and write") → (3) зареди готовия резултат обратно тук.</div>
+          <div id="ssLibGithubStatus" class="muted" style="margin-top:6px;"></div>
+          <div id="ssLibEnrichStatus" class="muted" style="margin-top:6px;"></div>
+          <div id="ssLibEnrichResults" style="margin-top:8px;font-size:12.5px;max-height:280px;overflow-y:auto;"></div>
+
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;">📥 Импортирай ръчно намерени линкове (JSON)</summary>
+            <p class="muted" style="font-size:12px;margin-top:6px;">Ако автоматичното четене на HyperFollow страницата е блокирано (напр. 403 от DistroKid), можеш да пейстнеш тук JSON с линкове, намерени по друг начин — слива се по url с текущата библиотека, без да трие вече намерено.</p>
+            <textarea id="ssEnrichedLinksPaste" placeholder='[{"url":"https://distrokid.com/hyperfollow/...","platforms":{"spotify":"...","tidal":"..."}}, ...]' style="min-height:90px;"></textarea>
+            <button class="btn" style="margin-top:6px;" onclick="guardClick(this, () => ShortsStudio.importEnrichedLinks())">📥 Импортирай</button>
+            <div id="ssEnrichedLinksStatus" class="muted" style="margin-top:6px;"></div>
+          </details>
+        </details>
+        <button class="btn" style="margin-top:8px;" onclick="guardClick(this, () => ShortsStudio.findLinks())">🔍 Опитай да намеря Spotify + Apple Music + HyperFollow автоматично</button>
+        <div id="ssLinksStatus" class="muted" style="margin-top:6px;"></div>
+
+        <button class="btn grad" id="ssStartBtn" style="margin-top:12px;" disabled onclick="guardClick(this, () => ShortsStudio.runProRender())">🚀 Генерирай Short (AI Pro, сървърно)</button>
+        <div id="ssRunning" class="muted" style="display:none;margin-top:8px;">⏳ Работя — рендерът тече в GitHub Actions (Gemini + Whisper + FFmpeg), може да отнеме няколко минути...</div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>2 · YouTube вход</strong>
+        <p class="muted">Впиши се предварително — тогава готовият Short автоматично се качва в YouTube (<strong>unlisted</strong>, за преглед) веднага след като сървърният рендер завърши.</p>
+        <div class="chip amber g-auth-status" id="gAuthStatus3">Не си вписан</div>
+        <div id="gSignInBtn3" class="g-signin-slot" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>Лог на процеса</strong>
+        <div id="ssLog" style="margin-top:10px;font-family:var(--font-mono);font-size:11.5px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+
+      <div id="ssProResultWrap" style="margin-top:14px;display:none;">
+        <div class="card">
+          <strong>Готов Short</strong>
+          <div id="ssProResultBody" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Скрит визуализатор — оставен за старата client-side логика
+           (js/shorts-studio.js: runFull/_renderAllClips), която вече не е
+           закачена за никой бутон (замени я 🚀 бутонът горе, който сега вика
+           runProRender() → js/shorts-pro-render.js, сървърен рендер). Кодът
+           и iframe-ът стоят непипнати като работещ fallback/референция. -->
+      <iframe id="shortsVisualizerFrame" src="about:blank" style="width:1px;height:1px;border:0;position:absolute;left:-9999px;"></iframe>
+    </div>
+
+    <!-- ============ NICHE TOOLKIT VIEW ============ -->
+    <div class="view" id="view-niche-toolkit">
+      <div class="section-title">🎯 Niche Toolkit — Spotify + YouTube анализ</div>
+
+      <div class="card">
+        <strong>🎯 Niche & Signal анализ (Profit Niche Score)</strong>
+        <p class="muted">Различен, допълнителен сигнал спрямо Стъпка 1 — тук се смесва Spotify популярност на топ тракове с YouTube трафик потенциал и груб конкурентен сигнал в едно 0-100 число. Прозрачна евристика, не финансов съвет. Изисква YouTube ключ (задължително) и Proxy URL (виж Настройки). Spotify Client ID/Secret е опционален — без него автоматично се пробва анонимен достъп; ако и той не сработи, score-ът се смята само от YouTube данни.</p>
+        <label>Жанр/поджанр</label>
+        <input type="text" id="ntGenre" placeholder="напр. sad boy hyperpop">
+        <button class="btn grad" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.analyzeNiche())">🎯 Анализирай нишата</button>
+        <div id="ntAnalyzeOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <strong>📊 Разширени сигнали (Demand / Momentum / Opportunity / Monetization / Feasibility)</strong>
+        <p class="muted">2026-08-10: нов, допълнителен PNS модел (виж AUDIT_PROGRESS.md за пълния дизайн) — 5 обясними под-индекса вместо единна формула, HHI-базирана "свободна ниша" оценка, безключови допълнителни сигнали (Deezer/iTunes/MusicBrainz/YouTube RSS). Пусни "🎯 Анализирай нишата" по-горе поне веднъж първо — този панел преизползва YouTube/Spotify резултата от там.</p>
+        <label>Осъществимост за теб лично (1 = много трудно/скъпо, 5 = лесно и бързо)</label>
+        <input type="range" id="ntFeasibility" min="1" max="5" value="3" step="1" oninput="document.getElementById('ntFeasibilityVal').textContent=this.value">
+        <div class="muted" style="text-align:center;">Избрано: <span id="ntFeasibilityVal">3</span>/5</div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.analyzeNicheExtended())">📊 Изчисли разширен PNS</button>
+        <div id="ntExtendedOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <strong>🏆 Автоматична седмична класация на ниши</strong>
+        <p class="muted">2026-08-11: отделен, изцяло автоматичен скенер — <code>scripts/track_niche_scores.py</code>, пуска се сам всеки понеделник през GitHub Actions, анализира ВСИЧКИ ниши от <code>config.json</code> наведнъж (не 1 по 1 ръчно). БЕЗ Spotify, БЕЗ API ключове — Deezer/iTunes/MusicBrainz (Demand, медиана от 3-те за надеждност) + Wikipedia Pageviews (Momentum) + Reddit (Community). Резултатът се чете директно от <code>data/niche-scores-history.json</code>.</p>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.loadAutoNicheRanking())">🔄 Зареди последната класация</button>
+        <div id="ntAutoRankingOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>💰 Приходна прогноза (Revenue Simulator)</strong>
+        <p class="muted">Груба ориентировъчна оценка на месечен приход при дадени стрийм/view числа — изцяло клиентска сметка, не изисква AI ключ. Не финансов съвет.</p>
+        <div class="row">
+          <div><label>Spotify стрийма/мес.</label><input type="number" id="revStreamsSpotify" min="0" value="0"></div>
+          <div><label>YouTube views/мес.</label><input type="number" id="revViewsYoutube" min="0" value="0"></div>
+        </div>
+        <label>TikTok views/мес. (Creator Fund)</label>
+        <input type="number" id="revViewsTiktok" min="0" value="0">
+        <div class="row" style="margin-top:12px;">
+          <button class="btn ghost" onclick="NicheToolkit.Revenue.prefillFromLastAnalysis()">🔄 Взимай от последния анализ</button>
+          <button class="btn grad" onclick="NicheToolkit.Revenue.calculate()">💰 Изчисли прогноза</button>
+        </div>
+        <div id="revOut" style="margin-top:4px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🎼 AI Промпт за Suno/Udio</strong>
+        <p class="muted">Кратък, готов промпт (стил + BPM + инструменти + настроение) — през твоя вече настроен Claude/Gemini pipeline.</p>
+        <div class="row">
+          <div><label>Поджанр</label><input type="text" id="ntSubgenre" placeholder="напр. drift phonk"></div>
+          <div><label>Настроение</label><input type="text" id="ntMood" placeholder="напр. тъмно, агресивно"></div>
+        </div>
+        <div class="row">
+          <div><label>BPM (по избор)</label><input type="text" id="ntBpm" placeholder="напр. 140-150"></div>
+          <div><label>Инструменти (по избор)</label><input type="text" id="ntInstruments" placeholder="напр. 808, cowbell"></div>
+        </div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.generateAudioPrompt())">🎼 Генерирай промпт</button>
+        <div id="ntPromptOut" style="margin-top:12px;white-space:pre-wrap;font-size:13px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📝 AI Структура на текст</strong>
+        <p class="muted">Стих/припев/мост + специфичен вокален речник за нишата (JSON от модела).</p>
+        <div class="row">
+          <div><label>Поджанр</label><input type="text" id="ntLyricsSubgenre" placeholder="напр. dark academia music"></div>
+          <div><label>Тема (по избор)</label><input type="text" id="ntLyricsTheme" placeholder="напр. изгубена любов"></div>
+        </div>
+        <button class="btn ghost" style="margin-top:12px;" onclick="guardClick(this, () => NicheToolkit.generateLyricsStructure())">📝 Генерирай структура</button>
+        <div id="ntLyricsOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📅 Release Playbook</strong>
+        <p class="muted">Разбива списък песни на график за единични сингли + CSV, готов за дистрибуторска платформа. Работи изцяло локално в браузъра — не изисква AI/API ключове.</p>
+        <div class="row">
+          <div><label>Начална дата</label><input type="date" id="ntPlaybookStart"></div>
+          <div><label>Дни между сингли</label><input type="number" id="ntPlaybookCadence" value="14" min="1"></div>
+        </div>
+        <label style="margin-top:10px;">Песни</label>
+        <div id="ntPlaybookRows"></div>
+        <button class="btn ghost sm" style="margin-top:8px;" onclick="NicheToolkit.Playbook.addRow()">➕ Добави песен</button>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn grad" onclick="NicheToolkit.Playbook.build()">📅 Построй график</button>
+        </div>
+        <div id="ntPlaybookOut" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ RELEASE ROADMAP VIEW ============ -->
+    <div class="view" id="view-release-roadmap">
+      <div class="section-title">🗓️ Release Asset Roadmap</div>
+      <div class="card">
+        <strong>🗓️ Динамичен чек-лист по дата на пускане</strong>
+        <p class="muted">Разбива пътя от студио до промо в конкретни задачи, подредени спрямо избраната дата на пускане (не статичен списък) — обложка, DistroKid, Spotify/Apple текстове, YouTube A/B, short-form сценарии и Track Record. Прогресът се пази локално.</p>
+        <div class="row">
+          <div><label>Заглавие на песента</label><input type="text" id="rrTitle" placeholder="напр. Midnight Drive"></div>
+          <div><label>Дата на пускане</label><input type="date" id="rrDate"></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="ReleaseRoadmap.prefillTitle()">🔄 Вземи от текущия проект</button>
+          <button class="btn grad" onclick="ReleaseRoadmap.build()">🗓️ Построй/зареди roadmap</button>
+        </div>
+        <div id="rrOut" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SUNO AUDIO PREVIEW PLAYER VIEW ============ -->
+    <div class="view" id="view-suno-preview">
+      <div class="section-title">🎧 Suno Audio Preview Player</div>
+      <div class="card">
+        <strong>🎧 Преглед на Suno AI output — без сваляне</strong>
+        <p class="muted">Пусни директно звука от Suno AI през вградения плейър на браузъра — или чрез директен линк (нула download), или чрез локален файл, ако вече си го свалил. Стандартен браузърен плейър, работи нативно с mp3/wav/ogg, не изисква VLC.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn grad" id="spTabUrlBtn" onclick="SunoPreview.switchTab('url')">🔗 Линк от Suno</button>
+          <button class="btn ghost" id="spTabFileBtn" onclick="SunoPreview.switchTab('file')">📁 Локален файл</button>
+        </div>
+
+        <div id="spPanelUrl" style="margin-top:12px;">
+          <label>Директен audio линк от Suno</label>
+          <input type="text" id="spUrlInput" placeholder="https://cdn1.suno.ai/....mp3">
+          <button class="btn grad" style="margin-top:10px;" onclick="SunoPreview.loadFromUrl()">▶️ Пусни за преглед</button>
+        </div>
+
+        <div id="spPanelFile" style="margin-top:12px; display:none;">
+          <label>Избери аудио файл (mp3/wav/ogg)</label>
+          <input type="file" id="spFileInput" accept="audio/*" onchange="SunoPreview.onFileSelected(this)">
+        </div>
+
+        <div id="spPlayerWrap" style="margin-top:16px; display:none;">
+          <div id="spNowPlaying" class="muted" style="margin-bottom:6px;"></div>
+          <audio id="spAudio" controls style="width:100%;"></audio>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 История на прегледите</strong>
+        <p class="muted">Последните преслушани песни на това устройство. Suno линковете могат да се пуснат отново директно от списъка; локалните файлове пазят само име/дата — браузърът не пази достъп до самия файл между сесии, затова се избират отново при нужда.</p>
+        <div id="spHistoryOut" style="margin-top:10px;"></div>
+        <button class="btn ghost" style="margin-top:10px;" onclick="SunoPreview.clearHistory()">🗑️ Изчисти историята</button>
+      </div>
+    </div>
+
+    <!-- ============ IDEA VAULT VIEW ============ -->
+    <!-- ============ SONG INTELLIGENCE LAB VIEW (напълно самостоятелен, виж js/song-lab.js) ============ -->
+    <div class="view" id="view-song-lab">
+      <div class="section-title">🎵 Song Intelligence Lab</div>
+      <div class="card">
+        <strong>➕ Нова песен</strong>
+        <p class="muted">Създай нов Song Project. Аудио файлът се използва само временно (не се съхранява) — пази се само информацията за песента.</p>
+        <div id="songlabNewFormOut"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <strong>📁 Моите песни</strong>
+        <div id="songlabListOut" style="margin-top:10px;"></div>
+      </div>
+      <div id="songlabWorkspaceOut" style="display:none;"></div>
+    </div>
+
+    <div class="view" id="view-idea-vault">
+      <div class="section-title">💡 Idea Vault</div>
+      <div class="card">
+        <strong>💡 Всички музикални идеи на едно място</strong>
+        <p class="muted" id="ideaVaultSummary" style="margin:6px 0 0;"></p>
+        <p class="muted">Топ нишите от Пазарен анализ (≥60/100) и победителят от Hook Evolution Arena се добавят тук автоматично. Можеш и да добавиш идея ръчно.</p>
+        <div class="row" style="margin-top:10px;">
+          <input type="text" id="ideaVaultInput" placeholder="Нова идея (ниша, hook, концепция...)" style="flex:1;">
+          <button class="btn grad" onclick="IdeaVault.addManual()">➕ Добави</button>
+        </div>
+        <div class="row" style="margin-top:10px;align-items:center;">
+          <label style="margin:0;">Филтър:</label>
+          <select id="ideaVaultFilter" onchange="IdeaVault.render()" style="width:auto;">
+            <option value="all">Всички</option>
+            <option value="new">Нови</option>
+            <option value="used">Използвани</option>
+            <option value="rejected">Отхвърлени</option>
+          </select>
+        </div>
+        <div id="ideaVaultList" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ БИБЛИОТЕКА С ТЕКСТОВЕ ============ -->
+    <div class="view" id="view-lyrics-library">
+      <div class="section-title" style="margin-top:0;">📝 Библиотека с текстове</div>
+      <p class="muted" style="margin:-8px 0 14px;">Всички твои текстове на едно място — избираш песен и виждаш само нейния текст. Същата база се подава на AI агентите, за да напишат нова песен.</p>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="row" style="align-items:center;">
+          <strong id="llCount" style="flex:1;"></strong>
+          <input type="text" id="llSearch" placeholder="🔍 Търси по заглавие или ред" oninput="LyricsLibrary.render()" style="flex:1;min-width:180px;">
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:14px;margin-top:12px;">
+          <div id="llList" style="max-height:440px;overflow:auto;"></div>
+          <div id="llDetail"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>➕ Добави / внеси текстове</strong>
+        <input type="text" id="llTitle" placeholder="Заглавие на песента" style="margin-top:8px;">
+        <textarea id="llText" rows="6" placeholder="Текст на песента..." style="margin-top:8px;"></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn grad sm" style="width:auto;" onclick="LyricsLibrary.add()">➕ Добави песента</button>
+          <input type="file" id="llFileInput" accept=".txt,.md,.json" multiple style="display:none;" onchange="LyricsLibrary.importFiles(this.files)">
+          <button class="btn ghost sm" style="width:auto;" onclick="document.getElementById('llFileInput').click()">📂 Внеси файлове (.txt .md .json)</button>
+          <button class="btn ghost sm" style="width:auto;" onclick="LyricsLibrary.importFromProjects()">📥 Внеси от проектите в сайта</button>
+        </div>
+        <div class="row" style="margin-top:12px;align-items:center;">
+          <button class="btn grad sm" style="width:auto;" onclick="guardClick(this, () => LyricsLibrary.saveToGitHub())">☁️ Запази в GitHub</button>
+          <button class="btn ghost sm" style="width:auto;" onclick="guardClick(this, () => LyricsLibrary.loadRemote(true).then(() => LyricsLibrary.render()))">⬇️ Обнови от GitHub</button>
+          <button class="btn ghost sm" style="width:auto;" onclick="LyricsLibrary.exportJson()">💾 Изтегли JSON</button>
+          <span class="muted" id="llStatus"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>🎤 Нова песен от всички мои текстове</strong>
+        <p class="muted">Всеки избран агент чете цялата библиотека, измисля нова история и пише песен, в която вплита твои стари редове.</p>
+        <div id="llAgentPicker" style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0;"></div>
+        <input type="text" id="llTheme" placeholder="Тема или посока (по желание)">
+        <div class="row" style="margin-top:8px;align-items:center;">
+          <label style="margin:0;">Лимит на текста към агента (знаци):</label>
+          <input type="number" id="llBudget" value="24000" min="4000" step="2000" style="width:120px;">
+          <button class="btn grad" id="llGenBtn" style="width:auto;" onclick="LyricsLibrary.generate()">✨ Създай песен</button>
+        </div>
+        <p class="muted" style="font-size:12px;">Ако текстовете са повече от лимита, всяка песен се съкращава поравно (никоя не отпада) — безплатните модели имат ограничен контекст.</p>
+        <div id="llResults"></div>
+      </div>
+    </div>
+
+    <!-- ============ SYSTEM TEST VIEW ============ -->
+    <div class="view" id="view-system-test">
+      <div class="section-title">🧪 Системен тест</div>
+      <div class="card">
+        <strong>🧪 Пълна диагностика на приложението</strong>
+        <p class="muted">Проверява localStorage четене/писане, цялост на текущия проект, Vault статус, Service Worker (offline), структурата на екраните, прихванати JS грешки от тази сесия, историческа надеждност на AI моделите, и накрая реални мрежови проверки на всички API ключове (същите, които "🧪 Тествай ключовете" в Настройки прави). В края може да питаш Gemini какви нови функции биха допълнили приложението, съобразени с резултата от теста.</p>
+        <button class="btn grad" style="margin-top:12px;" onclick="guardClick(this, () => SystemTest.runAll())">🧪 Пусни системен тест</button>
+        <div id="systemTestOut" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🔍 Точен списък от функции (за AI екипа / външен консултант)</strong>
+        <p class="muted">Сканира РЕАЛНИЯ интерфейс в момента (nav разделите + всяка card в тях) — точно това, което автоматично се подава на "🤖 Питай AI екипа" по-горе, за да не предлага дублиращи се идеи. Копирай го и го дай на всеки друг AI (напр. в нов разговор с Claude), когато искаш нови предложения отвън — за да не изостава от реалните функции.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="SystemTest.renderFeatureInventoryPreview()">🔍 Покажи текущия списък</button>
+        <div id="featureInventoryOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 История на тестовете</strong>
+        <p class="muted">Последните 10 пуснати теста, с дата/час и — ако си питал — какво отговори Gemini. Натисни ред, за да разгънеш детайлите.</p>
+        <div id="systemTestHistoryOut" style="margin-top:10px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ============ AI IDEAS ARCHIVE VIEW ============ -->
+    <div class="view" id="view-ai-ideas">
+      <div class="section-title">🗂️ Архив на идеи от AI екипа</div>
+      <div class="card">
+        <strong>🗂️ Архив на идеи от AI екипа</strong>
+        <p class="muted">Всяка отделна идея (не целия отговор наведнъж — всяко ЗАГЛАВИЕ+описание поотделно) от "🤖 Питай AI екипа" (Системен тест) се записва тук автоматично, с точното заглавие, което AI екипът ѝ е дал. Копирай заглавие+текст на идея и я подай на Claude/Claude Code, за да я изградите заедно. Щом е готова, маркирай я "✅ Изградено" тук — AI екипът ще вижда заглавието ѝ следващия път като вече готово и няма да я предлага пак.</p>
+        <input type="text" id="aiIdeaSearch" placeholder="🔎 Търси по заглавие..." style="margin-top:10px;" oninput="SystemTest.renderIdeaBacklog()">
+        <div id="aiIdeaBacklogOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>➕ Добави / маркирай идея ръчно</strong>
+        <p class="muted">За идея, изградена извън тази конкретна инсталация (напр. предложена в друг разговор с Claude, или взета директно от README) — впиши ТОЧНОТО заглавие, с което искаш AI екипът да я разпознае занапред. Ако вече съществува запис със същото заглавие, само го маркира изграден вместо да го дублира.</p>
+        <label>Заглавие (точно като "Идея А" / реалното име)</label>
+        <input type="text" id="aiIdeaManualTitle" placeholder="напр. Hook Strength Score">
+        <label style="margin-top:8px;">Кратко описание (по избор)</label>
+        <textarea id="aiIdeaManualText" rows="2" placeholder="Какво прави функцията — 1-2 изречения"></textarea>
+        <button class="btn grad" style="margin-top:10px;" onclick="SystemTest.addManualIdea(document.getElementById('aiIdeaManualTitle').value, document.getElementById('aiIdeaManualText').value); document.getElementById('aiIdeaManualTitle').value=''; document.getElementById('aiIdeaManualText').value='';">✅ Добави като изградена</button>
+      </div>
+    </div>
+
+    <!-- ============ VALIDATOR LOG VIEW ============ -->
+    <div class="view" id="view-validator">
+      <div class="section-title">Gemini Validator — Втори поглед (пълен лог)</div>
+      <div class="card">
+        <p class="muted">Автоматичен анализ след всяка стъпка (trend scan, концепция, текст, FX, обложка, album sprint, A/B заглавия). Пази последните 20 записа.</p>
+        <button class="btn ghost" onclick="Step1.validateWithGemini()">🔁 Ръчна повторна проверка на текста</button>
+        <div id="geminiOut" style="margin-top:12px;white-space:pre-wrap;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ AI MODEL FINDER VIEW ============ -->
+    <div class="view" id="view-model-finder">
+      <div class="section-title">🧠 AI Model Finder</div>
+      <div class="card">
+        <p class="muted">
+          Отделен скрапер (обединен в това repo на 2026-08-08), който всяка нощ
+          (GitHub Actions, 03:00 UTC) обхожда Hugging Face, OpenRouter, Gemini,
+          Groq, Mistral, Cloudflare Workers AI и
+          Jina и генерира <code>ai-model-finder/ai-models.json</code> —
+          готов списък с безплатни AI модели, endpoint-и и инструкции за
+          връзка. Не заменя Claude/Gemini/OpenRouter по-горе — това е
+          самостоятелен, допълнителен инструмент за откриване на нови
+          безплатни опции.
+        </p>
+        <div class="row" style="margin-top:10px;">
+          <a class="btn grad" href="ai-model-finder/index.html" target="_blank" rel="noopener">🔎 Отвори AI Model Finder →</a>
+          <button class="btn ghost" onclick="ModelFinder.refresh()">🔄 Обнови списъка тук</button>
+        </div>
+        <div id="modelFinderOut" style="margin-top:14px;font-size:13px;"></div>
+        <hr style="margin:18px 0;">
+        <strong>🔑 Ключове — за да могат тези модели РЕАЛНО да се извикват от таблото</strong>
+        <p class="muted" style="margin-top:6px;">
+          Тези модели вече участват като <strong>резервен AI provider</strong> навсякъде,
+          където таблото "иска AI" (Стъпка 1-3, System Test и т.н.) — виж
+          Настройки → Предпочитания → "AI за генериране на съдържание".
+          Всеки от ключовете по-долу е <strong>напълно безплатен</strong> (изисква само
+          регистрация, не плащане) — попълни поне един, за да има таблото резервен AI път.
+          Hugging Face токенът долу захранва и безплатната <strong>AI Демо мелодия</strong>
+          (Стъпка 3).
+        </p>
+        <label>Groq API Key <span class="optional-tag">безплатен</span></label>
+        <input type="password" id="key_groq">
+        <p class="muted" style="margin-top:6px;">От <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>. Ползва се и за текст (fallback), и за <strong>автоматични субтитри</strong> (Whisper) в "⚡ Бърз ъплоуд".</p>
+        <label>Mistral API Key <span class="optional-tag">безплатен план</span></label>
+        <input type="password" id="key_mistral">
+        <p class="muted" style="margin-top:6px;">От <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>.</p>
+        <label>Cloudflare API Token</label>
+        <input type="password" id="key_cf_token">
+        <label>Cloudflare Account ID</label>
+        <input type="text" id="key_cf_account">
+        <p class="muted" style="margin-top:6px;">И двете от <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">dash.cloudflare.com</a> — 10 000 neuroni/ден безплатно. Ползва се и за генериране на обложки (FLUX).</p>
+        <label>Hugging Face API Token <span class="optional-tag">безплатен</span></label>
+        <input type="password" id="key_hf">
+        <p class="muted" style="margin-top:6px;">От <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> (роля "Read" стига) — захранва безплатната AI Демо мелодия (MusicGen) в Стъпка 3.</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testModelFinderKeys()">🧪 Тествай ключовете</button>
+        <div id="modelFinderKeyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+        <hr style="margin:18px 0;">
+        <p class="muted">
+          Еднократна настройка на автоматичното нощно обновяване (по избор):
+          Settings → Secrets and variables → Actions → добави
+          <code>HF_API_KEY</code>, <code>OPENROUTER_API_KEY</code>,
+          <code>GEMINI_API_KEY</code>, <code>GROQ_API_KEY</code>,
+          <code>MISTRAL_API_KEY</code>, <code>CF_API_TOKEN</code>,
+          <code>CF_ACCOUNT_ID</code>, <code>GH_MODELS_PAT</code>,
+          <code>JINA_API_KEY</code> — виж пълните инструкции и линкове за
+          всеки ключ в <code>ai-model-finder/README.md</code>.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: API KEYS ============ -->
+    <div class="view" id="view-set-keys">
+      <div class="section-title">Настройки — API Ключове</div>
+      <div class="card">
+        <p class="muted">Всичко се пази само локално в браузъра (localStorage) на това устройство. Нищо не се качва в GitHub.</p>
+        <label>Anthropic (Claude) API Key</label>
+        <input type="password" id="key_claude">
+        <label>Google Gemini API Key</label>
+        <input type="password" id="key_gemini">
+        <label>OpenRouter API Key <span class="optional-tag">безплатен tier</span></label>
+        <input type="password" id="key_openrouter">
+        <p class="muted" style="margin-top:6px;">За "🧪 Системен тест" AI екипа (втори/трети AI глас, независим от Claude/Gemini). Безплатен ключ от <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> — вика само модели с 0 цена (":free"), никога платени.</p>
+        <label>YouTube Data API — Google Client ID (OAuth)</label>
+        <input type="password" id="key_yt_client_id">
+        <label>YouTube Data API Key</label>
+        <input type="password" id="key_yt_apikey">
+        <hr style="margin:18px 0;">
+        <label>Spotify Client ID</label>
+        <input type="password" id="key_spotify_client_id">
+        <label>Spotify Client Secret</label>
+        <input type="password" id="key_spotify_client_secret">
+        <p class="muted" style="margin-top:6px;">За "🎯 Niche & Signal (Spotify)" анализа. Взимат се от <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> → Create app. Токенът се тегли през Proxy URL по-долу (Spotify token endpoint-ът няма CORS за браузър заявки).</p>
+        <hr style="margin:18px 0;">
+        <label>GitHub Personal Access Token — за AI редакция на това repo (scope: repo)</label>
+        <input type="password" id="key_github_token" placeholder="ghp_...">
+        <p class="muted" style="margin-top:6px;">Използва се от AI Чата на Dashboard-а, за да чете/пише файлове директно в repo-то (виж полетата repo owner/име/branch в "Статистика → YouTube Тракер"). Пази се само локално в браузъра.</p>
+        <hr style="margin:18px 0;">
+        <label>🎬 Shorts Relay URL — по избор, за upload до 2GB (виж scripts/shorts-relay-server/)</label>
+        <input type="text" id="key_shorts_relay_url" placeholder="https://твоя-relay.onrender.com">
+        <label>🎬 Shorts Relay Secret</label>
+        <input type="password" id="key_shorts_relay_secret" placeholder="същия PROXY_SECRET, който си сложил в Render">
+        <p class="muted" style="margin-top:6px;">GitHub's upload-API (uploads.github.com) няма CORS за браузър заявки — Contents API има, но е ограничен до ~100MB (лимит на самия Git). Ако искаш upload до 2GB (Releases API), качи малкия relay сървър от <code>scripts/shorts-relay-server/</code> (безплатен Render/Fly.io/etc, виж README-то вътре) и сложи тук неговия URL + тайната си. Ако оставиш празно — AI Shorts Pro автоматично пада назад на Contents API (до ~100MB).</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.testKeys()">🧪 Тествай ключовете</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.listGeminiModels()">📋 Виж моделите на моя Gemini ключ</button>
+        <button class="btn ghost" style="margin-top:16px;" onclick="Settings.refreshModelLists()">🔄 Обнови fallback списъците с модели</button>
+        <div id="keyTestOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+        <div id="keyHealthOut" style="margin-top:10px;"></div>
+
+        <hr style="margin:18px 0;">
+        <strong>🎯 Модел по подразбиране</strong>
+        <p class="muted" style="margin-top:6px;">
+          Като натиснеш "🧪 Тествай ключовете" по-горе, приложението пробва моделите
+          един по един и хваща ПЪРВИЯ, който реално отговори — той автоматично става
+          модел по подразбиране навсякъде, докато не смениш нещо тук. Може и да избереш
+          конкретен модел ръчно от менютата по-долу — тогава той има приоритет
+          (останалите пак стоят като fallback, ако той внезапно откаже/изчерпа квота).
+        </p>
+        <label>Claude — ръчен избор</label>
+        <select id="model_select_claude" onchange="Settings.setManualModel('claude', this.value)">
+          <option value="">🔄 Автоматично (fallback ред / последен успешен тест)</option>
+        </select>
+        <label>Gemini — ръчен избор</label>
+        <select id="model_select_gemini" onchange="Settings.setManualModel('gemini', this.value)">
+          <option value="">🔄 Автоматично (fallback ред / последен успешен тест)</option>
+        </select>
+        <div id="modelPrefOut" class="muted" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+        <hr style="margin:18px 0;">
+        <strong>🔐 Криптиране на ключовете (Vault)</strong>
+        <div id="vaultOut" style="margin-top:8px;"></div>
+        <hr style="margin:18px 0;">
+        <strong>🔒 Достъп до dashboard-а (екран за поверителност)</strong>
+        <div id="authGateSettingsOut" style="margin-top:8px;"></div>
+        <hr style="margin:18px 0;">
+        <strong>💾 Резервно копие на API ключовете</strong>
+        <p class="muted" style="margin-top:6px;">Отделно от резервното копие на проекта (виж "Проект &amp; Данни") — тук се пазят/възстановяват само ключовете. Файлът е в ЧИСТ ТЕКСТ, пази го на сигурно място.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="Settings.exportKeys()">⬇️ Export ключове</button>
+          <button class="btn ghost" onclick="document.getElementById('importKeysFile').click()">⬆️ Import ключове</button>
+        </div>
+        <input type="file" id="importKeysFile" accept="application/json" style="display:none;" onchange="Settings.importKeys(this.files[0]); this.value='';">
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📊 Приблизителен разход днес</strong>
+        <p class="muted">Локален брояч на извикванията по модел (не е официална квота от Google/Anthropic — само ориентир на това устройство, нулира се на нов ден).</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="QuotaTracker.render()">📊 Покажи</button>
+        <div id="quotaTrackerOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>💰 AI разход ($)</strong>
+        <p class="muted">Приблизителна оценка в долари, базирана на реалния token usage от Claude/Gemini отговорите. OpenRouter/AI Model Finder ползват предимно безплатни модели — не се калкулират тук.</p>
+        <div id="costTrackerOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🕐 AI Call Log</strong>
+        <p class="muted">Кой provider/модел реално е отговорил на последните извиквания (и кои опити са гръмнали по пътя — напр. fallback между модели).</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="AICallLog.render()">🕐 Покажи лога</button>
+          <button class="btn ghost" onclick="AICallLog.clear()">🗑️ Изчисти лога</button>
+        </div>
+        <div id="aiCallLogOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🗂️ AI Агент Ростър (работещи модели днес)</strong>
+        <p class="muted">Компактен, реално тестван списък — само моделите, които РЕАЛНО отговориха при последната проверка. Задачите (напр. "🤖 Питай AI екипа" в Системния тест) първо ползват ТОЗИ списък, вместо да претърсват целия списък модели наново. Строи се автоматично максимум веднъж на 24ч (или задължително при влизане, ако е изтекъл) — тук може и ръчно.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="AgentRoster.manualRefresh()">🔄 Обнови сега</button>
+        <div id="agentRosterOut" style="margin-top:10px;font-size:12px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🏆 Класация по надеждност</strong>
+        <p class="muted">Процент успешни извиквания на всеки модел на това устройство. При "🧪 Тествай ключовете" моделите с най-добра история се пробват първи.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="AICallLog.renderLeaderboard()">🏆 Покажи класацията</button>
+        <div id="aiLeaderboardOut" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PROXY ============ -->
+    <div class="view" id="view-set-proxy">
+      <div class="section-title">Настройки — Proxy &amp; Мрежа</div>
+      <div class="card">
+        <label>Proxy URL (по избор)</label>
+        <input type="text" id="key_proxy_url" placeholder="напр. https://твоя-worker.workers.dev">
+        <p class="muted" style="margin-top:8px;">Празно = директни заявки (стандартно). Ако въведеш URL, заявките към Gemini/Imagen/Suggest ще минат през <code>PROXY_URL?target=ORIGINAL_URL</code> — прокси-то (напр. Cloudflare Worker) трябва просто да препрати метода/хедърите/тялото към <code>target</code> и да върне отговора с CORS хедъри.</p>
+        <button class="btn grad" style="margin-top:16px;" onclick="Settings.save()">💾 Запази</button>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PROJECT & DATA ============ -->
+    <div class="view" id="view-set-project">
+      <div class="section-title">Настройки — Проект &amp; Данни</div>
+      <div class="card">
+        <strong>💾 Резервно копие на проекта</strong>
+        <p class="muted">Проектът (заглавие, текст, ниши, лог) живее само в този браузър. Направи export преди да чистиш кеша или сменяш устройство.</p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn ghost" onclick="Settings.exportProject()">⬇️ Export проект</button>
+          <button class="btn ghost" onclick="document.getElementById('importFile').click()">⬆️ Import проект</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="Settings.importProject(this.files[0])">
+        <hr style="margin:18px 0;">
+        <button class="btn ghost" onclick="Settings.newProject()">🆕 Нов проект (изчисти текущия)</button>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📚 Архив на песните</strong>
+        <p class="muted">"Нов проект" вече архивира автоматично старата песен. Можеш и ръчно да запазиш текущата, за да сравняваш Viral Score между песни във времето.</p>
+        <button class="btn grad" onclick="ProjectArchive.saveCurrent()">💾 Архивирай текущия проект сега</button>
+        <div id="projectArchiveOut" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🔄 Auto Update (System)</strong>
+        <p class="muted">
+          Автоматично, тествано, с backup и rollback обновяване на кода в repo-то — виж
+          <code>update_engine.py</code> и <code>.github/workflows/auto-update.yml</code>.
+          <strong>Без GitHub token в браузъра</strong> — този панел само ЧЕТЕ статуса, никога не commit-ва нищо.
+        </p>
+        <p class="muted" style="margin-top:8px;">
+          <strong>Как да пуснеш update:</strong> качи ZIP-а в папка
+          <code>incoming/update.zip</code> през github.com ("Add file → Upload files" →
+          пуснеш файла → Commit directly to main). GitHub Action-ът се пуска автоматично,
+          прави backup, тества, и само при успех commit-ва. Резултатът се появява тук.
+        </p>
+        <button class="btn ghost" style="margin-top:8px;" onclick="guardClick(this, () => SystemUpdate.refresh())">🔄 Провери статус</button>
+        <div id="systemUpdateOut" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS: PREFERENCES ============ -->
+    <div class="view" id="view-set-prefs">
+      <div class="section-title">Настройки — Предпочитания</div>
+      <div class="card">
+        <div class="set-row"><div class="txt"><strong>Тъмна / Светла тема</strong><span>Превключи външния вид на цялото табло.</span></div><div class="switch" id="themeSwitch3" onclick="Prefs.toggleTheme()"><div class="knob"></div></div></div>
+        <div class="set-row"><div class="txt"><strong>Проверка на ключовете при зареждане</strong><span>Тиха проверка дали някой ключ е "умрял" — предупреждение горе вместо грешка по средата на работа.</span></div><div class="switch on" id="healthSwitch2" onclick="Prefs.toggleHealthCheck()"><div class="knob"></div></div></div>
+        <div class="set-row">
+          <div class="txt"><strong>AI за генериране на съдържание</strong><span>Кой модел пише концепции/текстове/hook-ове/анализи (Стъпка 1-3 и навсякъде другаде в таблото). <strong>Автоматично</strong> (препоръчано) следва реда, хванат от последното "🧪 Тествай ключовете" в Настройки → API Ключове — кои провайдъри реално отговориха, в тестовия им ред; ако избраният провайдър гръмне грешка, автоматично пада на следващия в реда (Claude/Gemini/OpenRouter/AI Model Finder), докато някой не отговори. AI Model Finder е винаги последен резерв — работи с поне един от 3-те безплатни ключа (Groq/Mistral/Cloudflare, Настройки → AI Model Finder). Ръчен избор тук просто го закача най-отпред, останалите пак стоят като резерв.</span></div>
+          <select id="contentProviderSelect" style="width:auto;min-width:140px;" onchange="Prefs.setContentProvider(this.value)">
+            <option value="auto">🔄 Автоматично (по теста)</option>
+            <option value="claude">Claude</option>
+            <option value="gemini">Gemini</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="modelfinder">🧠 AI Model Finder</option>
+          </select>
+        </div>
+        <div class="set-row"><div class="txt"><strong>🤖 Автопилот</strong><span>След като избере най-добрата ниша, автоматично продължава верижно към текст на песента + Viral Lab анализ — без да чакаш да натискаш всеки бутон поотделно. Изключен по подразбиране.</span></div><div class="switch" id="autopilotSwitch" onclick="Prefs.toggleAutopilot()"><div class="knob"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ============ STATS: TRACKER SETUP ============ -->
+    <div class="view" id="view-stats-tracker">
+      <div class="section-title">Статистика — YouTube Тракер (GitHub Actions)</div>
+      <div class="card">
+        <p class="muted">Дневен, автоматичен tracker живее извън браузъра — GitHub Actions cron сам се събужда всеки ден, дърпа статистика за целия канал (абонати, views, likes, comments за всяко видео) и я записва в <code>data/stats-history.json</code> в repo-то. Таблото само чете този файл.</p>
+        <label>GitHub потребител/организация</label>
+        <input type="text" id="gh_owner" placeholder="напр. ceckod">
+        <label>Име на repo-то</label>
+        <input type="text" id="gh_repo" placeholder="напр. cd-b-dashboard">
+        <label>Клон (branch)</label>
+        <input type="text" id="gh_branch" placeholder="main" value="main">
+        <button class="btn grad" style="margin-top:14px;" onclick="Stats.saveRepoConfig()">💾 Запази и презареди статистиката</button>
+        <hr style="margin:18px 0;">
+        <strong style="font-size:13px;">Еднократен setup в GitHub (виж README.md в repo-то за пълни стъпки)</strong>
+        <ol class="muted" style="padding-left:18px;line-height:1.7;">
+          <li>Добави <code>YOUTUBE_API_KEY</code> като GitHub Secret (Settings → Secrets → Actions).</li>
+          <li>Сложи своя Channel ID в <code>config.json</code> в repo-то.</li>
+          <li>Workflow-ът в <code>.github/workflows/daily-stats.yml</code> тръгва сам всеки ден.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ============ STATS: ANALYTICS ============ -->
+    <div class="view" id="view-stats-analytics">
+      <div class="section-title">Анализи &amp; Графики</div>
+      <div id="analyticsArea"></div>
+
+      <div class="section-title">🎯 Track Record — Предсказание срещу реалност</div>
+      <div class="card">
+        <p class="muted">Всеки Viral Lab анализ (Стъпка 1) се запазва тук автоматично. Когато песен вече е публикувана и се появи в YouTube Тракера, свържи я с прогнозата, за да видиш реално колко точен е бил AI-я.</p>
+        <div id="trackRecordOut" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="section-title">🔁 Learning Loop — какво реално работи</div>
+      <div class="card">
+        <p class="muted">Агрегация върху вече свързаните резултати по-горе (Track Record) и използваните идеи (Idea Vault) — реални измерени данни, не прогнози. Past Performance → по-добри бъдещи решения.</p>
+        <div id="learningLoopOut" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ============ YOUTUBE DISCOVERY ENGINE ============ -->
+    <div class="view" id="view-yt-discovery">
+      <div class="section-title">🎧 YouTube Discovery Engine</div>
+      <div class="card">
+        <p class="muted">Автоматично открива стиловете в каталога ти, поддържа discovery playlist за всеки значим клъстер (external музика + естествено разпределени мои авторски песни) и се обновява ежедневно през GitHub Actions. Настрой <strong>YouTube Тракер</strong> (GitHub owner/repo/branch + Token) първо — Discovery Engine чете същия repo. Виж README.md → "YouTube Discovery Engine" за еднократния OAuth setup (нужен, за да може движкът реално да пише в YouTube playlists).</p>
+      </div>
+      <div id="ytDiscoveryOut" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- ============ METADATA OPTIMIZER (отделен от Discovery Engine — 2026-08-17) ============ -->
+    <div class="view" id="view-metadata-optimizer">
+      <div class="section-title">🏷️ Metadata Optimizer</div>
+      <div class="card">
+        <p class="muted">AI-генерирани title/description/tags предложения за конкретна песен, базирани на текущите trending ниши (data/trends-history.json), за да подобрят discoverability в YouTube search/suggested. Нищо не се пуска на живо автоматично — само генерира, ти одобряваш, после explicit "Приложи".</p>
+        <p class="muted" style="margin-top:6px;font-size:12px;">Песен-picker-ът показва <strong>целия каталог</strong> (data/catalog.json — всички видеа на канала, независимо от начина на качване), не само DistroKid/Releases разпространените. Ако скоро качено видео липсва — каталогът се обновява от YouTube Discovery Engine run-а; изчакай следващия успешен run или пусни "Run Now" там.</p>
+      </div>
+      <div id="metadataOptimizerOut" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- ============ YT CHANNEL CONSULTANT (отделен модул — js/consultant.js) ============ -->
+    <div class="view" id="view-yt-consultant">
+      <div class="section-title">🧑‍💼 YT Консултант</div>
+      <div class="card">
+        <p class="muted">Публичен анализ на канал, оценка на заглавия, keyword ранг и AI стратегически отчет. Ползва вече въведените ключове (YouTube API ключ + AI провайдърите от Настройки → API Ключове) — нищо ново за въвеждане.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <input type="text" id="consultantChannel" placeholder="@handle или UC... Channel ID" style="flex:1;min-width:200px;">
+          <button class="btn grad" onclick="Consultant.runAudit()">📊 Audit</button>
+          <button class="btn grad" onclick="Consultant.runReport()">💡 AI отчет</button>
+        </div>
+        <div id="consultantAuditOut"></div>
+        <div id="consultantReportOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>📝 Оценка на заглавия</strong>
+        <textarea id="consultantTitles" rows="4" placeholder="По едно заглавие на ред, напр.&#10;КЮЧЕК 2026 | Нови хитове 🔥" style="width:100%;margin-top:8px;"></textarea>
+        <button class="btn grad" style="margin-top:8px;" onclick="Consultant.scoreTitles()">Оцени</button>
+        <div id="consultantTitlesOut"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <strong>🔍 Keywords</strong>
+        <p class="muted" style="margin-top:4px;"><b>Търсене</b> е ръчна оценка (YouTube няма API за честота на търсене). <b>Конкуренцията</b> може да се измерва жива от YouTube. Формат на ред: <code>дума, търсене, конкуренция</code></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn grad" onclick="Consultant.refreshLive()">🔄 Обнови конкуренцията (≈100 quota/дума)</button>
+        </div>
+        <div id="consultantKeywordsOut" style="margin-top:8px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <input type="text" id="consultantSeed" placeholder="Начална дума за предложения, напр. чалга" style="flex:1;min-width:200px;">
+          <button class="btn ghost" onclick="Consultant.suggest()">💡 Предложения от YouTube</button>
+        </div>
+        <div id="consultantSuggestOut"></div>
+        <details style="margin-top:10px;"><summary class="muted" style="cursor:pointer;">✏️ Редактирай keywords</summary>
+          <textarea id="consultantKeywords" rows="8" style="width:100%;margin-top:8px;font-family:var(--font-mono);font-size:12px;"></textarea>
+          <button class="btn grad" style="margin-top:8px;" onclick="Consultant.saveKeywords()">💾 Запази</button>
+          <button class="btn ghost" style="margin-top:8px;" onclick="Consultant.resetKeywords()">↩️ По подразбиране</button>
+        </details>
+      </div>
+    </div>
+
+    <!-- ============ THUMBNAIL MAKER (отделен модул — js/thumbnail-maker.js) ============ -->
+    <div class="view" id="view-thumbnail-maker">
+      <div class="section-title">🖼️ Thumbnail Maker</div>
+      <div class="card">
+        <p class="muted">Въведи заглавието — AI измисля 3 концепции, генерира фоновете и слага надписа. Ползва вече въведените ключове, нищо ново.</p>
+        <div id="thumbKeyHint" style="margin-top:6px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <label class="muted" style="font-size:12px;">Агент за концепции
+            <select id="thumbTextAgent" style="width:100%;height:34px;">
+              <option value="free">Най-добър безплатен първо</option>
+              <option value="auto">Редът от Настройки</option>
+              <option value="gemini">Gemini</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="modelfinder">Model Finder (Groq/Mistral/CF)</option>
+              <option value="claude">Claude (платен)</option>
+            </select></label>
+          <label class="muted" style="font-size:12px;">Генератор на фон
+            <select id="thumbImgProvider" onchange="Thumb._refreshKeyHint()" style="width:100%;height:34px;">
+              <option value="auto">Най-силният първо</option>
+              <option value="gemini">Gemini image</option>
+              <option value="cloudflare">Cloudflare FLUX</option>
+              <option value="pollinations">Pollinations</option>
+            </select></label>
+        </div>
+        <input type="text" id="thumbTitle" placeholder="Заглавие на видеото" style="width:100%;margin-top:10px;">
+        <input type="text" id="thumbVibe" placeholder="Настроение/стил (по избор): напр. тъмно, неон, купон" style="width:100%;margin-top:8px;">
+        <button class="btn grad" style="margin-top:10px;" onclick="Thumb.autoCreate()">⚡ Създай автоматично (3 варианта)</button>
+        <div id="thumbStatus" style="margin-top:8px;"></div>
+        <div id="thumbVariants"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <canvas id="thumbCanvas" width="1280" height="720" style="width:100%;height:auto;border-radius:8px;background:#111;display:block;"></canvas>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <input type="text" id="thumbHeadline" placeholder="Надпис (до 4 думи)" oninput="Thumb.draw()" style="grid-column:1/3;">
+          <label class="muted" style="font-size:12px;">Акцент <input type="color" id="thumbAccent" value="#ffd400" oninput="Thumb.draw()" style="width:100%;height:34px;"></label>
+          <label class="muted" style="font-size:12px;">Позиция
+            <select id="thumbPosition" onchange="Thumb.draw()" style="width:100%;height:34px;"><option value="left">Ляво</option><option value="center">Център</option><option value="bottom">Долу</option></select></label>
+          <label class="muted" style="font-size:12px;">Затъмняване <input type="range" id="thumbOverlay" min="0" max="100" value="55" oninput="Thumb.draw()" style="width:100%;"></label>
+          <label class="muted" style="font-size:12px;">Размер <input type="range" id="thumbFont" min="60" max="220" value="150" oninput="Thumb.draw()" style="width:100%;"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <input type="text" id="thumbBgPrompt" placeholder="Нов фон (описание, по-добре на английски)" style="flex:1;min-width:180px;">
+          <button class="btn ghost" onclick="Thumb.regenBackground()">🎨 Нов фон</button>
+          <label class="btn ghost" style="cursor:pointer;">📁 Свой фон<input type="file" accept="image/*" style="display:none" onchange="Thumb.uploadBackground(this)"></label>
+        </div>
+        <button class="btn grad" style="margin-top:10px;width:100%;" onclick="Thumb.download()">⬇️ Свали (1280×720)</button>
+      </div>
+    </div>
+
+    <!-- ============ INFRA: LOGS ============ -->
+    <div class="view" id="view-infra-logs">
+      <div class="section-title">Системни логове</div>
+      <div class="card">
+        <p class="muted">Улавя JS грешки/предупреждения в реално време на тази сесия — полезно ако нещо не работи и искаш да видиш какво точно е гръмнало.</p>
+        <button class="btn ghost" onclick="SystemLog.clear()">🧹 Изчисти</button>
+        <div id="systemLogOut" style="margin-top:12px;font-family:var(--font-mono);font-size:11.5px;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+
+    <!-- ============ INFRA: CONFIG ============ -->
+    <div class="view" id="view-app-logs">
+      <div class="section-title">📋 Логове (по модул)</div>
+      <div class="card">
+        <p class="muted">Централен лог от всички модули (напр. 🎧 YouTube Discovery Engine), групиран по дата и модул. Цъкни на запис, за да го разгънеш и копираш с един клик. Автоматично се самопочиства след избрания брой дни.</p>
+      </div>
+      <div id="appLogOut" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="view" id="view-infra-config">
+      <div class="section-title">Конфигурация</div>
+      <div class="card">
+        <strong>Схема на данните (stats-history.json)</strong>
+        <p class="muted">Версиониран JSON формат — добавяне на нови полета в бъдеще не чупи старите записи.</p>
+        <pre style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;font-size:11.5px;overflow-x:auto;">{
+  "schema_version": 1,
+  "channel_id": "UCxxxxxxxx",
+  "snapshots": [
+    {
+      "date": "2026-07-22",
+      "channel": { "subscribers": 0, "total_views": 0, "video_count": 0 },
+      "videos": [
+        { "video_id": "...", "title": "...", "published_at": "...",
+          "views": 0, "likes": 0, "comments": 0 }
+      ]
+    }
+  ]
+}</pre>
+        <strong style="display:block;margin-top:16px;">Модулна структура на проекта</strong>
+        <p class="muted">index.html/app.js четат данни, не ги генерират. scripts/track_stats.py, .github/workflows/daily-stats.yml и config.json са напълно самостоятелни — добавяне на нов източник (напр. Spotify) става с нов файл, без да се пипат съществуващите.</p>
+      </div>
+    </div>
+
+    <!-- ============ AI ЧАТ ============ -->
+    <div class="view" id="view-ai-chat">
+      <div class="section-title" style="margin-top:0;">💬 AI Чат</div>
+      <p class="muted" style="margin:-8px 0 14px;">Разговаряй директно с всеки AI агент, за който имаш зададен ключ — превключвай между тях по всяко време. Разговорът е временен, не се пази между сесии.</p>
+
+      <div class="ai-chat-wrap">
+        <div class="ai-chat-agentbar">
+          <select id="aiChatAgentSelect" style="width:auto;min-width:170px;" onchange="AIChat.selectAgent(this.value)"></select>
+          <select id="aiChatModelSelect" style="width:auto;min-width:170px;display:none;" onchange="AIChat.selectModel(this.value)"></select>
+          <div id="aiChatAgentAbout" style="flex:1;min-width:220px;font-size:12.5px;color:var(--muted);"></div>
+          <button class="btn ghost sm" style="width:auto;" onclick="AIChat.clear()" title="Изчисти разговора">🧹 Изчисти</button>
+        </div>
+
+        <div class="ai-chat-messages" id="aiChatMessages"></div>
+
+        <div class="ai-chat-typing" id="aiChatTyping"><span>⏳</span> Пише отговор...</div>
+
+        <div id="aiChatAttachmentsPreview" style="display:none;gap:6px;flex-wrap:wrap;padding:0 16px 10px;"></div>
+
+        <div class="ai-chat-inputbar">
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <input type="file" id="aiChatFileInput" accept="image/*,application/pdf" multiple style="display:none;" onchange="AIChat.handleFiles(this.files)">
+            <button class="icon-btn" style="flex-shrink:0;" title="Прикачи снимка/PDF" onclick="document.getElementById('aiChatFileInput').click()">📎</button>
+            <textarea id="aiChatInput" rows="1" placeholder="Напиши съобщение... (Enter изпраща, Shift+Enter нов ред)" style="flex:1;resize:none;min-height:40px;max-height:140px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();AIChat.send();}"></textarea>
+            <button class="btn grad sm" id="aiChatSendBtn" style="width:auto;flex-shrink:0;" onclick="AIChat.send()">Изпрати</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CODE ARENA ============ -->
+    <div class="view" id="view-code-arena">
+      <div class="section-title" style="margin-top:0;">🥊 Code Arena</div>
+      <p class="muted" style="margin:-8px 0 14px;">Опиши задача → няколко безплатни AI агента пишат код независимо → после всеки чете и критикува кода на другите → накрая един агент синтезира финална, подобрена версия. Сваляш всичко като .zip.</p>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>Задача за кода</label>
+        <textarea id="codeArenaTask" rows="3" placeholder="напр. Python скрипт, който събира публична информация за обществени поръчки от сайт X и я записва в CSV"></textarea>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>Кои агенти участват (избери поне 2)</label>
+        <div id="codeArenaAgentPicker" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+        <p class="muted" style="margin:8px 0 0;font-size:12px;">Кои агенти са налични зависи от ключовете, които си задал в ⚙️ API Ключове. Groq, Mistral и OpenRouter (безплатни модели) са напълно безплатни.</p>
+      </div>
+
+      <button class="btn grad" id="codeArenaRunBtn" style="width:auto;" onclick="CodeArena.run()" disabled>🚀 Пусни агентите</button>
+      <button class="btn ghost" id="codeArenaDownloadBtn" style="width:auto;display:none;margin-left:8px;" onclick="CodeArena.downloadZip()">📦 Свали .zip</button>
+
+      <div id="codeArenaLog" class="ca-log" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ============ ОНЛАЙН МАСТЕРИНГ ============ -->
+    <div class="view" id="view-kinetic">
+      <div class="section-title" style="margin-top:0;">🎬 Kinetic Видео</div>
+      <div class="card" style="margin-bottom:14px;">
+        <label>🎵 1. Песен (първо нея — по нея агентите правят сценария)</label><input type="file" id="kineticAudio" accept="audio/*"><div class="muted" id="kineticAudioName"></div>
+        <label style="display:flex;gap:6px;margin-top:6px;"><input type="checkbox" id="kineticGemini"> 🎧 Нека Gemini чуе песента (настроение)</label>
+        <div id="kineticMusic" class="muted" style="display:none;margin-top:8px;white-space:pre-wrap;"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <label>🤖 2. Идея — агентите пишат сценария и промптовете</label>
+        <textarea id="kineticIdea" rows="3" style="width:100%;" placeholder="напр. Новият Claude Opus 5.5 — зашеметяващи способности, бързо и мощно" onfocus="Kinetic.refreshAgents()"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;"><input type="number" id="kineticCount" value="8" min="3" max="24" style="width:90px;" title="Брой сцени (идва от песента)"><select id="kineticLang"><option value="English">думи: English</option><option value="български">думи: български</option></select></div>
+        <div id="kineticAgents" style="margin-top:8px;"></div>
+        <button class="btn grad sm" id="kineticAskBtn" style="margin-top:8px;" onclick="Kinetic.askAgents()">🤖 Питай агентите</button>
+        <div id="kineticAgentOut"></div><div id="kineticPrompts"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <p class="muted" style="margin:0 0 10px;">Качи песен и снимки (по реда на сцените), напиши 1-3 думи за всяка и натисни бутона. Видеото се рендира в GitHub и се появява тук.</p>
+        
+        <label style="margin-top:10px;display:block;">3. Снимки по ред на промптовете (избери всички наведнъж, 9:16)</label><input type="file" id="kineticImages" accept="image/*" multiple>
+      </div>
+      <div class="card" style="margin-bottom:14px;"><div id="kineticScenes"><span class="muted">Още няма снимки.</span></div>
+        <details style="margin-top:10px;"><summary class="muted">🤖 Постави JSON от AI агентите</summary>
+          <textarea id="kineticJson" rows="5" style="width:100%;margin-top:6px;" placeholder='{"style":"slam_red","scenes":[{"text":"NEW OPUS"},{"text":"ARE YOU KIDDING","effect":"glitch"}]}'></textarea>
+          <button class="btn ghost sm" onclick="Kinetic.applyJson()">Приложи текстовете</button></details></div>
+      <div class="card" style="margin-bottom:14px;">
+        <label>Стил</label><select id="kineticStyle"><option value="slam_red">slam_red</option><option value="glitch">glitch</option><option value="stretch">stretch</option><option value="zoom_punch">zoom_punch</option><option value="clean">clean</option></select>
+        <label style="margin-top:8px;display:block;">Максимална дължина (сек)</label><input type="number" id="kineticSecs" value="30" min="5" max="120">
+        <label style="margin-top:8px;display:block;">Размер</label><select id="kineticSize"><option value="1080x1920">1080x1920 (пълно)</option><option value="720x1280">720x1280 (по-бързо)</option></select>
+        <button class="btn grad" id="kineticGoBtn" style="margin-top:12px;width:100%;" onclick="Kinetic.start()" disabled>🎬 Генерирай видео</button>
+        <div id="kineticStatus" class="muted" style="display:none;margin-top:10px;white-space:pre-wrap;"></div>
+        <div id="kineticResult" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-mastering">
+      <div class="section-title" style="margin-top:0;">🎚️ Онлайн Мастеринг</div>
+      <div class="card" style="margin-bottom:14px;">
+        <p class="muted" style="margin:0;">Качи аудио файл и го мастеринговай директно в браузъра — EQ, намаляване на изпъкващ глас, бас за кола/субуфер, компресия и лимитер. Всичко се случва локално на устройството ти (Web Audio API) — файлът никъде не се качва.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>Аудио файл</label>
+        <input type="file" id="masteringFileInput" accept="audio/*">
+        <div class="muted" id="masteringStatus" style="margin-top:8px;">Все още няма избран файл.</div>
+        <div id="masteringOriginalWrap" style="display:none;margin-top:10px;">
+          <div class="row" style="align-items:center;justify-content:space-between;">
+            <label style="margin:0;">Оригинал</label>
+            <button class="btn grad sm" id="masteringLiveToggleBtn" onclick="Mastering.toggleLive()">🎧 Живо преслушване: ВКЛ</button>
+          </div>
+          <audio id="masteringOriginalPlayer" controls style="width:100%;margin-top:6px;"></audio>
+          <p class="muted" style="font-size:11.5px;margin:6px 0 0;">Докато свириш този плейър, промяна на пресет/плъзгач се чува веднага. Финалният, по-прецизен запис (с лимитер) излиза само след "Обработи" по-долу.</p>
+        </div>
+      </div>
+
+      <div class="card" id="masteringStatsWrap" style="display:none;margin-bottom:14px;">
+        <strong>📊 Числов анализ</strong>
+        <p class="muted" style="font-size:11.5px;margin:4px 0 10px;">LUFS тук е ориентировъчна (K-weighted, без официалния relative gating) — точна за сравнение преди/след, не е сертифицирано число за платформа.</p>
+        <div class="grid cols-2">
+          <div>
+            <label style="margin:0 0 4px;">Преди (оригинал)</label>
+            <div id="masteringBeforeStats"></div>
+          </div>
+          <div>
+            <label style="margin:0 0 4px;">След мастеринг</label>
+            <div id="masteringAfterStats"><span class="muted" style="font-size:12px;">Обработи файла, за да видиш числата.</span></div>
+          </div>
+        </div>
+        <div id="masteringStatsDelta" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>🤖 AI предложение за мастеринг</strong>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 10px;">Gemini "чува" файла директно (мултимодален вход) и предлага конкретни числа за разширения панел по-долу — прегледай ги, коригирай при нужда и после натисни "Обработи".</p>
+        <button class="btn grad sm" id="masteringAiSuggestBtn" onclick="Mastering.aiSuggest()">🤖 Gemini: предложи мастеринг</button>
+        <div id="masteringAiReasoning" class="muted" style="display:none;font-size:12.5px;margin-top:8px;white-space:pre-wrap;"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>🧠 Как да подобрим САМАТА мастеринг система?</strong>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 10px;">Праща на OpenRouter описание на цялата изградена мастеринг архитектура (mid/side EQ, компресор, собствен лимитер, WAV износ и т.н.) и пита какво липсва, за да стигне професионално ниво — не е за конкретна песен, а за самия инструмент. Не изисква качен файл.</p>
+        <button class="btn ghost sm" id="masteringOpenRouterBtn" onclick="Mastering.askOpenRouterImprove()">🧠 OpenRouter: как да подобрим системата?</button>
+        <div style="margin-top:12px;">
+          <span class="muted" style="display:block;margin-bottom:6px;">ОТГОВОРИ ОТ OPENROUTER: <span title="Пазят се в GitHub — data/mastering-openrouter-log.json, автоматично изтриване след 30 дни">(в GitHub, 30 дни)</span></span>
+          <div id="masteringOpenRouterLog"><span class="muted" style="font-size:12px;">Зареждане…</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="row" style="align-items:center;justify-content:space-between;">
+          <strong>Настройки</strong>
+          <div style="display:flex;gap:8px;">
+            <button class="btn grad sm" id="masteringModeSimpleBtn" onclick="Mastering.setMode('simple')">Прост режим</button>
+            <button class="btn ghost sm" id="masteringModeAdvancedBtn" onclick="Mastering.setMode('advanced')">Разширени настройки</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <span class="muted" style="display:block;margin-bottom:6px;">Готови пресети:</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn ghost sm" onclick="Mastering.applyPreset('car')">🚗 Кола / Субуфер</button>
+            <button class="btn ghost sm" onclick="Mastering.applyPreset('stream')">📡 Стрийминг</button>
+            <button class="btn ghost sm" onclick="Mastering.applyPreset('stage')">🎪 Голяма сцена / Клуб</button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="row" style="align-items:center;justify-content:space-between;">
+            <span class="muted">Твои пресети <span title="Пазят се в GitHub — data/mastering-presets.json">(в GitHub, завинаги)</span></span>
+            <button class="btn ghost sm" onclick="Mastering.promptSavePreset()">💾 Запази текущите настройки</button>
+          </div>
+          <div id="masteringCustomPresetList" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <span class="muted" style="font-size:12px;">Зареждане…</span>
+          </div>
+        </div>
+
+        <!-- ПРОСТ РЕЖИМ -->
+        <div id="masteringSimplePanel" style="margin-top:16px;">
+          <label>Бас (кола/субуфер) <span id="lblBass" class="muted"></span></label>
+          <input type="range" id="masterBass" min="0" max="100" value="30">
+
+          <label>Намаляване на глас <span id="lblVocal" class="muted"></span></label>
+          <input type="range" id="masterVocal" min="0" max="100" value="0">
+
+          <label>Сила / Loudness <span id="lblLoudness" class="muted"></span></label>
+          <input type="range" id="masterLoudness" min="0" max="100" value="40">
+        </div>
+
+        <!-- РАЗШИРЕНИ НАСТРОЙКИ -->
+        <div id="masteringAdvancedPanel" style="display:none;margin-top:16px;">
+          <div class="grid cols-2">
+            <div><label>High-pass (Hz)</label><input type="number" id="advHighpass" value="25"></div>
+            <div><label>Целеви true peak (dBFS)</label><input type="number" id="advTargetPeak" value="-3.7" step="0.1"></div>
+            <div><label>Бас shelf честота (Hz)</label><input type="number" id="advBassFreq" value="65"></div>
+            <div><label>Бас усилване (dB)</label><input type="number" id="advBassGain" value="2.7" step="0.1"></div>
+            <div><label>Пънч честота (Hz)</label><input type="number" id="advPunchFreq" value="100"></div>
+            <div><label>Пънч усилване (dB)</label><input type="number" id="advPunchGain" value="1.35" step="0.1"></div>
+            <div><label>Кал (mud) честота (Hz)</label><input type="number" id="advMudFreq" value="400"></div>
+            <div><label>Кал усилване (dB)</label><input type="number" id="advMudGain" value="-0.45" step="0.1"></div>
+            <div><label>Вокал dip 1 честота (Hz)</label><input type="number" id="advVocalFreq1" value="1200"></div>
+            <div><label>Вокал dip 1 (dB)</label><input type="number" id="advVocalGain1" value="0" step="0.1"></div>
+            <div><label>Вокал dip 2 честота (Hz)</label><input type="number" id="advVocalFreq2" value="2500"></div>
+            <div><label>Вокал dip 2 (dB)</label><input type="number" id="advVocalGain2" value="0" step="0.1"></div>
+            <div><label>Въздух честота (Hz)</label><input type="number" id="advAirFreq" value="9000"></div>
+            <div><label>Въздух усилване (dB)</label><input type="number" id="advAirGain" value="1.6" step="0.1"></div>
+            <div><label>Compressor threshold (dB)</label><input type="number" id="advCompThreshold" value="-20"></div>
+            <div><label>Compressor ratio</label><input type="number" id="advCompRatio" value="3.6" step="0.1"></div>
+            <div><label>Attack (ms)</label><input type="number" id="advCompAttack" value="15"></div>
+            <div><label>Release (ms)</label><input type="number" id="advCompRelease" value="200"></div>
+            <div><label>Compressor knee (dB)</label><input type="number" id="advCompKnee" value="6"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>Мета тагове (по избор)</strong>
+        <div class="row">
+          <div><label>Заглавие</label><input type="text" id="metaTitle" placeholder="напр. Acıyor"></div>
+          <div><label>Изпълнител</label><input type="text" id="metaArtist" placeholder="напр. CD-B"></div>
+          <div><label>Лейбъл / Студио</label><input type="text" id="metaLabel" placeholder="напр. CD-B Records"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>WAV формат при износ</label>
+        <select id="masterBitDepth">
+          <option value="16" selected>16-bit PCM (стандарт, с TPDF + noise-shaping dither)</option>
+          <option value="24">24-bit PCM (повече хедрум, предпочитано от дистрибутори)</option>
+          <option value="32f">32-bit float (без загуба, максимален хедрум)</option>
+        </select>
+        <p class="muted" style="font-size:11.5px;margin:6px 0 0;">16-bit е достатъчен за краен слушател (Spotify/YouTube транскодират и без това) и е с най-малък размер. 24-bit/32-bit float са полезни, ако файлът ще мине през допълнителна обработка другаде.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <strong>🎛️ Професионални модули</strong>
+        <p class="muted" style="font-size:11.5px;margin:4px 0 12px;">Всичко тук е ИЗКЛЮЧЕНО по подразбиране — старото поведение остава непроменено, докато не пипнеш нещо. True-peak лимитерът и noise-shaped dither-ът са изключение — те винаги подобряват качеството без нужда от превключвател.</p>
+
+        <div style="margin-bottom:14px;">
+          <label>Изходна честота на дискретизация</label>
+          <select id="proSampleRate">
+            <option value="source" selected>Както оригинала</option>
+            <option value="44100">44.1 kHz</option>
+            <option value="48000">48 kHz</option>
+            <option value="88200">88.2 kHz</option>
+            <option value="96000">96 kHz</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label>LUFS нормализация (точка 2)</label>
+          <select id="proLufsTarget" onchange="document.getElementById('proLufsCustomWrap').style.display=this.value==='custom'?'block':'none';">
+            <option value="off" selected>Изкл. (само ръчен true-peak таргет)</option>
+            <option value="spotify">Spotify / YouTube (-14 LUFS)</option>
+            <option value="apple">Apple Music (-16 LUFS)</option>
+            <option value="loud">Силно (-9 LUFS)</option>
+            <option value="custom">Ръчно...</option>
+          </select>
+          <div id="proLufsCustomWrap" style="display:none;margin-top:6px;">
+            <input type="number" id="proLufsCustom" value="-14" step="0.5">
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-bottom:14px;">
+          <div><label>Стерео ширина, високи (0.5x-2x = 50-200%)</label><input type="number" id="proWidth" value="100" min="50" max="200"></div>
+          <div><label>Стерео ширина, бас (0.5x-2x)</label><input type="number" id="proBassWidth" value="100" min="50" max="200"></div>
+          <div><label>Crossover честота (Hz)</label><input type="number" id="proWidthCrossover" value="150"></div>
+        </div>
+
+        <div class="grid cols-2" style="margin-bottom:14px;">
+          <div><label>Saturation drive (%, 0=изкл.)</label><input type="number" id="proSatDrive" value="0" min="0" max="100"></div>
+          <div><label>Exciter amount (%, 0=изкл.)</label><input type="number" id="proExciterAmount" value="0" min="0" max="100"></div>
+          <div><label>Exciter честота (Hz)</label><input type="number" id="proExciterFreq" value="6000"></div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proMultibandEnabled"> Multiband динамика (4 ленти: sub/low-mid/high-mid/air)</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Sub &lt; (Hz)</label><input type="number" id="proXoverSubLow" value="80"></div>
+            <div><label>Low-mid &lt; (Hz)</label><input type="number" id="proXoverLowMid" value="500"></div>
+            <div><label>High-mid &lt; (Hz)</label><input type="number" id="proXoverMidHigh" value="4000"></div>
+            <div></div>
+            <div><label>Sub threshold/ratio</label><input type="number" id="proSubThreshold" value="-16"> / <input type="number" id="proSubRatio" value="2.5" step="0.1"></div>
+            <div><label>Low-mid threshold/ratio</label><input type="number" id="proLowThreshold" value="-18"> / <input type="number" id="proLowRatio" value="2.2" step="0.1"></div>
+            <div><label>High-mid threshold/ratio</label><input type="number" id="proMidThreshold" value="-20"> / <input type="number" id="proMidRatio" value="2" step="0.1"></div>
+            <div><label>Air threshold/ratio</label><input type="number" id="proHighThreshold" value="-22"> / <input type="number" id="proHighRatio" value="2.5" step="0.1"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proDeEsserEnabled"> De-esser (5-8kHz split-band)</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Долна честота (Hz)</label><input type="number" id="proDeEsserFreqLow" value="5000"></div>
+            <div><label>Горна честота (Hz)</label><input type="number" id="proDeEsserFreqHigh" value="8000"></div>
+            <div><label>Праг (dB)</label><input type="number" id="proDeEsserThreshold" value="-24"></div>
+            <div><label>Макс. намаление (dB)</label><input type="number" id="proDeEsserAmount" value="8"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label>True-peak лимитер (винаги активен) — фина настройка</label>
+          <div class="grid cols-2" style="margin-top:8px;">
+            <div><label>Oversampling</label><select id="proLimiterOversample"><option value="4" selected>4x</option><option value="8">8x</option></select></div>
+            <div><label>Lookahead (ms)</label><input type="number" id="proLimiterLookahead" value="2" min="1" max="5" step="0.5"></div>
+            <div><label>Атака (ms)</label><input type="number" id="proLimiterAttack" value="2" min="1" max="6" step="0.5"></div>
+            <div><label>Soft knee (dB)</label><input type="number" id="proLimiterKnee" value="2" min="0" max="6" step="0.5"></div>
+            <div><label>Release floor (ms)</label><input type="number" id="proLimiterReleaseFloor" value="40" min="10" max="100"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proAutoGainStaging"> Auto gain staging (input trim към RMS таргет ПРЕДИ EQ/компресора)</label>
+          <div style="margin-top:8px;"><label>RMS таргет (dB)</label><input type="number" id="proGainStagingTarget" value="-18"></div>
+        </div>
+
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="proMatchReference"> Изравни тонален баланс спрямо референтен файл</label>
+          <div class="row" style="margin-top:8px;">
+            <input type="file" id="masteringReferenceInput" accept="audio/*">
+          </div>
+          <p id="masteringReferenceStatus" class="muted" style="font-size:12px;margin-top:6px;"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <button class="btn grad full" id="masteringProcessBtn" onclick="Mastering.process()" disabled>🎚️ Обработи</button>
+
+        <div id="masteringMasteredWrap" style="display:none;margin-top:14px;">
+          <label>Резултат</label>
+          <audio id="masteringMasteredPlayer" controls style="width:100%;"></audio>
+        </div>
+
+        <div id="masteringDownloadWrap" style="display:none;gap:10px;margin-top:14px;">
+          <button class="btn ghost" id="masteringDownloadWav" onclick="Mastering.downloadWav()">⬇️ WAV</button>
+          <button class="btn ghost" id="masteringDownloadMp3" onclick="Mastering.downloadMp3()">⬇️ MP3 (320kbps)</button>
+        </div>
+      </div>
+
+      <!-- ============ PRO МАСТЕРИНГ (reference matching, GitHub Actions) ============ -->
+      <div class="card" style="margin-top:14px;">
+        <strong>🎛️ Pro Мастеринг (Reference Matching)</strong>
+        <p class="muted" style="font-size:12.5px;margin-top:4px;">
+          Различно от бързия preview по-горе — тук качваш и REFERENCE песен
+          (звук, който харесваш), и Python engine (matchering + true-peak
+          лимитер + LUFS анализ) на GitHub Actions приравнява спектъра/RMS/
+          стерео ширината на твоята песен към референцията. Отнема 1-3 мин.
+        </p>
+
+        <div style="margin-top:12px;">
+          <label>🎯 TARGET (песента за мастеринг)</label>
+          <input type="file" id="masteringProTargetInput" accept="audio/wav,.wav">
+          <div class="muted" id="masteringProTargetName" style="font-size:12px;margin-top:4px;">Няма избран файл.</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>🔊 REFERENCE (звукът, който искаш да наподобиш)</label>
+          <input type="file" id="masteringProReferenceInput" accept="audio/wav,.wav">
+          <div class="muted" id="masteringProReferenceName" style="font-size:12px;margin-top:4px;">Няма избран файл.</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Таван True Peak (dBTP)</label>
+          <input type="number" id="masteringProTargetPeak" value="-1.0" step="0.1" style="width:100px;">
+        </div>
+
+        <button class="btn grad full" id="masteringProProcessBtn" style="margin-top:14px;" onclick="MasteringPro.process()" disabled>
+          🎛️ Обработи (Pro)
+        </button>
+
+        <div class="muted" id="masteringProProgress" style="display:none;margin-top:10px;font-size:12.5px;"></div>
+
+        <div id="masteringProResultWrap" style="display:none;margin-top:14px;">
+          <label>Резултат</label>
+          <audio id="masteringProPlayer" controls style="width:100%;"></audio>
+          <div id="masteringProStats" class="muted" style="font-size:12px;margin-top:8px;"></div>
+          <button class="btn ghost" id="masteringProDownloadBtn" style="margin-top:10px;">⬇️ Свали WAV (16-bit, dithered)</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/storage.js"></script>
+<script src="js/ai-helpers.js"></script>
+<script src="js/ui/toast.js"></script>
+<script src="js/system-test.js"></script>
+<script src="js/ui/guard-click.js"></script>
+<script src="js/network.js"></script>
+<script src="js/agent-roster.js"></script>
+<script src="js/providers/fallback-loop.js"></script>
+<script src="js/providers/claude.js"></script>
+<script src="js/providers/gemini.js"></script>
+<script src="js/providers/openrouter.js"></script>
+<script src="js/providers/model-finder.js"></script>
+<script src="js/providers/pollinations-image.js"></script>
+<script src="js/providers/cloudflare-image.js"></script>
+<script src="js/providers/musicgen.js"></script>
+<script src="js/providers/code-logo.js"></script>
+<script src="js/providers/subtitles.js"></script>
+<script src="js/agent-registry.js"></script>
+<script src="js/ai-chat.js"></script>
+<script src="js/code-arena.js"></script>
+<script src="js/youtube.js"></script>
+<script src="js/system-log.js"></script>
+<script src="js/app-log.js"></script>
+<script src="js/app-state.js"></script>
+<script src="js/ai-cache.js"></script>
+<script src="js/quota-tracker.js"></script>
+<script src="js/cost-tracker.js"></script>
+<script src="js/prefs.js"></script>
+<script src="js/model-pref.js"></script>
+<script src="js/ai-provider-order.js"></script>
+<script src="js/ai-call-log.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/youtube-discovery.js"></script>
+<script src="js/metadata-optimizer.js"></script>
+<script src="js/consultant.js"></script>
+<script src="js/thumbnail-maker.js"></script>
+<script src="js/gemini-validator.js"></script>
+<script src="js/project-archive.js"></script>
+<script src="js/system-update.js"></script>
+<script src="js/quick-upload.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="js/shorts-studio.js"></script>
+<script src="js/shorts-pro-render.js"></script>
+<script src="js/track-record.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/lyrics-history.js"></script>
+<script src="js/lyrics-library.js"></script>
+<script src="js/lyrics-humanizer.js"></script>
+<script src="js/suno-preview.js"></script>
+<script src="js/idea-vault.js"></script>
+<script src="js/learning-loop.js"></script>
+<script src="js/song-lab.js"></script>
+<script src="js/step2.js"></script>
+<script src="js/step4.js"></script>
+<script src="js/step3.js"></script>
+<script src="js/viral-lab.js"></script>
+<script src="js/step1.js"></script>
+<script src="js/ui-bootstrap.js"></script>
+<script src="app.js"></script>
+<script src="js/auth-gate.js"></script>
+<script src="js/niche-scoring.js"></script>
+<script src="js/niche-data-sources.js"></script>
+<script src="js/niche-toolkit.js"></script>
+<script src="js/release-roadmap.js"></script>
+<!-- lamejs — MP3 encoder (client-side, за js/mastering.js). Ако CDN-ът е
+     недостъпен offline, mastering.js гo проверява (typeof lamejs) и скрива
+     само MP3 бутона — WAV експортът работи винаги, без тази зависимост. -->
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script src="js/mastering.js"></script>
+<script src="js/mastering-pro.js"></script>
+<script src="js/kinetic.js"></script>
+   <script src="scripts/clock-and-keys.js"></script>
+   <script>
+     // Регистрира Service Worker за offline достъп до дашборда (само
+     // черупката — HTML/JS/CSS/шрифтове; AI/GitHub/YouTube заявките
+     // винаги минават през мрежата, виж sw.js).
+     if ("serviceWorker" in navigator) {
+       window.addEventListener("load", () => {
+         navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch((e) => console.warn("SW регистрация неуспешна:", e));
+       });
+     }
+   </script>
+</body>
+</html>
