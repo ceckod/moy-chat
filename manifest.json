@@ -1,9 +1,0 @@
-{
-  "name": "CD-B Records Control Dashboard",
-  "short_name": "CD-B Dashboard",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0f1115",
-  "theme_color": "#0f1115",
-  "icons": []
-}
