@@ -1,0 +1,24 @@
+# AI Shorts Pro pipeline — зависимости
+# (pip install -r scripts/requirements-shorts.txt)
+#
+# requests        — сваляне на audio_url/cover_url, извиквания към Gemini REST API
+#                    и към iTunes Lookup API (_pick_next_song.py)
+# numpy/scipy     — bass-envelope извличане за beat-flash (Butterworth band-pass
+#                    40-150Hz + RMS envelope + peak-picking), виж
+#                    render_short_ffmpeg.extract_beat_flash_cmds()
+# pillow          — еднократни (не per-frame!) PNG asset-и: стъклена карта
+#                    (frosted_glass_ui), кръгла маска (circular_glow),
+#                    пулсиращо ветрило/halo, частици-мрежа (particle_field_3d)
+# openai-whisper  — word-level транскрипция за kinetic субтитрите
+#                    (word_timestamps=True), виж whisper_subtitles.py
+# torch (CPU)     — зависимост на openai-whisper; --index-url по-долу
+#                    издърпва CPU-only колелото, за да не тегли ненужно CUDA
+#                    build на безплатния GitHub Actions runner (спестява
+#                    минути + storage на runner-а)
+requests>=2.31
+numpy>=1.24
+scipy>=1.11
+pillow>=10.0
+openai-whisper==20231117
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.1

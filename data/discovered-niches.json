@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-02T17:55:36.112552+00:00",
+  "bootstrap_source": "youtube_trending",
+  "candidates_scanned": 15,
+  "discovered": [
+    {
+      "term": "harry styles",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "tate mcrae",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "daddy yankee",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "coming roses",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "leo rosiori",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "capital bra",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "five nights",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "nora istrefi",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "noizy azet",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "azet dardan",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "noizy azet dardan",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "punjabi songs",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "together together",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}
