@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-05T10:25:29.937Z",
-  "total": 59,
+  "generated_at": "2026-11-06T10:26:24.095Z",
+  "total": 58,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 16
+      "count": 15
     },
     "static": {
       "ok": true,
@@ -185,26 +185,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: cohere/north-mini-code:free"
-    },
-    {
-      "source": "openrouter",
-      "id": "nvidia/nemotron-3.5-content-safety:free",
-      "name": "NVIDIA: Nemotron 3.5 Content Safety (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/nvidia/nemotron-3.5-content-safety:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: nvidia/nemotron-3.5-content-safety:free"
     },
     {
       "source": "openrouter",
