@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T10:26:24.095Z",
-  "total": 58,
+  "generated_at": "2026-11-07T09:39:21.386Z",
+  "total": 59,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 15
+      "count": 16
     },
     "static": {
       "ok": true,
@@ -26,6 +26,26 @@
     "JINA_API_KEY"
   ],
   "models": [
+    {
+      "source": "openrouter",
+      "id": "liquid/lfm-3-1.7b:free",
+      "name": "LiquidAI: LFM3-1.7B (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/liquid/lfm-3-1.7b:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: liquid/lfm-3-1.7b:free"
+    },
     {
       "source": "openrouter",
       "id": "stealth/crouton-alpha",
