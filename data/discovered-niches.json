@@ -1,9 +1,30 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-02T17:55:36.112552+00:00",
+  "generated_at": "2026-11-09T18:26:36.423943+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
+    {
+      "term": "olivia rodrigo",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "tom macdonald",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "hindi songs",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
     {
       "term": "harry styles",
       "confirmed_by": [
@@ -12,11 +33,26 @@
       "confidence": "LOW"
     },
     {
-      "term": "tate mcrae",
+      "term": "belly gang",
       "confirmed_by": [
         "wikipedia"
       ],
       "confidence": "LOW"
+    },
+    {
+      "term": "hip hop",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "lil baby",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
     },
     {
       "term": "daddy yankee",
@@ -27,49 +63,14 @@
       "confidence": "HIGH"
     },
     {
-      "term": "coming roses",
+      "term": "mil jaaye",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "leo rosiori",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "capital bra",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "five nights",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "nora istrefi",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "noizy azet",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "azet dardan",
+      "term": "shahrukh khan",
       "confirmed_by": [
         "wikipedia",
         "musicbrainz"
@@ -77,26 +78,39 @@
       "confidence": "HIGH"
     },
     {
-      "term": "noizy azet dardan",
+      "term": "mil jaye",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "punjabi songs",
+      "term": "farid bang",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "together together",
+      "term": "take home",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
+    },
+    {
+      "term": "grupo firme",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "kodak black",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
     }
   ]
 }
