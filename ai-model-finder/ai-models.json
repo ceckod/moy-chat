@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T10:56:57.614Z",
+  "generated_at": "2026-11-10T10:48:26.300Z",
   "total": 59,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
@@ -28,6 +28,26 @@
   "models": [
     {
       "source": "openrouter",
+      "id": "thinkingmachines/inkling-2-small:free",
+      "name": "Thinking Machines: Inkling 2 Small (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/thinkingmachines/inkling-2-small:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: thinkingmachines/inkling-2-small:free"
+    },
+    {
+      "source": "openrouter",
       "id": "liquid/lfm-3-1.7b:free",
       "name": "LiquidAI: LFM3-1.7B (free)",
       "provider": "OpenRouter",
@@ -45,26 +65,6 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: liquid/lfm-3-1.7b:free"
-    },
-    {
-      "source": "openrouter",
-      "id": "stealth/crouton-alpha",
-      "name": "Crouton Alpha",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/stealth/crouton-alpha",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: stealth/crouton-alpha"
     },
     {
       "source": "openrouter",
