@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-12T10:41:14.267Z",
-  "total": 59,
+  "generated_at": "2026-11-13T10:36:09.136Z",
+  "total": 60,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 16
+      "count": 17
     },
     "static": {
       "ok": true,
@@ -85,6 +85,26 @@
         "note": "Безплатен tier с rate limits"
       },
       "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: liquid/lfm-3-1.7b:free"
+    },
+    {
+      "source": "openrouter",
+      "id": "particle-ai/particle-1:free",
+      "name": "Particle AI: Particle-1 (free)",
+      "provider": "OpenRouter",
+      "category": "text-generation",
+      "type": "chat",
+      "license": null,
+      "verified": true,
+      "link": "https://openrouter.ai/particle-ai/particle-1:free",
+      "downloads": 0,
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "auth": {
+        "type": "bearer",
+        "key_env": "OPENROUTER_API_KEY",
+        "key_url": "https://openrouter.ai/keys",
+        "note": "Безплатен tier с rate limits"
+      },
+      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: particle-ai/particle-1:free"
     },
     {
       "source": "openrouter",
