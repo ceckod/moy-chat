@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-09T18:26:36.423943+00:00",
+  "generated_at": "2026-11-16T18:00:24.464252+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
@@ -12,25 +12,12 @@
       "confidence": "LOW"
     },
     {
-      "term": "tom macdonald",
+      "term": "piele alba",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "hindi songs",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "harry styles",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
     },
     {
       "term": "belly gang",
@@ -40,19 +27,33 @@
       "confidence": "LOW"
     },
     {
-      "term": "hip hop",
+      "term": "auf trab",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "term": "jador piele",
       "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "lil baby",
+      "term": "piele alba maro",
       "confirmed_by": [
-        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "HIGH"
+      "confidence": "LOW"
+    },
+    {
+      "term": "alan walker",
+      "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
     },
     {
       "term": "daddy yankee",
@@ -63,35 +64,6 @@
       "confidence": "HIGH"
     },
     {
-      "term": "mil jaaye",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "shahrukh khan",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "mil jaye",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "farid bang",
-      "confirmed_by": [
-        "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
       "term": "take home",
       "confirmed_by": [
         "musicbrainz"
@@ -99,16 +71,9 @@
       "confidence": "LOW"
     },
     {
-      "term": "grupo firme",
+      "term": "jador piele alba",
       "confirmed_by": [
         "musicbrainz"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "kodak black",
-      "confirmed_by": [
-        "wikipedia"
       ],
       "confidence": "LOW"
     }
