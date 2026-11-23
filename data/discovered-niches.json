@@ -1,15 +1,24 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T18:00:24.464252+00:00",
+  "generated_at": "2026-11-23T19:55:09.654148+00:00",
   "bootstrap_source": "youtube_trending",
   "candidates_scanned": 15,
   "discovered": [
     {
-      "term": "olivia rodrigo",
+      "term": "quando rondo",
       "confirmed_by": [
+        "wikipedia",
         "musicbrainz"
       ],
-      "confidence": "LOW"
+      "confidence": "HIGH"
+    },
+    {
+      "term": "belly gang",
+      "confirmed_by": [
+        "wikipedia",
+        "musicbrainz"
+      ],
+      "confidence": "HIGH"
     },
     {
       "term": "piele alba",
@@ -20,7 +29,7 @@
       "confidence": "HIGH"
     },
     {
-      "term": "belly gang",
+      "term": "yfn lucci",
       "confirmed_by": [
         "wikipedia"
       ],
@@ -29,13 +38,27 @@
     {
       "term": "auf trab",
       "confirmed_by": [
+        "wikipedia"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "baby lasagna",
+      "confirmed_by": [
         "wikipedia",
         "musicbrainz"
       ],
       "confidence": "HIGH"
     },
     {
-      "term": "jador piele",
+      "term": "grupo selectivo",
+      "confirmed_by": [
+        "musicbrainz"
+      ],
+      "confidence": "LOW"
+    },
+    {
+      "term": "shaggy angel",
       "confirmed_by": [
         "musicbrainz"
       ],
@@ -51,27 +74,12 @@
     {
       "term": "alan walker",
       "confirmed_by": [
-        "wikipedia"
-      ],
-      "confidence": "LOW"
-    },
-    {
-      "term": "daddy yankee",
-      "confirmed_by": [
-        "wikipedia",
-        "musicbrainz"
-      ],
-      "confidence": "HIGH"
-    },
-    {
-      "term": "take home",
-      "confirmed_by": [
         "musicbrainz"
       ],
       "confidence": "LOW"
     },
     {
-      "term": "jador piele alba",
+      "term": "helene fischer",
       "confirmed_by": [
         "musicbrainz"
       ],
