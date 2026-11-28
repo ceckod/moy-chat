@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-27T11:48:13.197Z",
-  "total": 57,
+  "generated_at": "2026-11-28T11:24:34.069Z",
+  "total": 56,
   "note": "Безплатните tier-ове се променят — проверявай key_url за всеки източник.",
   "sources": {
     "huggingface": {
@@ -9,7 +9,7 @@
     },
     "openrouter": {
       "ok": true,
-      "count": 14
+      "count": 13
     },
     "static": {
       "ok": true,
@@ -26,26 +26,6 @@
     "JINA_API_KEY"
   ],
   "models": [
-    {
-      "source": "openrouter",
-      "id": "inclusionai/ling-3.2-flash:free",
-      "name": "inclusionAI: Ling 3.2 Flash (free)",
-      "provider": "OpenRouter",
-      "category": "text-generation",
-      "type": "chat",
-      "license": null,
-      "verified": true,
-      "link": "https://openrouter.ai/inclusionai/ling-3.2-flash:free",
-      "downloads": 0,
-      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-      "auth": {
-        "type": "bearer",
-        "key_env": "OPENROUTER_API_KEY",
-        "key_url": "https://openrouter.ai/keys",
-        "note": "Безплатен tier с rate limits"
-      },
-      "how_to_connect": "OpenAI-съвместим: base_url=https://openrouter.ai/api/v1, модел: inclusionai/ling-3.2-flash:free"
-    },
     {
       "source": "openrouter",
       "id": "baidu/ernie-5.5-flash-preview:free",
